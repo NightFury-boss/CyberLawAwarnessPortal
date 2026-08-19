@@ -43,7 +43,7 @@ function Resources() {
       {!loading && (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 'var(--space-lg)' }}>
           {resources.map((res) => (
-            <div key={res.id} className="editorial-card" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+            <div key={res._id || res.id} className="editorial-card" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
               <div>
                 <span className="tag" style={{ fontSize: '0.75rem' }}>{res.category}</span>
                 <h3 style={{ fontSize: '1.25rem', margin: 'var(--space-xs) 0' }}>{res.title}</h3>

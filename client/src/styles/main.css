@@ -988,3 +988,310 @@ h1 {
     display: block;
   }
 }
+
+/* ==================================================
+   REUSABLE INTERACTION CLASSES (CLICKABLE UI POLISH)
+   ================================================== */
+
+/* Globally accessible focus ring for keyboard navigation */
+:focus-visible {
+  outline: 2px solid var(--accent-navy);
+  outline-offset: 2px;
+}
+
+/* Button Pressed Animation Feedback */
+.btn:active,
+button:active,
+.interactive-card:active,
+.quiz-option:active,
+.decision-option:active {
+  transform: scale(0.98);
+}
+
+/* Interactive Card Styles */
+.interactive-card {
+  cursor: pointer !important;
+  background-color: var(--bg-white);
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  padding: var(--space-lg);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+}
+
+.interactive-card:hover {
+  border-color: var(--color-border-dark);
+  background-color: var(--bg-primary);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+/* Apply interactive states automatically to specific class combos */
+.editorial-card {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.editorial-card[onClick], 
+.editorial-card.interactive {
+  cursor: pointer !important;
+}
+
+.editorial-card[onClick]:hover,
+.editorial-card.interactive:hover {
+  border-color: var(--color-border-dark);
+  background-color: var(--bg-primary);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+/* Interactive Rows / List Items */
+.interactive-row {
+  cursor: pointer !important;
+  transition: all 0.2s ease;
+  border-left: 3px solid transparent;
+  padding: var(--space-md) var(--space-lg);
+  border-radius: 4px;
+}
+
+.interactive-row:hover {
+  background-color: var(--accent-navy-light);
+  border-left-color: var(--accent-navy);
+}
+
+/* Smooth arrow transition inside interactive links */
+.interactive-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--accent-navy);
+  font-weight: 600;
+  cursor: pointer !important;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+.interactive-link:hover {
+  color: var(--accent-navy-hover);
+  text-decoration: none;
+}
+
+.interactive-link .arrow {
+  transition: transform 0.2s ease;
+  display: inline-block;
+}
+
+.interactive-link:hover .arrow {
+  transform: translateX(4px);
+}
+
+/* Interactive filter tags and chapters */
+.filter-tab {
+  cursor: pointer !important;
+  transition: all 0.2s ease;
+  border: 1px solid var(--color-border);
+}
+
+.filter-tab:hover {
+  border-color: var(--color-border-dark);
+  background-color: var(--bg-secondary);
+}
+
+/* Quiz Option Interactive Blocks */
+.quiz-option {
+  cursor: pointer !important;
+  transition: all 0.15s ease;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  background-color: var(--bg-primary);
+}
+
+.quiz-option:hover {
+  border-color: var(--color-border-dark);
+  background-color: var(--bg-secondary);
+}
+
+.quiz-option.selected {
+  border-color: var(--accent-navy);
+  background-color: var(--accent-navy-light);
+}
+
+.quiz-option.correct {
+  border-color: var(--color-success);
+  background-color: var(--color-success-light);
+}
+
+.quiz-option.incorrect {
+  border-color: var(--color-error);
+  background-color: var(--color-error-light);
+}
+
+/* Interactive Decision Options inside Case Timelines */
+.decision-option {
+  cursor: pointer !important;
+  transition: all 0.2s ease;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  background-color: var(--bg-primary);
+}
+
+.decision-option:hover {
+  border-color: var(--accent-navy);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.decision-option.selected {
+  border-color: var(--accent-navy);
+  background-color: var(--accent-navy-light);
+  box-shadow: 0 0 0 3px rgba(15, 37, 55, 0.1);
+}
+
+/* Accordions hover */
+.accordion-header {
+  cursor: pointer !important;
+  transition: all 0.2s ease;
+}
+
+.accordion-header:hover {
+  background-color: var(--bg-secondary);
+}
+
+.accordion-chevron {
+  transition: transform 0.2s ease;
+}
+
+.accordion-header.open .accordion-chevron {
+  transform: rotate(90deg);
+}
+
+/* Admin Table compact action button transitions */
+.table-action-btn {
+  cursor: pointer !important;
+  border: none;
+  background: none;
+  font-size: 0.85rem;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  color: var(--text-secondary);
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+
+.table-action-btn:hover {
+  background-color: var(--accent-navy-light);
+  color: var(--accent-navy);
+}
+
+.table-action-btn.danger:hover {
+  background-color: var(--color-error-light);
+  color: var(--color-error);
+}
+
+/* Interactive diagrams node visual highlighting */
+.interactive-node {
+  cursor: pointer !important;
+  transition: all 0.2s ease;
+}
+
+.interactive-node:hover {
+  opacity: 0.85;
+  transform: scale(1.05);
+}
+
+/* ==================================================
+   ADDITIONAL SELECTORS FOR MAPPED COMPONENT INTERACTIONS
+   ================================================== */
+
+/* Compass Button highlights */
+.compass-btn {
+  transition: all 0.2s ease !important;
+}
+
+.compass-btn:hover {
+  border-color: var(--accent-navy) !important;
+  background-color: var(--accent-navy-light) !important;
+  transform: translateY(-1.5px);
+  box-shadow: 0 4px 10px rgba(15, 37, 55, 0.08);
+}
+
+/* Target categories and threat filters */
+button[style*="borderRadius: '20px'"],
+button[style*="borderRadius:\"20px\""] {
+  transition: all 0.2s ease !important;
+}
+
+button[style*="borderRadius: '20px'"]:not(:disabled):hover,
+button[style*="borderRadius:\"20px\""]:not(:disabled):hover {
+  transform: translateY(-1px);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.06);
+}
+
+/* Sidebar admin controls active highlight and hover state */
+.admin-nav button {
+  transition: all 0.2s ease !important;
+}
+
+.admin-nav button:hover {
+  background-color: var(--accent-navy) !important;
+  color: white !important;
+}
+
+.admin-nav button.active {
+  background-color: var(--accent-navy) !important;
+  color: white !important;
+  font-weight: 600;
+}
+
+/* Assistant header close button hover */
+.assistant-header button {
+  transition: all 0.2s ease !important;
+}
+
+.assistant-header button:hover {
+  opacity: 0.8;
+  transform: scale(1.15);
+}
+
+/* Universal hover/active overrides for buttons and cursor pointer items */
+button[style*="cursor: 'pointer'"],
+button[style*="cursor: \"pointer\""],
+button[style*="cursor:pointer"],
+button[onClick],
+a[onClick],
+div[onClick] {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+button[style*="cursor: 'pointer'"]:not(:disabled):hover,
+button[style*="cursor: \"pointer\""]:not(:disabled):hover,
+button[style*="cursor:pointer"]:not(:disabled):hover,
+button[onClick]:not(:disabled):hover,
+a[onClick]:hover,
+div[onClick]:hover {
+  transform: translateY(-1px);
+}
+
+/* Custom global hover adjustments on all clickable filters */
+.library-filters button,
+.library-filters span,
+.categories-container button,
+.tag-filter button {
+  cursor: pointer !important;
+  transition: all 0.2s ease;
+}
+
+.library-filters button:hover,
+.library-filters span:hover {
+  transform: translateY(-1.5px);
+  box-shadow: 0 3px 8px rgba(0,0,0,0.06);
+}
+
+/* Interactive Timeline nodes connector lift */
+.timeline-step {
+  transition: all 0.2s ease;
+}
+
+.timeline-step:hover {
+  transform: translateX(4px);
+}
+
