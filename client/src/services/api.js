@@ -95,6 +95,27 @@ const api = {
     return handleResponse(res);
   },
 
+  searchCrimes: async (query) => {
+    const res = await fetch(`${API_URL}/crimes/crimes/search?q=${encodeURIComponent(query)}`, {
+      headers: getHeaders()
+    });
+    return handleResponse(res);
+  },
+
+  getCrimeRecommendations: async () => {
+    const res = await fetch(`${API_URL}/crimes/crimes/recommendations`, {
+      headers: getHeaders()
+    });
+    return handleResponse(res);
+  },
+
+  getCrimeBySlug: async (slug) => {
+    const res = await fetch(`${API_URL}/crimes/crimes/slug/${slug}`, {
+      headers: getHeaders()
+    });
+    return handleResponse(res);
+  },
+
   getCrime: async (id) => {
     const res = await fetch(`${API_URL}/crimes/crimes/${id}`, {
       headers: getHeaders()
@@ -111,6 +132,20 @@ const api = {
 
   getCase: async (id) => {
     const res = await fetch(`${API_URL}/crimes/cases/${id}`, {
+      headers: getHeaders()
+    });
+    return handleResponse(res);
+  },
+
+  getCaseBySlug: async (slug) => {
+    const res = await fetch(`${API_URL}/crimes/cases/slug/${slug}`, {
+      headers: getHeaders()
+    });
+    return handleResponse(res);
+  },
+
+  searchCases: async (query) => {
+    const res = await fetch(`${API_URL}/crimes/cases/search?q=${encodeURIComponent(query)}`, {
       headers: getHeaders()
     });
     return handleResponse(res);

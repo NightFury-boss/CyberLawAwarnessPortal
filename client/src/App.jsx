@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'r
 import api from './services/api';
 
 // Components
+import Sidebar from './components/Sidebar';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import AssistantWidget from './components/AssistantWidget';
@@ -27,6 +28,7 @@ function AppContent() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [progressTrigger, setProgressTrigger] = useState(0); // increment to trigger reload
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const location = useLocation();
 
   useEffect(() => {
@@ -63,59 +65,63 @@ function AppContent() {
   const isAdminPath = location.pathname.startsWith('/admin');
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
-      {!isAdminPath && <Navbar user={user} setUser={setUser} />}
+    <div className={isAdminPath ? "" : "app-container"}>
+      {!isAdminPath && <Sidebar user={user} isOpen={sidebarOpen} setIsOpen={setSidebarOpen} />}
       
-      <main style={{ flex: 1 }}>
-        <Routes>
-          {/* Public Routes */}
-          <Route path="/" element={<Home user={user} />} />
-          <Route path="/about" element={<About />} />
-          <Route path="/laws" element={<Laws />} />
-          <Route path="/crimes" element={<Crimes />} />
-          <Route path="/cases" element={<Cases />} />
-          <Route path="/prevention" element={<Prevention />} />
-          <Route path="/resources" element={<Resources />} />
-          
-          <Route 
-            path="/login" 
-            element={!user ? <Login setUser={setUser} /> : <Navigate to="/dashboard" />} 
-          />
-          <Route 
-            path="/register" 
-            element={!user ? <Register setUser={setUser} /> : <Navigate to="/dashboard" />} 
-          />
+      <div className={isAdminPath ? "" : "main-content"} style={{ marginLeft: isAdminPath ? 0 : undefined }}>
+        {!isAdminPath && <Navbar user={user} setUser={setUser} setSidebarOpen={setSidebarOpen} />}
+        
+        <main style={{ flex: 1 }}>
+          <Routes>
+            {/* Public Routes */}
+            <Route path="/" element={<Home user={user} />} />
+            <Route path="/about" element={<About />} />
+            <Route path="/laws" element={<Laws />} />
+            <Route path="/crimes" element={<Crimes />} />
+            <Route path="/cases" element={<Cases />} />
+            <Route path="/prevention" element={<Prevention />} />
+            <Route path="/resources" element={<Resources />} />
+            
+            <Route 
+              path="/login" 
+              element={!user ? <Login setUser={setUser} /> : <Navigate to="/dashboard" />} 
+            />
+            <Route 
+              path="/register" 
+              element={!user ? <Register setUser={setUser} /> : <Navigate to="/dashboard" />} 
+            />
 
-          {/* User Protected Routes */}
-          <Route 
-            path="/dashboard" 
-            element={user ? <Dashboard user={user} progressTrigger={progressTrigger} /> : <Navigate to="/login" />} 
-          />
-          <Route 
-            path="/assessment/baseline" 
-            element={user ? <BaselineAssessment user={user} updateProgressTrigger={triggerProgressUpdate} /> : <Navigate to="/login" />} 
-          />
-          <Route 
-            path="/assessment/final" 
-            element={user ? <FinalAssessment user={user} updateProgressTrigger={triggerProgressUpdate} /> : <Navigate to="/login" />} 
-          />
-          <Route 
-            path="/quizzes" 
-            element={user ? <Quizzes user={user} updateProgressTrigger={triggerProgressUpdate} /> : <Navigate to="/login" />} 
-          />
+            {/* User Protected Routes */}
+            <Route 
+              path="/dashboard" 
+              element={user ? <Dashboard user={user} progressTrigger={progressTrigger} /> : <Navigate to="/login" />} 
+            />
+            <Route 
+              path="/assessment/baseline" 
+              element={user ? <BaselineAssessment user={user} updateProgressTrigger={triggerProgressUpdate} /> : <Navigate to="/login" />} 
+            />
+            <Route 
+              path="/assessment/final" 
+              element={user ? <FinalAssessment user={user} updateProgressTrigger={triggerProgressUpdate} /> : <Navigate to="/login" />} 
+            />
+            <Route 
+              path="/quizzes" 
+              element={user ? <Quizzes user={user} updateProgressTrigger={triggerProgressUpdate} /> : <Navigate to="/login" />} 
+            />
 
-          {/* Admin Protected Routes */}
-          <Route 
-            path="/admin" 
-            element={user && user.role === 'admin' ? <AdminPanel user={user} /> : <Navigate to="/login" />} 
-          />
+            {/* Admin Protected Routes */}
+            <Route 
+              path="/admin" 
+              element={user && user.role === 'admin' ? <AdminPanel user={user} /> : <Navigate to="/login" />} 
+            />
 
-          {/* Fallback */}
-          <Route path="*" element={<Navigate to="/" />} />
-        </Routes>
-      </main>
+            {/* Fallback */}
+            <Route path="*" element={<Navigate to="/" />} />
+          </Routes>
+        </main>
 
-      {!isAdminPath && <Footer />}
+        {!isAdminPath && <Footer />}
+      </div>
       {!isAdminPath && <AssistantWidget />}
     </div>
   );
@@ -123,7 +129,7 @@ function AppContent() {
 
 function App() {
   return (
-    <Router>
+    <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
       <AppContent />
     </Router>
   );

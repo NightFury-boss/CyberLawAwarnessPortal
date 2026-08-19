@@ -2,7 +2,7 @@ import React from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import api from '../services/api';
 
-function Navbar({ user, setUser }) {
+function Navbar({ user, setUser, setSidebarOpen }) {
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -12,89 +12,64 @@ function Navbar({ user, setUser }) {
     navigate('/');
   };
 
-  const isActive = (path) => {
-    return location.pathname === path ? 'active' : '';
+  const getPageTitle = () => {
+    const path = location.pathname;
+    if (path === '/') return 'Home Portal';
+    if (path === '/laws') return 'Cyber Laws Registry';
+    if (path === '/crimes') return 'Crimes Library & Warnings';
+    if (path === '/cases') return 'Incident Case Studies';
+    if (path === '/prevention') return 'Prevention Center';
+    if (path === '/resources') return 'Official Legal Resources';
+    if (path === '/about') return 'About the Project';
+    if (path === '/dashboard') return 'User Progress Dashboard';
+    if (path === '/quizzes') return 'Interactive Quiz Center';
+    if (path.startsWith('/assessment/')) return 'Cyber Awareness Assessment';
+    return 'Cyber Awareness System';
   };
 
   return (
-    <nav className="navbar">
-      <div className="container nav-container">
-        <Link to="/" className="brand">
-          ⚖️ Cyber Law Awareness
-        </Link>
-        <ul className="nav-links">
-          <li>
-            <Link to="/" className={isActive('/')}>
-              Home
-            </Link>
-          </li>
-          <li>
-            <Link to="/about" className={isActive('/about')}>
-              About
-            </Link>
-          </li>
-          <li>
-            <Link to="/laws" className={isActive('/laws')}>
-              Cyber Laws
-            </Link>
-          </li>
-          <li>
-            <Link to="/crimes" className={isActive('/crimes')}>
-              Crimes Library
-            </Link>
-          </li>
-          <li>
-            <Link to="/cases" className={isActive('/cases')}>
-              Case Studies
-            </Link>
-          </li>
-          <li>
-            <Link to="/prevention" className={isActive('/prevention')}>
-              Prevention Center
-            </Link>
-          </li>
-          <li>
-            <Link to="/resources" className={isActive('/resources')}>
-              Resources
-            </Link>
-          </li>
-          {user ? (
-            <>
-              <li>
-                <Link to="/dashboard" className={isActive('/dashboard')}>
-                  Dashboard
-                </Link>
-              </li>
-              {user.role === 'admin' && (
-                <li>
-                  <Link to="/admin" className="btn btn-secondary">
-                    Admin panel
-                  </Link>
-                </li>
-              )}
-              <li>
-                <button onClick={handleLogout} className="btn btn-danger">
-                  Logout
-                </button>
-              </li>
-            </>
-          ) : (
-            <>
-              <li>
-                <Link to="/login" className="btn btn-secondary">
-                  Login
-                </Link>
-              </li>
-              <li>
-                <Link to="/register" className="btn btn-primary">
-                  Start Learning
-                </Link>
-              </li>
-            </>
-          )}
-        </ul>
+    <header className="top-header">
+      <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-md)' }}>
+        <button 
+          onClick={() => setSidebarOpen(prev => !prev)} 
+          className="sidebar-toggle"
+          title="Toggle Navigation Menu"
+          style={{ marginRight: '8px' }}
+        >
+          ☰
+        </button>
+        <span className="header-title" style={{ fontWeight: '600', fontSize: '1.1rem', color: 'var(--accent-navy)' }}>
+          {getPageTitle()}
+        </span>
       </div>
-    </nav>
+
+      <div className="auth-links" style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-md)' }}>
+        {user ? (
+          <>
+            <span className="text-muted" style={{ fontSize: '0.85rem', marginRight: '4px' }}>
+              Welcome, <strong>{user.fullName}</strong>
+            </span>
+            {user.role === 'admin' && (
+              <Link to="/admin" className="btn btn-secondary" style={{ padding: '6px 12px', fontSize: '0.8rem' }}>
+                Admin Panel
+              </Link>
+            )}
+            <button onClick={handleLogout} className="btn btn-danger" style={{ padding: '6px 12px', fontSize: '0.8rem' }}>
+              Logout
+            </button>
+          </>
+        ) : (
+          <>
+            <Link to="/login" className="btn btn-secondary" style={{ padding: '6px 16px', fontSize: '0.85rem' }}>
+              Login
+            </Link>
+            <Link to="/register" className="btn btn-primary" style={{ padding: '6px 16px', fontSize: '0.85rem' }}>
+              Start Learning
+            </Link>
+          </>
+        )}
+      </div>
+    </header>
   );
 }
 

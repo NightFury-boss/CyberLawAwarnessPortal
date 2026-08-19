@@ -858,3 +858,133 @@ h1 {
 .category-bar-fill.success {
   background-color: var(--color-success);
 }
+
+/* SIDEBAR LAYOUT STYLES */
+.app-container {
+  display: flex;
+  min-height: 100vh;
+}
+
+.sidebar {
+  position: fixed;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 260px;
+  background-color: var(--bg-primary);
+  border-right: 1px solid var(--color-border);
+  padding: var(--space-lg) var(--space-md);
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.3s ease;
+}
+
+.sidebar .brand {
+  font-family: var(--font-serif);
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: var(--accent-navy);
+  margin-bottom: var(--space-xl);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sidebar .nav-links {
+  display: flex;
+  flex-direction: column;
+  list-style: none;
+  gap: var(--space-xs);
+  flex: 1;
+}
+
+.sidebar .nav-links a {
+  display: block;
+  padding: 10px 16px;
+  border-radius: 6px;
+  color: var(--text-secondary);
+  font-weight: 500;
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+  border-left: 3px solid transparent;
+}
+
+.sidebar .nav-links a:hover {
+  background-color: var(--accent-navy-light);
+  color: var(--accent-navy);
+  text-decoration: none;
+}
+
+.sidebar .nav-links a.active {
+  background-color: var(--accent-navy-light);
+  color: var(--accent-navy);
+  font-weight: 600;
+  border-left: 3px solid var(--accent-navy);
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+  text-decoration: none;
+}
+
+.main-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  margin-left: 260px;
+}
+
+.top-header {
+  position: sticky;
+  top: 0;
+  background-color: var(--bg-primary);
+  border-bottom: 1px solid var(--color-border);
+  padding: var(--space-md) var(--space-xl);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  z-index: 999;
+}
+
+.top-header .header-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--accent-navy);
+}
+
+.top-header .auth-links {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+}
+
+.sidebar-toggle {
+  display: none;
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: var(--accent-navy);
+}
+
+@media (max-width: 768px) {
+  .sidebar {
+    transform: translateX(-100%);
+  }
+  
+  .sidebar.open {
+    transform: translateX(0);
+  }
+  
+  .main-content {
+    margin-left: 0;
+  }
+  
+  .top-header {
+    padding: var(--space-md) var(--space-lg);
+  }
+  
+  .sidebar-toggle {
+    display: block;
+  }
+}

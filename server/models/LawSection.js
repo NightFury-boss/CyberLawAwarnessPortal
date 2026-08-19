@@ -16,9 +16,27 @@ const LawSectionSchema = new mongoose.Schema({
     required: true,
     trim: true
   },
+  role: {
+    type: String,
+    enum: [
+      'Core Cyber Law',
+      'Related Criminal Law',
+      'Data Protection',
+      'Electronic Commerce / Digital Transactions',
+      'Sector Regulation',
+      'Judicial Interpretation',
+      'Government Rule / Notification',
+      'Official Guidance'
+    ],
+    default: 'Core Cyber Law'
+  },
   plainLanguageExplanation: {
     type: String,
     required: true
+  },
+  officialText: {
+    type: String,
+    default: ''
   },
   whyItMatters: {
     type: String,
@@ -33,14 +51,37 @@ const LawSectionSchema = new mongoose.Schema({
       type: String // Category names of related crimes
     }
   ],
+  relatedCaseStudies: [
+    {
+      type: String // Slugs of related case studies
+    }
+  ],
+  relatedModules: [
+    {
+      type: String // Slugs of related learning modules
+    }
+  ],
   penaltyOrLegalEffect: {
     type: String
   },
   legalStatus: {
     type: String,
-    enum: ['current', 'omitted', 'amended', 'historical'],
-    default: 'current'
+    enum: ['CURRENT', 'OMITTED', 'AMENDED', 'REPEALED', 'NOT_YET_IN_FORCE', 'PARTIALLY_IN_FORCE', 'HISTORICAL', 'UNDER_REVIEW', 'current', 'omitted', 'amended', 'historical'],
+    default: 'CURRENT'
   },
+  commencementStatus: {
+    type: String,
+    default: ''
+  },
+  amendmentStatus: {
+    type: String,
+    default: ''
+  },
+  keywords: [
+    {
+      type: String
+    }
+  ],
   officialSourceId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'LegalSource'

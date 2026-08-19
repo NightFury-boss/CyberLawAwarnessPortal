@@ -6,6 +6,9 @@ function AdminPanel({ user }) {
   const [activeTab, setActiveTab] = useState('analytics'); // analytics, laws, crimes, cases, quizzes, resources, users
   const [analytics, setAnalytics] = useState(null);
   const [usersList, setUsersList] = useState([]);
+  const [crimeFormTab, setCrimeFormTab] = useState('overview'); // overview, timeline, tactics, games
+  const [caseFormTab, setCaseFormTab] = useState('overview'); // overview, story, timeline, legal
+  const [lawFormTab, setLawFormTab] = useState('overview'); // overview, content, metadata, connections
   
   // Data list states
   const [laws, setLaws] = useState([]);
@@ -24,6 +27,17 @@ function AdminPanel({ user }) {
   const [loading, setLoading] = useState(false);
 
   const navigate = useNavigate();
+
+  const getAvailableSources = () => {
+    const map = new Map();
+    laws.forEach(l => {
+      if (l.officialSourceId) {
+        const src = l.officialSourceId;
+        map.set(src._id || src.id, src);
+      }
+    });
+    return Array.from(map.values());
+  };
 
   // Authentication guard
   useEffect(() => {
@@ -123,26 +137,78 @@ function AdminPanel({ user }) {
 
     try {
       if (activeTab === 'laws') {
-        if (editItem) await api.adminUpdateLaw(editItem.id, formData);
-        else await api.adminCreateLaw(formData);
-      } else if (activeTab === 'crimes') {
-        // Handle array fields
+        // Validate required metadata based on status
+        if ((formData.legalStatus === 'NOT_YET_IN_FORCE' || formData.legalStatus === 'PARTIALLY_IN_FORCE') && !formData.commencementStatus?.trim()) {
+          throw new Error('Commencement status description is required when status is Not Yet In Force or Partially In Force.');
+        }
+        if (formData.legalStatus === 'OMITTED' && !formData.amendmentStatus?.trim()) {
+          throw new Error('Amendment / omission litigation notes are required when status is OMITTED.');
+        }
+        if (!formData.officialSourceId) {
+          throw new Error('Official source reference selection is required.');
+        }
+
         const formatted = {
           ...formData,
-          warningSigns: typeof formData.warningSigns === 'string' ? formData.warningSigns.split('\n').filter(Boolean) : formData.warningSigns,
-          actionSteps: typeof formData.actionSteps === 'string' ? formData.actionSteps.split('\n').filter(Boolean) : formData.actionSteps,
-          avoidSteps: typeof formData.avoidSteps === 'string' ? formData.avoidSteps.split('\n').filter(Boolean) : formData.avoidSteps,
-          legalContext: typeof formData.legalContext === 'string' ? formData.legalContext.split(',').map(s => s.trim()).filter(Boolean) : formData.legalContext
+          keywords: typeof formData.keywords === 'string' ? formData.keywords.split(',').map(s => s.trim()).filter(Boolean) : formData.keywords,
+          relatedCyberCrimes: typeof formData.relatedCyberCrimes === 'string' ? formData.relatedCyberCrimes.split(',').map(s => s.trim()).filter(Boolean) : formData.relatedCyberCrimes,
+          relatedCaseStudies: typeof formData.relatedCaseStudies === 'string' ? formData.relatedCaseStudies.split(',').map(s => s.trim()).filter(Boolean) : formData.relatedCaseStudies,
+          relatedModules: typeof formData.relatedModules === 'string' ? formData.relatedModules.split(',').map(s => s.trim()).filter(Boolean) : formData.relatedModules
         };
+
+        if (editItem) await api.adminUpdateLaw(editItem.id, formatted);
+        else await api.adminCreateLaw(formatted);
+      } else if (activeTab === 'crimes') {
+        // Handle array fields
+        let formatted;
+        try {
+          formatted = {
+            ...formData,
+            warningSigns: typeof formData.warningSigns === 'string' ? formData.warningSigns.split('\n').filter(Boolean) : formData.warningSigns,
+            actionSteps: typeof formData.actionSteps === 'string' ? formData.actionSteps.split('\n').filter(Boolean) : formData.actionSteps,
+            avoidSteps: typeof formData.avoidSteps === 'string' ? formData.avoidSteps.split('\n').filter(Boolean) : formData.avoidSteps,
+            ifTargetedSteps: typeof formData.ifTargetedSteps === 'string' ? formData.ifTargetedSteps.split('\n').filter(Boolean) : formData.ifTargetedSteps,
+            legalContext: typeof formData.legalContext === 'string' ? formData.legalContext.split(',').map(s => s.trim()).filter(Boolean) : formData.legalContext,
+            attackerObjective: typeof formData.attackerObjective === 'string' ? formData.attackerObjective.split(',').map(s => s.trim()).filter(Boolean) : formData.attackerObjective,
+            attackVectors: typeof formData.attackVectors === 'string' ? formData.attackVectors.split(',').map(s => s.trim()).filter(Boolean) : formData.attackVectors,
+            
+            // JSON parsing
+            attackLifecycle: typeof formData.attackLifecycle === 'string' && formData.attackLifecycle.trim() ? JSON.parse(formData.attackLifecycle) : formData.attackLifecycle,
+            attackerTactics: typeof formData.attackerTactics === 'string' && formData.attackerTactics.trim() ? JSON.parse(formData.attackerTactics) : formData.attackerTactics,
+            spotTheFlags: typeof formData.spotTheFlags === 'string' && formData.spotTheFlags.trim() ? JSON.parse(formData.spotTheFlags) : formData.spotTheFlags,
+            whatWouldYouDo: typeof formData.whatWouldYouDo === 'string' && formData.whatWouldYouDo.trim() ? JSON.parse(formData.whatWouldYouDo) : formData.whatWouldYouDo,
+            quickCheckQuestions: typeof formData.quickCheckQuestions === 'string' && formData.quickCheckQuestions.trim() ? JSON.parse(formData.quickCheckQuestions) : formData.quickCheckQuestions,
+            mythFacts: typeof formData.mythFacts === 'string' && formData.mythFacts.trim() ? JSON.parse(formData.mythFacts) : formData.mythFacts
+          };
+        } catch (e) {
+          throw new Error('Advanced configuration has invalid JSON syntax: ' + e.message);
+        }
         if (editItem) await api.adminUpdateCrime(editItem.id, formatted);
         else await api.adminCreateCrime(formatted);
       } else if (activeTab === 'cases') {
-        const formatted = {
-          ...formData,
-          warningSigns: typeof formData.warningSigns === 'string' ? formData.warningSigns.split('\n').filter(Boolean) : formData.warningSigns,
-          preventionTips: typeof formData.preventionTips === 'string' ? formData.preventionTips.split('\n').filter(Boolean) : formData.preventionTips,
-          legalContext: typeof formData.legalContext === 'string' ? formData.legalContext.split(',').map(s => s.trim()).filter(Boolean) : formData.legalContext
-        };
+        let formatted;
+        try {
+          formatted = {
+            ...formData,
+            // Format array inputs
+            legalContext: typeof formData.legalContext === 'string' ? formData.legalContext.split(',').map(s => s.trim()).filter(Boolean) : formData.legalContext,
+            relatedCrimes: typeof formData.relatedCrimes === 'string' ? formData.relatedCrimes.split(',').map(s => s.trim()).filter(Boolean) : formData.relatedCrimes,
+            relatedModules: typeof formData.relatedModules === 'string' ? formData.relatedModules.split(',').map(s => s.trim()).filter(Boolean) : formData.relatedModules,
+            response: typeof formData.response === 'string' ? formData.response.split('\n').filter(Boolean) : formData.response,
+            preventionLessons: typeof formData.preventionLessons === 'string' ? formData.preventionLessons.split('\n').filter(Boolean) : formData.preventionLessons,
+            attackerObjectives: typeof formData.attackerObjectives === 'string' ? formData.attackerObjectives.split(',').map(s => s.trim()).filter(Boolean) : formData.attackerObjectives,
+            
+            // JSON fields parsing
+            narrativeSections: typeof formData.narrativeSections === 'string' && formData.narrativeSections.trim() ? JSON.parse(formData.narrativeSections) : formData.narrativeSections,
+            timeline: typeof formData.timeline === 'string' && formData.timeline.trim() ? JSON.parse(formData.timeline) : formData.timeline,
+            decisionPoints: typeof formData.decisionPoints === 'string' && formData.decisionPoints.trim() ? JSON.parse(formData.decisionPoints) : formData.decisionPoints,
+            warningSigns: typeof formData.warningSigns === 'string' && formData.warningSigns.trim() ? JSON.parse(formData.warningSigns) : formData.warningSigns,
+            sources: typeof formData.sources === 'string' && formData.sources.trim() ? JSON.parse(formData.sources) : formData.sources,
+            impact: typeof formData.impact === 'string' && formData.impact.trim() ? JSON.parse(formData.impact) : formData.impact
+          };
+        } catch (e) {
+          throw new Error('Case Study JSON structure contains syntax errors: ' + e.message);
+        }
         if (editItem) await api.adminUpdateCase(editItem.id, formatted);
         else await api.adminCreateCase(formatted);
       } else if (activeTab === 'quizzes') {
@@ -379,13 +445,13 @@ function AdminPanel({ user }) {
                 </thead>
                 <tbody>
                   {activeTab === 'laws' && laws.map(item => (
-                    <tr key={item.id}>
-                      <td>{item.section}</td>
-                      <td>{item.title}</td>
-                      <td>{item.status}</td>
+                    <tr key={item._id || item.id}>
+                      <td>{item.sectionNumber}</td>
+                      <td>{item.officialTitle}</td>
+                      <td>{item.legalStatus}</td>
                       <td>
                         <button onClick={() => handleEditInit(item)} className="btn btn-secondary" style={{ marginRight: '8px', padding: '4px 8px', fontSize: '0.75rem' }}>Edit</button>
-                        <button onClick={() => handleDelete(item.id)} className="btn btn-danger" style={{ padding: '4px 8px', fontSize: '0.75rem' }}>Delete</button>
+                        <button onClick={() => handleDelete(item._id || item.id)} className="btn btn-danger" style={{ padding: '4px 8px', fontSize: '0.75rem' }}>Delete</button>
                       </td>
                     </tr>
                   ))}
@@ -444,115 +510,420 @@ function AdminPanel({ user }) {
             <form onSubmit={handleFormSubmit}>
               {activeTab === 'laws' && (
                 <>
-                  <div className="form-group">
-                    <label>Section Number</label>
-                    <input type="text" name="section" className="form-control" value={formData.section || ''} onChange={handleFormChange} required />
+                  <div style={{ display: 'flex', gap: '8px', marginBottom: '20px', borderBottom: '1px solid #334155', paddingBottom: '10px' }}>
+                    {['overview', 'content', 'metadata', 'connections'].map(tab => (
+                      <button
+                        key={tab}
+                        type="button"
+                        onClick={() => setLawFormTab(tab)}
+                        style={{
+                          backgroundColor: lawFormTab === tab ? '#3b82f6' : '#1e293b',
+                          color: 'white',
+                          border: 'none',
+                          padding: '8px 16px',
+                          borderRadius: '4px',
+                          cursor: 'pointer',
+                          fontSize: '0.85rem',
+                          fontWeight: '600',
+                          textTransform: 'capitalize'
+                        }}
+                      >
+                        {tab}
+                      </button>
+                    ))}
                   </div>
-                  <div className="form-group">
-                    <label>Official Title</label>
-                    <input type="text" name="title" className="form-control" value={formData.title || ''} onChange={handleFormChange} required />
-                  </div>
-                  <div className="form-group">
-                    <label>Explanation</label>
-                    <textarea name="explanation" className="form-control" style={{ minHeight: '100px' }} value={formData.explanation || ''} onChange={handleFormChange} required />
-                  </div>
-                  <div className="form-group">
-                    <label>Why It Matters</label>
-                    <textarea name="whyItMatters" className="form-control" value={formData.whyItMatters || ''} onChange={handleFormChange} required />
-                  </div>
-                  <div className="form-group">
-                    <label>Example Scenario</label>
-                    <textarea name="scenario" className="form-control" value={formData.scenario || ''} onChange={handleFormChange} required />
-                  </div>
-                  <div className="form-group">
-                    <label>Penalty/Impact</label>
-                    <input type="text" name="penalty" className="form-control" value={formData.penalty || ''} onChange={handleFormChange} />
-                  </div>
-                  <div className="form-group">
-                    <label>Status</label>
-                    <select name="status" className="form-control" value={formData.status || 'current'} onChange={handleFormChange}>
-                      <option value="current">Active</option>
-                      <option value="omitted">Omitted</option>
-                    </select>
-                  </div>
-                  <div className="form-group">
-                    <label>Official Source link</label>
-                    <input type="text" name="officialSourceLink" className="form-control" value={formData.officialSourceLink || ''} onChange={handleFormChange} />
-                  </div>
+
+                  {lawFormTab === 'overview' && (
+                    <>
+                      <div className="form-group">
+                        <label style={{ color: 'white' }}>Section / Provision Identifier</label>
+                        <input type="text" name="sectionNumber" className="form-control" placeholder="e.g. Section 66C, DPDP Section 6" value={formData.sectionNumber || ''} onChange={handleFormChange} required />
+                      </div>
+                      <div className="form-group">
+                        <label style={{ color: 'white' }}>Act Name / Statute</label>
+                        <input type="text" name="actName" className="form-control" placeholder="e.g. Information Technology Act, 2000" value={formData.actName || ''} onChange={handleFormChange} required />
+                      </div>
+                      <div className="form-group">
+                        <label style={{ color: 'white' }}>Official Title</label>
+                        <input type="text" name="officialTitle" className="form-control" placeholder="e.g. Punishment for identity theft" value={formData.officialTitle || ''} onChange={handleFormChange} required />
+                      </div>
+                      <div className="form-group">
+                        <label style={{ color: 'white' }}>Legal Role / Classification</label>
+                        <select name="role" className="form-control" value={formData.role || 'Core Cyber Law'} onChange={handleFormChange} style={{ backgroundColor: '#1e293b', color: 'white' }}>
+                          <option value="Core Cyber Law">Core Cyber Law</option>
+                          <option value="Related Criminal Law">Related Criminal Law</option>
+                          <option value="Data Protection">Data Protection</option>
+                          <option value="Electronic Commerce / Digital Transactions">Electronic Commerce / Digital Transactions</option>
+                          <option value="Sector Regulation">Sector Regulation</option>
+                          <option value="Judicial Interpretation">Judicial Interpretation</option>
+                          <option value="Government Rule / Notification">Government Rule / Notification</option>
+                          <option value="Official Guidance">Official Guidance</option>
+                        </select>
+                      </div>
+                      <div className="form-group">
+                        <label style={{ color: 'white' }}>Legal Status</label>
+                        <select name="legalStatus" className="form-control" value={formData.legalStatus || 'CURRENT'} onChange={handleFormChange} style={{ backgroundColor: '#1e293b', color: 'white' }}>
+                          <option value="CURRENT">Current</option>
+                          <option value="OMITTED">Omitted / Struck Down</option>
+                          <option value="AMENDED">Amended</option>
+                          <option value="REPEALED">Repealed</option>
+                          <option value="NOT_YET_IN_FORCE">Not Yet In Force</option>
+                          <option value="PARTIALLY_IN_FORCE">Partially In Force</option>
+                          <option value="HISTORICAL">Historical</option>
+                          <option value="UNDER_REVIEW">Under Review</option>
+                        </select>
+                      </div>
+                      <div className="form-group">
+                        <label style={{ color: 'white' }}>Official Source reference</label>
+                        <select name="officialSourceId" className="form-control" value={formData.officialSourceId || ''} onChange={handleFormChange} style={{ backgroundColor: '#1e293b', color: 'white' }} required>
+                          <option value="">-- Select Source --</option>
+                          {getAvailableSources().map(src => (
+                            <option key={src._id || src.id} value={src._id || src.id}>
+                              {src.title} ({src.authority})
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    </>
+                  )}
+
+                  {lawFormTab === 'content' && (
+                    <>
+                      <div className="form-group">
+                        <label style={{ color: 'white' }}>Plain Language Explanation</label>
+                        <textarea name="plainLanguageExplanation" className="form-control" style={{ minHeight: '80px' }} value={formData.plainLanguageExplanation || ''} onChange={handleFormChange} required />
+                      </div>
+                      <div className="form-group">
+                        <label style={{ color: 'white' }}>Official statutory draft text</label>
+                        <textarea name="officialText" className="form-control" style={{ minHeight: '120px', fontFamily: 'monospace' }} value={formData.officialText || ''} onChange={handleFormChange} />
+                      </div>
+                      <div className="form-group">
+                        <label style={{ color: 'white' }}>Why It Matters to users</label>
+                        <textarea name="whyItMatters" className="form-control" value={formData.whyItMatters || ''} onChange={handleFormChange} required />
+                      </div>
+                      <div className="form-group">
+                        <label style={{ color: 'white' }}>Everyday Example scenario</label>
+                        <textarea name="exampleScenario" className="form-control" value={formData.exampleScenario || ''} onChange={handleFormChange} required />
+                      </div>
+                      <div className="form-group">
+                        <label style={{ color: 'white' }}>Statutory Penalty / legal effect</label>
+                        <input type="text" name="penaltyOrLegalEffect" className="form-control" value={formData.penaltyOrLegalEffect || ''} onChange={handleFormChange} />
+                      </div>
+                    </>
+                  )}
+
+                  {lawFormTab === 'metadata' && (
+                    <>
+                      <div className="form-group">
+                        <label style={{ color: 'white' }}>Commencement Status notes</label>
+                        <input type="text" name="commencementStatus" className="form-control" placeholder="e.g. Staggered commencement pending notification." value={formData.commencementStatus || ''} onChange={handleFormChange} />
+                      </div>
+                      <div className="form-group">
+                        <label style={{ color: 'white' }}>Amendment Status notes</label>
+                        <input type="text" name="amendmentStatus" className="form-control" placeholder="e.g. Struck down in Shreya Singhal (2015)." value={formData.amendmentStatus || ''} onChange={handleFormChange} />
+                      </div>
+                      <div className="form-group">
+                        <label style={{ color: 'white' }}>Search Keywords (comma separated list)</label>
+                        <input type="text" name="keywords" className="form-control" placeholder="e.g. privacy, leak, bank PIN" value={Array.isArray(formData.keywords) ? formData.keywords.join(', ') : formData.keywords || ''} onChange={handleFormChange} />
+                      </div>
+                    </>
+                  )}
+
+                  {lawFormTab === 'connections' && (
+                    <>
+                      <div className="form-group">
+                        <label style={{ color: 'white' }}>Related Cybercrimes (comma separated list)</label>
+                        <input type="text" name="relatedCyberCrimes" className="form-control" placeholder="e.g. identity-theft, phishing" value={Array.isArray(formData.relatedCyberCrimes) ? formData.relatedCyberCrimes.join(', ') : formData.relatedCyberCrimes || ''} onChange={handleFormChange} />
+                      </div>
+                      <div className="form-group">
+                        <label style={{ color: 'white' }}>Related Case Study Slugs (comma separated)</label>
+                        <input type="text" name="relatedCaseStudies" className="form-control" placeholder="e.g. digital-arrest-impersonation" value={Array.isArray(formData.relatedCaseStudies) ? formData.relatedCaseStudies.join(', ') : formData.relatedCaseStudies || ''} onChange={handleFormChange} />
+                      </div>
+                      <div className="form-group">
+                        <label style={{ color: 'white' }}>Related Module Slugs (comma separated)</label>
+                        <input type="text" name="relatedModules" className="form-control" value={Array.isArray(formData.relatedModules) ? formData.relatedModules.join(', ') : formData.relatedModules || ''} onChange={handleFormChange} />
+                      </div>
+                    </>
+                  )}
                 </>
               )}
 
               {activeTab === 'crimes' && (
                 <>
-                  <div className="form-group">
-                    <label>Category Name</label>
-                    <input type="text" name="category" className="form-control" value={formData.category || ''} onChange={handleFormChange} required />
+                  <div style={{ display: 'flex', gap: '8px', marginBottom: '20px', borderBottom: '1px solid #334155', paddingBottom: '10px' }}>
+                    {['overview', 'timeline', 'tactics', 'games'].map(tab => (
+                      <button
+                        key={tab}
+                        type="button"
+                        onClick={() => setCrimeFormTab(tab)}
+                        style={{
+                          backgroundColor: crimeFormTab === tab ? '#3b82f6' : '#1e293b',
+                          color: 'white',
+                          border: 'none',
+                          padding: '8px 16px',
+                          borderRadius: '4px',
+                          cursor: 'pointer',
+                          fontSize: '0.85rem',
+                          fontWeight: '600',
+                          textTransform: 'capitalize'
+                        }}
+                      >
+                        {tab}
+                      </button>
+                    ))}
                   </div>
-                  <div className="form-group">
-                    <label>Title</label>
-                    <input type="text" name="title" className="form-control" value={formData.title || ''} onChange={handleFormChange} required />
-                  </div>
-                  <div className="form-group">
-                    <label>What is it?</label>
-                    <textarea name="whatIsIt" className="form-control" value={formData.whatIsIt || ''} onChange={handleFormChange} required />
-                  </div>
-                  <div className="form-group">
-                    <label>How does it work?</label>
-                    <textarea name="howItWorks" className="form-control" value={formData.howItWorks || ''} onChange={handleFormChange} required />
-                  </div>
-                  <div className="form-group">
-                    <label>Warning Signs (one per line)</label>
-                    <textarea name="warningSigns" className="form-control" value={Array.isArray(formData.warningSigns) ? formData.warningSigns.join('\n') : formData.warningSigns || ''} onChange={handleFormChange} />
-                  </div>
-                  <div className="form-group">
-                    <label>What You Should Do (one per line)</label>
-                    <textarea name="actionSteps" className="form-control" value={Array.isArray(formData.actionSteps) ? formData.actionSteps.join('\n') : formData.actionSteps || ''} onChange={handleFormChange} />
-                  </div>
-                  <div className="form-group">
-                    <label>What You Should Avoid (one per line)</label>
-                    <textarea name="avoidSteps" className="form-control" value={Array.isArray(formData.avoidSteps) ? formData.avoidSteps.join('\n') : formData.avoidSteps || ''} onChange={handleFormChange} />
-                  </div>
-                  <div className="form-group">
-                    <label>Legal Context (comma separated sections)</label>
-                    <input type="text" name="legalContext" className="form-control" value={Array.isArray(formData.legalContext) ? formData.legalContext.join(', ') : formData.legalContext || ''} onChange={handleFormChange} />
-                  </div>
+
+                  {crimeFormTab === 'overview' && (
+                    <>
+                      <div className="form-group">
+                        <label style={{ color: 'white' }}>Title</label>
+                        <input type="text" name="title" className="form-control" value={formData.title || ''} onChange={handleFormChange} required />
+                      </div>
+                      <div className="form-group">
+                        <label style={{ color: 'white' }}>Slug (lowercase, hyphens instead of spaces)</label>
+                        <input type="text" name="slug" className="form-control" value={formData.slug || ''} onChange={handleFormChange} required />
+                      </div>
+                      <div className="form-group">
+                        <label style={{ color: 'white' }}>Category Name</label>
+                        <input type="text" name="category" className="form-control" value={formData.category || ''} onChange={handleFormChange} required />
+                      </div>
+                      <div className="form-group">
+                        <label style={{ color: 'white' }}>Short Description</label>
+                        <input type="text" name="shortDescription" className="form-control" value={formData.shortDescription || ''} onChange={handleFormChange} required />
+                      </div>
+                      <div className="form-group">
+                        <label style={{ color: 'white' }}>Risk Level</label>
+                        <select name="redFlagLevel" className="form-control" value={formData.redFlagLevel || 'High'} onChange={handleFormChange} style={{ backgroundColor: '#1e293b', color: 'white' }}>
+                          <option value="Low">Low</option>
+                          <option value="Moderate">Moderate</option>
+                          <option value="High">High</option>
+                          <option value="Very High">Very High</option>
+                        </select>
+                      </div>
+                      <div className="form-group">
+                        <label style={{ color: 'white' }}>What is it?</label>
+                        <textarea name="whatIsIt" className="form-control" value={formData.whatIsIt || ''} onChange={handleFormChange} required />
+                      </div>
+                      <div className="form-group">
+                        <label style={{ color: 'white' }}>How does it work?</label>
+                        <textarea name="howItWorks" className="form-control" value={formData.howItWorks || ''} onChange={handleFormChange} required />
+                      </div>
+                    </>
+                  )}
+
+                  {crimeFormTab === 'timeline' && (
+                    <>
+                      <div className="form-group">
+                        <label style={{ color: 'white' }}>Warning Signs (one per line)</label>
+                        <textarea name="warningSigns" className="form-control" value={Array.isArray(formData.warningSigns) ? formData.warningSigns.join('\n') : formData.warningSigns || ''} onChange={handleFormChange} />
+                      </div>
+                      <div className="form-group">
+                        <label style={{ color: 'white' }}>What You Should Do (one per line)</label>
+                        <textarea name="actionSteps" className="form-control" value={Array.isArray(formData.actionSteps) ? formData.actionSteps.join('\n') : formData.actionSteps || ''} onChange={handleFormChange} />
+                      </div>
+                      <div className="form-group">
+                        <label style={{ color: 'white' }}>What You Should Avoid (one per line)</label>
+                        <textarea name="avoidSteps" className="form-control" value={Array.isArray(formData.avoidSteps) ? formData.avoidSteps.join('\n') : formData.avoidSteps || ''} onChange={handleFormChange} />
+                      </div>
+                      <div className="form-group">
+                        <label style={{ color: 'white' }}>If Targeted Steps (one per line)</label>
+                        <textarea name="ifTargetedSteps" className="form-control" value={Array.isArray(formData.ifTargetedSteps) ? formData.ifTargetedSteps.join('\n') : formData.ifTargetedSteps || ''} onChange={handleFormChange} />
+                      </div>
+                    </>
+                  )}
+
+                  {crimeFormTab === 'tactics' && (
+                    <>
+                      <div className="form-group">
+                        <label style={{ color: 'white' }}>Attacker Objectives (comma-separated list)</label>
+                        <input type="text" name="attackerObjective" className="form-control" placeholder="Money, Credentials, Identity" value={Array.isArray(formData.attackerObjective) ? formData.attackerObjective.join(', ') : formData.attackerObjective || ''} onChange={handleFormChange} />
+                      </div>
+                      <div className="form-group">
+                        <label style={{ color: 'white' }}>Attack Vectors (comma-separated list)</label>
+                        <input type="text" name="attackVectors" className="form-control" placeholder="Email, SMS, Phone" value={Array.isArray(formData.attackVectors) ? formData.attackVectors.join(', ') : formData.attackVectors || ''} onChange={handleFormChange} />
+                      </div>
+                      <div className="form-group">
+                        <label style={{ color: 'white' }}>Legal Context (comma separated sections)</label>
+                        <input type="text" name="legalContext" className="form-control" value={Array.isArray(formData.legalContext) ? formData.legalContext.join(', ') : formData.legalContext || ''} onChange={handleFormChange} />
+                      </div>
+                      <div className="form-group">
+                        <label style={{ color: 'white' }}>Attack Lifecycle (JSON Format)</label>
+                        <textarea name="attackLifecycle" className="form-control" style={{ fontFamily: 'monospace', fontSize: '0.85rem' }} placeholder='[{"stepNumber":1,"label":"Contact","description":"..."}]' value={typeof formData.attackLifecycle === 'string' ? formData.attackLifecycle : JSON.stringify(formData.attackLifecycle, null, 2) || ''} onChange={handleFormChange} />
+                      </div>
+                      <div className="form-group">
+                        <label style={{ color: 'white' }}>Attacker Tactics (JSON Format)</label>
+                        <textarea name="attackerTactics" className="form-control" style={{ fontFamily: 'monospace', fontSize: '0.85rem' }} placeholder='[{"tactic":"Urgency","example":"...","whyItWorks":"..."}]' value={typeof formData.attackerTactics === 'string' ? formData.attackerTactics : JSON.stringify(formData.attackerTactics, null, 2) || ''} onChange={handleFormChange} />
+                      </div>
+                    </>
+                  )}
+
+                  {crimeFormTab === 'games' && (
+                    <>
+                      <div className="form-group">
+                        <label style={{ color: 'white' }}>Spot the Flags Game Config (JSON Format)</label>
+                        <textarea name="spotTheFlags" className="form-control" style={{ fontFamily: 'monospace', fontSize: '0.85rem' }} placeholder='{"messageType":"Email","messageText":"...","clickableFlags":[{"textSegment":"...","flagName":"...","explanation":"..."}]}' value={typeof formData.spotTheFlags === 'string' ? formData.spotTheFlags : JSON.stringify(formData.spotTheFlags, null, 2) || ''} onChange={handleFormChange} />
+                      </div>
+                      <div className="form-group">
+                        <label style={{ color: 'white' }}>What Would You Do Decision Game (JSON Format)</label>
+                        <textarea name="whatWouldYouDo" className="form-control" style={{ fontFamily: 'monospace', fontSize: '0.85rem' }} placeholder='{"questionText":"...","options":[{"optionText":"...","isCorrect":true,"explanation":"..."}]}' value={typeof formData.whatWouldYouDo === 'string' ? formData.whatWouldYouDo : JSON.stringify(formData.whatWouldYouDo, null, 2) || ''} onChange={handleFormChange} />
+                      </div>
+                      <div className="form-group">
+                        <label style={{ color: 'white' }}>Quick Check Questions (JSON Format)</label>
+                        <textarea name="quickCheckQuestions" className="form-control" style={{ fontFamily: 'monospace', fontSize: '0.85rem' }} placeholder='[{"questionText":"...","options":["..."],"correctOptionIndex":0,"explanation":"..."}]' value={typeof formData.quickCheckQuestions === 'string' ? formData.quickCheckQuestions : JSON.stringify(formData.quickCheckQuestions, null, 2) || ''} onChange={handleFormChange} />
+                      </div>
+                      <div className="form-group">
+                        <label style={{ color: 'white' }}>Myths & Facts (JSON Format)</label>
+                        <textarea name="mythFacts" className="form-control" style={{ fontFamily: 'monospace', fontSize: '0.85rem' }} placeholder='[{"myth":"...","fact":"..."}]' value={typeof formData.mythFacts === 'string' ? formData.mythFacts : JSON.stringify(formData.mythFacts, null, 2) || ''} onChange={handleFormChange} />
+                      </div>
+                    </>
+                  )}
                 </>
               )}
 
               {activeTab === 'cases' && (
                 <>
-                  <div className="form-group">
-                    <label>Title</label>
-                    <input type="text" name="title" className="form-control" value={formData.title || ''} onChange={handleFormChange} required />
+                  <div style={{ display: 'flex', gap: '8px', marginBottom: '20px', borderBottom: '1px solid #334155', paddingBottom: '10px' }}>
+                    {['overview', 'story', 'timeline', 'legal'].map(tab => (
+                      <button
+                        key={tab}
+                        type="button"
+                        onClick={() => setCaseFormTab(tab)}
+                        style={{
+                          backgroundColor: caseFormTab === tab ? '#3b82f6' : '#1e293b',
+                          color: 'white',
+                          border: 'none',
+                          padding: '8px 16px',
+                          borderRadius: '4px',
+                          cursor: 'pointer',
+                          fontSize: '0.85rem',
+                          fontWeight: '600',
+                          textTransform: 'capitalize'
+                        }}
+                      >
+                        {tab}
+                      </button>
+                    ))}
                   </div>
-                  <div className="form-group">
-                    <label>Attack/Incident Type</label>
-                    <input type="text" name="incidentType" className="form-control" value={formData.incidentType || ''} onChange={handleFormChange} required />
-                  </div>
-                  <div className="form-group">
-                    <label>Incident Details</label>
-                    <textarea name="incidentDescription" className="form-control" value={formData.incidentDescription || ''} onChange={handleFormChange} required />
-                  </div>
-                  <div className="form-group">
-                    <label>Victim Impact</label>
-                    <textarea name="victimImpact" className="form-control" value={formData.victimImpact || ''} onChange={handleFormChange} />
-                  </div>
-                  <div className="form-group">
-                    <label>Warning Signs (one per line)</label>
-                    <textarea name="warningSigns" className="form-control" value={Array.isArray(formData.warningSigns) ? formData.warningSigns.join('\n') : formData.warningSigns || ''} onChange={handleFormChange} />
-                  </div>
-                  <div className="form-group">
-                    <label>Prevention Tips (one per line)</label>
-                    <textarea name="preventionTips" className="form-control" value={Array.isArray(formData.preventionTips) ? formData.preventionTips.join('\n') : formData.preventionTips || ''} onChange={handleFormChange} />
-                  </div>
-                  <div className="form-group">
-                    <label>Lessons Learned</label>
-                    <input type="text" name="lessonsLearned" className="form-control" value={formData.lessonsLearned || ''} onChange={handleFormChange} />
-                  </div>
-                  <div className="form-group">
-                    <label>Legal Context (comma separated sections)</label>
-                    <input type="text" name="legalContext" className="form-control" value={Array.isArray(formData.legalContext) ? formData.legalContext.join(', ') : formData.legalContext || ''} onChange={handleFormChange} />
-                  </div>
+
+                  {caseFormTab === 'overview' && (
+                    <>
+                      <div className="form-group">
+                        <label style={{ color: 'white' }}>Title</label>
+                        <input type="text" name="title" className="form-control" value={formData.title || ''} onChange={handleFormChange} required />
+                      </div>
+                      <div className="form-group">
+                        <label style={{ color: 'white' }}>Slug (lowercase, hyphens instead of spaces)</label>
+                        <input type="text" name="slug" className="form-control" value={formData.slug || ''} onChange={handleFormChange} required />
+                      </div>
+                      <div className="form-group">
+                        <label style={{ color: 'white' }}>Case Reference ID</label>
+                        <input type="text" name="caseNumber" className="form-control" placeholder="e.g. CASE FILE 001" value={formData.caseNumber || ''} onChange={handleFormChange} required />
+                      </div>
+                      <div className="form-group">
+                        <label style={{ color: 'white' }}>Case Type</label>
+                        <select name="caseType" className="form-control" value={formData.caseType || 'documented-case'} onChange={handleFormChange} style={{ backgroundColor: '#1e293b', color: 'white' }}>
+                          <option value="documented-case">Documented Case</option>
+                          <option value="educational-reconstruction">Educational Reconstruction</option>
+                          <option value="anonymized-incident">Anonymized Incident</option>
+                          <option value="fictional-training-scenario">Fictional Training Scenario</option>
+                        </select>
+                      </div>
+                      <div className="form-group">
+                        <label style={{ color: 'white' }}>Incident Type (Category)</label>
+                        <input type="text" name="incidentType" className="form-control" placeholder="e.g. Phishing, Job Scams, Vishing" value={formData.incidentType || ''} onChange={handleFormChange} required />
+                      </div>
+                      <div className="form-group">
+                        <label style={{ color: 'white' }}>Attack Method</label>
+                        <input type="text" name="attackVector" className="form-control" placeholder="e.g. Email, WhatsApp, SMS, Phone" value={formData.attackVector || ''} onChange={handleFormChange} required />
+                      </div>
+                      <div className="form-group">
+                        <label style={{ color: 'white' }}>Difficulty (Ability to Spot)</label>
+                        <select name="difficulty" className="form-control" value={formData.difficulty || 'Beginner'} onChange={handleFormChange} style={{ backgroundColor: '#1e293b', color: 'white' }}>
+                          <option value="Beginner">Beginner</option>
+                          <option value="Intermediate">Intermediate</option>
+                          <option value="Advanced">Advanced</option>
+                        </select>
+                      </div>
+                      <div className="form-group">
+                        <label style={{ color: 'white' }}>Featured Editorial Case</label>
+                        <select name="featured" className="form-control" value={formData.featured ? 'true' : 'false'} onChange={(e) => handleFormChange({ target: { name: 'featured', value: e.target.value === 'true' } })} style={{ backgroundColor: '#1e293b', color: 'white' }}>
+                          <option value="false">No</option>
+                          <option value="true">Yes</option>
+                        </select>
+                      </div>
+                      <div className="form-group">
+                        <label style={{ color: 'white' }}>Short Teaser Description</label>
+                        <textarea name="shortDescription" className="form-control" value={formData.shortDescription || ''} onChange={handleFormChange} required />
+                      </div>
+                      <div className="form-group">
+                        <label style={{ color: 'white' }}>Source Summary</label>
+                        <input type="text" name="sourceSummary" className="form-control" placeholder="Brief review/ethics statement" value={formData.sourceSummary || ''} onChange={handleFormChange} />
+                      </div>
+                    </>
+                  )}
+
+                  {caseFormTab === 'story' && (
+                    <>
+                      <div className="form-group">
+                        <label style={{ color: 'white' }}>Narrative Sections (JSON Format)</label>
+                        <textarea name="narrativeSections" className="form-control" style={{ fontFamily: 'monospace', fontSize: '0.85rem' }} placeholder='[{"heading":"The Unexpected Contact","body":"..."}]' value={typeof formData.narrativeSections === 'string' ? formData.narrativeSections : JSON.stringify(formData.narrativeSections, null, 2) || ''} onChange={handleFormChange} required />
+                      </div>
+                      <div className="form-group">
+                        <label style={{ color: 'white' }}>Impact Categories (JSON Format)</label>
+                        <textarea name="impact" className="form-control" style={{ fontFamily: 'monospace', fontSize: '0.85rem' }} placeholder='{"financial":"...","account":"...","privacy":"...","operational":"..."}' value={typeof formData.impact === 'string' ? formData.impact : JSON.stringify(formData.impact, null, 2) || ''} onChange={handleFormChange} />
+                      </div>
+                      <div className="form-group">
+                        <label style={{ color: 'white' }}>Response Actions (one per line)</label>
+                        <textarea name="response" className="form-control" value={Array.isArray(formData.response) ? formData.response.join('\n') : formData.response || ''} onChange={handleFormChange} />
+                      </div>
+                    </>
+                  )}
+
+                  {caseFormTab === 'timeline' && (
+                    <>
+                      <div className="form-group">
+                        <label style={{ color: 'white' }}>Incident Timeline (JSON Format)</label>
+                        <textarea name="timeline" className="form-control" style={{ fontFamily: 'monospace', fontSize: '0.85rem' }} placeholder='[{"time":"10:00 AM","label":"Email Received","description":"...","type":"contact"}]' value={typeof formData.timeline === 'string' ? formData.timeline : JSON.stringify(formData.timeline, null, 2) || ''} onChange={handleFormChange} />
+                      </div>
+                      <div className="form-group">
+                        <label style={{ color: 'white' }}>Decision Point Widgets (JSON Format)</label>
+                        <textarea name="decisionPoints" className="form-control" style={{ fontFamily: 'monospace', fontSize: '0.85rem' }} placeholder='[{"questionText":"...","options":[{"optionText":"...","isCorrect":true,"explanation":"..."}]}]' value={typeof formData.decisionPoints === 'string' ? formData.decisionPoints : JSON.stringify(formData.decisionPoints, null, 2) || ''} onChange={handleFormChange} />
+                      </div>
+                      <div className="form-group">
+                        <label style={{ color: 'white' }}>Warning Signs Audit (JSON Format)</label>
+                        <textarea name="warningSigns" className="form-control" style={{ fontFamily: 'monospace', fontSize: '0.85rem' }} placeholder='[{"title":"...","explanation":"..."}]' value={typeof formData.warningSigns === 'string' ? formData.warningSigns : JSON.stringify(formData.warningSigns, null, 2) || ''} onChange={handleFormChange} />
+                      </div>
+                    </>
+                  )}
+
+                  {caseFormTab === 'legal' && (
+                    <>
+                      <div className="form-group">
+                        <label style={{ color: 'white' }}>Legal Context (comma separated sections)</label>
+                        <input type="text" name="legalContext" className="form-control" placeholder="e.g. Section 66D, Section 66C" value={Array.isArray(formData.legalContext) ? formData.legalContext.join(', ') : formData.legalContext || ''} onChange={handleFormChange} />
+                      </div>
+                      <div className="form-group">
+                        <label style={{ color: 'white' }}>Attacker Objectives (comma-separated list)</label>
+                        <input type="text" name="attackerObjectives" className="form-control" placeholder="e.g. Credentials, Money, Identity" value={Array.isArray(formData.attackerObjectives) ? formData.attackerObjectives.join(', ') : formData.attackerObjectives || ''} onChange={handleFormChange} />
+                      </div>
+                      <div className="form-group">
+                        <label style={{ color: 'white' }}>Related Crimes (comma separated slugs)</label>
+                        <input type="text" name="relatedCrimes" className="form-control" placeholder="e.g. phishing, vishing" value={Array.isArray(formData.relatedCrimes) ? formData.relatedCrimes.join(', ') : formData.relatedCrimes || ''} onChange={handleFormChange} />
+                      </div>
+                      <div className="form-group">
+                        <label style={{ color: 'white' }}>Related Modules (comma separated slugs)</label>
+                        <input type="text" name="relatedModules" className="form-control" value={Array.isArray(formData.relatedModules) ? formData.relatedModules.join(', ') : formData.relatedModules || ''} onChange={handleFormChange} />
+                      </div>
+                      <div className="form-group">
+                        <label style={{ color: 'white' }}>Prevention Lessons (one per line)</label>
+                        <textarea name="preventionLessons" className="form-control" value={Array.isArray(formData.preventionLessons) ? formData.preventionLessons.join('\n') : formData.preventionLessons || ''} onChange={handleFormChange} />
+                      </div>
+                      <div className="form-group">
+                        <label style={{ color: 'white' }}>Official Sources (JSON Format)</label>
+                        <textarea name="sources" className="form-control" style={{ fontFamily: 'monospace', fontSize: '0.85rem' }} placeholder='[{"title":"...","authority":"...","url":"...","sourceType":"official"}]' value={typeof formData.sources === 'string' ? formData.sources : JSON.stringify(formData.sources, null, 2) || ''} onChange={handleFormChange} />
+                      </div>
+                    </>
+                  )}
                 </>
               )}
 

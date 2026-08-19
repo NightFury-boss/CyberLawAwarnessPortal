@@ -34,9 +34,13 @@ exports.searchLaws = async (req, res) => {
     const filtered = await LawSection.find({
       $or: [
         { sectionNumber: regex },
-        { title: regex },
+        { officialTitle: regex },
         { plainLanguageExplanation: regex },
-        { whyItMatters: regex }
+        { whyItMatters: regex },
+        { actName: regex },
+        { role: regex },
+        { keywords: regex },
+        { relatedCyberCrimes: regex }
       ]
     }).populate('officialSourceId');
 
