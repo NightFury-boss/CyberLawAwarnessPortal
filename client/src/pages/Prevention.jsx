@@ -2,7 +2,7 @@ import React from 'react';
 
 function Prevention() {
   return (
-    <div className="container" style={{ padding: 'var(--space-xl) 0', maxWidth: '800px' }}>
+    <div className="container page-entry" style={{ padding: 'var(--space-xl) 0', maxWidth: '800px' }}>
       <h1 style={{ fontSize: '2.5rem', marginBottom: 'var(--space-md)' }}>
         Prevention & Digital Hygiene Centre
       </h1>

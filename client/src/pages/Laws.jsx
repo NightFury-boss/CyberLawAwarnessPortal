@@ -256,7 +256,7 @@ function Laws() {
   });
 
   return (
-    <div className="container" style={{ padding: 'var(--space-xl) 0', fontFamily: 'var(--font-sans)', color: 'var(--text-primary)' }}>
+    <div className="container page-entry" style={{ padding: 'var(--space-xl) 0', fontFamily: 'var(--font-sans)', color: 'var(--text-primary)' }}>
       
       {/* Hero Branding Header */}
       <div style={{ marginBottom: 'var(--space-2xl)' }}>

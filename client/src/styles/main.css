@@ -1198,6 +1198,13 @@ button:active,
   transform: scale(1.05);
 }
 
+/* SVG stroke color/dash transition overrides */
+svg line,
+svg path,
+svg circle {
+  transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
 /* ==================================================
    ADDITIONAL SELECTORS FOR MAPPED COMPONENT INTERACTIONS
    ================================================== */

@@ -46,15 +46,15 @@ function Dashboard({ user, progressTrigger }) {
     { name: 'Cyber Guardian', description: 'Achieve score >= 90% in assessments' }
   ];
 
-  if (loading) return <div className="container" style={{ padding: 'var(--space-xl) 0' }}><p>Loading your dashboard...</p></div>;
-  if (error) return <div className="container" style={{ padding: 'var(--space-xl) 0' }}><div className="alert alert-error">{error}</div></div>;
+  if (loading) return <div className="container page-entry" style={{ padding: 'var(--space-xl) 0' }}><p>Loading your dashboard...</p></div>;
+  if (error) return <div className="container page-entry" style={{ padding: 'var(--space-xl) 0' }}><div className="alert alert-error">{error}</div></div>;
   if (!progress) return null;
 
   const hasBaseline = progress.baselineScore !== null;
   const hasFinal = progress.finalScore !== null;
 
   return (
-    <div className="container" style={{ padding: 'var(--space-xl) 0' }}>
+    <div className="container page-entry" style={{ padding: 'var(--space-xl) 0' }}>
       {/* Header and Welcome */}
       <div style={{
         display: 'flex',

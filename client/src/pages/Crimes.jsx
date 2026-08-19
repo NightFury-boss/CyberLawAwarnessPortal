@@ -211,7 +211,7 @@ function Crimes() {
   };
 
   return (
-    <div className="container" style={{ padding: 'var(--space-xl) 0', fontFamily: 'var(--font-sans)' }}>
+    <div className="container page-entry" style={{ padding: 'var(--space-xl) 0', fontFamily: 'var(--font-sans)' }}>
       {error && <div className="alert alert-error">{error}</div>}
 
       {/* LOADING STATE */}

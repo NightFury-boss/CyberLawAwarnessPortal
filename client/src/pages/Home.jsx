@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 
 function Home({ user }) {
   return (
-    <div>
+    <div className="page-entry">
       {/* Hero Section */}
       <section className="hero">
         <div className="container">
@@ -76,22 +76,22 @@ function Home({ user }) {
                 Featured Awareness Content
               </h2>
               
-              <div className="editorial-card">
+              <div className="editorial-card interactive motion-arrow-trigger">
                 <span className="tag">Cybercrime Focus</span>
                 <h3>Phishing & Mock Portals</h3>
                 <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem', marginBottom: 'var(--space-md)' }}>
                   Attackers weaponize fear and urgency to bypass password safety. Learn how spoofed domain URLs are designed and how to spot them before clicking.
                 </p>
-                <Link to="/crimes" style={{ fontWeight: '500' }}>Read Category Details &rarr;</Link>
+                <Link to="/crimes" className="interactive-link">Read Category Details <span className="motion-arrow">&rarr;</span></Link>
               </div>
 
-              <div className="editorial-card">
+              <div className="editorial-card interactive motion-arrow-trigger">
                 <span className="tag">Case Study</span>
                 <h3>The UPI 'Scan to Receive' Escrow Scam</h3>
                 <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem', marginBottom: 'var(--space-md)' }}>
                   Scammers on classified marketplaces send QR codes claiming they will transfer cash to you once scanned. Read our detailed breakdown of how UPI PIN authorization works.
                 </p>
-                <Link to="/cases" style={{ fontWeight: '500' }}>Read Timeline Analysis &rarr;</Link>
+                <Link to="/cases" className="interactive-link">Read Timeline Analysis <span className="motion-arrow">&rarr;</span></Link>
               </div>
             </div>
 

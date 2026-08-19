@@ -23,7 +23,7 @@ function Resources() {
   };
 
   return (
-    <div className="container" style={{ padding: 'var(--space-xl) 0', maxWidth: '900px' }}>
+    <div className="container page-entry" style={{ padding: 'var(--space-xl) 0', maxWidth: '900px' }}>
       <h1 style={{ fontSize: '2.5rem', marginBottom: 'var(--space-md)' }}>
         Official Legal Resources
       </h1>

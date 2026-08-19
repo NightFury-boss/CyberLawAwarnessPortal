@@ -812,7 +812,7 @@ function Cases() {
                           }
 
                           return (
-                            <div key={idx} style={{ display: 'flex', gap: '20px', position: 'relative' }}>
+                            <div key={idx} className="timeline-step" style={{ display: 'flex', gap: '20px', position: 'relative' }}>
                               {/* Line connector */}
                               {idx < selectedCase.timeline.length - 1 && (
                                 <div style={{

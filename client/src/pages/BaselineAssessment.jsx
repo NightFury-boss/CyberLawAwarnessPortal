@@ -76,11 +76,11 @@ function BaselineAssessment({ user, updateProgressTrigger }) {
   };
 
   return (
-    <div className="container" style={{ padding: 'var(--space-xl) 0' }}>
+    <div className="container page-entry" style={{ padding: 'var(--space-xl) 0' }}>
       {/* Start Screen */}
       {currentStep === 'start_screen' && (
         <div style={{ maxWidth: '600px', margin: '40px auto', textAlign: 'center' }}>
-          <span style={{ fontSize: '3rem' }}>⚖️</span>
+          
           <h1 style={{ fontSize: '2.5rem', fontFamily: 'var(--font-serif)', marginTop: '10px', marginBottom: 'var(--space-md)' }}>
             Cyber Awareness Baseline
           </h1>

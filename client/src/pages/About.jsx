@@ -4,6 +4,51 @@ import { Link } from 'react-router-dom';
 function About() {
   const [activeStep, setActiveStep] = useState(0);
   const [activeSection, setActiveSection] = useState('overview');
+  const [isMounted, setIsMounted] = useState(false);
+  const [scoreAnimate, setScoreAnimate] = useState(false);
+  const [baselineVal, setBaselineVal] = useState(0);
+  const [finalVal, setFinalVal] = useState(0);
+
+  useEffect(() => {
+    setIsMounted(true);
+    const t = setTimeout(() => {
+      setScoreAnimate(true);
+    }, 400);
+    return () => clearTimeout(t);
+  }, []);
+
+  useEffect(() => {
+    if (scoreAnimate) {
+      let bStart = 0;
+      const bEnd = 48;
+      const bTimer = setInterval(() => {
+        bStart += 2;
+        if (bStart >= bEnd) {
+          setBaselineVal(bEnd);
+          clearInterval(bTimer);
+        } else {
+          setBaselineVal(bStart);
+        }
+      }, 20);
+
+      let fStart = 0;
+      const fEnd = 87;
+      const fTimer = setInterval(() => {
+        fStart += 3;
+        if (fStart >= fEnd) {
+          setFinalVal(fEnd);
+          clearInterval(fTimer);
+        } else {
+          setFinalVal(fStart);
+        }
+      }, 20);
+
+      return () => {
+        clearInterval(bTimer);
+        clearInterval(fTimer);
+      };
+    }
+  }, [scoreAnimate]);
 
   const sections = [
     { id: 'overview', name: 'Overview' },
@@ -74,7 +119,7 @@ function About() {
   };
 
   return (
-    <div style={{ backgroundColor: 'var(--bg-primary)', color: 'var(--text-primary)', fontFamily: 'var(--font-sans)', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+    <div className="page-entry" style={{ backgroundColor: 'var(--bg-primary)', color: 'var(--text-primary)', fontFamily: 'var(--font-sans)', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
       
       {/* SECTION NAVIGATOR BAR */}
       <nav style={{
@@ -142,7 +187,7 @@ function About() {
           <div style={{ display: 'flex', justifyContent: 'center' }}>
             <svg width="240" height="200" viewBox="0 0 240 200">
               <path d="M 40 40 L 120 70 L 120 130 L 200 160" fill="none" stroke="var(--color-border)" strokeWidth="1.5" strokeDasharray="4 3" />
-              <path d="M 40 40 L 120 70 L 120 130 L 200 160" fill="none" stroke="var(--accent-navy)" strokeWidth="1.5" strokeDasharray="120" strokeDashoffset="0" />
+              <path className="motion-draw" d="M 40 40 L 120 70 L 120 130 L 200 160" fill="none" stroke="var(--accent-navy)" strokeWidth="1.5" style={{ strokeDasharray: 300, strokeDashoffset: 300 }} />
               
               <circle cx="40" cy="40" r="5" fill="var(--accent-navy)" />
               <text x="50" y="44" fontSize="0.7rem" fontWeight="bold" fill="var(--text-secondary)">LAW</text>
@@ -208,16 +253,20 @@ function About() {
             gap: '12px'
           }}>
             {/* Desktop continuous path line */}
-            <div style={{
-              position: 'absolute',
-              top: '18px',
-              left: '40px',
-              right: '40px',
-              height: '2px',
-              backgroundColor: 'var(--color-border)',
-              zIndex: 1,
-              display: 'block'
-            }} />
+            <div 
+              className="motion-progress"
+              style={{
+                position: 'absolute',
+                top: '18px',
+                left: '40px',
+                zIndex: 1,
+                display: 'block',
+                height: '2px',
+                backgroundColor: 'var(--accent-navy)',
+                width: isMounted ? 'calc(100% - 80px)' : '0%',
+                transition: 'width 1.2s cubic-bezier(0.16, 1, 0.3, 1)'
+              }} 
+            />
 
             {loopSteps.map((step, idx) => {
               const isActive = activeStep === idx;
@@ -393,20 +442,20 @@ function About() {
               <div style={{ marginBottom: '16px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', fontWeight: '600', marginBottom: '4px' }}>
                   <span>Baseline Assessment</span>
-                  <span>48 / 100</span>
+                  <span>{baselineVal} / 100</span>
                 </div>
-                <div style={{ width: '100%', height: '6px', backgroundColor: 'var(--bg-secondary)', borderRadius: '3px' }}>
-                  <div style={{ width: '48%', height: '100%', backgroundColor: 'var(--color-error)', borderRadius: '3px' }} />
+                <div style={{ width: '100%', height: '6px', backgroundColor: 'var(--bg-secondary)', borderRadius: '3px', overflow: 'hidden' }}>
+                  <div style={{ width: scoreAnimate ? '48%' : '0%', height: '100%', backgroundColor: 'var(--color-error)', borderRadius: '3px', transition: 'width 1.2s cubic-bezier(0.16, 1, 0.3, 1)' }} />
                 </div>
               </div>
 
               <div style={{ marginBottom: '16px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', fontWeight: '600', marginBottom: '4px' }}>
                   <span>Final Post-Learning</span>
-                  <span>87 / 100</span>
+                  <span>{finalVal} / 100</span>
                 </div>
-                <div style={{ width: '100%', height: '6px', backgroundColor: 'var(--bg-secondary)', borderRadius: '3px' }}>
-                  <div style={{ width: '87%', height: '100%', backgroundColor: 'var(--color-success)', borderRadius: '3px' }} />
+                <div style={{ width: '100%', height: '6px', backgroundColor: 'var(--bg-secondary)', borderRadius: '3px', overflow: 'hidden' }}>
+                  <div style={{ width: scoreAnimate ? '87%' : '0%', height: '100%', backgroundColor: 'var(--color-success)', borderRadius: '3px', transition: 'width 1.2s cubic-bezier(0.16, 1, 0.3, 1)' }} />
                 </div>
               </div>
 
