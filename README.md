@@ -6,7 +6,7 @@ Rather than presenting laws purely as static text, this portal implements a secu
 
 ---
 
-## 🚀 Technical Architecture
+##  Technical Architecture
 
 The application is built using the standard MERN stack with strict security isolation:
 
@@ -57,7 +57,7 @@ This drops existing collections and seeds standard development accounts:
 
 ---
 
-## 🏃 Running the Application
+## Running the Application
 
 Start both development servers concurrently:
 ```bash
@@ -69,7 +69,7 @@ Once booted:
 
 ---
 
-## 🧪 Verification & Automated Testing
+## Verification & Automated Testing
 
 Verify the application's integrity, authentication middleware, security isolation, and scoring delta by running the automated test suite:
 ```bash
@@ -84,7 +84,7 @@ This runs [api.test.js](file:///C:/Users/Asus/.gemini/antigravity-ide/scratch/cy
 
 ---
 
-## 📂 Project Organization
+## Project Organization
 
 ```
 cyber-law-portal/
@@ -112,7 +112,7 @@ cyber-law-portal/
 
 ---
 
-## 🎓 Viva Demonstration Walkthrough
+##  Viva Demonstration Walkthrough
 
 Use this sequence to demonstrate the portal features during evaluations:
 
@@ -130,6 +130,6 @@ Use this sequence to demonstrate the portal features during evaluations:
 
 ---
 
-## ⚖️ Legal Disclaimer & Safety
+##  Legal Disclaimer & Safety
 * **Sensitive Inputs:** Simulated passwords, PINs, or OTPs typed during assessments are discarded instantly and **never** written to database files.
 * **Educational Purpose Only:** This platform is an educational resource. Information provided does not constitute formal legal counsel. For official legal status, reference government legislative publications.
