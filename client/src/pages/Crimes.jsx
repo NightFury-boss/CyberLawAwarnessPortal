@@ -595,7 +595,7 @@ function Crimes() {
                     </div>
 
                     <div style={{ marginTop: 'var(--space-md)', paddingTop: 'var(--space-sm)', borderTop: '1px solid var(--color-border-light)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-                      <span>Vectors: <strong>{crime.attackVectors?.join(', ') || 'Online'}</strong></span>
+                      <span>Methods: <strong>{crime.attackVectors?.join(', ') || 'Online'}</strong></span>
                       <span style={{ color: 'var(--accent-navy)', fontWeight: '600' }}>Examine Profile &rarr;</span>
                     </div>
                   </div>
@@ -697,7 +697,7 @@ function Crimes() {
               {getRedFlagMeter(selectedCrime.redFlagLevel || 'High')}
 
               <h4 style={{ fontSize: '0.8rem', textTransform: 'uppercase', color: 'var(--text-muted)', margin: '16px 0 8px 0', fontWeight: '600' }}>
-                Primary Vectors
+                Primary Methods
               </h4>
               <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
                 {selectedCrime.attackVectors?.map((vec) => (
