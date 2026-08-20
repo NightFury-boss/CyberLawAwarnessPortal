@@ -24,35 +24,66 @@ function Navbar({ user, setUser, sidebarOpen, setSidebarOpen }) {
     if (path === '/dashboard') return 'User Progress Dashboard';
     if (path === '/quizzes') return 'Interactive Quiz Center';
     if (path.startsWith('/assessment/')) return 'Cyber Awareness Assessment';
-    return 'Cyber Awareness System';
+    return 'Cyber Law Awareness Portal';
   };
+
+  const isAuthPath = location.pathname === '/login' || location.pathname === '/register';
 
   return (
     <header className="top-header">
       <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-md)' }}>
-        <button 
-          onClick={() => setSidebarOpen(prev => !prev)} 
-          className="sidebar-toggle"
-          title="Toggle Navigation Menu"
-          style={{ marginRight: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'none', border: 'none', cursor: 'pointer', padding: '4px', color: 'var(--accent-navy)' }}
-        >
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
-        </button>
-        <Link to="/" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none' }} aria-label="Cyber Law Awareness Portal — Home">
-          <img 
-            src="/logo/cyber-law-logo-icon.svg" 
-            alt="Cyber Law" 
-            style={{ height: '28px', width: 'auto' }} 
-            className="navbar-brand-icon"
-          />
-        </Link>
-        <span className="header-title" style={{ fontWeight: '600', fontSize: '1.1rem', color: 'var(--accent-navy)', marginLeft: '4px' }}>
-          {getPageTitle()}
-        </span>
+        {/* Hide hamburger toggle on auth pages */}
+        {!isAuthPath && (
+          <button 
+            onClick={() => setSidebarOpen(prev => !prev)} 
+            className="sidebar-toggle"
+            title="Toggle Navigation Menu"
+            aria-label={sidebarOpen ? "Close navigation" : "Open navigation"}
+            aria-expanded={sidebarOpen}
+            aria-controls="main-sidebar"
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="3" y1="12" x2="21" y2="12"></line>
+              <line x1="3" y1="6" x2="21" y2="6"></line>
+              <line x1="3" y1="18" x2="21" y2="18"></line>
+            </svg>
+          </button>
+        )}
+        
+        {isAuthPath ? (
+          <Link to="/" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none' }} aria-label="Cyber Law Awareness Portal Home">
+            <img 
+              src="/logo/cyber-law-logo-horizontal.svg" 
+              alt="Cyber Law Awareness Portal" 
+              style={{ height: '36px', width: 'auto' }} 
+            />
+          </Link>
+        ) : (
+          <>
+            <Link to="/" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none' }} aria-label="Cyber Law Awareness Portal Home">
+              <img 
+                src="/logo/cyber-law-logo-icon.svg" 
+                alt="Cyber Law" 
+                style={{ height: '28px', width: 'auto' }} 
+                className="navbar-brand-icon"
+              />
+            </Link>
+            <span className="header-title" style={{ fontWeight: '600', fontSize: '1.1rem', color: 'var(--accent-navy)', marginLeft: '4px' }}>
+              {getPageTitle()}
+            </span>
+          </>
+        )}
       </div>
 
       <div className="auth-links" style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-md)' }}>
-        {user ? (
+        {isAuthPath ? (
+          <Link 
+            to="/" 
+            style={{ fontSize: '0.9rem', color: 'var(--accent-navy)', fontWeight: '600', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '4px' }}
+          >
+            &larr; Back to Portal
+          </Link>
+        ) : user ? (
           <>
             <span className="text-muted" style={{ fontSize: '0.85rem', marginRight: '4px' }}>
               Welcome, <strong>{user.fullName}</strong>
