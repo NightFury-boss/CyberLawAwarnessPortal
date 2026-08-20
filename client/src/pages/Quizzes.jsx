@@ -113,6 +113,12 @@ function Quizzes({ user, updateProgressTrigger }) {
       <p className="text-muted" style={{ marginBottom: 'var(--space-xl)' }}>
         Test your knowledge of digital threats, cyber hygiene, and legal provisions under the IT Act, 2000.
       </p>
+      <div style={{ marginBottom: 'var(--space-lg)', borderLeft: '3px solid var(--accent-navy)', paddingLeft: '16px' }}>
+        <p style={{ fontSize: '0.95rem', color: 'var(--accent-navy)', fontStyle: 'italic', margin: 0 }}>
+          "Knowing an answer is useful. Knowing why it matters is better."
+        </p>
+      </div>
+      <p style={{ display: 'none' /* placeholder to preserve indices */ }} />
 
       {/* Main Container */}
       {!activeQuiz ? (
@@ -156,7 +162,12 @@ function Quizzes({ user, updateProgressTrigger }) {
 
           {quizSubmitted && (
             <div className="alert alert-success" style={{ marginBottom: 'var(--space-lg)' }}>
-              <strong>Quiz Evaluation Complete!</strong> You scored <strong>{scorePercent}%</strong>.<br />
+              <div style={{ marginBottom: 'var(--space-md)', borderLeft: '3px solid var(--accent-navy)', paddingLeft: '16px' }}>
+              <p style={{ fontSize: '0.95rem', color: 'var(--accent-navy)', fontStyle: 'italic', margin: 0 }}>
+                "Use what you learned. Notice what you missed."
+              </p>
+            </div>
+            <strong>Quiz Evaluation Complete!</strong> You scored <strong>{scorePercent}%</strong>.<br />
               {submitMessage}
             </div>
           )}

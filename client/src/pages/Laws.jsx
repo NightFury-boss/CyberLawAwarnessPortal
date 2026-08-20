@@ -820,7 +820,7 @@ function Laws() {
           INDIAN DIGITAL LAW INDEX
         </h1>
         <p style={{ fontSize: '1.25rem', color: 'var(--text-secondary)', margin: '0 0 16px 0', fontFamily: 'var(--font-sans)', fontStyle: 'normal', fontWeight: '400' }}>
-          "Access and interpret India's cyber legal code in plain English."
+          "Understanding the provision is the first step. Understanding where it matters is the next."
         </p>
         <p style={{ maxWidth: '850px', color: 'var(--text-secondary)', lineHeight: '1.7', fontSize: '1rem', margin: 0 }}>
           Explore India's IT governance, data privacy statutes, and judicial interpretations. Connect statutory clauses to real-world incidents, toggle legal drafts, and bookmark provisions.

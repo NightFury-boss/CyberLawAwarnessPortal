@@ -116,8 +116,12 @@ function Home({ user }) {
                 Explore Cyber Laws
               </Link>
             </div>
-            <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '24px' }}>
-              * Learn the rules. Recognize the pattern. Pause before you act.
+                        <div style={{ borderTop: '2px solid var(--accent-navy)', width: '60px', marginTop: '24px', marginBottom: '12px' }} />
+            <span style={{ fontSize: '0.85rem', fontWeight: 'bold', color: 'var(--accent-navy)', textTransform: 'uppercase', display: 'block', letterSpacing: '0.5px' }}>
+              KNOWING THE LAW IS ONLY THE BEGINNING.
+            </span>
+            <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', margin: '4px 0 0 0' }}>
+              "Awareness matters when knowledge changes how we recognize and respond."
             </p>
           </div>
 
@@ -268,7 +272,7 @@ function Home({ user }) {
                 <line x1="16" y1="17" x2="8" y2="17" />
               </svg>
               <strong style={{ display: 'block', color: 'var(--accent-navy)' }}>CYBER LAWS</strong>
-              <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Understand the legal framework</span>
+              <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Understand the framework.</span>
             </Link>
 
             <Link to="/crimes" className="editorial-card interactive" style={{ padding: '20px', textDecoration: 'none', borderTop: ecoAnimate ? '4px solid #ef4444' : '4px solid var(--color-border)', transition: 'all 0.5s ease 0.3s', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
@@ -278,7 +282,7 @@ function Home({ user }) {
                 <line x1="8" y1="11" x2="14" y2="11" />
               </svg>
               <strong style={{ display: 'block', color: 'var(--accent-navy)' }}>CRIMES LIBRARY</strong>
-              <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Recognize common digital threats</span>
+              <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Recognize the pattern.</span>
             </Link>
 
             <Link to="/cases" className="editorial-card interactive" style={{ padding: '20px', textDecoration: 'none', borderTop: ecoAnimate ? '4px solid #f59e0b' : '4px solid var(--color-border)', transition: 'all 0.5s ease 0.5s', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
@@ -289,7 +293,7 @@ function Home({ user }) {
                 <line x1="3" y1="10" x2="21" y2="10" />
               </svg>
               <strong style={{ display: 'block', color: 'var(--accent-navy)' }}>CASE STUDIES</strong>
-              <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>See how incidents unfold</span>
+              <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>See what happened.</span>
             </Link>
 
             <Link to="/prevention" className="editorial-card interactive" style={{ padding: '20px', textDecoration: 'none', borderTop: ecoAnimate ? '4px solid #3b82f6' : '4px solid var(--color-border)', transition: 'all 0.5s ease 0.7s', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
@@ -298,7 +302,7 @@ function Home({ user }) {
                 <polyline points="9 11 11 13 15 9" />
               </svg>
               <strong style={{ display: 'block', color: 'var(--accent-navy)' }}>PREVENTION</strong>
-              <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Learn practical responses</span>
+              <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Know how to respond.</span>
             </Link>
 
             <Link to="/dashboard" className="editorial-card interactive" style={{ padding: '20px', textDecoration: 'none', borderTop: ecoAnimate ? '4px solid #10b981' : '4px solid var(--color-border)', transition: 'all 0.5s ease 0.9s', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
@@ -308,7 +312,7 @@ function Home({ user }) {
                 <line x1="6" y1="20" x2="6" y2="14" />
               </svg>
               <strong style={{ display: 'block', color: 'var(--accent-navy)' }}>ASSESSMENT</strong>
-              <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Test decisions & measure gains</span>
+              <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Put that knowledge into practice.</span>
             </Link>
 
           </div>

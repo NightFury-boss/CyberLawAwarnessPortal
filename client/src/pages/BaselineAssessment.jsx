@@ -92,6 +92,12 @@ function BaselineAssessment({ user, updateProgressTrigger }) {
           <p className="text-muted" style={{ fontSize: '1.05rem', marginBottom: 'var(--space-xl)' }}>
             This short interactive experience helps establish your current cyber-awareness habits. You will navigate a realistic scenario, and receive a personalized learning report afterward.
           </p>
+          <div style={{ marginBottom: 'var(--space-xl)', borderLeft: '3px solid var(--accent-navy)', paddingLeft: '16px', display: 'inline-block', textAlign: 'left' }}>
+            <p style={{ fontSize: '0.95rem', color: 'var(--accent-navy)', fontStyle: 'italic', margin: 0 }}>
+              "Knowing the rules is useful. The assessment looks at what you do when the situation feels real."
+            </p>
+          </div>
+          <p style={{ display: 'none' }} />
           {error && <div className="alert alert-error" style={{ marginBottom: 'var(--space-md)' }}>{error}</div>}
           <button 
             onClick={handleStart} 
@@ -294,6 +300,11 @@ function BaselineAssessment({ user, updateProgressTrigger }) {
       {currentStep === 'reveal_view' && result && (
         <div className="reveal-pane" style={{ border: '2px solid var(--accent-navy)' }}>
           <h3>This was a Cyber Awareness Simulation.</h3>
+          <div style={{ marginBottom: 'var(--space-md)', borderLeft: '3px solid var(--accent-navy)', paddingLeft: '16px' }}>
+            <p style={{ fontSize: '0.95rem', color: 'var(--accent-navy)', fontStyle: 'italic', margin: 0 }}>
+              "Now you know where your awareness begins."
+            </p>
+          </div>
           
           <p style={{ fontSize: '1.1rem', marginBottom: 'var(--space-lg)' }}>
             {result.score >= 70 ? (
@@ -376,6 +387,14 @@ function BaselineAssessment({ user, updateProgressTrigger }) {
             </div>
           </div>
 
+          <div style={{ textAlign: 'center', margin: 'var(--space-lg) 0', paddingTop: '16px', borderTop: '1px dashed var(--color-border)' }}>
+            <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', fontStyle: 'italic', margin: '0 0 4px 0' }}>
+              "Improvement is not about knowing every answer. It is about recognizing better decisions when they matter."
+            </p>
+            <span style={{ fontSize: '0.85rem', fontWeight: 'bold', color: 'var(--accent-navy)', letterSpacing: '0.5px' }}>
+              Learn. Recognize. Stay Safe.
+            </span>
+          </div>
           <div style={{ textAlign: 'center', marginTop: 'var(--space-xl)' }}>
             <button 
               onClick={() => navigate('/dashboard')} 

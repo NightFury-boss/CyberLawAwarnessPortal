@@ -245,6 +245,14 @@ function About() {
               This project bridges the gap between digital law and risk decisions. By linking legislative provisions directly to threat profiles, incident case timelines, and prevention checklists, the portal empowers users to understand not just what the law states, but how to protect themselves online.
             </p>
           </div>
+
+          {/* THE IDEA BEHIND THE PROJECT */}
+          <div style={{ marginTop: '32px', padding: '24px', backgroundColor: 'var(--accent-navy-light)', borderLeft: '4px solid var(--accent-navy)', borderRadius: 'var(--radius-sm)' }}>
+            <h3 style={{ fontSize: '0.8rem', textTransform: 'uppercase', color: 'var(--accent-navy)', fontWeight: '800', letterSpacing: '1px', margin: '0 0 8px 0' }}>The Idea Behind the Project</h3>
+            <h4 style={{ fontSize: '1.25rem', color: 'var(--accent-navy)', fontWeight: 'bold', margin: '0 0 12px 0' }}>"Knowing the law is only the beginning."</h4>
+            <p style={{ fontSize: '0.95rem', color: 'var(--text-secondary)', lineHeight: '1.6', margin: 0 }}>A useful understanding of cyber law goes beyond remembering provisions. It means recognizing warning signs, understanding how incidents unfold, knowing what practical steps to take, and making better decisions when situations become difficult.</p>
+          </div>
+
           <div style={{ marginTop: '24px' }}>
             <Link to="/crimes" style={{ color: 'var(--accent-navy)', fontWeight: 'bold', textDecoration: 'underline', fontSize: '0.9rem' }}>
               Explore Cyber Crimes Registry &rarr;
@@ -661,13 +669,10 @@ function About() {
       <section style={{ padding: '60px 0 80px 0', marginTop: 'auto' }}>
         <div className="container" style={{ maxWidth: '650px', textAlign: 'center' }}>
           <h3 style={{ fontSize: '1.3rem', color: 'var(--accent-navy)', fontWeight: 'bold', marginBottom: '12px' }}>
-            The Project Narrative
+            Knowing the law is only the beginning.
           </h3>
-          <p style={{ fontSize: '1.05rem', color: 'var(--text-secondary)', fontStyle: 'italic', marginBottom: '16px', lineHeight: '1.6' }}>
-            "Knowledge becomes more useful when it changes what we recognize and how we respond."
-          </p>
-          <div style={{ fontWeight: 'bold', color: 'var(--accent-navy)', fontSize: '0.95rem', marginBottom: '24px' }}>
-            Learn the law. Recognize the pattern. Pause before you act.
+          <div style={{ fontWeight: 'bold', color: 'var(--accent-navy)', fontSize: '1.1rem', marginBottom: '24px', letterSpacing: '0.5px' }}>
+            Learn. Recognize. Stay Safe.
           </div>
           
           <div style={{

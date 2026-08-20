@@ -84,6 +84,12 @@ function FinalAssessment({ user, updateProgressTrigger }) {
           <p className="text-muted" style={{ fontSize: '1.05rem', marginBottom: 'var(--space-xl)' }}>
             Welcome to **"A Day in Your Digital Life"**. You will navigate multiple sequential situations (some legitimate system processes, others malicious threat indicators). Make choices to verify your judgment.
           </p>
+          <div style={{ marginBottom: 'var(--space-xl)', borderLeft: '3px solid var(--accent-navy)', paddingLeft: '16px', display: 'inline-block', textAlign: 'left' }}>
+            <p style={{ fontSize: '0.95rem', color: 'var(--accent-navy)', fontStyle: 'italic', margin: 0 }}>
+              "What changed between knowing and recognizing?"
+            </p>
+          </div>
+          <p style={{ display: 'none' }} />
           {error && <div className="alert alert-error" style={{ marginBottom: 'var(--space-md)' }}>{error}</div>}
           <button 
             onClick={handleStart} 
@@ -325,6 +331,20 @@ function FinalAssessment({ user, updateProgressTrigger }) {
           )}
 
           {/* CTA footer */}
+          <div style={{ textAlign: 'center', margin: 'var(--space-lg) 0', paddingTop: '16px', borderTop: '1px dashed var(--color-border)' }}>
+            <span style={{ fontSize: '0.9rem', color: 'var(--accent-navy)', fontWeight: 'bold', textTransform: 'uppercase', display: 'block', letterSpacing: '0.5px' }}>
+              Knowing the law is only the beginning.
+            </span>
+            <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', margin: '4px 0 12px 0' }}>
+              Baseline &rarr; Learning &rarr; Practice &rarr; Final
+            </p>
+            <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', fontStyle: 'italic', margin: '0 0 4px 0' }}>
+              "Improvement is not about knowing every answer. It is about recognizing better decisions when they matter."
+            </p>
+            <span style={{ fontSize: '0.85rem', fontWeight: 'bold', color: 'var(--accent-navy)', letterSpacing: '0.5px' }}>
+              Learn. Recognize. Stay Safe.
+            </span>
+          </div>
           <div style={{ textAlign: 'center', marginTop: 'var(--space-xl)' }}>
             <button
               onClick={() => navigate('/dashboard')}

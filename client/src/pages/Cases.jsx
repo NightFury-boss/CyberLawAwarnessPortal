@@ -227,7 +227,7 @@ function Cases() {
               CYBER INCIDENT ARCHIVE
             </h1>
             <p style={{ fontSize: '1.2rem', color: 'var(--text-secondary)', marginTop: '4px', fontStyle: 'italic' }}>
-              "Real incidents. Digital deception. Lessons worth remembering."
+              "Knowing what happened is useful. Recognizing the pattern before it happens is better."
             </p>
             <p style={{ maxWidth: '750px', marginTop: 'var(--space-sm)', color: 'var(--text-muted)', lineHeight: '1.6' }}>
               Explore documented attack methods, analyze visual timelines, make critical decisions in situational mockups, and extract security lessons from previous fraud files.

@@ -125,6 +125,12 @@ function Prevention() {
         </div>
       </div>
 
+      <div style={{ textAlign: 'center', marginBottom: 'var(--space-xl)' }}>
+        <p style={{ fontSize: '1.05rem', color: 'var(--accent-navy)', fontStyle: 'italic', margin: 0 }}>
+          "Knowledge helps most when it changes what we do."
+        </p>
+      </div>
+
       {/* TOPIC NAVIGATION (Desktop sticky / Mobile dropdown) */}
       <div style={{
         position: 'sticky',
@@ -448,6 +454,13 @@ function Prevention() {
           </div>
         )}
 
+      </div>
+
+      {/* Dynamic branding tagline at the bottom */}
+      <div style={{ textAlign: 'center', marginTop: 'var(--space-xxl)', paddingTop: '24px', borderTop: '1px dashed var(--color-border)' }}>
+        <span style={{ fontSize: '1rem', fontWeight: 'bold', color: 'var(--accent-navy)', letterSpacing: '0.5px' }}>
+          Learn. Recognize. Stay Safe.
+        </span>
       </div>
 
     </div>

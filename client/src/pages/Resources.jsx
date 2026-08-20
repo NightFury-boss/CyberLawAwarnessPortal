@@ -163,6 +163,13 @@ function Resources() {
         This portal is an academic educational resource. For official reporting, legal filings, and current government guidance, use the verified official sources listed below.
       </div>
 
+      {/* Dynamic branding tagline */}
+      <div style={{ marginBottom: 'var(--space-xl)', borderLeft: '3px solid var(--accent-navy)', paddingLeft: '16px' }}>
+        <p style={{ fontSize: '1rem', color: 'var(--accent-navy)', fontStyle: 'italic', margin: 0 }}>
+          "Knowing where to verify information is part of knowing what to trust."
+        </p>
+      </div>
+
       {loading && (
         <div style={{ display: 'flex', justifyContent: 'center', padding: '40px 0' }}>
           <span style={{ fontSize: '0.95rem', color: 'var(--text-secondary)' }}>Loading resources...</span>

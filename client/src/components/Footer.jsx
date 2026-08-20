@@ -71,6 +71,7 @@ function Footer() {
         fontSize: '0.8rem',
         color: 'var(--text-muted)'
       }}>
+        <div style={{ fontWeight: 'bold', color: 'var(--accent-navy)', marginBottom: '8px', letterSpacing: '0.5px' }}>Learn. Recognize. Stay Safe.</div>
         &copy; {new Date().getFullYear()} Cyber Law Awareness Portal. Built for Academic and Awareness purposes.
       </div>
     </footer>

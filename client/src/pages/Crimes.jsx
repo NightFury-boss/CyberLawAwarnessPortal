@@ -671,6 +671,9 @@ function Crimes() {
               2. How the Attack Unfolds
             </h2>
             <p className="text-muted" style={{ marginBottom: 'var(--space-lg)', fontSize: '0.95rem' }}>
+              "Knowing what a crime is matters. Recognizing how it begins matters too."
+            </p>
+            <p className="text-muted" style={{ marginBottom: 'var(--space-lg)', fontSize: '0.95rem' }}>
               Conceptual timeline showing step-by-step triggers of a standard attack profile:
             </p>
 

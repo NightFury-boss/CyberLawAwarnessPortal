@@ -113,13 +113,13 @@ function Dashboard({ user, progressTrigger }) {
           {/* Quick Metrics Summary */}
           <div className="dashboard-grid">
             <div className="stat-card">
-              <span className="label">Baseline Score</span>
+              <span className="label">RECOGNITION</span>
               <div className="value">{progress.baselineScore}/100</div>
-              <span className="subtext">{progress.baselineLevel}</span>
+              <span className="subtext" style={{ fontSize: '0.75rem', fontWeight: '500' }}>What you are learning to identify.</span>
             </div>
 
             <div className="stat-card">
-              <span className="label">Final Score</span>
+              <span className="label">KNOWLEDGE</span>
               <div className="value">
                 {hasFinal ? `${progress.finalScore}/100` : '—'}
               </div>
@@ -129,17 +129,17 @@ function Dashboard({ user, progressTrigger }) {
             </div>
 
             <div className="stat-card">
-              <span className="label">Improvement Delta</span>
+              <span className="label">IMPROVEMENT</span>
               <div className="value" style={{ color: hasFinal ? (progress.finalScore - progress.baselineScore >= 0 ? 'var(--color-success)' : 'var(--color-error)') : 'var(--text-muted)' }}>
                 {hasFinal ? `${progress.finalScore - progress.baselineScore >= 0 ? '+' : ''}${progress.finalScore - progress.baselineScore}` : '—'}
               </div>
-              <span className="subtext">Points Difference</span>
+              <span className="subtext" style={{ fontSize: '0.75rem', fontWeight: '500' }}>How your performance has changed.</span>
             </div>
 
             <div className="stat-card">
-              <span className="label">Quizzes Answered</span>
+              <span className="label">PRACTICE</span>
               <div className="value">{Object.keys(progress.quizzesTaken || {}).length}</div>
-              <span className="subtext">Completed Assessments</span>
+              <span className="subtext" style={{ fontSize: '0.75rem', fontWeight: '500' }}>What you have applied.</span>
             </div>
           </div>
 
