@@ -3,6 +3,24 @@ import { Link } from 'react-router-dom';
 import api from '../services/api';
 
 function Crimes() {
+  const getCategoryColor = (category) => {
+    switch (category) {
+      case 'Phishing & Messaging Scams':
+      case 'Online Deception':
+        return 'var(--color-info)';
+      case 'Financial Fraud':
+      case 'E-commerce & Marketplace Fraud':
+        return 'var(--accent-navy)';
+      case 'Identity & Credential Theft':
+        return 'var(--color-border-dark)';
+      case 'Online Harassment & Abuse':
+      case 'Malware & Device Threats':
+        return 'var(--color-danger)';
+      default:
+        return 'var(--accent-navy)';
+    }
+  };
+
   const [crimes, setCrimes] = useState([]);
   const [recommendations, setRecommendations] = useState([]);
   const [recReason, setRecReason] = useState('');
@@ -13,6 +31,37 @@ function Crimes() {
   // Search & Filter
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState('All');
+  const [showFilters, setShowFilters] = useState(false);
+
+  const getRelevanceScore = (c, query) => {
+    if (!query.trim()) return 0;
+    const q = query.toLowerCase().trim();
+    let score = 0;
+
+    // Title / exact name matches
+    if (c.title.toLowerCase() === q) score += 50;
+    else if (c.title.toLowerCase().includes(q)) score += 10;
+
+    // Category / keyword matches
+    if (c.category?.toLowerCase().includes(q)) score += 5;
+    if (c.keywords?.some(k => k.toLowerCase().includes(q))) score += 5;
+
+    // Attack vector
+    if (c.attackVectors?.some(v => v.toLowerCase().includes(q))) score += 3;
+
+    // Warning signs
+    if (c.warningSigns?.some(ws => ws.title.toLowerCase().includes(q) || ws.description.toLowerCase().includes(q))) score += 2;
+
+    // Attacker tactics
+    if (c.attackerTactics?.some(tac => tac.tactic.toLowerCase().includes(q) || tac.example.toLowerCase().includes(q))) score += 1;
+
+    // Action / avoidance
+    if (c.actionSteps?.some(s => s.toLowerCase().includes(q))) score += 1;
+    if (c.avoidSteps?.some(s => s.toLowerCase().includes(q))) score += 1;
+    if (c.ifTargetedSteps?.some(s => s.toLowerCase().includes(q))) score += 1;
+
+    return score;
+  };
 
   // Interactive Game States ("Spot the Red Flags")
   const [foundFlags, setFoundFlags] = useState([]); // Array of flag indexes clicked
@@ -179,21 +228,18 @@ function Crimes() {
   };
 
   // Filter local crimes list by category and search query
-  const filteredCrimes = crimes.filter(c => {
-    const matchesCategory = activeCategory === 'All' || c.category === activeCategory;
-    const matchesSearch = !searchQuery.trim() || [
-      c.title,
-      c.category,
-      c.shortDescription,
-      c.whatIsIt,
-      c.howItWorks,
-      ...(c.warningSigns || []),
-      ...(c.attackVectors || []),
-      ...(c.attackerObjective || [])
-    ].some(field => field && field.toLowerCase().includes(searchQuery.toLowerCase()));
-    
-    return matchesCategory && matchesSearch;
-  });
+  const filteredCrimes = crimes
+    .filter(c => {
+      const matchesCategory = activeCategory === 'All' || c.category === activeCategory;
+      if (!searchQuery.trim()) return matchesCategory;
+      
+      const score = getRelevanceScore(c, searchQuery);
+      return matchesCategory && score > 0;
+    })
+    .sort((a, b) => {
+      if (!searchQuery.trim()) return 0;
+      return getRelevanceScore(b, searchQuery) - getRelevanceScore(a, searchQuery);
+    });
 
   // Red Flag level helper
   const getRedFlagMeter = (level) => {
@@ -252,7 +298,7 @@ function Crimes() {
           {recommendations.length > 0 && (
             <div style={{
               backgroundColor: 'var(--accent-navy-light)',
-              borderLeft: '4px solid var(--accent-navy)',
+              borderLeft: `4px solid ${getCategoryColor(crime.category)}`,
               padding: 'var(--space-lg)',
               borderRadius: '4px',
               marginBottom: 'var(--space-xl)'
@@ -287,25 +333,116 @@ function Crimes() {
           )}
 
           {/* Search Section */}
-          <div style={{ marginBottom: 'var(--space-xl)', display: 'flex', gap: '12px' }}>
-            <div style={{ position: 'relative', flex: 1 }}>
+          <div style={{ display: 'flex', gap: '12px', marginBottom: 'var(--space-md)' }}>
+            <div style={{ position: 'relative', flex: 1, display: 'flex', alignItems: 'center' }}>
+              <span style={{ position: 'absolute', left: '14px', color: 'var(--text-muted)', display: 'flex', alignItems: 'center' }}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+              </span>
               <input
                 type="text"
-                placeholder="Search threats by keyword, vector, tactic, warning signs..."
+                placeholder="Search crimes, warning signs, or attack methods"
                 value={searchQuery}
                 onChange={handleSearch}
                 style={{
                   width: '100%',
-                  padding: '14px 18px',
-                  borderRadius: '6px',
-                  border: '1px solid var(--color-border)',
-                  backgroundColor: 'var(--bg-secondary)',
-                  fontSize: '1rem',
-                  outline: 'none'
+                  padding: '12px 16px 12px 42px',
+                  borderRadius: 'var(--radius-sm)',
+                  border: '1px solid var(--color-border-dark)',
+                  backgroundColor: 'var(--bg-white)',
+                  fontSize: '0.95rem',
+                  color: 'var(--text-primary)',
+                  outline: 'none',
+                  transition: 'border-color 0.15s ease'
                 }}
               />
+              {searchQuery && (
+                <button
+                  onClick={() => handleSearch({ target: { value: '' } })}
+                  style={{
+                    position: 'absolute',
+                    right: '12px',
+                    background: 'none',
+                    border: 'none',
+                    cursor: 'pointer',
+                    color: 'var(--text-muted)',
+                    padding: '4px',
+                    display: 'flex',
+                    alignItems: 'center'
+                  }}
+                  title="Clear Search"
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+              )}
             </div>
+            <button
+              onClick={() => setShowFilters(prev => !prev)}
+              className="btn btn-secondary"
+              style={{ padding: '0 20px', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '8px' }}
+              title="Toggle filter domains list"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>
+              {showFilters ? 'Hide Filters' : 'Filter'}
+            </button>
           </div>
+
+          {/* Collapsible Category filter tabs */}
+          {showFilters && (
+            <div style={{ marginBottom: 'var(--space-md)', padding: 'var(--space-md)', backgroundColor: 'var(--bg-secondary)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--color-border)' }}>
+              <h3 style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: '8px', fontWeight: '800', letterSpacing: '0.5px' }}>
+                Filter by Threat Domain
+              </h3>
+              <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                {categories.map((cat) => (
+                  <button
+                    key={cat}
+                    onClick={() => setActiveCategory(cat)}
+                    style={{
+                      padding: '6px 12px',
+                      borderRadius: 'var(--radius-sm)',
+                      border: '1px solid var(--color-border-dark)',
+                      backgroundColor: activeCategory === cat ? 'var(--accent-navy)' : 'var(--bg-white)',
+                      color: activeCategory === cat ? 'white' : 'var(--text-secondary)',
+                      fontSize: '0.75rem',
+                      fontWeight: 'bold',
+                      cursor: 'pointer',
+                      transition: 'all 0.15s ease'
+                    }}
+                  >
+                    {cat}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Active Filter Indicators */}
+          {(activeCategory !== 'All' || searchQuery) && (
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-md)', padding: '8px 12px', backgroundColor: 'var(--bg-secondary)', borderRadius: 'var(--radius-sm)', fontSize: '0.85rem' }}>
+              <div style={{ display: 'flex', gap: '8px', alignItems: 'center', color: 'var(--text-secondary)' }}>
+                <span style={{ fontSize: '0.7rem', fontWeight: 'bold', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Active Filters:</span>
+                {activeCategory !== 'All' && <span style={{ backgroundColor: 'var(--accent-navy-light)', color: 'var(--accent-navy)', padding: '2px 8px', borderRadius: '4px', fontWeight: '600' }}>{activeCategory}</span>}
+                {searchQuery && <span style={{ backgroundColor: 'var(--accent-navy-light)', color: 'var(--accent-navy)', padding: '2px 8px', borderRadius: '4px', fontWeight: '600' }}>Search: "{searchQuery}"</span>}
+              </div>
+              <button
+                onClick={() => {
+                  setActiveCategory('All');
+                  handleSearch({ target: { value: '' } });
+                }}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: 'var(--accent-navy)',
+                  textDecoration: 'underline',
+                  cursor: 'pointer',
+                  fontSize: '0.85rem',
+                  fontWeight: 'bold'
+                }}
+              >
+                Reset
+              </button>
+            </div>
+          )}
 
           {/* Category filter tabs */}
           <div style={{ marginBottom: 'var(--space-xl)' }}>
@@ -368,17 +505,70 @@ function Crimes() {
 
           {/* Main Grid of Threat Profiles */}
           <div>
-            <h3 style={{ fontSize: '0.9rem', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: 'var(--space-md)', fontWeight: '600' }}>
-              Threat Index ({filteredCrimes.length} profiles)
-            </h3>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-md)', flexWrap: 'wrap', gap: '8px' }}>
+              <h3 style={{ fontSize: '0.9rem', textTransform: 'uppercase', color: 'var(--text-muted)', margin: 0, fontWeight: '600' }}>
+                {searchQuery || activeCategory !== 'All' ? (
+                  <span>
+                    <strong>{filteredCrimes.length}</strong> threats found
+                  </span>
+                ) : (
+                  <span>Threat Index ({filteredCrimes.length} profiles)</span>
+                )}
+              </h3>
+              {(searchQuery || activeCategory !== 'All') && (
+                <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+                  {searchQuery && <span>Search: <strong>"{searchQuery}"</strong></span>}
+                  {activeCategory !== 'All' && <span>{searchQuery ? ' \u00b7 ' : ''}Category: <strong>{activeCategory}</strong></span>}
+                </div>
+              )}
+            </div>
             {filteredCrimes.length === 0 ? (
-              <p style={{ color: 'var(--text-muted)', padding: 'var(--space-lg) 0' }}>No cyber threats matched your search term or category filter.</p>
+              <div style={{
+                textAlign: 'center',
+                padding: '40px var(--space-lg)',
+                backgroundColor: 'var(--bg-white)',
+                border: '1px dashed var(--color-border-dark)',
+                borderRadius: 'var(--radius-md)',
+                marginTop: 'var(--space-md)'
+              }}>
+                <h4 style={{ fontSize: '1.25rem', fontWeight: 'bold', color: 'var(--accent-navy)', marginBottom: '8px' }}>
+                  NO MATCHING THREATS
+                </h4>
+                <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem', marginBottom: '16px' }}>
+                  Try a crime name, warning sign, or attack method.
+                </p>
+                <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+                  Suggested search terms:
+                  <div style={{ display: 'inline-flex', gap: '8px', marginLeft: '8px', flexWrap: 'wrap' }}>
+                    {['OTP', 'QR', 'phishing', 'fake support', 'account takeover', 'identity'].map(term => (
+                      <button
+                        key={term}
+                        onClick={() => handleSearch({ target: { value: term } })}
+                        style={{
+                          background: 'none',
+                          border: 'none',
+                          color: 'var(--accent-navy)',
+                          textDecoration: 'underline',
+                          cursor: 'pointer',
+                          padding: 0,
+                          fontSize: '0.85rem',
+                          fontWeight: '600'
+                        }}
+                      >
+                        {term}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
             ) : (
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: 'var(--space-lg)' }}>
                 {filteredCrimes.map((crime) => (
                   <div
                     key={crime._id}
                     onClick={() => handleSelectCrime(crime)}
+                    tabIndex={0}
+                    onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); handleSelectCrime(crime); } }}
                     className="editorial-card"
                     style={{
                       cursor: 'pointer',
@@ -590,7 +780,7 @@ function Crimes() {
           </section>
 
           {/* SECTION 2: ATTACK LIFECYCLE */}
-          <section id="lifecycle" style={{ marginBottom: 'var(--space-xl)', padding: 'var(--space-lg)', backgroundColor: 'var(--bg-secondary)', borderRadius: '6px', border: '1px solid var(--color-border)' }}>
+          <section id="lifecycle" style={{ marginBottom: 'var(--space-xxl)', borderTop: '1px solid var(--color-border)', borderBottom: '1px solid var(--color-border)', padding: 'var(--space-xl) 0', backgroundColor: 'transparent' }}>
             <h2 style={{ fontSize: '1.8rem', color: 'var(--accent-navy)', marginBottom: 'var(--space-md)' }}>
               2. How the Attack Unfolds
             </h2>

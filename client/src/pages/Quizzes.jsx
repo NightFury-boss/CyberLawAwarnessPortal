@@ -187,15 +187,16 @@ function Quizzes({ user, updateProgressTrigger }) {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-xs)' }}>
                   {q.options.map((opt, optIndex) => {
                     const isSelected = chosenOption === optIndex;
-                    let optionStyle = {
+                                        let optionStyle = {
                       padding: '10px 14px',
-                      borderRadius: '4px',
-                      border: '1px solid var(--color-border-dark)',
+                      borderRadius: 'var(--radius-sm)',
+                      border: isSelected ? '1px solid var(--accent-navy)' : '1px solid var(--color-border-dark)',
                       textAlign: 'left',
                       background: isSelected ? 'var(--accent-navy-light)' : 'var(--bg-white)',
+                      color: isSelected ? 'var(--accent-navy)' : 'inherit',
                       cursor: quizSubmitted ? 'default' : 'pointer',
                       width: '100%',
-                      fontWeight: isSelected ? '500' : '400',
+                      fontWeight: isSelected ? '600' : '400',
                       transition: 'var(--transition-fast)'
                     };
 
@@ -232,8 +233,9 @@ function Quizzes({ user, updateProgressTrigger }) {
                   <div style={{
                     marginTop: 'var(--space-md)',
                     padding: 'var(--space-sm) var(--space-md)',
-                    backgroundColor: 'var(--bg-secondary)',
-                    borderRadius: '4px',
+                    backgroundColor: 'var(--accent-navy-light)',
+                    borderLeft: '3px solid var(--accent-navy)',
+                    borderRadius: 'var(--radius-xs)',
                     fontSize: '0.85rem'
                   }}>
                     <strong style={{ color: 'var(--accent-navy)' }}>Explanation:</strong> {explanationText}

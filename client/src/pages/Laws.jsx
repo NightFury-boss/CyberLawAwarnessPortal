@@ -378,15 +378,10 @@ function Laws() {
         data-section-num={section.sectionNumber}
         data-family-id={familyId}
         style={{
-          backgroundColor: 'var(--bg-white)',
-          borderLeft: `4px solid ${accentColor}`,
-          padding: '32px',
-          borderRadius: '4px',
-          boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
-          borderTop: '1px solid var(--color-border)',
-          borderRight: '1px solid var(--color-border)',
+          backgroundColor: 'transparent',
+          padding: '24px 0 32px 0',
           borderBottom: '1px solid var(--color-border)',
-          marginBottom: '24px'
+          marginBottom: '32px'
         }}
       >
         {/* Title metadata bar */}
@@ -398,6 +393,7 @@ function Laws() {
             <h3 style={{ fontSize: '1.6rem', color: 'var(--accent-navy)', fontWeight: '700', marginTop: '6px', lineHeight: '1.2' }}>
               {section.sectionNumber}: {section.officialTitle}
             </h3>
+            <div style={{ width: '40px', height: '3px', backgroundColor: accentColor, borderRadius: '1.5px', marginBottom: '16px' }} />
           </div>
 
           <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
@@ -1034,8 +1030,8 @@ function Laws() {
                         style={{
                           textAlign: 'left',
                           padding: '10px 12px',
-                          borderRadius: '4px',
-                          border: 'none',
+                          borderRadius: 'var(--radius-sm)',
+                          borderLeft: isFamActive ? '3px solid var(--accent-navy)' : '3px solid transparent',
                           backgroundColor: isFamActive ? 'var(--accent-navy-light)' : 'transparent',
                           color: isFamActive ? 'var(--accent-navy)' : 'var(--text-secondary)',
                           fontWeight: isFamActive ? 'bold' : '500',
@@ -1044,7 +1040,8 @@ function Laws() {
                           transition: 'all 0.15s ease',
                           display: 'flex',
                           alignItems: 'center',
-                          justifyContent: 'space-between'
+                          justifyContent: 'space-between',
+                          paddingLeft: isFamActive ? '10px' : '13px'
                         }}
                       >
                         <span>{fam.displayName.split(',')[0]}</span>

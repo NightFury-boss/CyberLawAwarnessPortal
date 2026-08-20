@@ -330,11 +330,11 @@ function BaselineAssessment({ user, updateProgressTrigger }) {
 
             <div>
               <div style={{
-                border: '1px solid var(--color-border)',
+                borderLeft: '4px solid var(--accent-navy)',
                 padding: 'var(--space-md)',
-                borderRadius: '4px',
+                borderRadius: 'var(--radius-sm)',
                 textAlign: 'center',
-                backgroundColor: 'var(--bg-secondary)'
+                backgroundColor: 'var(--accent-navy-light)'
               }}>
                 <span style={{ fontSize: '0.85rem', fontWeight: '600', color: 'var(--text-muted)' }}>BASELINE AWARENESS SCORE</span>
                 <div style={{ fontSize: '3rem', fontWeight: '700', color: 'var(--accent-navy)' }}>{result.score}/100</div>

@@ -296,11 +296,11 @@ function FinalAssessment({ user, updateProgressTrigger }) {
             {/* Right side: Overall stats card */}
             <div>
               <div style={{
-                border: '1px solid var(--color-border)',
+                borderLeft: '4px solid var(--accent-navy)',
                 padding: 'var(--space-lg)',
-                borderRadius: '4px',
+                borderRadius: 'var(--radius-sm)',
                 textAlign: 'center',
-                backgroundColor: 'var(--bg-secondary)',
+                backgroundColor: 'var(--accent-navy-light)',
                 marginBottom: 'var(--space-md)'
               }}>
                 <span style={{ fontSize: '0.85rem', fontWeight: '600', color: 'var(--text-muted)' }}>FINAL ASSESSMENT SCORE</span>
