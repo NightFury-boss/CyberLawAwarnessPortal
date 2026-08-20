@@ -28,7 +28,7 @@ function AppContent() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [progressTrigger, setProgressTrigger] = useState(0); // increment to trigger reload
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(window.innerWidth > 768);
   const location = useLocation();
 
   useEffect(() => {
@@ -49,6 +49,17 @@ function AppContent() {
     setLoading(false);
   };
 
+
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        setSidebarOpen(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
   const triggerProgressUpdate = () => {
     setProgressTrigger(prev => prev + 1);
   };
@@ -67,9 +78,14 @@ function AppContent() {
   return (
     <div className={isAdminPath ? "" : "app-container"}>
       {!isAdminPath && <Sidebar user={user} isOpen={sidebarOpen} setIsOpen={setSidebarOpen} />}
-      
-      <div className={isAdminPath ? "" : "main-content"} style={{ marginLeft: isAdminPath ? 0 : undefined }}>
-        {!isAdminPath && <Navbar user={user} setUser={setUser} setSidebarOpen={setSidebarOpen} />}
+      {!isAdminPath && sidebarOpen && (
+        <div 
+          onClick={() => setSidebarOpen(false)}
+          className="sidebar-backdrop"
+        />
+      )}
+      <div className={isAdminPath ? "" : `main-content ${sidebarOpen ? 'sidebar-expanded' : 'sidebar-collapsed'}`} style={{ marginLeft: isAdminPath ? 0 : undefined }}>
+        {!isAdminPath && <Navbar user={user} setUser={setUser} sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />}
         
         <main style={{ flex: 1 }}>
           <Routes>

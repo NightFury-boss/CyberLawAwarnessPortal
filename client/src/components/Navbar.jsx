@@ -2,7 +2,7 @@ import React from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import api from '../services/api';
 
-function Navbar({ user, setUser, setSidebarOpen }) {
+function Navbar({ user, setUser, sidebarOpen, setSidebarOpen }) {
   const navigate = useNavigate();
   const location = useLocation();
 
