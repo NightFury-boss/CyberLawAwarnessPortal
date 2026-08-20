@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../services/api';
+import PortalSearch from '../components/search/PortalSearch';
+import { searchItems } from '../components/search/searchUtils';
 
 function Cases() {
   const [cases, setCases] = useState([]);
@@ -122,26 +124,27 @@ function Cases() {
   ];
 
   // Combined client-side filtering for cases archive list
-  const filteredCases = cases.filter(c => {
-    const matchesCategory = activeCategory === 'All' || c.incidentType === activeCategory;
-    
-    // Pattern matches warning signs or attacker objectives
-    const matchesPattern = !activePattern || 
-      c.warningSigns?.some(ws => ws.title.toLowerCase().includes(activePattern.toLowerCase())) ||
-      c.title.toLowerCase().includes(activePattern.toLowerCase());
+  const casesSearchConfig = {
+    title: 50,
+    incidentType: 10,
+    attackVector: 5,
+    summary: 2,
+    warningSigns: 2,
+    keywords: 5
+  };
 
-    const matchesSearch = !searchQuery.trim() || [
-      c.title,
-      c.incidentType,
-      c.attackVector,
-      c.shortDescription,
-      c.caseNumber,
-      ...(c.warningSigns?.map(ws => ws.title) || []),
-      ...(c.attackerObjectives || [])
-    ].some(field => field && field.toLowerCase().includes(searchQuery.toLowerCase()));
-
-    return matchesCategory && matchesPattern && matchesSearch;
-  });
+    const filteredCases = searchItems(
+    cases,
+    searchQuery,
+    casesSearchConfig,
+    (item) => {
+      const matchesCategory = activeCategory === 'All' || item.incidentType === activeCategory;
+      const matchesPattern = !activePattern || 
+        item.warningSigns?.some(ws => ws.title.toLowerCase().includes(activePattern.toLowerCase())) ||
+        item.title.toLowerCase().includes(activePattern.toLowerCase());
+      return matchesCategory && matchesPattern;
+    }
+  );
 
   const featuredCase = cases.find(c => c.featured && c.published);
 
@@ -231,25 +234,17 @@ function Cases() {
             </p>
           </div>
 
-          {/* Search bar */}
-          <div style={{ marginBottom: 'var(--space-xl)' }}>
-            <input
-              type="text"
-              placeholder="Search case archive by title, incident type, method, or keyword..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              style={{
-                width: '100%',
-                padding: '14px 18px',
-                borderRadius: '6px',
-                border: '1px solid var(--color-border)',
-                backgroundColor: 'var(--bg-secondary)',
-                fontSize: '1.05rem',
-                outline: 'none',
-                color: 'var(--text-primary)'
-              }}
-            />
-          </div>
+          <PortalSearch
+            placeholder="Search incidents, tactics, or case topics"
+            searchQuery={searchQuery}
+            onSearchChange={(val) => setSearchQuery(val)}
+            onClear={() => setSearchQuery('')}
+            results={filteredCases}
+            resultTypeLabel="incidents found"
+            emptyHeader="NO MATCHING CASE FILES"
+            emptyText="Try searching for a different attack method, warning sign, or category keyword (e.g. UPI, phishing, vishing)."
+            suggestions={['UPI', 'phishing', 'vishing', 'OTP', 'support']}
+          />
 
           {/* FEATURED INCIDENT FILE (If present and search/filters are empty) */}
           {!searchQuery && activeCategory === 'All' && !activePattern && featuredCase && (

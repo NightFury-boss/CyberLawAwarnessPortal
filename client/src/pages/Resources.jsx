@@ -1,8 +1,23 @@
 import React, { useState, useEffect } from 'react';
 import api from '../services/api';
+import PortalSearch from '../components/search/PortalSearch';
+import { searchItems } from '../components/search/searchUtils';
 
 function Resources() {
   const [resources, setResources] = useState([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  
+  const resourcesSearchConfig = {
+    title: 50,
+    category: 10,
+    description: 5
+  };
+
+  const filteredResources = searchItems(
+    resources,
+    searchQuery,
+    resourcesSearchConfig
+  );
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -41,8 +56,22 @@ function Resources() {
       {error && <div className="alert alert-error">{error}</div>}
 
       {!loading && (
+        <PortalSearch
+          placeholder="Search legal and cyber-safety resources"
+          searchQuery={searchQuery}
+          onSearchChange={(val) => setSearchQuery(val)}
+          onClear={() => setSearchQuery('')}
+          results={filteredResources}
+          resultTypeLabel="resources matched"
+          emptyHeader="NO MATCHING RESOURCES"
+          emptyText="Try searching for a different official guide, helpline topic, or resource authority."
+          suggestions={['helpline', 'police', 'complaint', 'rbi', 'guideline']}
+        />
+      )}
+
+      {!loading && filteredResources.length > 0 && (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 'var(--space-lg)' }}>
-          {resources.map((res) => (
+          {filteredResources.map((res) => (
             <div key={res._id || res.id} className="editorial-card" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
               <div>
                 <span className="tag" style={{ fontSize: '0.75rem' }}>{res.category}</span>
@@ -65,6 +94,7 @@ function Resources() {
               </div>
             </div>
           ))}
+      
         </div>
       )}
 

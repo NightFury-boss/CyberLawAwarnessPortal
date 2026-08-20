@@ -1,6 +1,8 @@
 ﻿import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../services/api';
+import PortalSearch from '../components/search/PortalSearch';
+import { searchItems } from '../components/search/searchUtils';
 
 function Laws() {
   const [laws, setLaws] = useState([]);
@@ -333,23 +335,28 @@ function Laws() {
   };
 
   // Client Filter Logic (Filters the provisions pool dynamically)
-  const filteredLaws = laws.filter(l => {
-    const matchesStatus = activeStatus === 'All' || l.legalStatus === activeStatus;
-    const matchesChapter = !selectedChapter || 
-      (selectedChapter === 'Chapter IX' && itActChapters[0].sections.includes(l.sectionNumber)) ||
-      (selectedChapter === 'Chapter XI' && itActChapters[1].sections.includes(l.sectionNumber));
-    const matchesSearch = !searchQuery.trim() || [
-      l.sectionNumber,
-      l.officialTitle,
-      l.plainLanguageExplanation,
-      l.whyItMatters,
-      l.role,
-      l.actName,
-      ...(l.keywords || [])
-    ].some(field => field && field.toLowerCase().includes(searchQuery.toLowerCase()));
+  const lawsSearchConfig = {
+    sectionNumber: 50,
+    officialTitle: 30,
+    actName: 20,
+    keywords: 10,
+    plainLanguageExplanation: 5,
+    whyItMatters: 2,
+    role: 2
+  };
 
-    return matchesStatus && matchesChapter && matchesSearch;
-  });
+    const filteredLaws = searchItems(
+    laws,
+    searchQuery,
+    lawsSearchConfig,
+    (l) => {
+      const matchesStatus = activeStatus === 'All' || l.legalStatus === activeStatus;
+      const matchesChapter = !selectedChapter || 
+        (selectedChapter === 'Chapter IX' && itActChapters[0].sections.includes(l.sectionNumber)) ||
+        (selectedChapter === 'Chapter XI' && itActChapters[1].sections.includes(l.sectionNumber));
+      return matchesStatus && matchesChapter;
+    }
+  );
 
   const getSectionsByFamily = (family) => {
     return filteredLaws.filter(family.filter);
@@ -834,94 +841,75 @@ function Laws() {
         </div>
       </div>
 
-      {/* SEARCH BAR & STATUS FILTERS AREA (Breathing Room Separated) */}
-      <div style={{
-        backgroundColor: 'var(--bg-secondary)',
-        padding: '24px',
-        borderRadius: '6px',
-        marginBottom: '40px',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '20px',
-        boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.02)'
-      }}>
-        <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', width: '100%' }}>
-          <div style={{ flex: 1, minWidth: '280px' }}>
-            <span style={{ display: 'block', fontSize: '0.75rem', fontWeight: 'bold', color: 'var(--accent-navy)', textTransform: 'uppercase', marginBottom: '8px', letterSpacing: '0.5px' }}>
-              Search Legal Provisions
-            </span>
-            <input
-              type="text"
-              placeholder="Search sections (e.g. 66C, data, identity, Shreya Singhal)..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              style={{
-                width: '100%',
-                padding: '12px 16px',
-                borderRadius: '4px',
-                border: '1px solid var(--color-border-dark)',
-                backgroundColor: 'var(--bg-white)',
-                fontSize: '0.95rem',
-                color: 'var(--text-primary)',
-                outline: 'none',
-                transition: 'border-color 0.15s ease'
-              }}
-            />
-          </div>
-
-          <div style={{ minWidth: '220px' }}>
-            <span style={{ display: 'block', fontSize: '0.75rem', fontWeight: 'bold', color: 'var(--accent-navy)', textTransform: 'uppercase', marginBottom: '8px', letterSpacing: '0.5px' }}>
-              Filter by Status
-            </span>
-            <div style={{ display: 'flex', gap: '6px' }}>
-              {['All', 'CURRENT', 'OMITTED', 'NOT_YET_IN_FORCE'].map((stat) => (
-                <button
-                  key={stat}
-                  onClick={() => setActiveStatus(stat)}
-                  style={{
-                    padding: '8px 12px',
-                    borderRadius: '4px',
-                    border: '1px solid var(--color-border-dark)',
-                    backgroundColor: activeStatus === stat ? 'var(--accent-navy)' : 'var(--bg-white)',
-                    color: activeStatus === stat ? 'white' : 'var(--text-secondary)',
-                    fontSize: '0.75rem',
-                    fontWeight: 'bold',
-                    cursor: 'pointer',
-                    transition: 'all 0.15s ease'
-                  }}
-                >
-                  {stat.replace(/_/g, ' ')}
-                </button>
-              ))}
+      <PortalSearch
+        placeholder="Search laws, sections, or legal topics"
+        searchQuery={searchQuery}
+        onSearchChange={(val) => setSearchQuery(val)}
+        onClear={() => setSearchQuery('')}
+        results={filteredLaws}
+        resultTypeLabel="provisions matched"
+        emptyHeader="NO MATCHING PROVISIONS"
+        emptyText="Try searching for a different law section, legal term, or keyword (e.g. 66C, privacy, contract)."
+        suggestions={['66C', '66D', 'privacy', 'consent', 'identity']}
+        showFiltersToggle={true}
+        showFilters={true} // keep open by default to match original UX
+        onFiltersToggle={() => {}}
+        filtersDrawerContent={
+          <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', width: '100%' }}>
+            <div style={{ minWidth: '220px' }}>
+              <span style={{ display: 'block', fontSize: '0.75rem', fontWeight: 'bold', color: 'var(--accent-navy)', textTransform: 'uppercase', marginBottom: '8px', letterSpacing: '0.5px' }}>
+                Filter by Status
+              </span>
+              <div style={{ display: 'flex', gap: '6px' }}>
+                {['All', 'CURRENT', 'OMITTED', 'NOT_YET_IN_FORCE'].map((stat) => (
+                  <button
+                    key={stat}
+                    onClick={() => setActiveStatus(stat)}
+                    style={{
+                      padding: '8px 12px',
+                      borderRadius: 'var(--radius-sm)',
+                      border: '1px solid var(--color-border-dark)',
+                      backgroundColor: activeStatus === stat ? 'var(--accent-navy)' : 'var(--bg-white)',
+                      color: activeStatus === stat ? 'white' : 'var(--text-secondary)',
+                      fontSize: '0.75rem',
+                      fontWeight: 'bold',
+                      cursor: 'pointer',
+                      transition: 'all 0.15s ease'
+                    }}
+                  >
+                    {stat.replace(/_/g, ' ')}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
-        </div>
-
-        {/* Active Filters Clear Button */}
-        {(activeStatus !== 'All' || selectedChapter || searchQuery) && (
-          <div style={{ display: 'flex', justifyContent: 'flex-start' }}>
-            <button
-              onClick={() => {
-                setActiveStatus('All');
-                setSelectedChapter(null);
-                setSearchQuery('');
-              }}
-              style={{
-                backgroundColor: 'transparent',
-                border: 'none',
-                color: 'var(--accent-navy)',
-                textDecoration: 'underline',
-                cursor: 'pointer',
-                fontSize: '0.85rem',
-                fontWeight: 'bold',
-                padding: 0
-              }}
-            >
-              Clear Active Filters & Reset Search
-            </button>
-          </div>
-        )}
-      </div>
+        }
+        activeFiltersContent={
+          (activeStatus !== 'All' || selectedChapter || searchQuery) && (
+            <div style={{ display: 'flex', justifyContent: 'flex-start', marginBottom: 'var(--space-md)' }}>
+              <button
+                onClick={() => {
+                  setActiveStatus('All');
+                  setSelectedChapter(null);
+                  setSearchQuery('');
+                }}
+                style={{
+                  backgroundColor: 'transparent',
+                  border: 'none',
+                  color: 'var(--accent-navy)',
+                  textDecoration: 'underline',
+                  cursor: 'pointer',
+                  fontSize: '0.85rem',
+                  fontWeight: 'bold',
+                  padding: 0
+                }}
+              >
+                Clear Active Filters & Reset Search
+              </button>
+            </div>
+          )
+        }
+      />
 
       {/* DYNAMIC LAYOUT GRID */}
       <div style={{

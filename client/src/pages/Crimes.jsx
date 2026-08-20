@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../services/api';
+import PortalSearch from '../components/search/PortalSearch';
+import { searchItems } from '../components/search/searchUtils';
 
 function Crimes() {
   const getCategoryColor = (category) => {
@@ -31,6 +33,21 @@ function Crimes() {
   // Search & Filter
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState('All');
+  const crimesSearchConfig = {
+    title: 50,
+    category: 5,
+    attackVectors: 3,
+    warningSigns: 2,
+    attackerTactics: 1,
+    shortDescription: 1,
+    whatIsIt: 1,
+    howItWorks: 1,
+    actionSteps: 1,
+    avoidSteps: 1,
+    ifTargetedSteps: 1,
+    keywords: 5
+  };
+
   const [showFilters, setShowFilters] = useState(false);
 
   const getRelevanceScore = (c, query) => {
@@ -228,18 +245,12 @@ function Crimes() {
   };
 
   // Filter local crimes list by category and search query
-  const filteredCrimes = crimes
-    .filter(c => {
-      const matchesCategory = activeCategory === 'All' || c.category === activeCategory;
-      if (!searchQuery.trim()) return matchesCategory;
-      
-      const score = getRelevanceScore(c, searchQuery);
-      return matchesCategory && score > 0;
-    })
-    .sort((a, b) => {
-      if (!searchQuery.trim()) return 0;
-      return getRelevanceScore(b, searchQuery) - getRelevanceScore(a, searchQuery);
-    });
+  const filteredCrimes = searchItems(
+    crimes,
+    searchQuery,
+    crimesSearchConfig,
+    (item) => activeCategory === 'All' || item.category === activeCategory
+  );
 
   // Red Flag level helper
   const getRedFlagMeter = (level) => {
@@ -332,145 +343,76 @@ function Crimes() {
             </div>
           )}
 
-          {/* Search Section */}
-          <div style={{ display: 'flex', gap: '12px', marginBottom: 'var(--space-md)' }}>
-            <div style={{ position: 'relative', flex: 1, display: 'flex', alignItems: 'center' }}>
-              <span style={{ position: 'absolute', left: '14px', color: 'var(--text-muted)', display: 'flex', alignItems: 'center' }}>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-              </span>
-              <input
-                type="text"
-                placeholder="Search crimes, warning signs, or attack methods"
-                value={searchQuery}
-                onChange={handleSearch}
-                style={{
-                  width: '100%',
-                  padding: '12px 16px 12px 42px',
-                  borderRadius: 'var(--radius-sm)',
-                  border: '1px solid var(--color-border-dark)',
-                  backgroundColor: 'var(--bg-white)',
-                  fontSize: '0.95rem',
-                  color: 'var(--text-primary)',
-                  outline: 'none',
-                  transition: 'border-color 0.15s ease'
-                }}
-              />
-              {searchQuery && (
-                <button
-                  onClick={() => handleSearch({ target: { value: '' } })}
-                  style={{
-                    position: 'absolute',
-                    right: '12px',
-                    background: 'none',
-                    border: 'none',
-                    cursor: 'pointer',
-                    color: 'var(--text-muted)',
-                    padding: '4px',
-                    display: 'flex',
-                    alignItems: 'center'
-                  }}
-                  title="Clear Search"
-                >
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-                </button>
-              )}
-            </div>
-            <button
-              onClick={() => setShowFilters(prev => !prev)}
-              className="btn btn-secondary"
-              style={{ padding: '0 20px', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '8px' }}
-              title="Toggle filter domains list"
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>
-              {showFilters ? 'Hide Filters' : 'Filter'}
-            </button>
-          </div>
-
-          {/* Collapsible Category filter tabs */}
-          {showFilters && (
-            <div style={{ marginBottom: 'var(--space-md)', padding: 'var(--space-md)', backgroundColor: 'var(--bg-secondary)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--color-border)' }}>
-              <h3 style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: '8px', fontWeight: '800', letterSpacing: '0.5px' }}>
-                Filter by Threat Domain
-              </h3>
-              <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-                {categories.map((cat) => (
+          <PortalSearch
+            placeholder="Search crimes, warning signs, or attack methods"
+            searchQuery={searchQuery}
+            onSearchChange={(val) => setSearchQuery(val)}
+            onClear={() => setSearchQuery('')}
+            results={filteredCrimes}
+            resultTypeLabel="threats found"
+            emptyHeader="NO MATCHING THREATS"
+            emptyText="Try searching for a different crime name, warning sign, or attack method."
+            suggestions={['OTP', 'QR', 'phishing', 'fake support', 'account takeover', 'identity']}
+            showFiltersToggle={true}
+            showFilters={showFilters}
+            onFiltersToggle={() => setShowFilters(prev => !prev)}
+            filtersDrawerContent={
+              <div>
+                <h3 style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: '8px', fontWeight: '800', letterSpacing: '0.5px' }}>
+                  Filter by Threat Domain
+                </h3>
+                <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                  {categories.map((cat) => (
+                    <button
+                      key={cat}
+                      onClick={() => setActiveCategory(cat)}
+                      style={{
+                        padding: '6px 12px',
+                        borderRadius: 'var(--radius-sm)',
+                        border: '1px solid var(--color-border-dark)',
+                        backgroundColor: activeCategory === cat ? 'var(--accent-navy)' : 'var(--bg-white)',
+                        color: activeCategory === cat ? 'white' : 'var(--text-secondary)',
+                        fontSize: '0.75rem',
+                        fontWeight: 'bold',
+                        cursor: 'pointer',
+                        transition: 'all 0.15s ease'
+                      }}
+                    >
+                      {cat}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            }
+            activeFiltersContent={
+              (activeCategory !== 'All' || searchQuery) && (
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-md)', padding: '8px 12px', backgroundColor: 'var(--bg-secondary)', borderRadius: 'var(--radius-sm)', fontSize: '0.85rem' }}>
+                  <div style={{ display: 'flex', gap: '8px', alignItems: 'center', color: 'var(--text-secondary)' }}>
+                    <span style={{ fontSize: '0.75rem', fontWeight: 'bold', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Active Filters:</span>
+                    {activeCategory !== 'All' && <span style={{ backgroundColor: 'var(--accent-navy-light)', color: 'var(--accent-navy)', padding: '2px 8px', borderRadius: '4px', fontWeight: '600' }}>{activeCategory}</span>}
+                    {searchQuery && <span style={{ backgroundColor: 'var(--accent-navy-light)', color: 'var(--accent-navy)', padding: '2px 8px', borderRadius: '4px', fontWeight: '600' }}>Search: "{searchQuery}"</span>}
+                  </div>
                   <button
-                    key={cat}
-                    onClick={() => setActiveCategory(cat)}
+                    onClick={() => {
+                      setActiveCategory('All');
+                      setSearchQuery('');
+                    }}
                     style={{
-                      padding: '6px 12px',
-                      borderRadius: 'var(--radius-sm)',
-                      border: '1px solid var(--color-border-dark)',
-                      backgroundColor: activeCategory === cat ? 'var(--accent-navy)' : 'var(--bg-white)',
-                      color: activeCategory === cat ? 'white' : 'var(--text-secondary)',
-                      fontSize: '0.75rem',
-                      fontWeight: 'bold',
+                      background: 'none',
+                      border: 'none',
+                      color: 'var(--accent-navy)',
+                      textDecoration: 'underline',
                       cursor: 'pointer',
-                      transition: 'all 0.15s ease'
+                      fontSize: '0.85rem',
+                      fontWeight: 'bold'
                     }}
                   >
-                    {cat}
+                    Reset
                   </button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Active Filter Indicators */}
-          {(activeCategory !== 'All' || searchQuery) && (
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-md)', padding: '8px 12px', backgroundColor: 'var(--bg-secondary)', borderRadius: 'var(--radius-sm)', fontSize: '0.85rem' }}>
-              <div style={{ display: 'flex', gap: '8px', alignItems: 'center', color: 'var(--text-secondary)' }}>
-                <span style={{ fontSize: '0.7rem', fontWeight: 'bold', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Active Filters:</span>
-                {activeCategory !== 'All' && <span style={{ backgroundColor: 'var(--accent-navy-light)', color: 'var(--accent-navy)', padding: '2px 8px', borderRadius: '4px', fontWeight: '600' }}>{activeCategory}</span>}
-                {searchQuery && <span style={{ backgroundColor: 'var(--accent-navy-light)', color: 'var(--accent-navy)', padding: '2px 8px', borderRadius: '4px', fontWeight: '600' }}>Search: "{searchQuery}"</span>}
-              </div>
-              <button
-                onClick={() => {
-                  setActiveCategory('All');
-                  handleSearch({ target: { value: '' } });
-                }}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  color: 'var(--accent-navy)',
-                  textDecoration: 'underline',
-                  cursor: 'pointer',
-                  fontSize: '0.85rem',
-                  fontWeight: 'bold'
-                }}
-              >
-                Reset
-              </button>
-            </div>
-          )}
-
-          {/* Category filter tabs */}
-          <div style={{ marginBottom: 'var(--space-xl)' }}>
-            <h3 style={{ fontSize: '0.9rem', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: 'var(--space-sm)', fontWeight: '600' }}>
-              Filter by Threat Domain
-            </h3>
-            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-              {categories.map((cat) => (
-                <button
-                  key={cat}
-                  onClick={() => setActiveCategory(cat)}
-                  style={{
-                    padding: '8px 16px',
-                    borderRadius: '20px',
-                    border: '1px solid var(--color-border)',
-                    backgroundColor: activeCategory === cat ? 'var(--accent-navy)' : 'var(--bg-secondary)',
-                    color: activeCategory === cat ? '#ffffff' : 'var(--text-primary)',
-                    fontSize: '0.85rem',
-                    fontWeight: '500',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s ease'
-                  }}
-                >
-                  {cat}
-                </button>
-              ))}
-            </div>
-          </div>
+                </div>
+              )
+            }
+          />
 
           {/* Recently Explored Row */}
           {recentlyExplored.length > 0 && (
@@ -505,63 +447,7 @@ function Crimes() {
 
           {/* Main Grid of Threat Profiles */}
           <div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-md)', flexWrap: 'wrap', gap: '8px' }}>
-              <h3 style={{ fontSize: '0.9rem', textTransform: 'uppercase', color: 'var(--text-muted)', margin: 0, fontWeight: '600' }}>
-                {searchQuery || activeCategory !== 'All' ? (
-                  <span>
-                    <strong>{filteredCrimes.length}</strong> threats found
-                  </span>
-                ) : (
-                  <span>Threat Index ({filteredCrimes.length} profiles)</span>
-                )}
-              </h3>
-              {(searchQuery || activeCategory !== 'All') && (
-                <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-                  {searchQuery && <span>Search: <strong>"{searchQuery}"</strong></span>}
-                  {activeCategory !== 'All' && <span>{searchQuery ? ' \u00b7 ' : ''}Category: <strong>{activeCategory}</strong></span>}
-                </div>
-              )}
-            </div>
-            {filteredCrimes.length === 0 ? (
-              <div style={{
-                textAlign: 'center',
-                padding: '40px var(--space-lg)',
-                backgroundColor: 'var(--bg-white)',
-                border: '1px dashed var(--color-border-dark)',
-                borderRadius: 'var(--radius-md)',
-                marginTop: 'var(--space-md)'
-              }}>
-                <h4 style={{ fontSize: '1.25rem', fontWeight: 'bold', color: 'var(--accent-navy)', marginBottom: '8px' }}>
-                  NO MATCHING THREATS
-                </h4>
-                <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem', marginBottom: '16px' }}>
-                  Try a crime name, warning sign, or attack method.
-                </p>
-                <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-                  Suggested search terms:
-                  <div style={{ display: 'inline-flex', gap: '8px', marginLeft: '8px', flexWrap: 'wrap' }}>
-                    {['OTP', 'QR', 'phishing', 'fake support', 'account takeover', 'identity'].map(term => (
-                      <button
-                        key={term}
-                        onClick={() => handleSearch({ target: { value: term } })}
-                        style={{
-                          background: 'none',
-                          border: 'none',
-                          color: 'var(--accent-navy)',
-                          textDecoration: 'underline',
-                          cursor: 'pointer',
-                          padding: 0,
-                          fontSize: '0.85rem',
-                          fontWeight: '600'
-                        }}
-                      >
-                        {term}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            ) : (
+                        {filteredCrimes.length > 0 && (
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: 'var(--space-lg)' }}>
                 {filteredCrimes.map((crime) => (
                   <div
