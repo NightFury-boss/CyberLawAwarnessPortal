@@ -298,7 +298,7 @@ function Crimes() {
           {recommendations.length > 0 && (
             <div style={{
               backgroundColor: 'var(--accent-navy-light)',
-              borderLeft: `4px solid ${getCategoryColor(crime.category)}`,
+              borderLeft: '4px solid var(--accent-navy)',
               padding: 'var(--space-lg)',
               borderRadius: '4px',
               marginBottom: 'var(--space-xl)'
