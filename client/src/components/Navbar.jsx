@@ -34,11 +34,19 @@ function Navbar({ user, setUser, setSidebarOpen }) {
           onClick={() => setSidebarOpen(prev => !prev)} 
           className="sidebar-toggle"
           title="Toggle Navigation Menu"
-          style={{ marginRight: '8px' }}
+          style={{ marginRight: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'none', border: 'none', cursor: 'pointer', padding: '4px', color: 'var(--accent-navy)' }}
         >
-          ☰
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
         </button>
-        <span className="header-title" style={{ fontWeight: '600', fontSize: '1.1rem', color: 'var(--accent-navy)' }}>
+        <Link to="/" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none' }} aria-label="Cyber Law Awareness Portal — Home">
+          <img 
+            src="/logo/cyber-law-logo-icon.svg" 
+            alt="Cyber Law" 
+            style={{ height: '28px', width: 'auto' }} 
+            className="navbar-brand-icon"
+          />
+        </Link>
+        <span className="header-title" style={{ fontWeight: '600', fontSize: '1.1rem', color: 'var(--accent-navy)', marginLeft: '4px' }}>
           {getPageTitle()}
         </span>
       </div>

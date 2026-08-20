@@ -1,0 +1,563 @@
+[
+  {
+    "scenario": {
+      "title": "Cyber Security Baseline Assessment",
+      "slug": "baseline",
+      "code": "baseline",
+      "description": "Experience a simulated multi-domain security review. Your decisions will establish your default defense habits and identify training goals.",
+      "version": 1,
+      "assessmentType": "baseline",
+      "status": "published",
+      "type": "phishing",
+      "configuredWeights": {
+        "Phishing awareness": 35,
+        "Social engineering": 25,
+        "URL verification": 20,
+        "Credential safety": 20
+      }
+    },
+    "stages": [
+      {
+        "stageOrder": 1,
+        "title": "Suspicious Security Alert",
+        "description": "You check your inbox in the morning and see a red alert from \"BharatConnect Support Desk\".",
+        "mockInterfaceType": "email",
+        "mockInterfaceData": {
+          "senderName": "BharatConnect Verification Desk",
+          "senderEmail": "support-alert@bharatconnect-verify.in",
+          "subject": "CRITICAL: Immediate Account Verification Required",
+          "body": "Dear User,\n\nWe detected a security login attempt on your BharatConnect profile from St. Petersburg, Russia. To protect your linked accounts, you must click the link below and verify your identity within 2 hours. Failure to verify will result in permanent profile lock.",
+          "ctaText": "Verify Account Identity Now",
+          "dateString": "Today (3 mins ago)"
+        },
+        "eventClassification": "malicious",
+        "terminal": false,
+        "decisions": [
+          {
+            "optionText": "Inspect the sender email header, identify the fake domain (verify.in instead of .gov.in), and report the message.",
+            "scoreChange": 40,
+            "categoryScoreWeights": { "Phishing awareness": 40, "Social engineering": 20, "URL verification": 20 },
+            "riskLevel": "safe",
+            "isCriticalMistake": false,
+            "nextStageOrder": 3,
+            "explanation": "Excellent action! You spotted the spoof domain header and reported it, avoiding the scam.",
+            "outcomeType": "correct"
+          },
+          {
+            "optionText": "Delete the email immediately without clicking any links.",
+            "scoreChange": 20,
+            "categoryScoreWeights": { "Phishing awareness": 20, "Social engineering": 10 },
+            "riskLevel": "low-risk",
+            "isCriticalMistake": false,
+            "nextStageOrder": 3,
+            "explanation": "Deleting prevents account compromise, although reporting is the best security practice.",
+            "outcomeType": "safe-action"
+          },
+          {
+            "optionText": "Click the \"Verify Account Identity Now\" link to review the security alert details.",
+            "scoreChange": -10,
+            "categoryScoreWeights": { "Phishing awareness": -20, "URL verification": -20 },
+            "riskLevel": "medium-risk",
+            "isCriticalMistake": false,
+            "nextStageOrder": 2,
+            "explanation": "Clicking the link exposes you to cloned websites. Always inspect domain headers first.",
+            "outcomeType": "unsafe-action"
+          }
+        ]
+      },
+      {
+        "stageOrder": 2,
+        "title": "Unsecured Profile Verification Page",
+        "description": "The verification button has redirected you to this form. Check the URL and connection security.",
+        "mockInterfaceType": "website",
+        "mockInterfaceData": {
+          "title": "BharatConnect Secure Login",
+          "url": "http://bharatconnect-verify.in/secure/auth",
+          "warningText": "Connection is not secure (HTTP)"
+        },
+        "eventClassification": "malicious",
+        "terminal": false,
+        "decisions": [
+          {
+            "optionText": "Enter simulated login credentials and verification code to unlock your profile.",
+            "scoreChange": -35,
+            "categoryScoreWeights": { "Credential safety": -40, "Phishing awareness": -20 },
+            "riskLevel": "critical",
+            "isCriticalMistake": true,
+            "nextStageOrder": 3,
+            "explanation": "Entering passwords on unencrypted HTTP cloned sites is a critical mistake, exposing credentials to theft.",
+            "outcomeType": "incorrect"
+          },
+          {
+            "optionText": "Close the tab immediately after noticing the HTTP alert and mismatched browser URL.",
+            "scoreChange": 35,
+            "categoryScoreWeights": { "URL verification": 40, "Credential safety": 30 },
+            "riskLevel": "safe",
+            "isCriticalMistake": false,
+            "nextStageOrder": 3,
+            "explanation": "Smart escape. Recognizing HTTP connection alerts and fake domains prevents credentials theft.",
+            "outcomeType": "correct"
+          }
+        ]
+      },
+      {
+        "stageOrder": 3,
+        "title": "Browser Security Update Notification",
+        "description": "While browsing, your web browser displays an official system banner regarding security patches.",
+        "mockInterfaceType": "notification",
+        "mockInterfaceData": {
+          "title": "Browser Update Available",
+          "body": "A critical security update (v124.0.1) is available for Google Chrome. This update addresses active vulnerabilities in WebRTC. Click to restart and update.",
+          "ctaText": "Restart and Update",
+          "dateString": "System Alert"
+        },
+        "eventClassification": "legitimate",
+        "terminal": false,
+        "decisions": [
+          {
+            "optionText": "Accept the restart and apply the official browser security update.",
+            "scoreChange": 40,
+            "categoryScoreWeights": { "Credential safety": 30, "Phishing awareness": 10 },
+            "riskLevel": "safe",
+            "isCriticalMistake": false,
+            "nextStageOrder": 4,
+            "explanation": "Applying updates is critical. This is a legitimate notification targeting WebRTC vulnerabilities.",
+            "outcomeType": "correct"
+          },
+          {
+            "optionText": "Dismiss the update and block it as a suspicious phishing prompt.",
+            "scoreChange": -10,
+            "categoryScoreWeights": { "Phishing awareness": -10 },
+            "riskLevel": "medium-risk",
+            "isCriticalMistake": false,
+            "nextStageOrder": 4,
+            "explanation": "False positive. Blocking official security updates keeps your device vulnerable to active exploits.",
+            "outcomeType": "false-positive"
+          }
+        ]
+      },
+      {
+        "stageOrder": 4,
+        "title": "Delivery Status SMS Alert",
+        "description": "You receive a text message regarding a pending courier delivery.",
+        "mockInterfaceType": "sms",
+        "mockInterfaceData": {
+          "senderNumber": "+91 98765 43210",
+          "body": "ALERT: Your IndiaPost package is held at our warehouse due to incorrect address delivery notes. Please verify your address details immediately at http://indapost-update.click to release package.",
+          "dateString": "Received 10 mins ago"
+        },
+        "eventClassification": "malicious",
+        "terminal": false,
+        "decisions": [
+          {
+            "optionText": "Delete the SMS immediately. Check package statuses via the official post office app.",
+            "scoreChange": 40,
+            "categoryScoreWeights": { "Phishing awareness": 30, "URL verification": 30 },
+            "riskLevel": "safe",
+            "isCriticalMistake": false,
+            "nextStageOrder": 5,
+            "explanation": "Excellent check. Courier scams use fake tracking links (.click domains) to collect money or details.",
+            "outcomeType": "correct"
+          },
+          {
+            "optionText": "Click the tracking link to update your delivery address to avoid warehouse returns.",
+            "scoreChange": -30,
+            "categoryScoreWeights": { "Phishing awareness": -30, "URL verification": -30 },
+            "riskLevel": "critical",
+            "isCriticalMistake": true,
+            "nextStageOrder": 5,
+            "explanation": "Clicking smishing links downloads malicious files or directs you to billing scam gateway portals.",
+            "outcomeType": "incorrect"
+          }
+        ]
+      },
+      {
+        "stageOrder": 5,
+        "title": "KYC Suspension Warning Call",
+        "description": "Your mobile phone rings. A caller claims to represent the Telecom Regulatory Authority.",
+        "mockInterfaceType": "phone_call",
+        "mockInterfaceData": {
+          "callerName": "TRAI Verification Center",
+          "callerNumber": "+91 81234 56789",
+          "bodyText": "\"This is an automated warning call. Your mobile network connection will be suspended in 2 hours due to unauthorized Aadhaar link logs. Press 1 to speak with our verification agent to complete online KYC validation.\""
+        },
+        "eventClassification": "malicious",
+        "terminal": false,
+        "decisions": [
+          {
+            "optionText": "Hang up the call immediately. Verify SIM status directly with your network operator.",
+            "scoreChange": 40,
+            "categoryScoreWeights": { "Social engineering": 40, "Credential safety": 20 },
+            "riskLevel": "safe",
+            "isCriticalMistake": false,
+            "nextStageOrder": 6,
+            "explanation": "Excellent. Operators never call to threaten disconnection or request biometric updates.",
+            "outcomeType": "correct"
+          },
+          {
+            "optionText": "Press 1, speak to the verification agent, and share the requested details to avoid deactivation.",
+            "scoreChange": -35,
+            "categoryScoreWeights": { "Social engineering": -40, "Credential safety": -30 },
+            "riskLevel": "critical",
+            "isCriticalMistake": true,
+            "nextStageOrder": 6,
+            "explanation": "Scammers pretend to represent authorities to steal identity and verification codes over call.",
+            "outcomeType": "incorrect"
+          }
+        ]
+      },
+      {
+        "stageOrder": 6,
+        "title": "Classifieds Buyer UPI Money Request",
+        "description": "You are selling a chair on OLX. The buyer sends you a payment alert on your UPI app.",
+        "mockInterfaceType": "checkout",
+        "mockInterfaceData": {
+          "merchantName": "Ramesh OLX Buyer",
+          "amount": 5000,
+          "warningText": "UPI Money Request: Confirm to receive funds."
+        },
+        "eventClassification": "malicious",
+        "terminal": true,
+        "decisions": [
+          {
+            "optionText": "Decline the payment request. Inform the buyer that UPI PINs are only entered to pay out, not receive.",
+            "scoreChange": 40,
+            "categoryScoreWeights": { "Social engineering": 30, "Credential safety": 30 },
+            "riskLevel": "safe",
+            "isCriticalMistake": false,
+            "nextStageOrder": null,
+            "explanation": "Spot-on! Scammers send requests to pay, counting on victims to enter PINs without checking.",
+            "outcomeType": "correct"
+          },
+          {
+            "optionText": "Approve the UPI app request and enter your PIN to claim the ₹5,000 credit.",
+            "scoreChange": -45,
+            "categoryScoreWeights": { "Credential safety": -50, "Social engineering": -30 },
+            "riskLevel": "critical",
+            "isCriticalMistake": true,
+            "nextStageOrder": null,
+            "explanation": "Entering your UPI PIN authorizes a debit. Scammers use this QR/UPI scam to clean out seller accounts.",
+            "outcomeType": "incorrect"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "scenario": {
+      "title": "Cyber Security Final Assessment",
+      "slug": "final",
+      "code": "final",
+      "description": "Experience a broad simulated environment containing legitimate, suspicious, and malicious prompts. Your scores will measure your overall digital hygiene.",
+      "version": 1,
+      "assessmentType": "final",
+      "status": "published",
+      "type": "mixed",
+      "configuredWeights": {
+        "Phishing awareness": 25,
+        "Social engineering": 25,
+        "URL verification": 25,
+        "Credential safety": 25
+      }
+    },
+    "stages": [
+      {
+        "stageOrder": 1,
+        "title": "The Freelance Offer (Morning)",
+        "description": "You receive an email pitching a high-paying part-time remote job task.",
+        "mockInterfaceType": "email",
+        "mockInterfaceData": {
+          "senderName": "HR Career Global Solutions",
+          "senderEmail": "career-recruitment@global-careers-verify.net",
+          "subject": "Job Offer: ₹15,000/Day for Simple Online Review Tasks",
+          "body": "Dear Candidate,\n\nYour profile has been shortlisted for our part-time online reviewer position. You can earn up to ₹15,000 per day by completing simple tasks. Click the button below to join our Telegram briefing group.",
+          "ctaText": "Join Briefing Group",
+          "dateString": "Today (8:30 AM)"
+        },
+        "eventClassification": "malicious",
+        "terminal": false,
+        "decisions": [
+          {
+            "optionText": "Verify the HR domain, identify it as spoofing, and delete the message.",
+            "scoreChange": 30,
+            "categoryScoreWeights": { "Social engineering": 30, "Phishing awareness": 10 },
+            "riskLevel": "safe",
+            "isCriticalMistake": false,
+            "nextStageOrder": 2,
+            "explanation": "Good. Urgency and extreme payouts are clear job scam vectors.",
+            "outcomeType": "correct"
+          },
+          {
+            "optionText": "Click the link to join the Telegram briefing group.",
+            "scoreChange": -20,
+            "categoryScoreWeights": { "Social engineering": -30, "Phishing awareness": -20 },
+            "riskLevel": "medium-risk",
+            "isCriticalMistake": false,
+            "nextStageOrder": 3,
+            "explanation": "Clicking directs you to scammers who request prepaid work tasks.",
+            "outcomeType": "unsafe-action"
+          }
+        ]
+      },
+      {
+        "stageOrder": 2,
+        "title": "System Security Update Notification (Afternoon)",
+        "description": "A notification appears on your device regarding a browser update.",
+        "mockInterfaceType": "notification",
+        "mockInterfaceData": {
+          "title": "Google Chrome Update Service",
+          "body": "Google Chrome v124.0.1 is available. It includes critical security patches for 3 Zero-Day vulnerabilities. Restart now to apply.",
+          "ctaText": "Apply Browser Update",
+          "dateString": "System"
+        },
+        "eventClassification": "legitimate",
+        "terminal": false,
+        "decisions": [
+          {
+            "optionText": "Accept the restart and apply official Chrome security updates.",
+            "scoreChange": 40,
+            "categoryScoreWeights": { "Credential safety": 30, "Phishing awareness": 10 },
+            "riskLevel": "safe",
+            "isCriticalMistake": false,
+            "nextStageOrder": 4,
+            "explanation": "Applying official updates is crucial. This is a legitimate alert.",
+            "outcomeType": "correct"
+          },
+          {
+            "optionText": "Dismiss the update and block it as a security threat.",
+            "scoreChange": -10,
+            "categoryScoreWeights": { "Phishing awareness": -10 },
+            "riskLevel": "medium-risk",
+            "isCriticalMistake": false,
+            "nextStageOrder": 4,
+            "explanation": "False positive. Blocking legitimate security updates keeps your device vulnerable.",
+            "outcomeType": "false-positive"
+          }
+        ]
+      },
+      {
+        "stageOrder": 3,
+        "title": "Suspicious Software Update Prompt (Afternoon)",
+        "description": "A pop-up browser banner warns of critical system security errors.",
+        "mockInterfaceType": "browser",
+        "mockInterfaceData": {
+          "title": "Critical Windows System Warning",
+          "url": "http://alert-windows-security-check.icu/alert",
+          "warningText": "Your PC is infected with 3 critical Trojan files! Download \"windows-defender-patch.exe\" to clean system immediately."
+        },
+        "eventClassification": "malicious",
+        "terminal": false,
+        "decisions": [
+          {
+            "optionText": "Download and run \"windows-defender-patch.exe\" to clean system files.",
+            "scoreChange": -40,
+            "categoryScoreWeights": { "Credential safety": -40, "Phishing awareness": -20 },
+            "riskLevel": "critical",
+            "isCriticalMistake": true,
+            "nextStageOrder": null,
+            "explanation": "Downloading EXE files from unauthorized browser banners compromises your device.",
+            "outcomeType": "incorrect"
+          },
+          {
+            "optionText": "Close the browser tab immediately and ignore the fake warnings.",
+            "scoreChange": 40,
+            "categoryScoreWeights": { "URL verification": 40, "Credential safety": 20 },
+            "riskLevel": "safe",
+            "isCriticalMistake": false,
+            "nextStageOrder": 4,
+            "explanation": "Excellent. Browser banners cannot scan your device; they are bait.",
+            "outcomeType": "correct"
+          }
+        ]
+      },
+      {
+        "stageOrder": 4,
+        "title": "Adaptive Segment",
+        "description": "Evaluating baseline profile to adapt assessment path...",
+        "mockInterfaceType": "notification",
+        "mockInterfaceData": {
+          "title": "Loading assessment pathway...",
+          "body": "Please wait..."
+        },
+        "eventClassification": "ambiguous",
+        "terminal": false,
+        "decisions": []
+      },
+      {
+        "stageOrder": 5,
+        "title": "Phishing Weakness Diagnostic Stage",
+        "description": "You receive an urgent message from your corporate team.",
+        "mockInterfaceType": "chat",
+        "mockInterfaceData": {
+          "sender": "Corporate System Admin",
+          "body": "WARNING: Your login token expires in 10 minutes. Click http://corporate-sso-verify.org to log in and renew access immediately.",
+          "dateString": "1:45 PM"
+        },
+        "eventClassification": "malicious",
+        "terminal": false,
+        "decisions": [
+          {
+            "optionText": "Close the chat and contact the company IT helpdesk via phone to verify.",
+            "scoreChange": 40,
+            "categoryScoreWeights": { "Phishing awareness": 30, "URL verification": 30 },
+            "riskLevel": "safe",
+            "isCriticalMistake": false,
+            "nextStageOrder": 9,
+            "explanation": "Excellent verification. Domain SSO-verify is spoofed.",
+            "outcomeType": "correct"
+          },
+          {
+            "optionText": "Click the link and log in to renew your token.",
+            "scoreChange": -35,
+            "categoryScoreWeights": { "Credential safety": -40, "Phishing awareness": -20 },
+            "riskLevel": "critical",
+            "isCriticalMistake": true,
+            "nextStageOrder": 9,
+            "explanation": "Clicking spoof corporate SSO steals employee passwords.",
+            "outcomeType": "incorrect"
+          }
+        ]
+      },
+      {
+        "stageOrder": 6,
+        "title": "Financial Safety Weakness Diagnostic Stage",
+        "description": "You scan a payment QR code for parking, but the redirected URL looks suspicious.",
+        "mockInterfaceType": "website",
+        "mockInterfaceData": {
+          "title": "QuickPay Express Parking Checkout",
+          "url": "http://quickpay-express-parking.in/checkout?val=100",
+          "warningText": "Please enter your bank netbanking password to settle parking dues."
+        },
+        "eventClassification": "malicious",
+        "terminal": false,
+        "decisions": [
+          {
+            "optionText": "Close the window. Pay the parking fees in cash or scan official counters.",
+            "scoreChange": 40,
+            "categoryScoreWeights": { "URL verification": 30, "Credential safety": 30 },
+            "riskLevel": "safe",
+            "isCriticalMistake": false,
+            "nextStageOrder": 9,
+            "explanation": "Good. Parking portals never require Netbanking password entry.",
+            "outcomeType": "correct"
+          },
+          {
+            "optionText": "Enter your Netbanking password to complete the payment.",
+            "scoreChange": -35,
+            "categoryScoreWeights": { "Credential safety": -45, "URL verification": -20 },
+            "riskLevel": "critical",
+            "isCriticalMistake": true,
+            "nextStageOrder": 9,
+            "explanation": "Entering passwords on third-party HTTP portals is a critical mistake.",
+            "outcomeType": "incorrect"
+          }
+        ]
+      },
+      {
+        "stageOrder": 7,
+        "title": "Social Engineering Weakness Diagnostic Stage",
+        "description": "A vishing call claims your bank account is suspended due to high-risk transactions.",
+        "mockInterfaceType": "phone_call",
+        "mockInterfaceData": {
+          "callerName": "Bank Fraud Control",
+          "callerNumber": "+91 78901 23456",
+          "bodyText": "\"This is Bank Security. We have detected a transaction of ₹50,000 on your card. To reverse this, we have sent a verification code to your phone. Please share it with us now to cancel the charge.\""
+        },
+        "eventClassification": "malicious",
+        "terminal": false,
+        "decisions": [
+          {
+            "optionText": "Refuse to share the code. Hang up and check your banking app directly.",
+            "scoreChange": 40,
+            "categoryScoreWeights": { "Social engineering": 40, "Credential safety": 20 },
+            "riskLevel": "safe",
+            "isCriticalMistake": false,
+            "nextStageOrder": 9,
+            "explanation": "Perfect. Banks never call to request OTPs to reverse charges.",
+            "outcomeType": "correct"
+          },
+          {
+            "optionText": "Share the verification code to cancel the unauthorized charge.",
+            "scoreChange": -35,
+            "categoryScoreWeights": { "Credential safety": -40, "Social engineering": -30 },
+            "riskLevel": "critical",
+            "isCriticalMistake": true,
+            "nextStageOrder": 9,
+            "explanation": "Sharing codes allows attackers to authorize debits on your account.",
+            "outcomeType": "incorrect"
+          }
+        ]
+      },
+      {
+        "stageOrder": 8,
+        "title": "Credential Safety Weakness Diagnostic Stage",
+        "description": "An unsolicited SMS alerts you that your login password was changed.",
+        "mockInterfaceType": "sms",
+        "mockInterfaceData": {
+          "senderNumber": "Google-Security",
+          "body": "Alert: Your password was updated successfully. If you did not perform this change, click http://account-recovery-gmail.support to restore access.",
+          "dateString": "Today"
+        },
+        "eventClassification": "malicious",
+        "terminal": false,
+        "decisions": [
+          {
+            "optionText": "Ignore the text link. Open Google Account settings directly to check password status.",
+            "scoreChange": 40,
+            "categoryScoreWeights": { "Phishing awareness": 30, "Credential safety": 30 },
+            "riskLevel": "safe",
+            "isCriticalMistake": false,
+            "nextStageOrder": 9,
+            "explanation": "Excellent. Recovery links in SMS texts are frequently spoofed.",
+            "outcomeType": "correct"
+          },
+          {
+            "optionText": "Click the link and submit your recovery codes to lock the hackers out.",
+            "scoreChange": -35,
+            "categoryScoreWeights": { "Credential safety": -40, "Phishing awareness": -20 },
+            "riskLevel": "critical",
+            "isCriticalMistake": true,
+            "nextStageOrder": 9,
+            "explanation": "Entering recovery codes on fake portals compromises your account.",
+            "outcomeType": "incorrect"
+          }
+        ]
+      },
+      {
+        "stageOrder": 9,
+        "title": "Concert Tickets Checkout (Evening)",
+        "description": "You are completing a payment checkout for concert tickets.",
+        "mockInterfaceType": "checkout",
+        "mockInterfaceData": {
+          "merchantName": "TicketBooking Escrow Gateway",
+          "amount": 3500,
+          "warningText": "Merchant validation: Enter UPI PIN to authorize payment."
+        },
+        "eventClassification": "ambiguous",
+        "terminal": true,
+        "decisions": [
+          {
+            "optionText": "Decline to scan, and require standard escrow transactions or in-person cash handover.",
+            "scoreChange": 40,
+            "categoryScoreWeights": { "Social engineering": 30, "Credential safety": 30 },
+            "riskLevel": "safe",
+            "isCriticalMistake": false,
+            "nextStageOrder": null,
+            "explanation": "Good. Verifying names and amounts keeps you secure.",
+            "outcomeType": "correct"
+          },
+          {
+            "optionText": "Enter your UPI PIN to approve the transaction.",
+            "scoreChange": -40,
+            "categoryScoreWeights": { "Credential safety": -40, "Social engineering": -20 },
+            "riskLevel": "critical",
+            "isCriticalMistake": true,
+            "nextStageOrder": null,
+            "explanation": "Entering your UPI PIN authorizes a debit. Always verify targets.",
+            "outcomeType": "incorrect"
+          }
+        ]
+      }
+    ]
+  }
+]

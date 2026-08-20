@@ -166,11 +166,18 @@ const api = {
     return handleResponse(res);
   },
 
-  submitQuiz: async (quizId, score) => {
+  getQuizQuestions: async (quizId) => {
+    const res = await fetch(`${API_URL}/quizzes/${quizId}/questions`, {
+      headers: getHeaders()
+    });
+    return handleResponse(res);
+  },
+
+  submitQuiz: async (quizId, answers) => {
     const res = await fetch(`${API_URL}/quizzes/submit`, {
       method: 'POST',
       headers: getHeaders(),
-      body: JSON.stringify({ quizId, score })
+      body: JSON.stringify({ quizId, answers })
     });
     return handleResponse(res);
   },

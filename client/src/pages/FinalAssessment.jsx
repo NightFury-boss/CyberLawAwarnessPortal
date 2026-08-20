@@ -72,8 +72,13 @@ function FinalAssessment({ user, updateProgressTrigger }) {
       {/* Start Screen */}
       {currentStep === 'start_screen' && (
         <div style={{ maxWidth: '600px', margin: '40px auto', textAlign: 'center' }}>
-          
-          <h1 style={{ fontSize: '2.5rem', fontFamily: 'var(--font-serif)', marginTop: '10px', marginBottom: 'var(--space-md)' }}>
+          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', marginBottom: 'var(--space-md)' }}>
+            <img src="/logo/cyber-law-logo-icon.svg" alt="" style={{ height: '32px', width: 'auto' }} />
+            <span style={{ fontSize: '0.85rem', fontWeight: 'bold', color: 'var(--accent-navy)', textTransform: 'uppercase', letterSpacing: '1px' }}>
+              Cyber Law Awareness Portal
+            </span>
+          </div>
+          <h1 style={{ fontSize: '2.5rem', marginTop: '10px', marginBottom: 'var(--space-md)' }}>
             Cyber Awareness Final Assessment
           </h1>
           <p className="text-muted" style={{ fontSize: '1.05rem', marginBottom: 'var(--space-xl)' }}>
@@ -109,7 +114,7 @@ function FinalAssessment({ user, updateProgressTrigger }) {
           {/* Feedback Box showing analysis of previous action */}
           {stepFeedback && (
             <div className="alert alert-success" style={{ padding: 'var(--space-sm) var(--space-md)', fontSize: '0.85rem', marginBottom: 'var(--space-md)' }}>
-              💡 <strong>Previous Choice Analysis:</strong> {stepFeedback}
+              <strong>Previous Choice Analysis:</strong> {stepFeedback}
             </div>
           )}
 
@@ -153,7 +158,7 @@ function FinalAssessment({ user, updateProgressTrigger }) {
                   </p>
                   
                   <div className="email-attachment-box">
-                    <span>📁</span>
+                    <span style={{ fontSize: "0.85rem", fontWeight: "600" }}>FROM:</span>
                     <div>
                       <strong>{currentStage.mockInterfaceData.attachmentName}</strong>
                       <span className="text-muted" style={{ display: 'block', fontSize: '0.75rem' }}>Size: 242 KB</span>
@@ -173,7 +178,7 @@ function FinalAssessment({ user, updateProgressTrigger }) {
                   Active Address: {currentStage.mockInterfaceData.url}
                 </p>
                 <div className="alert alert-success" style={{ fontSize: '0.9rem', borderLeft: '4px solid var(--color-success)' }}>
-                  🛡️ {currentStage.mockInterfaceData.bodyText}
+                  {currentStage.mockInterfaceData.bodyText}
                 </div>
               </div>
             )}
@@ -182,7 +187,7 @@ function FinalAssessment({ user, updateProgressTrigger }) {
             {currentStage.mockInterfaceType === 'website' && (
               <div className="mock-browser-content" style={{ padding: 'var(--space-xl)', textAlign: 'center' }}>
                 <h3 style={{ fontSize: '1.6rem', color: 'var(--color-error)', marginBottom: 'var(--space-xs)' }}>
-                  ⚠️ {currentStage.mockInterfaceData.title}
+                  {currentStage.mockInterfaceData.title}
                 </h3>
                 <p className="text-muted" style={{ fontFamily: 'monospace', fontSize: '0.8rem', marginBottom: 'var(--space-md)' }}>
                   Active Domain: {currentStage.mockInterfaceData.url}
@@ -251,7 +256,7 @@ function FinalAssessment({ user, updateProgressTrigger }) {
       {/* Comparison Report View */}
       {currentStep === 'reveal_view' && result && (
         <div className="reveal-pane" style={{ border: '2px solid var(--accent-navy)' }}>
-          <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: '2.2rem', color: 'var(--accent-navy)', marginBottom: 'var(--space-md)' }}>
+          <h2 style={{ fontSize: '2.2rem', color: 'var(--accent-navy)', marginBottom: 'var(--space-md)' }}>
             Final Assessment Report
           </h2>
           <p className="text-muted" style={{ marginBottom: 'var(--space-lg)', fontSize: '1.05rem' }}>
@@ -260,7 +265,7 @@ function FinalAssessment({ user, updateProgressTrigger }) {
 
           {result.deltaMessage && (
             <div className="alert alert-success" style={{ padding: 'var(--space-md)', fontSize: '1.1rem', borderLeft: '4px solid var(--color-success)', marginBottom: 'var(--space-lg)' }}>
-              📈 <strong>Learning Outcome Progress:</strong><br />
+              <strong>Learning Outcome Progress:</strong><br />
               {result.deltaMessage}
             </div>
           )}
@@ -269,7 +274,7 @@ function FinalAssessment({ user, updateProgressTrigger }) {
           <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: 'var(--space-xl)', marginBottom: 'var(--space-xl)' }}>
             {/* Left side: Category progress bars */}
             <div>
-              <h3 style={{ fontSize: '1.2rem', marginBottom: 'var(--space-md)' }}>🛡️ Category Defense Performance</h3>
+              <h3 style={{ fontSize: '1.2rem', marginBottom: 'var(--space-md)' }}>Category Defense Performance</h3>
               <div className="category-bars">
                 {Object.entries(result.categoryScores || {}).map(([cat, score]) => (
                   <div key={cat} className="category-bar-row">
@@ -310,7 +315,7 @@ function FinalAssessment({ user, updateProgressTrigger }) {
           {/* Critical Mistakes list */}
           {result.criticalMistakes && result.criticalMistakes.length > 0 && (
             <div className="alert alert-error" style={{ marginBottom: 'var(--space-lg)' }}>
-              <h4>⚠️ Critical Mistakes Made:</h4>
+              <h4>Critical Mistakes:</h4>
               <ul style={{ paddingLeft: 'var(--space-md)', fontSize: '0.85rem' }}>
                 {result.criticalMistakes.map((m, idx) => (
                   <li key={idx}>{m}</li>

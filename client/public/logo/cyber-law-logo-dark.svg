@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 80" width="100%" height="100%">
+  <!-- Icon Mark (scaled and translated) -->
+  <g transform="translate(0, 0)">
+    <!-- Left Side Circuits & Nodes (Accent Blue) -->
+    <path d="M 35 30 L 23 30 L 18 37" fill="none" stroke="#3b82f6" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
+    <circle cx="18" cy="37" r="3" fill="#3b82f6" />
+
+    <path d="M 35 45 L 20 45" fill="none" stroke="#3b82f6" stroke-width="2.5" stroke-linecap="round" />
+    <circle cx="20" cy="45" r="3" fill="#3b82f6" />
+
+    <path d="M 35 60 L 25 60 L 20 52" fill="none" stroke="#3b82f6" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
+    <circle cx="20" cy="52" r="3" fill="#3b82f6" />
+
+    <!-- Document Outline (White) -->
+    <path d="M 35 72 L 35 15 L 62 15 L 74 27 L 74 72 Z" fill="none" stroke="#ffffff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" />
+    <!-- Folded Corner Flap -->
+    <path d="M 62 15 L 62 27 L 74 27 Z" fill="#3b82f6" stroke="#ffffff" stroke-width="1" stroke-linejoin="round" />
+
+    <!-- C Geometry -->
+    <path d="M 59 33 A 12 12 0 0 0 45 45 A 12 12 0 0 0 59 57" fill="none" stroke="#ffffff" stroke-width="3.5" stroke-linecap="round" />
+
+    <!-- L Geometry -->
+    <path d="M 59 57 L 66 57" fill="none" stroke="#ffffff" stroke-width="3.5" stroke-linecap="round" />
+
+    <!-- i Geometry -->
+    <line x1="54" y1="40" x2="54" y2="52" stroke="#ffffff" stroke-width="3.5" stroke-linecap="round" />
+    <circle cx="54" cy="34" r="2" fill="#3b82f6" />
+  </g>
+
+  <!-- Typography Wordmark (White) -->
+  <text x="88" y="38" font-family="'Outfit', sans-serif" font-weight="700" font-size="20" fill="#ffffff">Cyber Law</text>
+  <text x="88" y="56" font-family="'Outfit', sans-serif" font-weight="400" font-size="16" fill="#ffffff" letter-spacing="0.5">Awareness Portal</text>
+  
+  <!-- Subtitle (Light Accent) -->
+  <text x="88" y="69" font-family="'Outfit', sans-serif" font-weight="600" font-size="7" fill="#cccccc" letter-spacing="1.2">LEARN  •  RECOGNIZE  •  STAY SAFE</text>
+  <line x1="88" y1="73" x2="240" y2="73" stroke="#3b82f6" stroke-width="1" />
+</svg>

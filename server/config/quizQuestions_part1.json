@@ -1,0 +1,448 @@
+[
+  {
+    "category": "Phishing",
+    "questionText": "Which of the following elements is the most reliable indicator of a secure, official website?",
+    "options": [
+      "The logo of the organization displayed on the page.",
+      "A lock icon in the browser address bar alongside an official verified HTTPS domain.",
+      "A banner claiming the site is \"Safe and Certified by RBI\".",
+      "The color scheme matching the company's official branding."
+    ],
+    "correctOptionIndex": 1,
+    "explanation": "Visual elements like logos and banners are easily copied by hackers. The only verifiable check is the browser address bar checking for secure HTTPS and a correctly spelled official domain.",
+    "questionType": "recognition",
+    "difficulty": "Beginner",
+    "learningObjective": "Identify verified domains and security indicators.",
+    "relatedLaw": "Section 66D",
+    "relatedCrime": "phishing",
+    "relatedModule": "phishing-awareness"
+  },
+  {
+    "category": "Phishing",
+    "questionText": "You receive an email from \"service-support@bank-security-update.in\" asking you to click a link to verify your account. What is the safest first step?",
+    "options": [
+      "Click the link and fill out the details quickly to avoid account suspension.",
+      "Reply to the email asking if it is legitimate.",
+      "Delete the email, and verify independently by visiting the bank's official website directly.",
+      "Forward the email to your friends to warn them."
+    ],
+    "correctOptionIndex": 2,
+    "explanation": "Never use contacts or links provided in unsolicited security emails. Always go directly to the verified bank URL to check account status.",
+    "questionType": "prevention",
+    "difficulty": "Beginner",
+    "learningObjective": "Respond safely to unsolicited communication.",
+    "relatedLaw": "Section 66D",
+    "relatedCrime": "phishing",
+    "relatedModule": "phishing-awareness"
+  },
+  {
+    "category": "Phishing",
+    "questionText": "How does smishing differ from traditional email phishing?",
+    "options": [
+      "Smishing only targets computer systems, while phishing targets phones.",
+      "Smishing is delivered via SMS/text messaging, whereas phishing is delivered via email.",
+      "Smishing is completely legal, whereas phishing is a crime.",
+      "There is no difference; they are identical."
+    ],
+    "correctOptionIndex": 1,
+    "explanation": "Smishing refers to phishing attacks executed over Short Message Service (SMS) text messages, often containing shortened links or mobile numbers.",
+    "questionType": "distinction",
+    "difficulty": "Beginner",
+    "learningObjective": "Distinguish between attack delivery channels.",
+    "relatedLaw": "Section 66D",
+    "relatedCrime": "smishing",
+    "relatedModule": "phishing-awareness"
+  },
+  {
+    "category": "Phishing",
+    "questionText": "Under the Information Technology Act, 2000, what is the maximum imprisonment for identity theft (Section 66C)?",
+    "options": [
+      "Up to 1 year",
+      "Up to 3 years",
+      "Up to 7 years",
+      "Life imprisonment"
+    ],
+    "correctOptionIndex": 1,
+    "explanation": "Section 66C of the IT Act prescribes imprisonment of up to 3 years and a fine of up to ₹1,00,000 for fraudulent use of another's password or signature.",
+    "questionType": "legal-context",
+    "difficulty": "Intermediate",
+    "learningObjective": "Know the penalties for electronic identity theft.",
+    "relatedLaw": "Section 66C",
+    "relatedCrime": "credential-theft",
+    "relatedModule": "phishing-awareness"
+  },
+  {
+    "category": "Phishing",
+    "questionText": "You land on a login page for a banking service. Which of the following warnings indicates the connection is NOT encrypted?",
+    "options": [
+      "A \"Connection is secure\" notification.",
+      "The protocol prefix reads \"http://\" instead of \"https://\".",
+      "The page has a dark background.",
+      "The page is in English."
+    ],
+    "correctOptionIndex": 1,
+    "explanation": "HTTP connections are unencrypted, allowing attackers to intercept credentials in plain text. Secure pages always use HTTPS.",
+    "questionType": "scenario",
+    "difficulty": "Beginner",
+    "learningObjective": "Recognize connection encryption status.",
+    "relatedLaw": "Section 43A",
+    "relatedCrime": "data-breach",
+    "relatedModule": "phishing-awareness"
+  },
+  {
+    "category": "Phishing",
+    "questionText": "What is \"Spear Phishing\"?",
+    "options": [
+      "Phishing attacks targeted randomly at millions of users.",
+      "A highly targeted phishing attack customized for a specific individual or organization.",
+      "A phishing scam that uses voice calls instead of email.",
+      "A physical attack on computer servers."
+    ],
+    "correctOptionIndex": 1,
+    "explanation": "Spear phishing targets specific individuals or organizations using personalized details (like names, department roles) to appear authentic.",
+    "questionType": "knowledge",
+    "difficulty": "Intermediate",
+    "learningObjective": "Understand targeted social engineering variants.",
+    "relatedLaw": "Section 66D",
+    "relatedCrime": "spear-phishing",
+    "relatedModule": "phishing-awareness"
+  },
+  {
+    "category": "Phishing",
+    "questionText": "Myth or Fact: If a website address starts with HTTPS and shows a lock icon, the business/content on the page is guaranteed to be honest and safe.",
+    "options": [
+      "Fact: HTTPS lock certificates are only issued to honest, safe businesses.",
+      "Myth: Attackers can easily get free HTTPS certificates to secure their fake login pages."
+    ],
+    "correctOptionIndex": 1,
+    "explanation": "HTTPS only guarantees that the connection is encrypted, not that the owner of the page is legitimate. Phishing sites frequently use HTTPS.",
+    "questionType": "myth-fact",
+    "difficulty": "Intermediate",
+    "learningObjective": "Deconstruct the lock icon security myth.",
+    "relatedLaw": "Section 66D",
+    "relatedCrime": "phishing",
+    "relatedModule": "phishing-awareness"
+  },
+  {
+    "category": "Phishing",
+    "questionText": "You receive a Skype message from a coworker asking you to download and review an attached PDF report urgently. The phrasing is slightly off. What should you do?",
+    "options": [
+      "Download and open the document to be helpful.",
+      "Ignore the message completely.",
+      "Contact the coworker through an alternate trusted channel (like phone or in-person) to verify they sent it.",
+      "Reply on Skype asking if they are real."
+    ],
+    "correctOptionIndex": 2,
+    "explanation": "Accounts can be hijacked. Always verify unusual requests or files using a separate, out-of-band communication channel.",
+    "questionType": "situational-judgment",
+    "difficulty": "Advanced",
+    "learningObjective": "Apply out-of-band verification procedures.",
+    "relatedLaw": "Section 66C",
+    "relatedCrime": "account-takeover",
+    "relatedModule": "phishing-awareness"
+  },
+  {
+    "category": "Phishing",
+    "questionText": "If you suspect you have clicked a phishing link and entered your Netbanking password, what should be your FIRST action?",
+    "options": [
+      "Report it to the police cyber cell.",
+      "Call your bank immediately to block the accounts and change the compromised password.",
+      "Wait 24 hours to see if any money is deducted.",
+      "Uninstall the browser."
+    ],
+    "correctOptionIndex": 1,
+    "explanation": "Minimize damage by immediately locking your banking credentials and changing your passwords to revoke attacker access.",
+    "questionType": "sequence",
+    "difficulty": "Intermediate",
+    "learningObjective": "Recall sequence of containment steps.",
+    "relatedLaw": "Section 66C",
+    "relatedCrime": "credential-theft",
+    "relatedModule": "phishing-awareness"
+  },
+  {
+    "category": "Phishing",
+    "questionText": "What is the safest way to verify an unexpected security alert email from an online service provider?",
+    "options": [
+      "Click the link in the email and see if it looks real.",
+      "Call the support phone number listed in the email body.",
+      "Navigate to the service official app/website independently, log in, and check for alerts.",
+      "Ignore it completely as all security alerts are scams."
+    ],
+    "correctOptionIndex": 2,
+    "explanation": "Always inspect and verify notifications independently by logging into your profile directly through official bookmarks or apps.",
+    "questionType": "prevention",
+    "difficulty": "Beginner",
+    "learningObjective": "Implement safe verification strategies.",
+    "relatedLaw": "Section 43A",
+    "relatedCrime": "data-breach",
+    "relatedModule": "phishing-awareness"
+  },
+  {
+    "category": "Social Engineering",
+    "questionText": "What is the primary defining characteristic of \"Social Engineering\"?",
+    "options": [
+      "Exploiting hardware bugs in computers.",
+      "Manipulating human psychology and trust to gain unauthorized access to assets or data.",
+      "Writing programs to crawl social media websites.",
+      "Designing websites for public institutions."
+    ],
+    "correctOptionIndex": 1,
+    "explanation": "Social engineering exploits human qualities like trust, urgency, fear, or curiosity to compromise security, rather than bypassing technical barriers directly.",
+    "questionType": "knowledge",
+    "difficulty": "Beginner",
+    "learningObjective": "Define human-centric threat concepts.",
+    "relatedLaw": "Section 66D",
+    "relatedCrime": "identity-theft",
+    "relatedModule": "phishing-awareness"
+  },
+  {
+    "category": "Social Engineering",
+    "questionText": "You get a call from \"Airtel Support\" saying your SIM card will be deactivated in 1 hour due to missing KYC. They ask you to install \"AnyDesk\" to complete KYC. What should you do?",
+    "options": [
+      "Install AnyDesk and let them guide you to keep the SIM card active.",
+      "Hang up immediately. Official operators never ask you to install remote control apps.",
+      "Provide your Aadhaar number over the call instead.",
+      "Give them the contact number of your family members."
+    ],
+    "correctOptionIndex": 1,
+    "explanation": "AnyDesk/TeamViewer allow attackers to remotely view your phone screen, bypass MFA, and capture passwords. Never install screen-sharing software for caller requests.",
+    "questionType": "scenario",
+    "difficulty": "Intermediate",
+    "learningObjective": "Recognize remote-access tools vishing patterns.",
+    "relatedLaw": "Section 66D",
+    "relatedCrime": "vishing",
+    "relatedModule": "phishing-awareness"
+  },
+  {
+    "category": "Social Engineering",
+    "questionText": "An SMS claims: \"Congratulations! You have won a ₹5,00,000 cash lottery from KBC. Click this link to claim your reward before midnight.\" Which indicator is most suspicious?",
+    "options": [
+      "The high prize amount.",
+      "The urgency (midnight deadline) and the request to click a link to receive money.",
+      "The SMS is in English.",
+      "The name of the lottery program."
+    ],
+    "correctOptionIndex": 1,
+    "explanation": "Urgency combined with free lottery cash claims is a classic baiting vector. Genuine entities do not send link-based cash lotteries.",
+    "questionType": "recognition",
+    "difficulty": "Beginner",
+    "learningObjective": "Spot lottery baiting warning signs.",
+    "relatedLaw": "BNS Section 318",
+    "relatedCrime": "online-cheating",
+    "relatedModule": "phishing-awareness"
+  },
+  {
+    "category": "Social Engineering",
+    "questionText": "A caller claiming to be a CBI officer states you are under \"digital arrest\" for money laundering via your Aadhaar. They demand you stay on a Skype call and transfer funds to audit. What is your safest response?",
+    "options": [
+      "Transfer the funds to prove your innocence and cooperate.",
+      "Hang up immediately. No law enforcement agency has the power of \"digital arrest\" or demands transfers over calls.",
+      "Request them to send a WhatsApp copy of their ID badge first.",
+      "Stay on the call but refuse to pay."
+    ],
+    "correctOptionIndex": 1,
+    "explanation": "Digital arrest is a complete fraud. Police and government agencies never arrest citizens online, place them on video holds, or solicit escrow audits.",
+    "questionType": "prevention",
+    "difficulty": "Intermediate",
+    "learningObjective": "Deconstruct digital arrest extortion scams.",
+    "relatedLaw": "BNS Section 319",
+    "relatedCrime": "online-impersonation",
+    "relatedModule": "phishing-awareness"
+  },
+  {
+    "category": "Social Engineering",
+    "questionText": "What is the maximum prison sentence for cheating by personation under Section 66D of the IT Act?",
+    "options": [
+      "Up to 1 year",
+      "Up to 3 years",
+      "Up to 5 years",
+      "Up to 10 years"
+    ],
+    "correctOptionIndex": 1,
+    "explanation": "Section 66D specifies that cheating by personation using a communication device carries imprisonment of up to 3 years and a fine of up to ₹1,00,000.",
+    "questionType": "legal-context",
+    "difficulty": "Beginner",
+    "learningObjective": "Identify criminal penalties for electronic personation.",
+    "relatedLaw": "Section 66D",
+    "relatedCrime": "online-cheating",
+    "relatedModule": "phishing-awareness"
+  },
+  {
+    "category": "Social Engineering",
+    "questionText": "Myth or Fact: Social engineering attackers are easy to detect because they sound uneducated, speak rudely, or make obvious spelling mistakes.",
+    "options": [
+      "Fact: Professionals never fall for scams because scammers are transparently clumsy.",
+      "Myth: Scammers often speak professionally, use formal templates, and build high trust profiles."
+    ],
+    "correctOptionIndex": 1,
+    "explanation": "Modern social engineers use professional scripts, authentic terminology, and clone actual company materials to build trust.",
+    "questionType": "myth-fact",
+    "difficulty": "Intermediate",
+    "learningObjective": "Reconstruct psychological profiles of social engineers.",
+    "relatedLaw": "BNS Section 319",
+    "relatedCrime": "online-impersonation",
+    "relatedModule": "phishing-awareness"
+  },
+  {
+    "category": "Social Engineering",
+    "questionText": "A WhatsApp message from your supervisor's real name and picture claims they are in a meeting and need you to purchase 5 Google Play gift cards for a client immediately. What should you do?",
+    "options": [
+      "Buy the gift cards and message the codes to keep your supervisor happy.",
+      "Report it to the IT administrator and call the supervisor directly on their cell phone to verify.",
+      "Ignore the request and buy only 1 card to be safe.",
+      "Ask the supervisor to email you from their personal account."
+    ],
+    "correctOptionIndex": 1,
+    "explanation": "This is a classic \"Executive Impersonation\" spear phishing tactic. Verify requests involving monetary transfers via voice or in-person checks.",
+    "questionType": "situational-judgment",
+    "difficulty": "Advanced",
+    "learningObjective": "Deter executive impersonation scams.",
+    "relatedLaw": "Section 66D",
+    "relatedCrime": "online-impersonation",
+    "relatedModule": "phishing-awareness"
+  },
+  {
+    "category": "Social Engineering",
+    "questionText": "What is the primary difference between vishing and phishing?",
+    "options": [
+      "Vishing is done via telephone/voice, while phishing is done via electronic text/email.",
+      "Vishing is legal in corporate setups, while phishing is not.",
+      "Vishing targets only mobile SIMs, while phishing targets only servers.",
+      "Vishing is an automated bot virus, while phishing is manual."
+    ],
+    "correctOptionIndex": 0,
+    "explanation": "Vishing (voice phishing) uses direct telephone calls to manipulate targets, whereas phishing represents the broader category primarily associated with emails/messages.",
+    "questionType": "distinction",
+    "difficulty": "Beginner",
+    "learningObjective": "Classify vishing vs phishing vectors.",
+    "relatedLaw": "Section 66D",
+    "relatedCrime": "vishing",
+    "relatedModule": "phishing-awareness"
+  },
+  {
+    "category": "Social Engineering",
+    "questionText": "During a vishing call, if the caller creates massive panic by claiming your credit card is locked due to fraudulent logs, what should you do FIRST?",
+    "options": [
+      "Give them your OTP immediately to cancel the block.",
+      "Hang up immediately, wait 3 minutes, and call the official support number printed on the back of your card.",
+      "Call your local cyber police cell to file a report before hanging up.",
+      "Threaten to sue the caller."
+    ],
+    "correctOptionIndex": 1,
+    "explanation": "Hanging up breaks the emotional state of urgency. Verifying independently via details printed on your physical card isolates you from spoof contacts.",
+    "questionType": "sequence",
+    "difficulty": "Intermediate",
+    "learningObjective": "Execute safe sequences during high-pressure vishing.",
+    "relatedLaw": "BNS Section 318",
+    "relatedCrime": "vishing",
+    "relatedModule": "phishing-awareness"
+  },
+  {
+    "category": "Social Engineering",
+    "questionText": "What is the most robust defensive rule to protect yourself from phone-based social engineering requests?",
+    "options": [
+      "Change your SIM card every month.",
+      "Never share passwords, PINs, OTPs, or biometric codes over a call, regardless of who the caller claims to be.",
+      "Use only landline connections for sensitive calls.",
+      "Never pick up calls from unknown numbers."
+    ],
+    "correctOptionIndex": 1,
+    "explanation": "No legitimate financial or support institution will ever ask for passwords, PINs, or verification codes over a telephone call.",
+    "questionType": "prevention",
+    "difficulty": "Beginner",
+    "learningObjective": "Apply the absolute credentials secrecy rule.",
+    "relatedLaw": "Section 66C",
+    "relatedCrime": "vishing",
+    "relatedModule": "phishing-awareness"
+  },
+  {
+    "category": "Financial Safety",
+    "questionText": "Under what circumstances does receiving money into your account require you to scan a QR code or enter your UPI PIN?",
+    "options": [
+      "When the sender is from another state.",
+      "Only when the transaction exceeds ₹10,000.",
+      "NEVER. Entering your UPI PIN is strictly for authorizing payments/debts, not receiving credits.",
+      "When receiving refunds from e-commerce portals."
+    ],
+    "correctOptionIndex": 2,
+    "explanation": "Entering your UPI PIN authorizes a debit from your account. Senders only need your VPA/number to pay you; they never need you to enter a PIN or scan a QR code.",
+    "questionType": "knowledge",
+    "difficulty": "Beginner",
+    "learningObjective": "Analyze UPI PIN authorization direction.",
+    "relatedLaw": "BNS Section 318",
+    "relatedCrime": "upi-fraud",
+    "relatedModule": "phishing-awareness"
+  },
+  {
+    "category": "Financial Safety",
+    "questionText": "A buyer on OLX/Marketplace agrees to purchase your listing. They send you a QR code claiming: \"Scan this to receive your ₹5,000 payment instantly.\" What is the safest response?",
+    "options": [
+      "Scan the QR code and enter your UPI PIN to approve the transaction.",
+      "Refuse the transaction immediately. Real buyers transfer money directly and do not send receipt QR codes.",
+      "Change your UPI PIN first, then scan the QR code.",
+      "Request them to send a credit card number instead."
+    ],
+    "correctOptionIndex": 1,
+    "explanation": "Lottery/marketplace QR scams trick sellers into scanning codes that set up instant debit authorizations. Never scan QR codes to receive money.",
+    "questionType": "scenario",
+    "difficulty": "Intermediate",
+    "learningObjective": "Recognize OLX/marketplace QR scam traps.",
+    "relatedLaw": "BNS Section 318",
+    "relatedCrime": "qr-scam",
+    "relatedModule": "phishing-awareness"
+  },
+  {
+    "category": "Financial Safety",
+    "questionText": "You scan a QR code at a retail merchant. The payment app shows the name \"J.K. Enterprises\" but the banner on the counter reads \"Mega Foodcourt\". What indicator is suspicious?",
+    "options": [
+      "The mismatched payment name (potential tampered QR code sticker).",
+      "The app took 5 seconds to load.",
+      "The merchant didn't smile.",
+      "The payment is made via mobile network."
+    ],
+    "correctOptionIndex": 0,
+    "explanation": "Scammers paste tampered QR stickers over merchants' original codes. Always verify that the name resolved on your app screen matches the business name.",
+    "questionType": "recognition",
+    "difficulty": "Beginner",
+    "learningObjective": "Spot QR sticker tampering indicators.",
+    "relatedLaw": "Section 66D",
+    "relatedCrime": "qr-scam",
+    "relatedModule": "phishing-awareness"
+  },
+  {
+    "category": "Financial Safety",
+    "questionText": "What is the utility of reviewing transaction alerts sent to your mobile phone?",
+    "options": [
+      "They exist only to clutter your SMS inbox.",
+      "They allow you to verify the exact amount and merchant name being debited from your bank account.",
+      "They are sent to verify your SIM operator is active.",
+      "They allow you to claim tax deductions."
+    ],
+    "correctOptionIndex": 1,
+    "explanation": "Reviewing alerts ensures that unauthorized debits are caught immediately. Check details like value, currency, and recipient before entering any authorization codes.",
+    "questionType": "prevention",
+    "difficulty": "Beginner",
+    "learningObjective": "Review debit warnings and transactions.",
+    "relatedLaw": "Section 43A",
+    "relatedCrime": "data-breach",
+    "relatedModule": "phishing-awareness"
+  },
+  {
+    "category": "Financial Safety",
+    "questionText": "Under the Bharatiya Nyaya Sanhita (BNS) 2023, what is the maximum prison sentence for cheating (BNS Section 318)?",
+    "options": [
+      "Up to 3 years",
+      "Up to 5 years",
+      "Up to 7 years",
+      "Up to 10 years"
+    ],
+    "correctOptionIndex": 2,
+    "explanation": "Section 318 of BNS (formerly IPC 420) provides for imprisonment of up to 7 years and a fine for cheating and dishonestly inducing delivery of property.",
+    "questionType": "legal-context",
+    "difficulty": "Intermediate",
+    "learningObjective": "Identify criminal penalties for financial cheating.",
+    "relatedLaw": "BNS Section 318",
+    "relatedCrime": "online-cheating",
+    "relatedModule": "phishing-awareness"
+  }
+]

@@ -10,9 +10,9 @@ function Sidebar({ user, isOpen, setIsOpen }) {
 
   return (
     <aside className={`sidebar ${isOpen ? 'open' : ''}`}>
-      <div className="brand" style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '1.25rem', fontWeight: 'bold', marginBottom: 'var(--space-xl)', color: 'var(--accent-navy)' }}>
-        🛡️ Cyber Law Portal
-      </div>
+      <Link to="/" className="brand" style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: 'var(--space-xl)', padding: '0 8px', textDecoration: 'none' }}>
+        <img src="/logo/cyber-law-logo-horizontal.svg" alt="Cyber Law Awareness Portal" style={{ height: '36px', width: 'auto', maxWidth: '100%' }} />
+      </Link>
       <nav className="nav-links" style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-xs)' }}>
         <Link to="/" className={isActive('/')} onClick={() => setIsOpen(false)}>
           Home

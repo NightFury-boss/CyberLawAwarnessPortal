@@ -13,7 +13,15 @@ const QuizAttemptSchema = new mongoose.Schema({
   },
   answers: [
     {
-      type: Number
+      questionId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'QuizQuestion',
+        required: true
+      },
+      selectedOptionIndex: {
+        type: Number,
+        required: true
+      }
     }
   ],
   score: {
@@ -23,6 +31,13 @@ const QuizAttemptSchema = new mongoose.Schema({
   percentage: {
     type: Number,
     required: true
+  },
+  attemptNumber: {
+    type: Number,
+    default: 1
+  },
+  timeTaken: {
+    type: Number // in seconds
   },
   completedAt: {
     type: Date,

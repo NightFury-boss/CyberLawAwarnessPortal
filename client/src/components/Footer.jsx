@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 
 function Footer() {
   return (
@@ -16,41 +17,47 @@ function Footer() {
         gap: 'var(--space-xl)'
       }}>
         <div>
-          <h3 style={{ marginBottom: 'var(--space-sm)', fontSize: '1.2rem', fontFamily: 'var(--font-serif)' }}>
-            ⚖️ Cyber Law Awareness Portal
-          </h3>
-          <p style={{ maxWidth: '500px', marginBottom: 'var(--space-md)' }}>
-            An academic final-year project designed to educate citizens about Indian Cyber Law, especially the Information Technology Act, 2000, and standard safe digital habits through simulations.
+          <div style={{ marginBottom: 'var(--space-sm)' }}>
+            <img src="/logo/cyber-law-logo-horizontal.svg" alt="Cyber Law Awareness Portal" style={{ height: '36px', width: 'auto' }} />
+          </div>
+          <p style={{ maxWidth: '500px', marginBottom: 'var(--space-md)', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+            An educational platform for cyber-law and digital-safety awareness.
           </p>
-          <div className="alert alert-warning" style={{ margin: 0, padding: 'var(--space-sm)' }}>
-            ⚠️ <strong>Legal Disclaimer:</strong> Information provided on this portal is for educational awareness purposes only and should not be treated as professional legal advice.
+          <div className="alert alert-warning" style={{ margin: 0, padding: 'var(--space-sm)', fontSize: '0.8rem' }}>
+            <strong>Legal Disclaimer:</strong> Information provided on this portal is for educational awareness purposes only and should not be treated as professional legal advice.
           </div>
         </div>
         
         <div>
-          <h4 style={{ marginBottom: 'var(--space-sm)', fontSize: '1rem' }}>Emergency Reporting</h4>
-          <p style={{ marginBottom: 'var(--space-sm)' }}>
+          <h4 style={{ marginBottom: 'var(--space-sm)', fontSize: '1rem', color: 'var(--accent-navy)', fontWeight: 'bold' }}>Emergency Reporting</h4>
+          <p style={{ marginBottom: 'var(--space-sm)', fontSize: '0.85rem' }}>
             If you have been a victim of cyber fraud, report it immediately:
           </p>
-          <p style={{ fontWeight: '600', color: 'var(--color-error)', marginBottom: 'var(--space-xs)' }}>
-            📞 Helpline: 1930 (Toll-Free)
+          <p style={{ fontWeight: '600', color: 'var(--color-error)', marginBottom: 'var(--space-xs)', fontSize: '0.85rem' }}>
+            Helpline: 1930 (Toll-Free)
           </p>
-          <p>
-            💻 Portal: <a href="https://cybercrime.gov.in" target="_blank" rel="noopener noreferrer">cybercrime.gov.in</a>
+          <p style={{ fontSize: '0.85rem' }}>
+            Portal: <a href="https://cybercrime.gov.in" target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'underline' }}>cybercrime.gov.in</a>
           </p>
         </div>
 
         <div>
-          <h4 style={{ marginBottom: 'var(--space-sm)', fontSize: '1rem' }}>Reference Links</h4>
-          <ul style={{ listStyle: 'none', padding: 0 }}>
-            <li style={{ marginBottom: 'var(--space-xs)' }}>
-              <a href="https://www.meity.gov.in" target="_blank" rel="noopener noreferrer">MeitY Official</a>
+          <h4 style={{ marginBottom: 'var(--space-sm)', fontSize: '1rem', color: 'var(--accent-navy)', fontWeight: 'bold' }}>Portal Navigation</h4>
+          <ul style={{ listStyle: 'none', padding: 0, display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '0.85rem' }}>
+            <li>
+              <Link to="/laws" style={{ color: 'var(--text-secondary)' }}>Cyber Laws</Link>
             </li>
-            <li style={{ marginBottom: 'var(--space-xs)' }}>
-              <a href="https://www.cert-in.org.in" target="_blank" rel="noopener noreferrer">CERT-In</a>
+            <li>
+              <Link to="/crimes" style={{ color: 'var(--text-secondary)' }}>Crimes Library</Link>
             </li>
-            <li style={{ marginBottom: 'var(--space-xs)' }}>
-              <a href="https://www.rbi.org.in" target="_blank" rel="noopener noreferrer">RBI Safe Payments</a>
+            <li>
+              <Link to="/cases" style={{ color: 'var(--text-secondary)' }}>Case Studies</Link>
+            </li>
+            <li>
+              <Link to="/prevention" style={{ color: 'var(--text-secondary)' }}>Prevention Centre</Link>
+            </li>
+            <li>
+              <Link to="/resources" style={{ color: 'var(--text-secondary)' }}>Legal Resources</Link>
             </li>
           </ul>
         </div>

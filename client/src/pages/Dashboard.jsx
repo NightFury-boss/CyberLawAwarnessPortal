@@ -27,14 +27,14 @@ function Dashboard({ user, progressTrigger }) {
 
   const getBadgeIcon = (badge) => {
     switch (badge) {
-      case 'First Step': return '🚀';
-      case 'Phishing Detector': return '🎣';
-      case 'Cyber Law Learner': return '⚖️';
-      case 'Safe Browser': return '🌐';
-      case 'Scam Spotter': return '🎯';
-      case 'Cyber Defender': return '🛡️';
-      case 'Cyber Guardian': return '🏆';
-      default: return '🏅';
+      case 'First Step': return 'FS';
+      case 'Phishing Detector': return 'PD';
+      case 'Cyber Law Learner': return 'CL';
+      case 'Safe Browser': return 'SB';
+      case 'Scam Spotter': return 'SS';
+      case 'Cyber Defender': return 'CD';
+      case 'Cyber Guardian': return 'CG';
+      default: return '--';
     }
   };
 
@@ -67,7 +67,7 @@ function Dashboard({ user, progressTrigger }) {
         gap: 'var(--space-md)'
       }}>
         <div>
-          <h1 style={{ fontSize: '2.4rem', fontFamily: 'var(--font-serif)' }}>
+          <h1 style={{ fontSize: '2.4rem' }}>
             Welcome Back, {progress.fullName}
           </h1>
           <p className="text-muted">Account: {progress.email} | Student Profile</p>
@@ -94,8 +94,8 @@ function Dashboard({ user, progressTrigger }) {
           backgroundColor: 'var(--bg-secondary)',
           borderRadius: '6px'
         }}>
-          <span style={{ fontSize: '3rem' }}>🔒</span>
-          <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: '2.2rem', marginTop: 'var(--space-sm)', marginBottom: 'var(--space-md)' }}>
+          <span style={{ fontSize: '1.6rem', fontWeight: '700', color: 'var(--accent-navy)' }}>Progress</span>
+          <h2 style={{ fontSize: '2.2rem', marginTop: 'var(--space-sm)', marginBottom: 'var(--space-md)' }}>
             Complete Your Baseline Assessment
           </h2>
           <p style={{ color: 'var(--text-secondary)', maxWidth: '600px', margin: '0 auto var(--space-xl) auto', fontSize: '1.05rem' }}>
@@ -147,12 +147,12 @@ function Dashboard({ user, progressTrigger }) {
           <div className="editorial-grid">
             {/* Left side: strengths & recommendations */}
             <div>
-              <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: '1.8rem', marginBottom: 'var(--space-md)' }}>
+              <h2 style={{ fontSize: '1.8rem', marginBottom: 'var(--space-md)' }}>
                 Learning Path & Recommendations
               </h2>
 
               <div className="editorial-card">
-                <h4 style={{ marginBottom: 'var(--space-sm)' }}>📋 Recommendations Based on Weak Areas</h4>
+                <h4 style={{ marginBottom: 'var(--space-sm)' }}>Recommendations Based on Weak Areas</h4>
                 <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: 'var(--space-md)' }}>
                   Our system evaluates your assessment decisions and automatically suggests these learning modules to address vulnerabilities:
                 </p>
@@ -167,7 +167,7 @@ function Dashboard({ user, progressTrigger }) {
                     borderRadius: '4px'
                   }}>
                     <div>
-                      <strong style={{ fontSize: '0.9rem' }}>🎣 Phishing & Cloned Websites</strong>
+                      <strong style={{ fontSize: '0.9rem' }}>Phishing & Cloned Websites</strong>
                       <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Required section based on URL inspection scores</p>
                     </div>
                     <Link to="/crimes" className="btn btn-secondary" style={{ fontSize: '0.75rem', padding: '4px 8px' }}>
@@ -184,7 +184,7 @@ function Dashboard({ user, progressTrigger }) {
                     borderRadius: '4px'
                   }}>
                     <div>
-                      <strong style={{ fontSize: '0.9rem' }}>💳 UPI, QR Codes & Financial safety</strong>
+                      <strong style={{ fontSize: '0.9rem' }}>UPI, QR Codes & Financial safety</strong>
                       <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Required section based on transaction check scores</p>
                     </div>
                     <Link to="/crimes" className="btn btn-secondary" style={{ fontSize: '0.75rem', padding: '4px 8px' }}>
@@ -201,7 +201,7 @@ function Dashboard({ user, progressTrigger }) {
                     borderRadius: '4px'
                   }}>
                     <div>
-                      <strong style={{ fontSize: '0.9rem' }}>🔑 Passphrases & MFA setup</strong>
+                      <strong style={{ fontSize: '0.9rem' }}>Passphrases & MFA setup</strong>
                       <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Required section based on credential safety scores</p>
                     </div>
                     <Link to="/prevention" className="btn btn-secondary" style={{ fontSize: '0.75rem', padding: '4px 8px' }}>
@@ -213,7 +213,7 @@ function Dashboard({ user, progressTrigger }) {
 
               {/* Quiz and Learning center link */}
               <div className="editorial-card" style={{ borderColor: 'var(--color-border-dark)' }}>
-                <h3 style={{ fontSize: '1.25rem', marginBottom: 'var(--space-xs)' }}>⚡ Take Learning Quizzes</h3>
+                <h3 style={{ fontSize: '1.25rem', marginBottom: 'var(--space-xs)' }}>Take Learning Quizzes</h3>
                 <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: 'var(--space-md)' }}>
                   Test your legal and preventive knowledge on different categories. Completing quizzes awards badges.
                 </p>
@@ -225,7 +225,7 @@ function Dashboard({ user, progressTrigger }) {
 
             {/* Right side: Badge Locker & final checklist */}
             <div>
-              <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: '1.8rem', marginBottom: 'var(--space-md)' }}>
+              <h2 style={{ fontSize: '1.8rem', marginBottom: 'var(--space-md)' }}>
                 Badge Locker
               </h2>
 
@@ -250,7 +250,7 @@ function Dashboard({ user, progressTrigger }) {
                         <div className="badge-icon">{getBadgeIcon(badgeObj.name)}</div>
                         <div className="badge-name" style={{ fontSize: '0.75rem' }}>{badgeObj.name}</div>
                         <div className="badge-status" style={{ fontSize: '0.65rem' }}>
-                          {isEarned ? '✓ Earned' : 'Locked'}
+                          {isEarned ? 'Earned' : 'Locked'}
                         </div>
                       </div>
                     );
@@ -263,12 +263,12 @@ function Dashboard({ user, progressTrigger }) {
                 <h4 style={{ marginBottom: 'var(--space-sm)' }}>Assessment Progress</h4>
                 <ul style={{ listStyle: 'none', padding: 0, fontSize: '0.85rem' }}>
                   <li style={{ marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <span style={{ color: 'var(--color-success)', fontWeight: 'bold' }}>✓</span>
+                    <span style={{ color: 'var(--color-success)', fontWeight: '600', fontSize: '0.8rem' }}>Done</span>
                     <span>Baseline Assessment: Completed ({progress.baselineScore}/100)</span>
                   </li>
                   <li style={{ marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
                     {hasFinal ? (
-                      <span style={{ color: 'var(--color-success)', fontWeight: 'bold' }}>✓</span>
+                      <span style={{ color: 'var(--color-success)', fontWeight: '600', fontSize: '0.8rem' }}>Done</span>
                     ) : (
                       <span style={{ color: 'var(--text-muted)' }}>○</span>
                     )}

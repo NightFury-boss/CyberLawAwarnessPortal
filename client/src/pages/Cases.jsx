@@ -258,7 +258,7 @@ function Cases() {
               borderLeft: '4px solid var(--accent-navy)',
               padding: 'var(--space-xl)',
               borderRadius: '6px',
-              marginBottom: 'var(--space-2xl)',
+              marginBottom: 'var(--space-xxl)',
               display: 'grid',
               gridTemplateColumns: '1.5fr 1fr',
               gap: 'var(--space-xl)',
@@ -327,29 +327,55 @@ function Cases() {
           )}
 
           {/* ATTACK PATTERNS DIRECTORY */}
-          <div style={{ marginBottom: 'var(--space-2xl)' }}>
-            <h3 style={{ fontSize: '0.9rem', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: '12px', fontWeight: '600' }}>
+          <div style={{ 
+            marginBottom: 'var(--space-xxl)', 
+            borderTop: '1px solid var(--color-border)', 
+            paddingTop: 'var(--space-xl)' 
+          }}>
+            <span style={{
+              fontSize: '0.75rem',
+              textTransform: 'uppercase',
+              letterSpacing: '1.5px',
+              color: 'var(--accent-navy)',
+              fontWeight: '800',
+              display: 'block',
+              marginBottom: '8px'
+            }}>
+              Tactics Directory
+            </span>
+            <h2 style={{ fontSize: '1.6rem', fontWeight: 'bold', color: 'var(--accent-navy)', marginBottom: 'var(--space-xl)' }}>
               Common Attack Patterns In Archive
-            </h3>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '16px' }}>
-              {patternsList.map((p) => (
+            </h2>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '24px 48px' }}>
+              {patternsList.map((p, idx) => (
                 <div
                   key={p.name}
                   onClick={() => handlePatternClick(p.name)}
                   style={{
-                    backgroundColor: activePattern === p.name ? 'var(--accent-navy-light)' : 'var(--bg-secondary)',
-                    border: activePattern === p.name ? '1px solid var(--accent-navy)' : '1px solid var(--color-border)',
-                    borderRadius: '6px',
-                    padding: '16px',
+                    padding: 'var(--space-md) 0',
+                    borderBottom: '1px solid var(--color-border)',
                     cursor: 'pointer',
-                    transition: 'all 0.2s ease'
+                    opacity: activePattern && activePattern !== p.name ? 0.6 : 1,
+                    transition: 'all 0.2s ease',
+                    position: 'relative'
                   }}
+                  className="editorial-pattern-row"
                 >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
-                    <span style={{ fontSize: '1.25rem' }}>{p.icon}</span>
-                    <strong style={{ fontSize: '1rem', color: 'var(--accent-navy)' }}>{p.name}</strong>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                    <span style={{ fontSize: '0.8rem', fontWeight: '700', color: 'var(--text-muted)', fontFamily: 'monospace' }}>
+                      0{idx + 1}
+                    </span>
+                    <span style={{ display: 'flex', alignItems: 'center', color: 'var(--accent-navy)' }}>{p.icon}</span>
+                    <strong style={{ fontSize: '1rem', color: 'var(--accent-navy)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                      {p.name}
+                    </strong>
+                    {activePattern === p.name && (
+                      <span style={{ fontSize: '0.7rem', color: 'var(--accent-navy)', backgroundColor: 'var(--accent-navy-light)', padding: '2px 6px', borderRadius: '4px', marginLeft: 'auto', fontWeight: 'bold' }}>
+                        Active Filter
+                      </span>
+                    )}
                   </div>
-                  <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: 0, lineHeight: '1.4' }}>
+                  <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: 0, lineHeight: '1.5', paddingLeft: '22px' }}>
                     {p.desc}
                   </p>
                 </div>
@@ -357,48 +383,106 @@ function Cases() {
             </div>
           </div>
 
-          {/* Filter Categories tabs */}
-          <div style={{ marginBottom: 'var(--space-xl)' }}>
-            <h3 style={{ fontSize: '0.9rem', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: '10px', fontWeight: '600' }}>
-              Filter by Incident Type
-            </h3>
-            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-              {categories.map((cat) => (
-                <button
-                  key={cat}
-                  onClick={() => {
-                    setActiveCategory(cat);
-                    setActivePattern(null); // clear pattern when selecting category
-                  }}
-                  style={{
-                    padding: '8px 16px',
-                    borderRadius: '20px',
-                    border: '1px solid var(--color-border)',
-                    backgroundColor: activeCategory === cat ? 'var(--accent-navy)' : 'var(--bg-secondary)',
-                    color: activeCategory === cat ? '#ffffff' : 'var(--text-primary)',
-                    fontSize: '0.85rem',
-                    fontWeight: '500',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s ease'
-                  }}
-                >
-                  {cat}
-                </button>
-              ))}
-            </div>
-          </div>
-
           {/* EDITORIAL CASES LIST INDEX */}
           <div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '2px solid var(--color-border)', paddingBottom: '10px', marginBottom: '20px' }}>
-              <h3 style={{ fontSize: '1.1rem', fontWeight: 'bold', color: 'var(--accent-navy)', margin: 0 }}>
-                Incident Registry ({filteredCases.length} files)
-              </h3>
-              {completedCases.length > 0 && (
-                <span style={{ fontSize: '0.85rem', color: 'var(--color-success)', fontWeight: '500' }}>
-                  ✓ {completedCases.length} Audited Cases
+            <div style={{ 
+              borderBottom: '1px solid var(--color-border)', 
+              paddingBottom: 'var(--space-md)', 
+              marginBottom: 'var(--space-xl)'
+            }}>
+              <div style={{ 
+                display: 'flex', 
+                justifyContent: 'space-between', 
+                alignItems: 'baseline', 
+                flexWrap: 'wrap', 
+                gap: '12px',
+                marginBottom: 'var(--space-md)'
+              }}>
+                <div>
+                  <span style={{
+                    fontSize: '0.75rem',
+                    textTransform: 'uppercase',
+                    letterSpacing: '1.5px',
+                    color: 'var(--text-muted)',
+                    fontWeight: 'bold',
+                    display: 'block',
+                    marginBottom: '4px'
+                  }}>
+                    Case Catalog
+                  </span>
+                  <h2 style={{ fontSize: '1.6rem', fontWeight: 'bold', color: 'var(--accent-navy)', margin: 0 }}>
+                    INCIDENT REGISTRY
+                  </h2>
+                </div>
+                
+                <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                  <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: '500', backgroundColor: 'var(--bg-secondary)', padding: '4px 10px', borderRadius: '4px' }}>
+                    {filteredCases.length} files
+                  </span>
+                  {completedCases.length > 0 && (
+                    <span style={{ fontSize: '0.85rem', color: 'var(--color-success)', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><polyline points="20 6 9 17 4 12"/></svg>
+                      Audited
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              {/* Integrated Filter Row */}
+              <div style={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: '12px', 
+                flexWrap: 'wrap',
+                marginTop: 'var(--space-md)',
+                paddingTop: 'var(--space-sm)',
+                borderTop: '1px dashed var(--color-border)'
+              }}>
+                <span style={{ fontSize: '0.75rem', fontWeight: 'bold', color: 'var(--text-muted)', textTransform: 'uppercase' }}>
+                  Filter:
                 </span>
-              )}
+                <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                  {categories.map((cat) => (
+                    <button
+                      key={cat}
+                      onClick={() => {
+                        setActiveCategory(cat);
+                        setActivePattern(null);
+                      }}
+                      style={{
+                        padding: '6px 12px',
+                        borderRadius: '4px',
+                        border: activeCategory === cat ? '1px solid var(--accent-navy)' : '1px solid var(--color-border)',
+                        backgroundColor: activeCategory === cat ? 'var(--accent-navy)' : 'var(--bg-white)',
+                        color: activeCategory === cat ? '#ffffff' : 'var(--text-secondary)',
+                        fontSize: '0.75rem',
+                        fontWeight: activeCategory === cat ? '600' : '500',
+                        cursor: 'pointer',
+                        transition: 'all 0.15s ease'
+                      }}
+                    >
+                      {cat}
+                    </button>
+                  ))}
+                  {activePattern && (
+                    <button
+                      onClick={() => setActivePattern(null)}
+                      style={{
+                        padding: '6px 12px',
+                        borderRadius: '4px',
+                        border: '1px solid var(--accent-navy)',
+                        backgroundColor: 'var(--accent-navy-light)',
+                        color: 'var(--accent-navy)',
+                        fontSize: '0.75rem',
+                        fontWeight: '600',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      Pattern: {activePattern} &times;
+                    </button>
+                  )}
+                </div>
+              </div>
             </div>
 
             {filteredCases.length === 0 ? (
@@ -406,7 +490,7 @@ function Cases() {
                 <p style={{ color: 'var(--text-muted)' }}>No archived incident files matching filters found.</p>
               </div>
             ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0' }}>
                 {filteredCases.map((cs) => {
                   const tagInfo = getCaseTypeLabel(cs.caseType);
                   const isCompleted = completedCases.includes(cs.slug);
@@ -416,10 +500,9 @@ function Cases() {
                       key={cs._id}
                       onClick={() => handleSelectCase(cs.slug)}
                       style={{
-                        padding: '20px',
-                        backgroundColor: 'var(--bg-primary)',
-                        border: '1px solid var(--color-border)',
-                        borderRadius: '4px',
+                        padding: 'var(--space-lg) 0',
+                        backgroundColor: 'transparent',
+                        borderBottom: '1px solid var(--color-border)',
                         cursor: 'pointer',
                         transition: 'all 0.2s ease',
                         display: 'flex',
@@ -428,14 +511,14 @@ function Cases() {
                       }}
                       className="incident-index-row"
                     >
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '8px' }}>
-                        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                          <span style={{ fontFamily: 'monospace', fontSize: '0.85rem', color: 'var(--accent-navy)', fontWeight: 'bold' }}>
-                            {cs.caseNumber}
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
+                        <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                          <span style={{ fontFamily: 'monospace', fontSize: '0.8rem', color: 'var(--accent-navy)', fontWeight: 'bold' }}>
+                            CASE FILE {cs.caseNumber.replace('CASE-', '')}
                           </span>
                           <span style={{
                             fontSize: '0.65rem',
-                            padding: '1px 6px',
+                            padding: '2px 8px',
                             borderRadius: '3px',
                             fontWeight: 'bold',
                             backgroundColor: tagInfo.bg,
@@ -444,13 +527,22 @@ function Cases() {
                             {tagInfo.text}
                           </span>
                           {isCompleted && (
-                            <span style={{ fontSize: '0.75rem', color: 'var(--color-success)', fontWeight: 'bold' }}>
-                              [✓ Audited]
+                            <span style={{ 
+                              fontSize: '0.7rem', 
+                              color: 'var(--color-success)', 
+                              fontWeight: '700',
+                              textTransform: 'uppercase',
+                              letterSpacing: '0.5px',
+                              backgroundColor: 'var(--color-success-light)',
+                              padding: '2px 8px',
+                              borderRadius: '3px'
+                            }}>
+                              Audited
                             </span>
                           )}
                         </div>
-                        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                          <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                        <div style={{ display: 'flex', gap: '8px', alignItems: 'center', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                          <span>
                             Method: <strong>{cs.attackVector}</strong>
                           </span>
                           <span>•</span>
@@ -458,17 +550,21 @@ function Cases() {
                         </div>
                       </div>
 
-                      <h3 style={{ fontSize: '1.35rem', color: 'var(--text-primary)', fontWeight: 'bold', margin: '4px 0' }}>
+                      <h3 style={{ fontSize: '1.4rem', color: 'var(--accent-navy)', fontWeight: 'bold', margin: '4px 0 2px 0' }}>
                         {cs.title}
                       </h3>
 
-                      <p style={{ fontSize: '0.95rem', color: 'var(--text-secondary)', margin: '0 0 10px 0', lineHeight: '1.5' }}>
+                      <p style={{ fontSize: '0.95rem', color: 'var(--text-secondary)', margin: '0 0 4px 0', lineHeight: '1.6', maxWidth: '850px' }}>
                         {cs.shortDescription}
                       </p>
 
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.85rem', color: 'var(--accent-navy)', fontWeight: '600' }}>
-                        <span>Domain: {cs.incidentType}</span>
-                        <span>Examine Case File &rarr;</span>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.85rem', color: 'var(--accent-navy)', fontWeight: '600', marginTop: '4px' }}>
+                        <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 'normal' }}>
+                          Domain: <strong style={{ color: 'var(--text-secondary)' }}>{cs.incidentType}</strong>
+                        </span>
+                        <span className="interactive-link">
+                          Examine Case File <span className="arrow">&rarr;</span>
+                        </span>
                       </div>
                     </div>
                   );
@@ -478,7 +574,6 @@ function Cases() {
           </div>
         </div>
       )}
-
       {/* 4. CASE DETAILS NARRATIVE VIEW */}
       {!loading && selectedCase && (
         <div style={{ maxWidth: '850px', margin: '0 auto' }}>

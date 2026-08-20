@@ -59,6 +59,16 @@ function Crimes() {
     }
   }, []);
 
+  useEffect(() => {
+    if (crimes.length > 0 && window.location.hash) {
+      const slug = window.location.hash.substring(1);
+      const matched = crimes.find(c => c.slug === slug);
+      if (matched) {
+        handleSelectCrime(matched);
+      }
+    }
+  }, [crimes]);
+
   const fetchInitialData = async () => {
     setLoading(true);
     try {
@@ -187,31 +197,29 @@ function Crimes() {
 
   // Red Flag level helper
   const getRedFlagMeter = (level) => {
-    let bars = '░░░░░░░░░░';
+    let filled = 0;
     let color = 'var(--text-muted)';
-    if (level === 'Low') {
-      bars = '████░░░░░░';
-      color = 'var(--color-success)';
-    } else if (level === 'Moderate') {
-      bars = '██████░░░░';
-      color = '#cca000';
-    } else if (level === 'High') {
-      bars = '████████░░';
-      color = '#e67300';
-    } else if (level === 'Very High' || level === 'Critical') {
-      bars = '██████████';
-      color = 'var(--color-error)';
-    }
+    if (level === 'Low') { filled = 3; color = 'var(--color-success)'; }
+    else if (level === 'Moderate') { filled = 5; color = '#cca000'; }
+    else if (level === 'High') { filled = 7; color = '#e67300'; }
+    else if (level === 'Very High' || level === 'Critical') { filled = 10; color = 'var(--color-error)'; }
     return (
-      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-        <span style={{ fontFamily: 'monospace', fontSize: '1rem', letterSpacing: '2px', color }}>{bars}</span>
-        <span style={{ fontSize: '0.85rem', fontWeight: 'bold', color }}>{level.toUpperCase()}</span>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+        <div style={{ display: 'flex', gap: '2px' }}>
+          {Array.from({ length: 10 }, (_, i) => (
+            <div key={i} style={{
+              width: '6px', height: '14px', borderRadius: '1px',
+              backgroundColor: i < filled ? color : 'var(--color-border)'
+            }} />
+          ))}
+        </div>
+        <span style={{ fontSize: '0.75rem', fontWeight: '700', color, letterSpacing: '0.5px', textTransform: 'uppercase' }}>{level}</span>
       </div>
     );
   };
 
   return (
-    <div className="container page-entry" style={{ padding: 'var(--space-xl) 0', fontFamily: 'var(--font-sans)' }}>
+    <div className="container" style={{ padding: 'var(--space-xl) 0', fontFamily: 'var(--font-sans)' }}>
       {error && <div className="alert alert-error">{error}</div>}
 
       {/* LOADING STATE */}
@@ -250,7 +258,7 @@ function Crimes() {
               marginBottom: 'var(--space-xl)'
             }}>
               <h3 style={{ fontSize: '1.1rem', color: 'var(--accent-navy)', display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px', fontWeight: 'bold' }}>
-                💡 RECOMMENDED FOR YOU
+                RECOMMENDED FOR YOU
               </h3>
               <p style={{ fontSize: '0.95rem', color: 'var(--text-primary)', marginBottom: 'var(--space-md)' }}>
                 {recReason}
@@ -270,7 +278,7 @@ function Crimes() {
                     </p>
                     <div style={{ marginTop: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.8rem' }}>
                       <span style={{ fontWeight: '500', color: 'var(--accent-navy)' }}>Intelligence Profile &rarr;</span>
-                      {completedCrimes.includes(rec.slug) && <span style={{ color: 'var(--color-success)' }}>✓ Completed</span>}
+                      {completedCrimes.includes(rec.slug) && <span style={{ color: 'var(--color-success)' }}>Completed</span>}
                     </div>
                   </div>
                 ))}
@@ -351,7 +359,7 @@ function Crimes() {
                       gap: '6px'
                     }}
                   >
-                    🔍 {item.title}
+                    {item.title}
                   </button>
                 ))}
               </div>
@@ -385,7 +393,7 @@ function Crimes() {
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
                         <span className="tag" style={{ fontSize: '0.75rem' }}>{crime.category}</span>
                         {completedCrimes.includes(crime.slug) && (
-                          <span style={{ color: 'var(--color-success)', fontSize: '0.8rem', fontWeight: 'bold' }}>✓ Done</span>
+                          <span style={{ color: 'var(--color-success)', fontSize: '0.8rem', fontWeight: 'bold' }}>Done</span>
                         )}
                       </div>
                       <h3 style={{ fontSize: '1.4rem', margin: '4px 0 8px 0', color: 'var(--accent-navy)' }}>
@@ -524,7 +532,7 @@ function Crimes() {
             <a href="#overview" style={{ color: 'var(--text-primary)', fontWeight: '600', textDecoration: 'none', fontSize: '0.9rem' }}>1. Overview</a>
             <a href="#lifecycle" style={{ color: 'var(--text-primary)', fontWeight: '600', textDecoration: 'none', fontSize: '0.9rem' }}>2. How it Unfolds</a>
             {selectedCrime.spotTheFlags?.messageText && (
-              <a href="#simulator" style={{ color: 'var(--accent-navy)', fontWeight: '600', textDecoration: 'none', fontSize: '0.9rem' }}>🎯 3. Spot the Flags Game</a>
+              <a href="#simulator" style={{ color: 'var(--accent-navy)', fontWeight: '600', textDecoration: 'none', fontSize: '0.9rem' }}>3. Spot the Flags Game</a>
             )}
             <a href="#prevention" style={{ color: 'var(--text-primary)', fontWeight: '600', textDecoration: 'none', fontSize: '0.9rem' }}>4. Prevention Check</a>
             <a href="#legal" style={{ color: 'var(--text-primary)', fontWeight: '600', textDecoration: 'none', fontSize: '0.9rem' }}>5. Legal Context</a>
@@ -551,7 +559,7 @@ function Crimes() {
               {/* Attacker Objectives */}
               <div style={{ backgroundColor: 'var(--bg-secondary)', padding: 'var(--space-md)', borderRadius: '4px', border: '1px solid var(--color-border)' }}>
                 <h3 style={{ fontSize: '1.1rem', color: 'var(--accent-navy)', marginBottom: 'var(--space-md)', fontWeight: '600' }}>
-                  🎯 ATTACKER OBJECTIVES
+                  ATTACKER OBJECTIVES
                 </h3>
                 <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '12px' }}>
                   What the attacker attempts to compromise:
@@ -573,7 +581,7 @@ function Crimes() {
                         gap: '8px'
                       }}
                     >
-                      ☠️ {obj}
+                      {obj}
                     </div>
                   ))}
                 </div>
@@ -640,13 +648,13 @@ function Crimes() {
             {selectedCrime.attackerTactics && selectedCrime.attackerTactics.length > 0 && (
               <div style={{ marginTop: 'var(--space-xl)', borderTop: '1px solid var(--color-border-light)', paddingTop: 'var(--space-lg)' }}>
                 <h3 style={{ fontSize: '1.15rem', color: 'var(--accent-navy)', marginBottom: 'var(--space-md)', fontWeight: '600' }}>
-                  🎭 DECEPTION TACTICS INVOLVED
+                  DECEPTION TACTICS
                 </h3>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 'var(--space-md)' }}>
                   {selectedCrime.attackerTactics.map((tac, idx) => (
                     <div key={idx} style={{ backgroundColor: 'var(--bg-primary)', padding: '14px', borderRadius: '4px', border: '1px solid var(--color-border-light)' }}>
                       <h4 style={{ fontSize: '1rem', color: 'var(--accent-navy)', fontWeight: 'bold', display: 'flex', gap: '6px', alignItems: 'center' }}>
-                        ⚡ {tac.tactic}
+                        {tac.tactic}
                       </h4>
                       <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: '8px 0' }}>
                         <strong>Concept:</strong> "{tac.example}"
@@ -665,7 +673,7 @@ function Crimes() {
           {selectedCrime.spotTheFlags?.messageText && (
             <section id="simulator" style={{ marginBottom: 'var(--space-xl)' }}>
               <h2 style={{ fontSize: '1.8rem', color: 'var(--accent-navy)', marginBottom: 'var(--space-md)' }}>
-                🎯 Interactive Activity: Spot the Red Flags
+                Interactive Activity: Spot the Red Flags
               </h2>
               <p className="text-muted" style={{ marginBottom: 'var(--space-md)', fontSize: '0.95rem' }}>
                 Examine the message below. **Click on the phrases or components** that seem suspicious or reveal scam tactics.
@@ -684,7 +692,7 @@ function Crimes() {
                   boxShadow: 'var(--shadow-md)'
                 }}>
                   <div style={{ borderBottom: '1px solid #2d3748', paddingBottom: '8px', marginBottom: '12px', display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                    <span>📱 INCIDENT SIMULATION</span>
+                    <span>INCIDENT SIMULATION</span>
                     <span>100% SECURE</span>
                   </div>
 
@@ -788,7 +796,7 @@ function Crimes() {
                       borderLeft: '4px solid var(--accent-navy)'
                     }}>
                       <h4 style={{ fontSize: '0.95rem', color: 'var(--accent-navy)', fontWeight: 'bold', marginBottom: '6px' }}>
-                        💡 Segment Analysis:
+                        Segment Analysis:
                       </h4>
                       <p style={{ fontSize: '0.88rem', color: 'var(--text-primary)', margin: 0, lineHeight: '1.5' }}>
                         {activeFlagExplanation}
@@ -802,7 +810,7 @@ function Crimes() {
 
                   {foundFlags.length === selectedCrime.spotTheFlags.clickableFlags.length && (
                     <div style={{ marginTop: 'var(--space-md)', backgroundColor: 'var(--color-success-light)', color: '#1a6234', padding: '10px 14px', borderRadius: '4px', fontWeight: '500', fontSize: '0.88rem' }}>
-                      ✓ Outstanding! You identified all critical threat markers in this mock transmission.
+                      Outstanding! You identified all critical threat markers in this mock transmission.
                     </div>
                   )}
                 </div>
@@ -830,7 +838,7 @@ function Crimes() {
                 borderRadius: '4px'
               }}>
                 <h3 style={{ color: '#1a6234', fontSize: '1.15rem', display: 'flex', gap: '6px', alignItems: 'center', marginBottom: 'var(--space-sm)', fontWeight: 'bold' }}>
-                  🛡️ Actions to Take (Defenses)
+                  Actions to Take (Defenses)
                 </h3>
                 <ul style={{ paddingLeft: 'var(--space-md)', fontSize: '0.9rem', lineHeight: '1.6' }}>
                   {selectedCrime.actionSteps?.map((step, idx) => (
@@ -846,7 +854,7 @@ function Crimes() {
                 borderRadius: '4px'
               }}>
                 <h3 style={{ color: '#7b1c12', fontSize: '1.15rem', display: 'flex', gap: '6px', alignItems: 'center', marginBottom: 'var(--space-sm)', fontWeight: 'bold' }}>
-                  ⚠️ Actions to Avoid (Risks)
+                  Actions to Avoid (Risks)
                 </h3>
                 <ul style={{ paddingLeft: 'var(--space-md)', fontSize: '0.9rem', lineHeight: '1.6' }}>
                   {selectedCrime.avoidSteps?.map((step, idx) => (
@@ -864,7 +872,7 @@ function Crimes() {
               borderRadius: '4px'
             }}>
               <h3 style={{ fontSize: '1.15rem', color: 'var(--accent-navy)', marginBottom: 'var(--space-sm)', fontWeight: 'bold' }}>
-                🚨 IF YOU THINK YOU HAVE BEEN TARGETED:
+                IF YOU THINK YOU HAVE BEEN TARGETED:
               </h3>
               <ol style={{ paddingLeft: 'var(--space-md)', fontSize: '0.92rem', lineHeight: '1.6' }}>
                 {selectedCrime.ifTargetedSteps && selectedCrime.ifTargetedSteps.length > 0 ? (
@@ -887,7 +895,7 @@ function Crimes() {
           {selectedCrime.whatWouldYouDo?.questionText && (
             <section style={{ marginBottom: 'var(--space-xl)', border: '1px solid var(--color-border)', padding: 'var(--space-lg)', borderRadius: '6px' }}>
               <h3 style={{ fontSize: '1.3rem', color: 'var(--accent-navy)', marginBottom: 'var(--space-sm)', fontWeight: 'bold' }}>
-                🤔 What Would You Do?
+                What Would You Do?
               </h3>
               <p style={{ fontSize: '0.95rem', color: 'var(--text-secondary)', marginBottom: 'var(--space-md)' }}>
                 {selectedCrime.whatWouldYouDo.questionText}
@@ -935,7 +943,7 @@ function Crimes() {
                   borderRadius: '4px'
                 }}>
                   <h4 style={{ margin: '0 0 4px 0', fontSize: '0.95rem', fontWeight: 'bold', color: selectedCrime.whatWouldYouDo.options[selectedScenarioOption].isCorrect ? '#1a6234' : '#7b1c12' }}>
-                    {selectedCrime.whatWouldYouDo.options[selectedScenarioOption].isCorrect ? '✓ CORRECT SECURITY HABIT' : '✗ UNSAFE OPTION'}
+                    {selectedCrime.whatWouldYouDo.options[selectedScenarioOption].isCorrect ? 'CORRECT' : 'UNSAFE'}
                   </h4>
                   <p style={{ fontSize: '0.9rem', margin: 0, lineHeight: '1.5' }}>
                     {selectedCrime.whatWouldYouDo.options[selectedScenarioOption].explanation}
@@ -949,7 +957,7 @@ function Crimes() {
           {selectedCrime.mythFacts && selectedCrime.mythFacts.length > 0 && (
             <section style={{ marginBottom: 'var(--space-xl)' }}>
               <h3 style={{ fontSize: '1.3rem', color: 'var(--accent-navy)', marginBottom: 'var(--space-md)', fontWeight: 'bold' }}>
-                💡 Myth vs. Fact
+                Myth vs. Fact
               </h3>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 'var(--space-lg)' }}>
                 {selectedCrime.mythFacts.map((mf, idx) => (
@@ -991,7 +999,7 @@ function Crimes() {
                   }}
                 >
                   <h4 style={{ fontSize: '1.1rem', color: 'var(--accent-navy)', fontWeight: 'bold', marginBottom: '8px' }}>
-                    ⚖️ {law}
+                    {law}
                   </h4>
                   <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '12px' }}>
                     Governs identity hijacking, cloned sites, or device intrusions related to this threat.
@@ -1121,7 +1129,7 @@ function Crimes() {
                 className={`btn ${completedCrimes.includes(selectedCrime.slug) ? 'btn-secondary' : 'btn-primary'}`}
                 style={{ marginLeft: '12px', padding: '8px 16px', fontSize: '0.85rem' }}
               >
-                {completedCrimes.includes(selectedCrime.slug) ? '✓ Mark Incomplete' : 'Mark Topic Completed'}
+                {completedCrimes.includes(selectedCrime.slug) ? 'Mark Incomplete' : 'Mark Topic Completed'}
               </button>
             </div>
 

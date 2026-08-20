@@ -1837,46 +1837,36 @@ async function seed(isReset = false) {
 
     // 7. Quizzes
     console.log('- Seeding quizzes...');
-    let quizPhish = await Quiz.findOne({ title: 'Phishing Prevention Challenge' });
-    if (!quizPhish) {
-      quizPhish = await Quiz.create({
-        title: 'Phishing Prevention Challenge',
-        category: 'Phishing',
-        description: 'Test your ability to spot mock websites and spoof emails.',
-        difficulty: 'Easy'
-      });
-    }
-
-    const quizQuestionsData = [
-      {
-        quizId: quizPhish._id,
-        questionText: 'Which of the following elements is the most reliable indicator of a secure, official website?',
-        options: [
-          'The logo of the organization displayed on the page.',
-          'A lock icon in the browser address bar alongside an official verified HTTPS domain.',
-          'A banner claiming the site is "Safe and Certified by RBI".',
-          'The color scheme matching the company\'s official branding.'
-        ],
-        correctOptionIndex: 1,
-        explanation: 'Visual elements like logos and banners are easily copied by hackers. The only verifiable check is the browser address bar checking for secure HTTPS and a correctly spelled official domain.',
-        relatedLawSection: 'Section 66D'
-      },
-      {
-        quizId: quizPhish._id,
-        questionText: 'Under the Information Technology Act, 2000, what is the status of Section 66A?',
-        options: [
-          'It is an active law carrying a 3-year prison sentence for offensive texts.',
-          'It has been omitted (struck down as unconstitutional by the Supreme Court).',
-          'It covers cases of biometric identity theft.',
-          'It governs UPI fraud damages.'
-        ],
-        correctOptionIndex: 1,
-        explanation: 'Section 66A was declared unconstitutional by the Supreme Court of India in the Shreya Singhal case (2015) and is omitted from active legal enforcement.',
-        relatedLawSection: 'Section 66A'
-      }
+    const quizzesData = [
+      { title: 'Phishing Prevention Challenge', category: 'Phishing', description: 'Test your ability to spot mock websites and spoof emails.', difficulty: 'Beginner' },
+      { title: 'Social Engineering & Vishing', category: 'Social Engineering', description: 'Test your defense against psychological manipulation and fake phone calls.', difficulty: 'Intermediate' },
+      { title: 'UPI & Financial Safety', category: 'Financial Safety', description: 'Test your payment security habits and QR transaction awareness.', difficulty: 'Intermediate' },
+      { title: 'Credentials & Account Security', category: 'Account Security', description: 'Test your account defense strength, password hygiene, and MFA checks.', difficulty: 'Advanced' },
+      { title: 'Cyber Law & Privacy Basics', category: 'Cyber Law Basics', description: 'Test your understanding of the IT Act, 2000, and the DPDP Act, 2023.', difficulty: 'Beginner' }
     ];
 
+    const quizMap = {};
+    for (let quizData of quizzesData) {
+      let quiz = await Quiz.findOne({ title: quizData.title });
+      if (!quiz) {
+        quiz = await Quiz.create(quizData);
+      } else {
+        await Quiz.updateOne({ _id: quiz._id }, quizData);
+      }
+      quizMap[quizData.category] = quiz;
+    }
+
+    const fs = require('fs');
+    const qPart1 = JSON.parse(fs.readFileSync(path.join(__dirname, 'quizQuestions_part1.json'), 'utf8'));
+    const qPart2 = JSON.parse(fs.readFileSync(path.join(__dirname, 'quizQuestions_part2.json'), 'utf8'));
+    const quizQuestionsData = [...qPart1, ...qPart2];
+
     for (let qData of quizQuestionsData) {
+      const dbQuiz = quizMap[qData.category];
+      if (!dbQuiz) {
+        throw new Error(`Quiz not found for category: ${qData.category}`);
+      }
+      qData.quizId = dbQuiz._id;
       await QuizQuestion.findOneAndUpdate(
         { quizId: qData.quizId, questionText: qData.questionText },
         qData,
@@ -1887,370 +1877,101 @@ async function seed(isReset = false) {
     // 8. Scenario Engine Seeding (Baseline & Branching Final)
     console.log('- Seeding scenario engine nodes...');
     
-    // Baseline Scenario Setup
-    let scBase = await Scenario.findOne({ slug: 'baseline', version: 1 });
-    if (scBase) {
-      const stages = await ScenarioStage.find({ scenarioId: scBase._id });
-      for (let stg of stages) {
-        await ScenarioDecision.deleteMany({ stageId: stg._id });
+    async function upsertStage(stageData) {
+      const existing = await ScenarioStage.findOne({
+        scenarioId: stageData.scenarioId,
+        stageOrder: stageData.stageOrder
+      });
+      if (existing) {
+        await ScenarioStage.updateOne({ _id: existing._id }, stageData);
+        return existing;
       }
-      await ScenarioStage.deleteMany({ scenarioId: scBase._id });
-      await Scenario.deleteOne({ _id: scBase._id });
+      return ScenarioStage.create(stageData);
     }
 
-    scBase = await Scenario.create({
-      title: 'Cyber Security Baseline Assessment',
-      slug: 'baseline',
-      code: 'baseline',
-      description: 'Experience a simulated account security notification. Your decisions will establish your default defense habits and identify training goals.',
-      version: 1,
-      assessmentType: 'baseline',
-      status: 'published',
-      type: 'phishing',
-      configuredWeights: {
-        'Phishing awareness': 35,
-        'Social engineering': 25,
-        'URL verification': 20,
-        'Credential safety': 20
+    async function upsertDecision(decisionData) {
+      const existing = await ScenarioDecision.findOne({
+        stageId: decisionData.stageId,
+        optionText: decisionData.optionText
+      });
+      if (existing) {
+        await ScenarioDecision.updateOne({ _id: existing._id }, decisionData);
+        return existing;
       }
-    });
-
-    const stageBase1 = await ScenarioStage.create({
-      scenarioId: scBase._id,
-      stageOrder: 1,
-      title: 'Suspicious Security Alert',
-      description: 'You check your inbox in the morning and see a red alert from "BharatConnect Support Desk".',
-      mockInterfaceType: 'email',
-      mockInterfaceData: {
-        senderName: 'BharatConnect Verification Desk',
-        senderEmail: 'support-alert@bharatconnect-verify.in',
-        subject: 'CRITICAL: Immediate Account Verification Required',
-        body: 'Dear User,\n\nWe detected a security login attempt on your BharatConnect profile from St. Petersburg, Russia. To protect your linked accounts, you must click the link below and verify your identity within 2 hours. Failure to verify will result in permanent profile lock.',
-        ctaText: 'Verify Account Identity Now',
-        dateString: 'Today (3 mins ago)'
-      },
-      eventClassification: 'malicious',
-      terminal: false
-    });
-
-    const stageBaseLogin = await ScenarioStage.create({
-      scenarioId: scBase._id,
-      stageOrder: 2,
-      title: 'Unsecured Profile Verification Page',
-      description: 'The verification button has redirected you to this form. Check the URL and indicators.',
-      mockInterfaceType: 'website',
-      mockInterfaceData: {
-        title: 'BharatConnect Secure Login',
-        url: 'http://bharatconnect-verify.in/secure/auth',
-        warningText: 'Connection is not secure (HTTP)'
-      },
-      eventClassification: 'malicious',
-      terminal: true
-    });
-
-    const decBaseInspect = await ScenarioDecision.create({
-      stageId: stageBase1._id,
-      optionText: 'Inspect the sender email header, identify the fake domain (verify.in instead of .gov.in), and report the message.',
-      scoreChange: 40,
-      categoryScoreWeights: {
-        'Phishing awareness': 40,
-        'Social engineering': 30,
-        'URL verification': 30
-      },
-      riskLevel: 'safe',
-      isCriticalMistake: false,
-      nextStageId: null,
-      explanation: 'Excellent action! You spotted the spoof domain header and reported it, isolating the threat.',
-      outcomeType: 'correct'
-    });
-
-    const decBaseIgnore = await ScenarioDecision.create({
-      stageId: stageBase1._id,
-      optionText: 'Delete the email immediately and check your banking status manually through the official web app later.',
-      scoreChange: 20,
-      categoryScoreWeights: {
-        'Phishing awareness': 20,
-        'Social engineering': 10
-      },
-      riskLevel: 'low-risk',
-      isCriticalMistake: false,
-      nextStageId: null,
-      explanation: 'Deleting prevents immediate account compromise, although reporting is the best practice.',
-      outcomeType: 'safe-action'
-    });
-
-    const decBaseClick = await ScenarioDecision.create({
-      stageId: stageBase1._id,
-      optionText: 'Click the "Verify Account Identity Now" link to review the security alert details.',
-      scoreChange: -10,
-      categoryScoreWeights: {
-        'Phishing awareness': -20,
-        'Social engineering': -20,
-        'URL verification': -20
-      },
-      riskLevel: 'medium-risk',
-      isCriticalMistake: false,
-      nextStageId: stageBaseLogin._id,
-      explanation: 'Clicking the link exposes you to cloned mock websites. Always inspect domain headers first.',
-      outcomeType: 'unsafe-action'
-    });
-
-    const decBaseSubmit = await ScenarioDecision.create({
-      stageId: stageBaseLogin._id,
-      optionText: 'Enter simulated login credentials and verification code to unlock your profile.',
-      scoreChange: -30,
-      categoryScoreWeights: {
-        'Credential safety': -40,
-        'Phishing awareness': -20
-      },
-      riskLevel: 'critical',
-      isCriticalMistake: true,
-      nextStageId: null,
-      explanation: 'Entering passwords on unencrypted HTTP cloned sites is a critical mistake, exposing credentials to theft.',
-      outcomeType: 'incorrect'
-    });
-
-    const decBaseClose = await ScenarioDecision.create({
-      stageId: stageBaseLogin._id,
-      optionText: 'Close the tab immediately after noticing the HTTP alert and mismatched browser URL.',
-      scoreChange: 30,
-      categoryScoreWeights: {
-        'URL verification': 40,
-        'Credential safety': 30
-      },
-      riskLevel: 'safe',
-      isCriticalMistake: false,
-      nextStageId: null,
-      explanation: 'Smart escape. Recognizing HTTP connection alerts and fake domains prevents credentials theft.',
-      outcomeType: 'correct'
-    });
-
-    await ScenarioStage.findByIdAndUpdate(stageBase1._id, {
-      $push: { availableDecisionIds: [decBaseInspect._id, decBaseIgnore._id, decBaseClick._id] }
-    });
-    await ScenarioStage.findByIdAndUpdate(stageBaseLogin._id, {
-      $push: { availableDecisionIds: [decBaseSubmit._id, decBaseClose._id] }
-    });
-
-
-    // Final Scenario Setup
-    let scFinal = await Scenario.findOne({ slug: 'final', version: 1 });
-    if (scFinal) {
-      const stages = await ScenarioStage.find({ scenarioId: scFinal._id });
-      for (let stg of stages) {
-        await ScenarioDecision.deleteMany({ stageId: stg._id });
-      }
-      await ScenarioStage.deleteMany({ scenarioId: scFinal._id });
-      await Scenario.deleteOne({ _id: scFinal._id });
+      return ScenarioDecision.create(decisionData);
     }
 
-    scFinal = await Scenario.create({
-      title: 'Cyber Security Final Assessment',
-      slug: 'final',
-      code: 'final',
-      description: 'Navigate "A Day in Your Digital Life". Make sequential choices across mixed legitimate and suspicious situations.',
-      version: 1,
-      assessmentType: 'final',
-      status: 'published',
-      type: 'mixed',
-      configuredWeights: {
-        'Phishing awareness': 20,
-        'Social engineering': 20,
-        'Financial safety': 25,
-        'Credential safety': 15,
-        'Digital Hygiene': 20
+    const scenariosData = JSON.parse(fs.readFileSync(path.join(__dirname, 'scenarios.json'), 'utf8'));
+
+    for (let sData of scenariosData) {
+      let scenario = await Scenario.findOne({ slug: sData.scenario.slug, version: sData.scenario.version });
+      if (!scenario) {
+        scenario = await Scenario.create(sData.scenario);
+      } else {
+        await Scenario.updateOne({ _id: scenario._id }, sData.scenario);
       }
-    });
 
-    const stageFinal1 = await ScenarioStage.create({
-      scenarioId: scFinal._id,
-      stageOrder: 1,
-      title: 'The Freelance Offer (Morning)',
-      description: 'You receive an email from a recruiter offering a freelance assignment, with details inside an attached ZIP folder.',
-      mockInterfaceType: 'email',
-      mockInterfaceData: {
-        senderName: 'Vikas Sen (Infotech HR)',
-        senderEmail: 'hr@infotech-contracts.com',
-        subject: 'Urgent: Freelance Developer NDA & Contract Setup',
-        body: 'Hi Rohan,\n\nWe saw your repository work and want to hire you starting today. The payout is ₹80,000 for 2 weeks.\n\nPlease find the project specifications and NDA setup executable in the attached ZIP folder. Run it to get started.',
-        attachmentName: 'NDA_agreement_contract.zip',
-        dateString: '9:15 AM'
-      },
-      eventClassification: 'malicious',
-      terminal: false
-    });
+      const stageMap = {};
+      const decisionsList = [];
 
-    const stageFinal2A = await ScenarioStage.create({
-      scenarioId: scFinal._id,
-      stageOrder: 2,
-      title: 'System Security Update Notification (Afternoon)',
-      description: 'Your browser outputs a local modal prompting you to download a critical security patch.',
-      mockInterfaceType: 'browser',
-      mockInterfaceData: {
-        title: 'Google Chrome Update Service',
-        url: 'chrome://settings/help',
-        bodyText: 'A security patch is available. Please click Update to restart your browser and protect against active WebGL vulnerabilities.'
-      },
-      eventClassification: 'legitimate',
-      terminal: false
-    });
+      for (let stg of sData.stages) {
+        const stagePayload = {
+          scenarioId: scenario._id,
+          stageOrder: stg.stageOrder,
+          title: stg.title,
+          description: stg.description,
+          mockInterfaceType: stg.mockInterfaceType,
+          mockInterfaceData: stg.mockInterfaceData,
+          eventClassification: stg.eventClassification,
+          terminal: stg.terminal
+        };
 
-    const stageFinal2B = await ScenarioStage.create({
-      scenarioId: scFinal._id,
-      stageOrder: 2,
-      title: 'Suspicious Software Update Prompt (Afternoon)',
-      description: 'A pop-up window suddenly opens while browsing, claiming your computer is infected.',
-      mockInterfaceType: 'website',
-      mockInterfaceData: {
-        title: 'Critical Windows System Warning',
-        url: 'http://free-antivirus-scan.in/alert',
-        bodyText: 'Your device registry is infected with spyware. Install our certified scanner to clean your CPU immediately!'
-      },
-      eventClassification: 'malicious',
-      terminal: false
-    });
+        const dbStage = await upsertStage(stagePayload);
+        stageMap[stg.stageOrder] = dbStage;
 
-    const stageFinal3 = await ScenarioStage.create({
-      scenarioId: scFinal._id,
-      stageOrder: 3,
-      title: 'Concert Tickets Checkout (Evening)',
-      description: 'You are buying tickets from an online classified forum. The seller requests payments via their secure QR link.',
-      mockInterfaceType: 'qr_code',
-      mockInterfaceData: {
-        title: 'QuickPay Merchant Escrow Gate',
-        amount: '₹4,500',
-        instructions: 'Scan this QR code using Paytm or Google Pay and enter your UPI PIN to claim tickets.'
-      },
-      eventClassification: 'malicious',
-      terminal: true
-    });
+        if (stg.decisions && stg.decisions.length > 0) {
+          decisionsList.push({
+            stageOrder: stg.stageOrder,
+            decisions: stg.decisions
+          });
+        }
+      }
 
-    const decFinal1a = await ScenarioDecision.create({
-      stageId: stageFinal1._id,
-      optionText: 'Download the attachment, extract the ZIP file, and run the NDA setup script.',
-      scoreChange: -30,
-      categoryScoreWeights: {
-        'Digital Hygiene': -30,
-        'Social engineering': -10
-      },
-      riskLevel: 'critical',
-      isCriticalMistake: true,
-      nextStageId: stageFinal2B._id,
-      explanation: 'Running executable installers inside unknown ZIP folders is the primary entry point for trojans.',
-      outcomeType: 'incorrect'
-    });
+      for (let dList of decisionsList) {
+        const parentStage = stageMap[dList.stageOrder];
+        const decisionIds = [];
 
-    const decFinal1b = await ScenarioDecision.create({
-      stageId: stageFinal1._id,
-      optionText: 'Verify the HR domain on search engines first, identify it as generic spoofing, and delete the message.',
-      scoreChange: 30,
-      categoryScoreWeights: {
-        'Digital Hygiene': 30,
-        'Social engineering': 20
-      },
-      riskLevel: 'safe',
-      isCriticalMistake: false,
-      nextStageId: stageFinal2A._id,
-      explanation: 'Excellent. Investigating domains before downloading files shields your machine from malware payloads.',
-      outcomeType: 'correct'
-    });
+        for (let dec of dList.decisions) {
+          let resolvedNextStageId = null;
+          if (dec.nextStageOrder !== null && dec.nextStageOrder !== undefined) {
+            const nextStageObj = stageMap[dec.nextStageOrder];
+            if (nextStageObj) {
+              resolvedNextStageId = nextStageObj._id;
+            }
+          }
 
-    const decFinal2a_agree = await ScenarioDecision.create({
-      stageId: stageFinal2A._id,
-      optionText: 'Click Update to restart the browser and apply official software patches.',
-      scoreChange: 30,
-      categoryScoreWeights: {
-        'Digital Hygiene': 30
-      },
-      riskLevel: 'safe',
-      isCriticalMistake: false,
-      nextStageId: stageFinal3._id,
-      explanation: 'Correct action. Keeping system files and web browsers updated isolates against zero-day exploits.',
-      outcomeType: 'correct'
-    });
+          const decisionPayload = {
+            stageId: parentStage._id,
+            optionText: dec.optionText,
+            scoreChange: dec.scoreChange,
+            categoryScoreWeights: dec.categoryScoreWeights,
+            riskLevel: dec.riskLevel,
+            isCriticalMistake: dec.isCriticalMistake,
+            nextStageId: resolvedNextStageId,
+            explanation: dec.explanation,
+            outcomeType: dec.outcomeType
+          };
 
-    const decFinal2a_report = await ScenarioDecision.create({
-      stageId: stageFinal2A._id,
-      optionText: 'Block the prompt and report it as a malware attack warning.',
-      scoreChange: 10,
-      categoryScoreWeights: {
-        'Digital Hygiene': 10
-      },
-      riskLevel: 'low-risk',
-      isCriticalMistake: false,
-      nextStageId: stageFinal3._id,
-      explanation: 'Safe but unnecessary caution (False Positive). That was a legitimate browser notification (`chrome://` settings block). Blocking it keeps you secure but delays patching.',
-      outcomeType: 'false-positive'
-    });
+          const dbDecision = await upsertDecision(decisionPayload);
+          decisionIds.push(dbDecision._id);
+        }
 
-    const decFinal2b_run = await ScenarioDecision.create({
-      stageId: stageFinal2B._id,
-      optionText: 'Click the Install link to run the security software scanner.',
-      scoreChange: -40,
-      categoryScoreWeights: {
-        'Digital Hygiene': -40
-      },
-      riskLevel: 'critical',
-      isCriticalMistake: true,
-      nextStageId: stageFinal3._id,
-      explanation: 'You downloaded rogue software. Banners claiming infections are scareware tricks designed to download spyware.',
-      outcomeType: 'incorrect'
-    });
-
-    const decFinal2b_close = await ScenarioDecision.create({
-      stageId: stageFinal2B._id,
-      optionText: 'Close the pop-up and exit the website immediately.',
-      scoreChange: 30,
-      categoryScoreWeights: {
-        'Digital Hygiene': 30
-      },
-      riskLevel: 'safe',
-      isCriticalMistake: false,
-      nextStageId: stageFinal3._id,
-      explanation: 'Spot on. Exiting scareware blocks prevent payload installs.',
-      outcomeType: 'correct'
-    });
-
-    const decFinal3_scan = await ScenarioDecision.create({
-      stageId: stageFinal3._id,
-      optionText: 'Scan the QR code with PhonePe and type your UPI PIN to claim tickets.',
-      scoreChange: -40,
-      categoryScoreWeights: {
-        'Financial safety': -40
-      },
-      riskLevel: 'critical',
-      isCriticalMistake: true,
-      nextStageId: null,
-      explanation: 'You fell for QR escrow fraud. UPI PIN is exclusively for authorizing debits (sending money), never for receiving.',
-      outcomeType: 'incorrect'
-    });
-
-    const decFinal3_decline = await ScenarioDecision.create({
-      stageId: stageFinal3._id,
-      optionText: 'Decline to scan, and require standard escrow transactions or in-person cash handover.',
-      scoreChange: 30,
-      categoryScoreWeights: {
-        'Financial safety': 30
-      },
-      riskLevel: 'safe',
-      isCriticalMistake: false,
-      nextStageId: null,
-      explanation: 'Smart refusal. Escrow QR codes are standard vishing hooks used by marketplace scammers.',
-      outcomeType: 'correct'
-    });
-
-    await ScenarioStage.findByIdAndUpdate(stageFinal1._id, {
-      $push: { availableDecisionIds: [decFinal1a._id, decFinal1b._id] }
-    });
-    await ScenarioStage.findByIdAndUpdate(stageFinal2A._id, {
-      $push: { availableDecisionIds: [decFinal2a_agree._id, decFinal2a_report._id] }
-    });
-    await ScenarioStage.findByIdAndUpdate(stageFinal2B._id, {
-      $push: { availableDecisionIds: [decFinal2b_run._id, decFinal2b_close._id] }
-    });
-    await ScenarioStage.findByIdAndUpdate(stageFinal3._id, {
-      $push: { availableDecisionIds: [decFinal3_scan._id, decFinal3_decline._id] }
-    });
+        await ScenarioStage.updateOne(
+          { _id: parentStage._id },
+          { $set: { availableDecisionIds: decisionIds } }
+        );
+      }
+    }
 
     // 9. Seeding Portal Resources
     console.log('- Seeding resources...');

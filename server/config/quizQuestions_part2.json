@@ -1,0 +1,446 @@
+[
+  {
+    "category": "Financial Safety",
+    "questionText": "Myth or Fact: If you accidentally transfer money to a scammer via UPI, the bank is legally required to reverse the charge instantly on request.",
+    "options": [
+      "Fact: Reversals are automated for all accidental UPI transfers.",
+      "Myth: UPI settlements are instant and irrevocable. Reclaiming funds depends on merchant escrow freezes or court orders."
+    ],
+    "correctOptionIndex": 1,
+    "explanation": "UPI payments settle instantly, making them hard to recover once sent. Reversals require rapid reporting (1930) to freeze recipient accounts.",
+    "questionType": "myth-fact",
+    "difficulty": "Intermediate",
+    "learningObjective": "Deconstruct the instant charge reversal myth.",
+    "relatedLaw": "BNS Section 318",
+    "relatedCrime": "upi-fraud",
+    "relatedModule": "phishing-awareness"
+  },
+  {
+    "category": "Financial Safety",
+    "questionText": "A website offers cheap concert tickets, redirecting you to a payment page that requests your bank account number and password, promising to hold them in \"secure escrow\". The URL is http://concerts-sale.net. What is your decision?",
+    "options": [
+      "Submit the bank credentials to buy the tickets before they sell out.",
+      "Decline the transaction. The page is unencrypted (HTTP) and uses an unofficial merchant gateway.",
+      "Proceed with purchase but use a secondary account with less balance.",
+      "Write a complaint to the bank."
+    ],
+    "correctOptionIndex": 1,
+    "explanation": "Never enter account passwords on unencrypted, suspicious checkouts. Escrows should only use official, certified UPI or card gateways.",
+    "questionType": "situational-judgment",
+    "difficulty": "Advanced",
+    "learningObjective": "Detect fraudulent checkout setups.",
+    "relatedLaw": "Section 43A",
+    "relatedCrime": "fake-login-pages",
+    "relatedModule": "phishing-awareness"
+  },
+  {
+    "category": "Financial Safety",
+    "questionText": "How do credit card chargeback rights differ from UPI transaction rules?",
+    "options": [
+      "Credit cards have no fraud dispute routes, while UPI has automated reversals.",
+      "Credit card transactions allow you to dispute charges and request refunds via the issuer network, whereas UPI settled transfers are direct and hard to reverse.",
+      "They are identical; both allow instant reversals at zero cost.",
+      "UPI is only valid for international transfers."
+    ],
+    "correctOptionIndex": 1,
+    "explanation": "Credit card networks (Visa/Mastercard) provide customer protection routes to dispute unauthorized transactions. UPI transfers funds instantly between bank accounts, making containment harder.",
+    "questionType": "distinction",
+    "difficulty": "Intermediate",
+    "learningObjective": "Distinguish card dispute pathways from UPI.",
+    "relatedLaw": "Section 43A",
+    "relatedCrime": "upi-fraud",
+    "relatedModule": "phishing-awareness"
+  },
+  {
+    "category": "Financial Safety",
+    "questionText": "If you realize you have been defrauded of money in a cyber scam, what is the absolute FIRST reporting step you must take to freeze the funds?",
+    "options": [
+      "File a written complaint at your local police station.",
+      "Call the national cybercrime helpline (1930) immediately to trigger recipient bank account holds.",
+      "Hire an advocate to file a suit.",
+      "Post about the scam on social media."
+    ],
+    "correctOptionIndex": 1,
+    "explanation": "Calling 1930 immediately (within the golden hour) allows the cyber cell to notify the receiving banks to freeze the scammed funds before the attacker withdraws them.",
+    "questionType": "sequence",
+    "difficulty": "Intermediate",
+    "learningObjective": "Trigger national cybercrime reporting protocol.",
+    "relatedLaw": "BNS Section 318",
+    "relatedCrime": "upi-fraud",
+    "relatedModule": "phishing-awareness"
+  },
+  {
+    "category": "Financial Safety",
+    "questionText": "What is the safest way to ensure a merchant UPI request is correct before approving the transaction on your screen?",
+    "options": [
+      "Check that the amount matches and verify the verified merchant name/VPA display name.",
+      "Approve it and request a refund later if it was wrong.",
+      "Ask the merchant to show their ID badge.",
+      "Turn off your phone and turn it on again."
+    ],
+    "correctOptionIndex": 0,
+    "explanation": "Always verify the displayed payee name and amount on the transaction summary screen before entering your PIN.",
+    "questionType": "prevention",
+    "difficulty": "Beginner",
+    "learningObjective": "Implement UPI merchant checks.",
+    "relatedLaw": "Section 66D",
+    "relatedCrime": "upi-fraud",
+    "relatedModule": "phishing-awareness"
+  },
+  {
+    "category": "Account Security",
+    "questionText": "What is \"Multi-Factor Authentication\" (MFA)?",
+    "options": [
+      "Using multiple security questions.",
+      "A security system requiring two or more separate verification factors to grant user access.",
+      "Writing your password in multiple languages.",
+      "Hiring multiple security guards."
+    ],
+    "correctOptionIndex": 1,
+    "explanation": "MFA adds layers of defense by requiring something you know (password) and something you have (phone authenticator or token).",
+    "questionType": "knowledge",
+    "difficulty": "Beginner",
+    "learningObjective": "Define MFA security structures.",
+    "relatedLaw": "Section 43A",
+    "relatedCrime": "credential-theft",
+    "relatedModule": "phishing-awareness"
+  },
+  {
+    "category": "Account Security",
+    "questionText": "You receive an unexpected SMS with an OTP code for your Gmail account. What is the safest response?",
+    "options": [
+      "Reply to the SMS with \"CANCEL\".",
+      "Ignore the text, but change your password immediately as someone has compromised your credentials.",
+      "Forward the code to Google support numbers.",
+      "Enter the code on a testing website."
+    ],
+    "correctOptionIndex": 1,
+    "explanation": "An unsolicited OTP means someone has entered your password correctly and is trying to access your account. Change your password immediately.",
+    "questionType": "scenario",
+    "difficulty": "Intermediate",
+    "learningObjective": "Respond to unsolicited OTP/MFA notifications.",
+    "relatedLaw": "Section 66C",
+    "relatedCrime": "account-takeover",
+    "relatedModule": "phishing-awareness"
+  },
+  {
+    "category": "Account Security",
+    "questionText": "You check your account security logs and see a successful login from a Chrome browser on a Linux device in another city. You do not own a Linux device. What does this indicate?",
+    "options": [
+      "A browser system update error.",
+      "A security breach (unauthorized credential compromise and session takeover).",
+      "The platform server is backing up files.",
+      "A public holiday."
+    ],
+    "correctOptionIndex": 1,
+    "explanation": "Successful logins from unrecognized platforms or locations indicate active session/credential compromise. Terminate all sessions immediately.",
+    "questionType": "recognition",
+    "difficulty": "Beginner",
+    "learningObjective": "Identify unauthorized security log inputs.",
+    "relatedLaw": "Section 66C",
+    "relatedCrime": "account-takeover",
+    "relatedModule": "phishing-awareness"
+  },
+  {
+    "category": "Account Security",
+    "questionText": "Where is the safest place to store your MFA account recovery codes?",
+    "options": [
+      "In a text file named \"passwords.txt\" on your desktop.",
+      "Printed and stored physically in a secure location, or inside an encrypted offline vault.",
+      "In a draft message inside your email account.",
+      "Shared in a family WhatsApp chat group."
+    ],
+    "correctOptionIndex": 1,
+    "explanation": "Recovery codes bypass MFA. Storing them in raw text on devices or email accounts exposes them to hackers. Keep them offline or encrypted.",
+    "questionType": "prevention",
+    "difficulty": "Intermediate",
+    "learningObjective": "Implement secure backup policies.",
+    "relatedLaw": "Section 43A",
+    "relatedCrime": "credential-theft",
+    "relatedModule": "phishing-awareness"
+  },
+  {
+    "category": "Account Security",
+    "questionText": "Under the Information Technology Act, 2000, what section criminalizes the fraudulent or dishonest use of another person's electronic signature or password?",
+    "options": [
+      "Section 43A",
+      "Section 66A",
+      "Section 66C",
+      "Section 79"
+    ],
+    "correctOptionIndex": 2,
+    "explanation": "Section 66C penalizes fraudulent identity theft, including using another's password, PIN, or electronic signature.",
+    "questionType": "legal-context",
+    "difficulty": "Beginner",
+    "learningObjective": "Identify key IT Act identity theft sections.",
+    "relatedLaw": "Section 66C",
+    "relatedCrime": "identity-theft",
+    "relatedModule": "phishing-awareness"
+  },
+  {
+    "category": "Account Security",
+    "questionText": "Myth or Fact: If your password is long and complex (e.g., \"P@$$w0rd123!\"), it is safe to use it across all your online banking, email, and social accounts.",
+    "options": [
+      "Fact: Complexity is the only security standard that matters.",
+      "Myth: Password reuse is a massive risk. A breach on one minor website exposes your complex credentials globally."
+    ],
+    "correctOptionIndex": 1,
+    "explanation": "Never reuse passwords. If an attacker breaches a low-security site, they will try your credentials on banking and email platforms (Credential Stuffing).",
+    "questionType": "myth-fact",
+    "difficulty": "Beginner",
+    "learningObjective": "Deter credential reuse strategies.",
+    "relatedLaw": "Section 43A",
+    "relatedCrime": "credential-theft",
+    "relatedModule": "phishing-awareness"
+  },
+  {
+    "category": "Account Security",
+    "questionText": "Your browser alerts you that your saved password for an online service has been leaked in a public data breach. What action should you take?",
+    "options": [
+      "Ignore it, as the browser will automatically change it.",
+      "Change the password immediately on that site and on any other platforms where you reused it.",
+      "Deactivate your internet connection.",
+      "Contact the service support and ask for compensation."
+    ],
+    "correctOptionIndex": 1,
+    "explanation": "A leaked password is listed in automated hacker databases. Update your logins immediately to contain the exposure.",
+    "questionType": "situational-judgment",
+    "difficulty": "Intermediate",
+    "learningObjective": "Execute passwords breach remediation.",
+    "relatedLaw": "Section 66C",
+    "relatedCrime": "credential-theft",
+    "relatedModule": "phishing-awareness"
+  },
+  {
+    "category": "Account Security",
+    "questionText": "Why are Authenticator Apps (like Google Authenticator) considered safer than SMS-based MFA codes?",
+    "options": [
+      "Authenticator apps are free, whereas SMS codes cost money.",
+      "Authenticator codes are generated locally offline and are not susceptible to SIM swapping or network hijacking.",
+      "Authenticator apps do not require a smartphone.",
+      "There is no security difference."
+    ],
+    "correctOptionIndex": 1,
+    "explanation": "SMS codes travel over carrier networks and can be intercepted via SIM swapping. Authenticator apps generate time-based codes locally on your device hardware.",
+    "questionType": "distinction",
+    "difficulty": "Advanced",
+    "learningObjective": "Evaluate authenticator app safety advantages.",
+    "relatedLaw": "Section 43A",
+    "relatedCrime": "sim-swapping",
+    "relatedModule": "phishing-awareness"
+  },
+  {
+    "category": "Account Security",
+    "questionText": "If you discover your corporate email password has been compromised, what should you do FIRST?",
+    "options": [
+      "Notify your supervisor and change your password to block active unauthorized sessions.",
+      "Delete the corporate account.",
+      "Report it to the Certifying Authority.",
+      "File an FIR at the local cyber cell."
+    ],
+    "correctOptionIndex": 0,
+    "explanation": "Change the password immediately and revoke active sessions to lock out the intruder before they pull sensitive company data.",
+    "questionType": "sequence",
+    "difficulty": "Intermediate",
+    "learningObjective": "Recall sequence of account containment steps.",
+    "relatedLaw": "Section 66C",
+    "relatedCrime": "account-takeover",
+    "relatedModule": "phishing-awareness"
+  },
+  {
+    "category": "Account Security",
+    "questionText": "What is the safest practice when logging into personal banking accounts on a public Wi-Fi network (like at an airport)?",
+    "options": [
+      "Save your login details in the browser to log in faster.",
+      "Avoid logging in entirely, or use a secure Virtual Private Network (VPN) over encrypted HTTPS.",
+      "Log in normally as public Wi-Fi is protected by government agencies.",
+      "Close all other browser tabs before entering details."
+    ],
+    "correctOptionIndex": 1,
+    "explanation": "Public Wi-Fi networks expose you to Man-in-the-Middle (MITM) attacks where hackers intercept traffic. Avoid banking on public networks or use an encrypted VPN.",
+    "questionType": "prevention",
+    "difficulty": "Intermediate",
+    "learningObjective": "Understand public network risks.",
+    "relatedLaw": "Section 43A",
+    "relatedCrime": "data-breach",
+    "relatedModule": "phishing-awareness"
+  },
+  {
+    "category": "Cyber Law Basics",
+    "questionText": "Under what landmark Supreme Court case was Section 66A of the IT Act struck down as unconstitutional?",
+    "options": [
+      "Kesavananda Bharati case (1973)",
+      "Shreya Singhal v. Union of India (2015)",
+      "Justice K.S. Puttaswamy case (2017)",
+      "Minerva Mills case (1980)"
+    ],
+    "correctOptionIndex": 1,
+    "explanation": "The Supreme Court struck down Section 66A in Shreya Singhal v. Union of India, declaring it a violation of the freedom of speech (Article 19(1)(a)).",
+    "questionType": "knowledge",
+    "difficulty": "Beginner",
+    "learningObjective": "Know the landmark Shreya Singhal case.",
+    "relatedLaw": "Section 66A",
+    "relatedCrime": "cyberstalking",
+    "relatedModule": "phishing-awareness"
+  },
+  {
+    "category": "Cyber Law Basics",
+    "questionText": "A photo-editing mobile app requests permissions to access your contacts, location, and storage. Under the DPDP Act 2023, what should you do?",
+    "options": [
+      "Grant all permissions to make the app function faster.",
+      "Reject permissions that are not necessary for the app's core utility (photo editing).",
+      "Report the developer to the police cell.",
+      "Uninstall your phone operating system."
+    ],
+    "correctOptionIndex": 1,
+    "explanation": "The DPDP Act mandates that personal data must only be collected for specified, legitimate purposes. Reject unnecessary data collection prompts.",
+    "questionType": "scenario",
+    "difficulty": "Intermediate",
+    "learningObjective": "Apply data minimization guidelines.",
+    "relatedLaw": "DPDP Section 6",
+    "relatedCrime": "data-breach",
+    "relatedModule": "phishing-awareness"
+  },
+  {
+    "category": "Cyber Law Basics",
+    "questionText": "Which right under the Digital Personal Data Protection (DPDP) Act, 2023 allows a user to ask a company to delete their stored profile records?",
+    "options": [
+      "Right to correction and erasure",
+      "Right to transfer funds",
+      "Right to claim compensations",
+      "Right of public review"
+    ],
+    "correctOptionIndex": 0,
+    "explanation": "DPDP 2023 guarantees citizens (Data Principals) the Right to Correction and Erasure of their personal data once the purpose of collection is completed.",
+    "questionType": "recognition",
+    "difficulty": "Beginner",
+    "learningObjective": "Identify DPDP user rights.",
+    "relatedLaw": "DPDP Section 8",
+    "relatedCrime": "data-breach",
+    "relatedModule": "phishing-awareness"
+  },
+  {
+    "category": "Cyber Law Basics",
+    "questionText": "Under the Indian IT Intermediary Rules, social media platforms are required to take down deepfakes or impersonating profiles within how many hours of receiving a complaint?",
+    "options": [
+      "Within 24 to 36 hours",
+      "Within 7 days",
+      "Within 1 month",
+      "At their own discretion"
+    ],
+    "correctOptionIndex": 0,
+    "explanation": "Due diligence rules mandate that platforms remove illegal or impersonating content within 24 to 36 hours of notification to preserve their \"Safe Harbour\" protection.",
+    "questionType": "prevention",
+    "difficulty": "Intermediate",
+    "learningObjective": "Recall take-down timelines for social platforms.",
+    "relatedLaw": "IT Intermediary Rules",
+    "relatedCrime": "online-impersonation",
+    "relatedModule": "phishing-awareness"
+  },
+  {
+    "category": "Cyber Law Basics",
+    "questionText": "Under Section 43A of the IT Act, if a company's security negligence leaks your financial data, what is the statutory maximum limit on the damages they must pay you?",
+    "options": [
+      "Up to ₹5,00,000 only",
+      "Up to ₹10,00,000 only",
+      "There is no upper limit; compensation is based on actual damage suffered.",
+      "Companies are completely immune from damages."
+    ],
+    "correctOptionIndex": 2,
+    "explanation": "Section 43A does not specify an upper limit for civil compensation damages, holding companies strictly liable for security negligence.",
+    "questionType": "legal-context",
+    "difficulty": "Advanced",
+    "learningObjective": "Know the scope of corporate liability for data breaches.",
+    "relatedLaw": "Section 43A",
+    "relatedCrime": "data-breach",
+    "relatedModule": "phishing-awareness"
+  },
+  {
+    "category": "Cyber Law Basics",
+    "questionText": "Myth or Fact: Click-wrap agreements (clicking \"I Agree\" to terms on a website) are not legally binding in Indian courts because they are not signed on physical paper.",
+    "options": [
+      "Fact: Only physical agreements signed in ink are valid.",
+      "Myth: Under Section 10A of the IT Act, electronic contracts entered via click agreements are legally valid and enforceable."
+    ],
+    "correctOptionIndex": 1,
+    "explanation": "Section 10A of the IT Act establishes the validity of electronic contracts. Click-wrap and browse-wrap agreements are legally binding contracts.",
+    "questionType": "myth-fact",
+    "difficulty": "Intermediate",
+    "learningObjective": "Deconstruct digital contract myths.",
+    "relatedLaw": "Section 10A",
+    "relatedCrime": "online-cheating",
+    "relatedModule": "phishing-awareness"
+  },
+  {
+    "category": "Cyber Law Basics",
+    "questionText": "A citizen discovers that a private credit bureau has listed their data without consent. Under the DPDP Act 2023, what is the citizen designated as?",
+    "options": [
+      "Data Fiduciary",
+      "Data Principal",
+      "Data Intermediary",
+      "Data Auditor"
+    ],
+    "correctOptionIndex": 1,
+    "explanation": "The individual whose personal data is collected is defined as the \"Data Principal\" under DPDP 2023, while the processing entity is the \"Data Fiduciary\".",
+    "questionType": "situational-judgment",
+    "difficulty": "Beginner",
+    "learningObjective": "Classify data roles under privacy laws.",
+    "relatedLaw": "DPDP Section 6",
+    "relatedCrime": "data-breach",
+    "relatedModule": "phishing-awareness"
+  },
+  {
+    "category": "Cyber Law Basics",
+    "questionText": "What is the primary difference in scope between the IT Act, 2000 and the DPDP Act, 2023?",
+    "options": [
+      "IT Act is for physical computers, DPDP is for software.",
+      "IT Act governs cybercrimes, intermediary guidelines, and contracts; DPDP Act specifically regulates digital personal data processing and privacy rights.",
+      "The DPDP Act replaces the IT Act entirely.",
+      "There is no difference."
+    ],
+    "correctOptionIndex": 1,
+    "explanation": "The IT Act is the general cyber law penalizing crimes and hacks, whereas the DPDP Act specifically governs data protection, user consent, and personal privacy obligations.",
+    "questionType": "distinction",
+    "difficulty": "Intermediate",
+    "learningObjective": "Compare IT Act vs DPDP Act frameworks.",
+    "relatedLaw": "DPDP Section 6",
+    "relatedCrime": "data-breach",
+    "relatedModule": "phishing-awareness"
+  },
+  {
+    "category": "Cyber Law Basics",
+    "questionText": "If you want to request a social platform to remove a deepfake video using your likeness, what is the correct sequence of steps?",
+    "options": [
+      "File a court case directly.",
+      "Notify the platform's designated Grievance Officer, and if they fail to act within 36 hours, file a complaint at cybercrime.gov.in.",
+      "Post comments on the video asking the poster to delete it.",
+      "Wait for the platform's monthly review."
+    ],
+    "correctOptionIndex": 1,
+    "explanation": "Under the Intermediary Rules, notifying the grievance officer triggers platform takedown obligations. If ignored, escalate to the cyber cell.",
+    "questionType": "sequence",
+    "difficulty": "Intermediate",
+    "learningObjective": "Recall sequence of platform grievance steps.",
+    "relatedLaw": "IT Intermediary Rules",
+    "relatedCrime": "online-impersonation",
+    "relatedModule": "phishing-awareness"
+  },
+  {
+    "category": "Cyber Law Basics",
+    "questionText": "Which Indian government agency is responsible for issuing warnings, guidelines, and coordinate response alerts regarding data breaches and malware outbreaks?",
+    "options": [
+      "Reserve Bank of India (RBI)",
+      "Indian Computer Emergency Response Team (CERT-In)",
+      "Telecom Regulatory Authority of India (TRAI)",
+      "Supreme Court of India"
+    ],
+    "correctOptionIndex": 1,
+    "explanation": "CERT-In is the national nodal agency under Section 70B of the IT Act responsible for cybersecurity incidents and threat advisories.",
+    "questionType": "prevention",
+    "difficulty": "Beginner",
+    "learningObjective": "Identify the national cyber incident response body.",
+    "relatedLaw": "Section 70B",
+    "relatedCrime": "malware",
+    "relatedModule": "phishing-awareness"
+  }
+]

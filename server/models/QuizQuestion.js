@@ -24,12 +24,43 @@ const QuizQuestionSchema = new mongoose.Schema({
     type: String,
     required: true
   },
-  relatedLawSection: {
-    type: String // Section code
+  questionType: {
+    type: String,
+    enum: ['knowledge', 'scenario', 'recognition', 'prevention', 'legal-context', 'sequence', 'distinction', 'myth-fact', 'situational-judgment'],
+    default: 'knowledge'
+  },
+  category: {
+    type: String,
+    required: true
   },
   difficulty: {
     type: String,
-    default: 'Medium'
+    enum: ['Beginner', 'Intermediate', 'Advanced'],
+    default: 'Intermediate'
+  },
+  learningObjective: {
+    type: String,
+    default: ''
+  },
+  relatedLaw: {
+    type: String,
+    default: ''
+  },
+  relatedLawSection: {
+    type: String,
+    default: ''
+  },
+  relatedCrime: {
+    type: String,
+    default: ''
+  },
+  relatedModule: {
+    type: String,
+    default: ''
+  },
+  published: {
+    type: Boolean,
+    default: true
   }
 }, {
   timestamps: true

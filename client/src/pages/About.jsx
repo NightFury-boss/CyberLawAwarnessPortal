@@ -10,11 +10,34 @@ function About() {
   const [finalVal, setFinalVal] = useState(0);
 
   useEffect(() => {
-    setIsMounted(true);
-    const t = setTimeout(() => {
-      setScoreAnimate(true);
-    }, 400);
-    return () => clearTimeout(t);
+    const observerOptions = {
+      root: null,
+      rootMargin: '0px',
+      threshold: 0.15
+    };
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          if (entry.target.id === 'method') {
+            setIsMounted(true);
+          } else if (entry.target.id === 'assessment') {
+            setScoreAnimate(true);
+          }
+          observer.unobserve(entry.target);
+        }
+      });
+    }, observerOptions);
+
+    const methodEl = document.getElementById('method');
+    const assessmentEl = document.getElementById('assessment');
+    if (methodEl) observer.observe(methodEl);
+    if (assessmentEl) observer.observe(assessmentEl);
+
+    return () => {
+      if (methodEl) observer.unobserve(methodEl);
+      if (assessmentEl) observer.unobserve(assessmentEl);
+    };
   }, []);
 
   useEffect(() => {
@@ -360,9 +383,9 @@ function About() {
               </span>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.85rem', fontWeight: '600', color: 'var(--text-secondary)' }}>
                 <span>Read Articles</span>
-                <span>➔</span>
+                <span>→</span>
                 <span>Static Quiz</span>
-                <span>➔</span>
+                <span>→</span>
                 <span>End</span>
               </div>
             </div>
@@ -373,13 +396,13 @@ function About() {
               </span>
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.85rem', fontWeight: '600', color: 'var(--accent-navy)', flexWrap: 'wrap' }}>
                 <span>Experience</span>
-                <span>➔</span>
+                <span>→</span>
                 <span>Reflect</span>
-                <span>➔</span>
+                <span>→</span>
                 <span>Learn</span>
-                <span>➔</span>
+                <span>→</span>
                 <span>Practice</span>
-                <span>➔</span>
+                <span>→</span>
                 <span>Improve</span>
               </div>
             </div>
@@ -388,7 +411,7 @@ function About() {
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '24px' }}>
             <div>
               <strong style={{ fontSize: '0.95rem', color: 'var(--accent-navy)', display: 'block', marginBottom: '6px' }}>
-                🔗 Context Linkage
+                Context Linkage
               </strong>
               <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: '1.5', margin: 0 }}>
                 IT Act codes are taught alongside threat patterns and real-world incidents, never in isolated legal lists.
@@ -396,7 +419,7 @@ function About() {
             </div>
             <div>
               <strong style={{ fontSize: '0.95rem', color: 'var(--accent-navy)', display: 'block', marginBottom: '6px' }}>
-                🛡️ Active Sandbox
+                Active Sandbox
               </strong>
               <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: '1.5', margin: 0 }}>
                 Encounter controlled visual threat situations to practice recognizing red flags safely.
@@ -404,7 +427,7 @@ function About() {
             </div>
             <div>
               <strong style={{ fontSize: '0.95rem', color: 'var(--accent-navy)', display: 'block', marginBottom: '6px' }}>
-                📊 Quantified Growth
+                Quantified Growth
               </strong>
               <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: '1.5', margin: 0 }}>
                 Evaluation monitors threat recognition baseline differences, delivering an action assessment score delta.
@@ -508,7 +531,7 @@ function About() {
             {/* Left: What we do */}
             <div>
               <span style={{ fontSize: '0.8rem', fontWeight: 'bold', color: 'var(--color-success)', display: 'block', marginBottom: '12px', textTransform: 'uppercase' }}>
-                ✓ The Simulations Use
+                The Simulations Use
               </span>
               <ul style={{ paddingLeft: '16px', margin: 0, fontSize: '0.85rem', color: 'var(--text-secondary)', display: 'flex', flexDirection: 'column', gap: '8px' }}>
                 <li>Fictional banking institutions and mock sites.</li>
@@ -521,7 +544,7 @@ function About() {
             {/* Right: What we exclude */}
             <div>
               <span style={{ fontSize: '0.8rem', fontWeight: 'bold', color: 'var(--color-error)', display: 'block', marginBottom: '12px', textTransform: 'uppercase' }}>
-                ✕ Excluded Safety Boundaries
+                Excluded Safety Boundaries
               </span>
               <ul style={{ paddingLeft: '16px', margin: 0, fontSize: '0.85rem', color: 'var(--text-secondary)', display: 'flex', flexDirection: 'column', gap: '8px' }}>
                 <li><strong>Passwords:</strong> No real credentials or logins.</li>
@@ -544,7 +567,7 @@ function About() {
           }}>
             <strong style={{ color: 'var(--accent-navy)', display: 'block', marginBottom: '6px' }}>Simulation Safety Pipeline</strong>
             <span style={{ fontFamily: 'monospace', color: 'var(--text-secondary)' }}>
-              USER INPUT ➔ [Filter: Action Score Only] ➔ DB STORE (Choice Metrics) ➔ (Credentials Discarded)
+              USER INPUT → [Filter: Action Score Only] → DB STORE (Choice Metrics) → (Credentials Discarded)
             </span>
           </div>
         </div>
@@ -654,7 +677,7 @@ function About() {
             color: 'var(--text-muted)',
             lineHeight: '1.5'
           }}>
-            🎓 <strong>Academic Disclaimer:</strong> This portal is a MERN Academic Project developed for student educational training and general cyber-law safety awareness. It does not compile official police reports or represent legal counsel. Official provisions should be cross-referenced against legislative codes published by the Government of India.
+            <strong>Academic Disclaimer:</strong> This portal is a MERN Academic Project developed for student educational training and general cyber-law safety awareness. It does not compile official police reports or represent legal counsel. Official provisions should be cross-referenced against legislative codes published by the Government of India.
           </div>
         </div>
       </section>

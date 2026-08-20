@@ -33,7 +33,7 @@ function Resources() {
 
       {/* Crucial Banner distinguishing Education vs Complaint */}
       <div className="alert alert-warning" style={{ padding: 'var(--space-md)', marginBottom: 'var(--space-xl)' }}>
-        🛡️ <strong>Important Notice: Educational Guidance Only</strong><br />
+        <strong>Important Notice: Educational Guidance Only</strong><br />
         This portal is an educational project and <strong>does not</strong> file official police complaints or register FIRs. If you need to file an official cybercrime report, please use the verified government links listed below.
       </div>
 
@@ -60,7 +60,7 @@ function Resources() {
                   className="btn btn-secondary"
                   style={{ width: '100%', textAlign: 'center', fontSize: '0.85rem', padding: 'var(--space-sm)' }}
                 >
-                  {res.downloadable ? '📥 Download Document' : '🔗 Open Official Resource'}
+                  {res.downloadable ? 'Download Document' : 'Open Official Resource ↗'}
                 </a>
               </div>
             </div>
@@ -70,7 +70,7 @@ function Resources() {
 
       {/* FAQ Section */}
       <div style={{ marginTop: 'var(--space-xxl)' }}>
-        <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: '2rem', marginBottom: 'var(--space-lg)' }}>
+        <h2 style={{ fontSize: '2rem', marginBottom: 'var(--space-lg)' }}>
           Frequently Asked Questions
         </h2>
 

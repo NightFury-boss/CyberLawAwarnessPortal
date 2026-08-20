@@ -12,7 +12,7 @@ function Prevention() {
 
       {/* Guide 1 */}
       <div className="editorial-card" style={{ marginBottom: 'var(--space-lg)' }}>
-        <h3 style={{ fontSize: '1.3rem', marginBottom: 'var(--space-xs)' }}>🔐 Password Hygiene & MFA</h3>
+        <h3 style={{ fontSize: '1.3rem', marginBottom: 'var(--space-xs)' }}>Password Hygiene & MFA</h3>
         <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: 'var(--space-sm)' }}>
           Password reuse makes you highly vulnerable to credential stuffing. If a hacker breaches one forum, they test your email/password on banking apps.
         </p>
@@ -25,7 +25,7 @@ function Prevention() {
 
       {/* Guide 2 */}
       <div className="editorial-card" style={{ marginBottom: 'var(--space-lg)' }}>
-        <h3 style={{ fontSize: '1.3rem', marginBottom: 'var(--space-xs)' }}>📱 UPI & Payment Security</h3>
+        <h3 style={{ fontSize: '1.3rem', marginBottom: 'var(--space-xs)' }}>UPI & Payment Security</h3>
         <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: 'var(--space-sm)' }}>
           UPI payments transfer funds instantly out of your bank account. There is no escrow reversal mechanism.
         </p>
@@ -38,7 +38,7 @@ function Prevention() {
 
       {/* Guide 3 */}
       <div className="editorial-card" style={{ marginBottom: 'var(--space-lg)' }}>
-        <h3 style={{ fontSize: '1.3rem', marginBottom: 'var(--space-xs)' }}>🌐 Safe Browsing & Links</h3>
+        <h3 style={{ fontSize: '1.3rem', marginBottom: 'var(--space-xs)' }}>Safe Browsing & Links</h3>
         <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: 'var(--space-sm)' }}>
           Fake portals cloning banking/university login pages are hosted on domains registered to look similar.
         </p>
@@ -51,7 +51,7 @@ function Prevention() {
       
       {/* Guide 4 */}
       <div className="editorial-card" style={{ marginBottom: 'var(--space-lg)' }}>
-        <h3 style={{ fontSize: '1.3rem', marginBottom: 'var(--space-xs)' }}>📁 Digital Evidence Preservation</h3>
+        <h3 style={{ fontSize: '1.3rem', marginBottom: 'var(--space-xs)' }}>Digital Evidence Preservation</h3>
         <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: 'var(--space-sm)' }}>
           If you fall victim to a cybercrime, preserving evidence is critical to secure an investigation.
         </p>

@@ -33,8 +33,11 @@ function Login({ setUser }) {
   return (
     <div className="container" style={{ maxWidth: '420px', padding: 'var(--space-xl) 0' }}>
       <div className="editorial-card" style={{ padding: 'var(--space-xl)' }}>
-        <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: '2rem', marginBottom: 'var(--space-md)' }}>
-          Login to Portal
+        <div style={{ textAlign: 'center', marginBottom: 'var(--space-md)' }}>
+          <img src="/logo/cyber-law-logo-horizontal.svg" alt="Cyber Law Awareness Portal" style={{ height: '40px', width: 'auto' }} />
+        </div>
+        <h2 style={{ fontSize: '1.5rem', marginBottom: 'var(--space-md)', textAlign: 'center', color: 'var(--accent-navy)' }}>
+          Sign In
         </h2>
         <p className="text-muted" style={{ marginBottom: 'var(--space-lg)', fontSize: '0.9rem' }}>
           Access your personalized dashboard, track quiz results, and complete cyber awareness assessments.

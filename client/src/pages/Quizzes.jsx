@@ -31,16 +31,30 @@ function Quizzes({ user, updateProgressTrigger }) {
     }
   };
 
-  const handleSelectQuiz = (category) => {
-    const categoryQuizzes = quizzes.filter(q => q.category === category);
-    setActiveQuiz({
-      category,
-      questions: categoryQuizzes
-    });
-    setSelectedAnswers({});
-    setQuizSubmitted(false);
-    setSubmitMessage('');
-    setExplanations([]);
+  const handleSelectQuiz = async (category) => {
+    const quizObj = quizzes.find(q => q.category === category);
+    if (!quizObj) {
+      alert('Quiz not found for this category.');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const questions = await api.getQuizQuestions(quizObj.id);
+      setActiveQuiz({
+        id: quizObj.id,
+        category,
+        questions
+      });
+      setSelectedAnswers({});
+      setQuizSubmitted(false);
+      setSubmitMessage('');
+      setExplanations([]);
+    } catch (err) {
+      alert(err.message || 'Failed to retrieve quiz questions.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleOptionChange = (qIndex, optionIndex) => {
@@ -66,14 +80,13 @@ function Quizzes({ user, updateProgressTrigger }) {
       selectedOptionIndex: selectedAnswers[idx]
     }));
 
-    // Find a representative quiz ID
-    const representativeQuizId = activeQuiz.questions[0]?.id;
-    if (!representativeQuizId) return;
+    const quizId = activeQuiz.id;
+    if (!quizId) return;
 
     setLoading(true);
     try {
       // Backend-Authoritative submission
-      const data = await api.submitQuiz(representativeQuizId, formattedAnswers);
+      const data = await api.submitQuiz(quizId, formattedAnswers);
       setScorePercent(data.score);
       setExplanations(data.explanations || []);
       setQuizSubmitted(true);
@@ -106,7 +119,8 @@ function Quizzes({ user, updateProgressTrigger }) {
         // List Categories to Select
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 'var(--space-lg)' }}>
           {categories.map((cat) => {
-            const count = quizzes.filter(q => q.category === cat).length;
+            const quizObj = quizzes.find(q => q.category === cat);
+            const count = quizObj ? quizObj.questionCount : 0;
             return (
               <div key={cat} className="editorial-card" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
                 <div>
@@ -132,7 +146,7 @@ function Quizzes({ user, updateProgressTrigger }) {
         // Active Quiz Renderer
         <div>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-lg)', borderBottom: '1px solid var(--color-border)', paddingBottom: 'var(--space-sm)' }}>
-            <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: '1.8rem' }}>
+            <h2 style={{ fontSize: '1.8rem' }}>
               Category: {activeQuiz.category}
             </h2>
             <button onClick={() => setActiveQuiz(null)} className="btn btn-secondary">
@@ -142,7 +156,7 @@ function Quizzes({ user, updateProgressTrigger }) {
 
           {quizSubmitted && (
             <div className="alert alert-success" style={{ marginBottom: 'var(--space-lg)' }}>
-              🎉 <strong>Quiz Evaluation Complete!</strong> You scored <strong>{scorePercent}%</strong>.<br />
+              <strong>Quiz Evaluation Complete!</strong> You scored <strong>{scorePercent}%</strong>.<br />
               {submitMessage}
             </div>
           )}
@@ -207,7 +221,7 @@ function Quizzes({ user, updateProgressTrigger }) {
                         style={optionStyle}
                         disabled={quizSubmitted}
                       >
-                        {isSelected ? '⬤' : '○'} {opt}
+                        {isSelected ? '●' : '○'} {opt}
                       </button>
                     );
                   })}
@@ -225,7 +239,7 @@ function Quizzes({ user, updateProgressTrigger }) {
                     <strong style={{ color: 'var(--accent-navy)' }}>Explanation:</strong> {explanationText}
                     {q.relatedLawSection && (
                       <div style={{ marginTop: 'var(--space-xs)', fontSize: '0.8rem' }}>
-                        ⚖️ <em>Relevant Law Context:</em> <Link to="/laws" style={{ fontWeight: '600', textDecoration: 'underline' }}>{q.relatedLawSection}</Link>
+                        <em>Related Law:</em> <Link to="/laws" style={{ fontWeight: '600', textDecoration: 'underline' }}>{q.relatedLawSection}</Link>
                       </div>
                     )}
                   </div>

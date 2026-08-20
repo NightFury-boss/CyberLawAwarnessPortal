@@ -3,12 +3,14 @@ const QuizQuestion = require('../models/QuizQuestion');
 const QuizAttempt = require('../models/QuizAttempt');
 const UserProgress = require('../models/UserProgress');
 
+const { selectQuestions } = require('../services/questionSelectionService');
+
 exports.getAllQuizzes = async (req, res) => {
   try {
     const quizzes = await Quiz.find();
-    // Return quizzes populated with their questions list, but WITHOUT correct answers or explanations (Security Protection)
+    // Return quizzes populated with their questions list, but WITHOUT correct answers or explanations (Security Protection & Test Compatibility)
     const populated = await Promise.all(quizzes.map(async (quiz) => {
-      const questions = await QuizQuestion.find({ quizId: quiz._id });
+      const questions = await QuizQuestion.find({ quizId: quiz._id, published: true });
       return {
         id: quiz._id,
         title: quiz.title,
@@ -19,9 +21,8 @@ exports.getAllQuizzes = async (req, res) => {
           id: q._id,
           questionText: q.questionText,
           options: q.options,
-          relatedLawSection: q.relatedLawSection,
+          relatedLawSection: q.relatedLawSection || q.relatedLaw || '',
           difficulty: q.difficulty
-          // EXCLUDED correctOptionIndex and explanation to prevent client-side inspecting
         }))
       };
     }));
@@ -30,6 +31,41 @@ exports.getAllQuizzes = async (req, res) => {
     res.status(500).json({
       success: false,
       error: { code: 'QUIZ_FETCH_ERROR', message: error.message }
+    });
+  }
+};
+
+exports.getQuizQuestions = async (req, res) => {
+  try {
+    const { quizId } = req.params;
+    const userId = req.user._id;
+
+    const quiz = await Quiz.findById(quizId);
+    if (!quiz) {
+      return res.status(404).json({
+        success: false,
+        error: { code: 'QUIZ_NOT_FOUND', message: 'Quiz not found' }
+      });
+    }
+
+    // Load questions dynamically via selection service
+    const questions = await selectQuestions(userId, quizId, quiz.category, 10);
+    
+    // EXCLUDE correctOptionIndex and explanation to prevent client-side inspection
+    const sanitized = questions.map(q => ({
+      id: q._id,
+      questionText: q.questionText,
+      options: q.options,
+      relatedLawSection: q.relatedLawSection || q.relatedLaw || '',
+      difficulty: q.difficulty,
+      questionType: q.questionType
+    }));
+
+    res.json(sanitized);
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: { code: 'QUESTIONS_FETCH_ERROR', message: error.message }
     });
   }
 };
@@ -88,6 +124,9 @@ exports.submitQuiz = async (req, res) => {
     const percentage = Math.round((correctCount / questions.length) * 100);
 
     // Save attempt
+    const previousAttemptsCount = await QuizAttempt.countDocuments({ userId, quizId });
+    const attemptNumber = previousAttemptsCount + 1;
+
     const attempt = await QuizAttempt.create({
       userId,
       quizId,
@@ -96,7 +135,8 @@ exports.submitQuiz = async (req, res) => {
         selectedOptionIndex: a.selectedOptionIndex
       })),
       score: percentage,
-      percentage
+      percentage,
+      attemptNumber
     });
 
     // Update progress profiles, streaks, and badges

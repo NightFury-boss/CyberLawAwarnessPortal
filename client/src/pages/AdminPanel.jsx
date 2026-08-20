@@ -238,7 +238,12 @@ function AdminPanel({ user }) {
     <div className="admin-theme admin-layout">
       {/* Sidebar navigation */}
       <aside className="admin-sidebar">
-        <h2>🔧 Admin Controls</h2>
+        <div style={{ padding: '0 8px', marginBottom: 'var(--space-lg)' }}>
+          <img src="/logo/cyber-law-logo-horizontal.svg" alt="Cyber Law Awareness Portal" style={{ height: '30px', width: 'auto', filter: 'brightness(0) invert(1)' }} />
+          <span style={{ fontSize: '0.7rem', fontWeight: 'bold', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '1px', display: 'block', marginTop: '8px' }}>
+            ADMINISTRATION
+          </span>
+        </div>
         <ul className="admin-nav">
           <li>
             <button
@@ -246,7 +251,7 @@ function AdminPanel({ user }) {
               className={`btn btn-secondary ${activeTab === 'analytics' ? 'active' : ''}`}
               style={{ width: '100%', textAlign: 'left', border: 'none', color: 'white', backgroundColor: activeTab === 'analytics' ? '#1e293b' : 'transparent' }}
             >
-              📊 System Analytics
+              System Analytics
             </button>
           </li>
           <li>
@@ -255,7 +260,7 @@ function AdminPanel({ user }) {
               className={`btn btn-secondary ${activeTab === 'users' ? 'active' : ''}`}
               style={{ width: '100%', textAlign: 'left', border: 'none', color: 'white', backgroundColor: activeTab === 'users' ? '#1e293b' : 'transparent' }}
             >
-              👤 Users Progression
+              Users Progression
             </button>
           </li>
           <li>
@@ -264,7 +269,7 @@ function AdminPanel({ user }) {
               className={`btn btn-secondary ${activeTab === 'laws' ? 'active' : ''}`}
               style={{ width: '100%', textAlign: 'left', border: 'none', color: 'white', backgroundColor: activeTab === 'laws' ? '#1e293b' : 'transparent' }}
             >
-              ⚖️ IT Act Sections
+              IT Act Sections
             </button>
           </li>
           <li>
@@ -273,7 +278,7 @@ function AdminPanel({ user }) {
               className={`btn btn-secondary ${activeTab === 'crimes' ? 'active' : ''}`}
               style={{ width: '100%', textAlign: 'left', border: 'none', color: 'white', backgroundColor: activeTab === 'crimes' ? '#1e293b' : 'transparent' }}
             >
-              🔒 Cybercrime Topics
+              Cybercrime Topics
             </button>
           </li>
           <li>
@@ -282,7 +287,7 @@ function AdminPanel({ user }) {
               className={`btn btn-secondary ${activeTab === 'cases' ? 'active' : ''}`}
               style={{ width: '100%', textAlign: 'left', border: 'none', color: 'white', backgroundColor: activeTab === 'cases' ? '#1e293b' : 'transparent' }}
             >
-              🔍 Case Studies
+              Case Studies
             </button>
           </li>
           <li>
@@ -291,7 +296,7 @@ function AdminPanel({ user }) {
               className={`btn btn-secondary ${activeTab === 'quizzes' ? 'active' : ''}`}
               style={{ width: '100%', textAlign: 'left', border: 'none', color: 'white', backgroundColor: activeTab === 'quizzes' ? '#1e293b' : 'transparent' }}
             >
-              ⚡ Quizzes
+              Quizzes
             </button>
           </li>
           <li>
@@ -300,7 +305,7 @@ function AdminPanel({ user }) {
               className={`btn btn-secondary ${activeTab === 'resources' ? 'active' : ''}`}
               style={{ width: '100%', textAlign: 'left', border: 'none', color: 'white', backgroundColor: activeTab === 'resources' ? '#1e293b' : 'transparent' }}
             >
-              🔗 Portal Resources
+              Portal Resources
             </button>
           </li>
           <li>
@@ -309,7 +314,7 @@ function AdminPanel({ user }) {
               className={`btn btn-secondary ${activeTab === 'audit' ? 'active' : ''}`}
               style={{ width: '100%', textAlign: 'left', border: 'none', color: 'white', backgroundColor: activeTab === 'audit' ? '#1e293b' : 'transparent' }}
             >
-              📋 Audit History Logs
+              Audit History Logs
             </button>
           </li>
           <li style={{ marginTop: '40px' }}>
@@ -349,7 +354,7 @@ function AdminPanel({ user }) {
             </div>
 
             <div className="editorial-card" style={{ backgroundColor: 'var(--bg-white)', border: 'none' }}>
-              <h3 style={{ color: 'white', marginBottom: '10px' }}>💡 Primary Student Vulnerability</h3>
+              <h3 style={{ color: 'white', marginBottom: '10px' }}>Primary Student Vulnerability</h3>
               <p style={{ color: 'var(--text-secondary)' }}>
                 Most common weak assessment area detected across participants: <strong style={{ color: 'var(--color-error)' }}>{analytics.weakestArea}</strong> (failed threshold in {analytics.weakestAreaCount} attempts).
               </p>

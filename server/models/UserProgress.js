@@ -12,6 +12,12 @@ const UserProgressSchema = new mongoose.Schema({
       type: String // Slugs of completed learning modules
     }
   ],
+  quizAttempts: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'QuizAttempt'
+    }
+  ],
   badgesEarned: [
     {
       type: String

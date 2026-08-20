@@ -1,9 +1,9 @@
 /* CYBER LAW AWARENESS PORTAL - DESIGN SYSTEM & STYLESHEET */
 
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,600;1,400&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 
 :root {
-  /* Color Palette - Editorial & Institutional */
+  /* Color Palette - Brand System (Home page source of truth) */
   --bg-primary: #fbfbf9;
   --bg-secondary: #f4f3ee;
   --bg-white: #ffffff;
@@ -25,9 +25,40 @@
   --color-warning: #d35400;
   --color-warning-light: #fef5ec;
 
-  /* Typography Scale */
-  --font-sans: 'Outfit', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  --font-serif: 'Playfair Display', Georgia, serif;
+  /* Typography Families */
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-body: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-display-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  /* Note: --font-serif removed. All type uses --font-sans / --font-body / --font-display-family */
+
+  /* Typography Sizes */
+  --font-xs: 0.75rem;
+  --font-sm: 0.875rem;
+  --font-base: 1rem;
+  --font-md: 1.125rem;
+  --font-lg: 1.25rem;
+  --font-xl: 1.5rem;
+  --font-2xl: 2rem;
+  --font-3xl: 2.5rem;
+  --font-size-display: clamp(2.5rem, 4vw, 3.5rem);
+
+  /* Typography Weights */
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+  --weight-bold: 700;
+
+  /* Typography Line Heights */
+  --lh-tight: 1.2;
+  --lh-normal: 1.5;
+  --lh-relaxed: 1.65;
+  --lh-loose: 1.8;
+
+  /* Typography Letter Spacings */
+  --letter-spacing-tight: -0.015em;
+  --letter-spacing-normal: 0em;
+  --letter-spacing-wide: 0.05em;
+  --letter-spacing-widest: 0.1em;
 
   /* Spacing */
   --space-xs: 0.25rem;
@@ -40,6 +71,28 @@
   /* Transitions */
   --transition-fast: 0.15s ease;
   --transition-normal: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* Border Radius System */
+  --radius-xs: 2px;
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 10px;
+  --radius-xl: 16px;
+
+  /* Semantic Color Tokens */
+  --color-info: #2563eb;
+  --color-info-light: #eff6ff;
+  --color-danger: #c0392b;
+  --color-danger-light: #fdf2f0;
+
+  /* Responsive Typography Scale */
+  --font-size-h1: clamp(2rem, 4vw, 3rem);
+  --font-size-h2: clamp(1.5rem, 3vw, 2.2rem);
+  --font-size-h3: clamp(1.2rem, 2.5vw, 1.6rem);
+  --font-size-body: 1rem;
+  --font-size-body-sm: 0.9rem;
+  --font-size-meta: 0.8rem;
+  --font-size-label: 0.75rem;
 }
 
 /* Reset */
@@ -53,7 +106,7 @@ body {
   background-color: var(--bg-primary);
   color: var(--text-primary);
   font-family: var(--font-sans);
-  line-height: 1.6;
+  line-height: var(--lh-relaxed);
   -webkit-font-smoothing: antialiased;
 }
 
@@ -69,14 +122,16 @@ a:hover {
 }
 
 h1, h2, h3, h4, h5, h6 {
-  font-weight: 600;
-  line-height: 1.25;
+  font-weight: var(--weight-semibold);
+  line-height: var(--lh-tight);
   color: var(--accent-navy);
 }
 
 h1 {
-  font-family: var(--font-serif);
-  font-weight: 500;
+  font-family: var(--font-sans);
+  font-weight: var(--weight-bold);
+  font-size: var(--font-3xl);
+  letter-spacing: var(--letter-spacing-tight);
 }
 
 /* Common Layout Elements */
@@ -104,7 +159,7 @@ h1 {
 }
 
 .navbar .brand {
-  font-family: var(--font-serif);
+  font-family: var(--font-sans);
   font-size: 1.4rem;
   font-weight: 600;
   color: var(--accent-navy);
@@ -142,7 +197,7 @@ h1 {
   padding: 0.6rem 1.2rem;
   font-size: 0.9rem;
   font-weight: 500;
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   cursor: pointer;
   transition: var(--transition-fast);
   border: 1px solid transparent;
@@ -198,7 +253,7 @@ h1 {
   padding: 0.65rem 0.85rem;
   font-size: 0.95rem;
   border: 1px solid var(--color-border-dark);
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   background-color: var(--bg-white);
   transition: var(--transition-fast);
   font-family: var(--font-sans);
@@ -231,7 +286,7 @@ h1 {
   border: 1px solid var(--color-border);
   padding: var(--space-lg);
   margin-bottom: var(--space-md);
-  border-radius: 4px;
+  border-radius: var(--radius-md);
   transition: var(--transition-normal);
 }
 
@@ -333,7 +388,7 @@ h1 {
 
 .pillar-col h3 {
   margin-bottom: var(--space-sm);
-  font-family: var(--font-serif);
+  font-family: var(--font-sans);
   font-size: 1.4rem;
 }
 
@@ -560,7 +615,7 @@ h1 {
 }
 
 .reveal-pane h3 {
-  font-family: var(--font-serif);
+  font-family: var(--font-sans);
   font-size: 1.8rem;
   color: var(--color-error);
   margin-bottom: var(--space-md);
@@ -881,7 +936,7 @@ h1 {
 }
 
 .sidebar .brand {
-  font-family: var(--font-serif);
+  font-family: var(--font-sans);
   font-size: 1.3rem;
   font-weight: 600;
   color: var(--accent-navy);
@@ -1302,3 +1357,36 @@ div[onClick]:hover {
   transform: translateX(4px);
 }
 
+/* Responsive Navbar Brand Logo Icon */
+.navbar-brand-icon {
+  display: block;
+  transition: opacity 0.2s ease;
+}
+
+.navbar-brand-icon:hover {
+  opacity: 0.85;
+}
+
+@media (min-width: 769px) {
+  .navbar-brand-icon {
+    display: none;
+  }
+}
+
+
+/* ==================================================
+   EDITORIAL ARCHIVE INDEX ROW HOVER STYLES
+   ================================================== */
+.incident-index-row {
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  border-left: 3px solid transparent !important;
+  padding-left: 12px !important;
+  padding-right: 12px !important;
+  border-radius: 4px !important;
+}
+
+.incident-index-row:hover {
+  background-color: var(--bg-secondary) !important;
+  border-left-color: var(--accent-navy) !important;
+  padding-left: 20px !important;
+}

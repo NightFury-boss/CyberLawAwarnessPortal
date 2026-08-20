@@ -80,8 +80,13 @@ function BaselineAssessment({ user, updateProgressTrigger }) {
       {/* Start Screen */}
       {currentStep === 'start_screen' && (
         <div style={{ maxWidth: '600px', margin: '40px auto', textAlign: 'center' }}>
-          
-          <h1 style={{ fontSize: '2.5rem', fontFamily: 'var(--font-serif)', marginTop: '10px', marginBottom: 'var(--space-md)' }}>
+          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', marginBottom: 'var(--space-md)' }}>
+            <img src="/logo/cyber-law-logo-icon.svg" alt="" style={{ height: '32px', width: 'auto' }} />
+            <span style={{ fontSize: '0.85rem', fontWeight: 'bold', color: 'var(--accent-navy)', textTransform: 'uppercase', letterSpacing: '1px' }}>
+              Cyber Law Awareness Portal
+            </span>
+          </div>
+          <h1 style={{ fontSize: '2.5rem', marginTop: '10px', marginBottom: 'var(--space-md)' }}>
             Cyber Awareness Baseline
           </h1>
           <p className="text-muted" style={{ fontSize: '1.05rem', marginBottom: 'var(--space-xl)' }}>
@@ -196,21 +201,21 @@ function BaselineAssessment({ user, updateProgressTrigger }) {
                 <span className="dot-green"></span>
               </div>
               <div className="mock-browser-url" style={{ color: 'var(--color-error)' }}>
-                🚫 {currentStage.mockInterfaceData.url}
+                {currentStage.mockInterfaceData.url}
               </div>
             </div>
 
             <div className="mock-browser-content" style={{ maxWidth: '400px', margin: '40px auto' }}>
               <div className="editorial-card" style={{ padding: 'var(--space-lg)', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}>
                 <div style={{ textAlign: 'center', marginBottom: 'var(--space-md)' }}>
-                  <h3 style={{ fontSize: '1.6rem', color: 'var(--accent-navy)', fontFamily: 'var(--font-serif)' }}>
+                  <h3 style={{ fontSize: '1.6rem', color: 'var(--accent-navy)' }}>
                     {currentStage.mockInterfaceData.title}
                   </h3>
                   <span className="text-muted" style={{ fontSize: '0.8rem' }}>Verification Portal</span>
                 </div>
 
                 <div className="alert alert-error" style={{ fontSize: '0.75rem', padding: '8px' }}>
-                  ⚠️ Warning: {currentStage.mockInterfaceData.warningText}
+                  Warning: {currentStage.mockInterfaceData.warningText}
                 </div>
 
                 <form onSubmit={handleLoginSubmit}>
@@ -293,7 +298,7 @@ function BaselineAssessment({ user, updateProgressTrigger }) {
           <p style={{ fontSize: '1.1rem', marginBottom: 'var(--space-lg)' }}>
             {result.score >= 70 ? (
               <span style={{ color: 'var(--color-success)', fontWeight: '600' }}>
-                🎉 Excellent defense reflex! You recognized the indicators of a spoof communication.
+                Excellent defense reflex! You recognized the indicators of a spoof communication.
               </span>
             ) : (
               <span style={{ color: 'var(--text-secondary)' }}>
@@ -309,7 +314,7 @@ function BaselineAssessment({ user, updateProgressTrigger }) {
             marginBottom: 'var(--space-xl)'
           }}>
             <div>
-              <h4 style={{ fontSize: '1.1rem', marginBottom: 'var(--space-xs)' }}>🔍 Incident Breakdown</h4>
+              <h4 style={{ fontSize: '1.1rem', marginBottom: 'var(--space-xs)' }}>Incident Breakdown</h4>
               <ul style={{ paddingLeft: 'var(--space-md)', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
                 <li style={{ marginBottom: '6px' }}>
                   <strong>The Urgency Trigger:</strong> The email threatened account suspension in <em>2 hours</em>. Attacking entities create artificial deadlines to override standard caution checks.
@@ -342,7 +347,7 @@ function BaselineAssessment({ user, updateProgressTrigger }) {
 
           {result.criticalMistakes && result.criticalMistakes.length > 0 && (
             <div className="alert alert-error" style={{ marginBottom: 'var(--space-lg)' }}>
-              <h4>⚠️ Critical Mistakes Made:</h4>
+              <h4>Critical Mistakes Made:</h4>
               <ul style={{ paddingLeft: 'var(--space-md)', fontSize: '0.85rem' }}>
                 {result.criticalMistakes.map((m, idx) => (
                   <li key={idx}>{m}</li>
@@ -357,16 +362,16 @@ function BaselineAssessment({ user, updateProgressTrigger }) {
             borderRadius: '4px',
             marginBottom: 'var(--space-lg)'
           }}>
-            <h4 style={{ color: 'var(--accent-navy)', marginBottom: 'var(--space-xs)' }}>📋 Recommended Learning Modules</h4>
+            <h4 style={{ color: 'var(--accent-navy)', marginBottom: 'var(--space-xs)' }}>Recommended Learning Modules</h4>
             <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: 'var(--space-sm)' }}>
               Based on your simulation decisions, we recommend visiting these learning modules to close your safety gaps:
             </p>
             <div style={{ display: 'flex', gap: 'var(--space-sm)' }}>
               <button onClick={() => navigate('/crimes')} className="btn btn-secondary" style={{ fontSize: '0.8rem' }}>
-                🔒 Phishing Detection Module
+                Phishing Detection Module
               </button>
               <button onClick={() => navigate('/prevention')} className="btn btn-secondary" style={{ fontSize: '0.8rem' }}>
-                🛡️ Safe URL Verification
+                Safe URL Verification
               </button>
             </div>
           </div>
