@@ -18,8 +18,20 @@ function Sidebar({ user, isOpen, setIsOpen }) {
 
   return (
     <aside id="main-sidebar" className={`sidebar ${isOpen ? 'open' : 'collapsed'}`} aria-label="Main Navigation">
-      <Link ref={firstLinkRef} to="/" className={isActive('/')} onClick={() => setIsOpen(false)}>
-        <img src="/logo/cyber-law-logo-horizontal.svg" alt="Cyber Law Awareness Portal" style={{ height: '36px', width: 'auto', maxWidth: '100%' }} />
+      <Link ref={firstLinkRef} to="/" className="brand" style={{ display: 'flex', alignItems: 'center', justifyContent: isOpen ? 'flex-start' : 'center', gap: '10px', marginBottom: 'var(--space-xl)', padding: '0 8px', textDecoration: 'none' }} onClick={() => setIsOpen(false)}>
+        {isOpen ? (
+          <img 
+            src="/logo/cyber-law-logo-horizontal.svg" 
+            alt="Cyber Law Awareness Portal" 
+            style={{ height: '46px', width: 'auto', maxWidth: '100%', transition: 'all 0.2s ease' }} 
+          />
+        ) : (
+          <img 
+            src="/logo/cyber-law-logo-icon.svg" 
+            alt="CL" 
+            style={{ height: '32px', width: 'auto', transition: 'all 0.2s ease' }} 
+          />
+        )}
       </Link>
       <nav className="nav-links" style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-xs)' }}>
         <Link to="/" className={isActive('/')} onClick={() => setIsOpen(false)}>

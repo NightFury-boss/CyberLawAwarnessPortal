@@ -14,7 +14,7 @@ function Navbar({ user, setUser, sidebarOpen, setSidebarOpen }) {
 
   const getPageTitle = () => {
     const path = location.pathname;
-    if (path === '/') return 'Home Portal';
+    if (path === '/') return 'Cyber Law Awareness Portal';
     if (path === '/laws') return 'Cyber Laws Registry';
     if (path === '/crimes') return 'Crimes Library & Warnings';
     if (path === '/cases') return 'Incident Case Studies';
