@@ -31,6 +31,43 @@ function AppContent() {
   const [sidebarOpen, setSidebarOpen] = useState(window.innerWidth > 768);
   const location = useLocation();
 
+  // Scroll restoration and anchor navigation handler
+  useEffect(() => {
+    const handleScrollRestoration = () => {
+      const hash = location.hash;
+      if (hash) {
+        const targetId = hash.substring(1);
+        let attempts = 0;
+        
+        const scrollToAnchor = () => {
+          const element = document.getElementById(targetId);
+          if (element) {
+            const header = document.querySelector('.top-header');
+            const headerHeight = header ? header.offsetHeight : 64;
+            
+            element.style.scrollMarginTop = `${headerHeight + 16}px`;
+            element.scrollIntoView({
+              behavior: 'smooth',
+              block: 'start'
+            });
+          } else if (attempts < 10) {
+            attempts++;
+            requestAnimationFrame(scrollToAnchor);
+          }
+        };
+        requestAnimationFrame(scrollToAnchor);
+      } else {
+        window.scrollTo({
+          top: 0,
+          left: 0,
+          behavior: 'auto'
+        });
+      }
+    };
+
+    handleScrollRestoration();
+  }, [location.pathname, location.hash]);
+
   useEffect(() => {
     checkAuth();
   }, []);
