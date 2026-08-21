@@ -12,7 +12,8 @@
     "dev": "concurrently \"npm run server\" \"npm run client\"",
     "seed": "node server/config/seed.js",
     "seed:reset": "node server/config/seedReset.js",
-    "test": "node server/tests/api.test.js"
+    "test": "node server/tests/api.test.js",
+    "verify:scenarios": "node server/utils/verifyScenarios.js"
   },
   "dependencies": {
     "concurrently": "^8.2.2"

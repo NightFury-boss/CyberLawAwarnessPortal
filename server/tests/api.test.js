@@ -351,6 +351,39 @@ async function runTests() {
     if (!fStep3Data.deltaMessage || fStep3Data.improvementDelta === undefined) {
       throw new Error('Improvement delta tracking failed or did not return delta values.');
     }
+    
+    // 10. Test Scenario Engine Reference Integrity
+    console.log('- Testing Scenario Engine Reference Integrity...');
+    const allScenarios = await Scenario.find({});
+    for (let s of allScenarios) {
+      const stages = await ScenarioStage.find({ scenarioId: s._id }).sort({ stageOrder: 1 });
+      if (stages.length === 0) {
+        throw new Error(`Scenario "${s.title}" has 0 stages in the database!`);
+      }
+      
+      const stageMap = {};
+      stages.forEach(st => {
+        stageMap[st._id.toString()] = st;
+      });
+
+      // Verify that all decisions point to valid nextStageId
+      for (let st of stages) {
+        const decisions = await ScenarioDecision.find({ stageId: st._id });
+        if (decisions.length === 0 && !st.terminal && st.title !== 'Adaptive Segment') {
+          throw new Error(`Non-terminal Stage ${st.stageOrder} in scenario "${s.title}" has 0 decisions!`);
+        }
+        for (let dec of decisions) {
+          if (dec.nextStageId) {
+            const nextIdStr = dec.nextStageId.toString();
+            if (!stageMap[nextIdStr]) {
+              throw new Error(`Stage ${st.stageOrder} Decision in scenario "${s.title}" points to invalid nextStageId: ${dec.nextStageId}`);
+            }
+          }
+        }
+      }
+    }
+    console.log('  * PASS: Scenario DB reference integrity validated successfully');
+
     console.log(`  * PASS: pre/post delta reported: "${fStep3Data.deltaMessage}"`);
 
     console.log('\n✅ ALL AUTOMATED SECURITY TESTS PASSED SUCCESSFULLY!\n');
