@@ -61,3 +61,13 @@ if (require.main === module) {
 }
 
 module.exports = app;
+
+// Process-level monitors for uncaught errors and rejections
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('[Unhandled Rejection] Promise:', promise, 'Reason:', reason);
+});
+
+process.on('uncaughtException', (err) => {
+  console.error('[Uncaught Exception] Critical Error:', err);
+  process.exit(1);
+});
