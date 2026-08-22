@@ -8,7 +8,7 @@ function Cases() {
   const [cases, setCases] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  
+
   // UI states
   const [selectedCaseSlug, setSelectedCaseSlug] = useState(null);
   const [selectedCase, setSelectedCase] = useState(null);
@@ -16,13 +16,13 @@ function Cases() {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState('All');
   const [activePattern, setActivePattern] = useState(null); // 'Urgency', 'Authority', 'Fear', 'Trust', 'Familiarity'
-  
+
   // Interactive Decision states
   const [selectedChoiceIdx, setSelectedChoiceIdx] = useState(null);
   const [decisionSubmitted, setDecisionSubmitted] = useState(false);
   const [decisionFeedback, setDecisionFeedback] = useState('');
   const [narrativeUnlocked, setNarrativeUnlocked] = useState(false);
-  
+
   // User Reading Progress (Local Storage)
   const [completedCases, setCompletedCases] = useState([]);
 
@@ -61,7 +61,7 @@ function Cases() {
       setSelectedChoiceIdx(null);
       setDecisionSubmitted(false);
       setDecisionFeedback('');
-      
+
       // If there are no decision points, unlock narrative automatically
       if (!data.decisionPoints || data.decisionPoints.length === 0) {
         setNarrativeUnlocked(true);
@@ -114,13 +114,13 @@ function Cases() {
 
   // Categories helper derived from seed data
   const categories = ['All', 'Phishing', 'UPI/Payment Scams', 'Vishing', 'Job Scams', 'Social Engineering', 'Identity Theft', 'Payment Scams', 'Account Takeover'];
-  
+
   // Patterns lookup list
   const patternsList = [
-    { name: 'Urgency', icon: '⏳', desc: 'Attacker creates extreme pressure so victims skip safety verification.' },
-    { name: 'Authority', icon: '👮', desc: 'Impersonating police, military, or banking officials to bypass trust barriers.' },
-    { name: 'Familiarity', icon: '💬', desc: 'Imitating recognizable logos, layouts, or language styles.' },
-    { name: 'Fear', icon: '🚨', desc: 'Threatening account suspension or judicial arrests to induce compliance.' }
+    { name: 'Urgency', desc: 'Attacker creates extreme pressure so victims skip safety verification.' },
+    { name: 'Authority', desc: 'Impersonating police, military, or banking officials to bypass trust barriers.' },
+    { name: 'Familiarity', desc: 'Imitating recognizable logos, layouts, or language styles.' },
+    { name: 'Fear', desc: 'Threatening account suspension or judicial arrests to induce compliance.' }
   ];
 
   // Combined client-side filtering for cases archive list
@@ -133,13 +133,13 @@ function Cases() {
     keywords: 5
   };
 
-    const filteredCases = searchItems(
+  const filteredCases = searchItems(
     cases,
     searchQuery,
     casesSearchConfig,
     (item) => {
       const matchesCategory = activeCategory === 'All' || item.incidentType === activeCategory;
-      const matchesPattern = !activePattern || 
+      const matchesPattern = !activePattern ||
         item.warningSigns?.some(ws => ws.title.toLowerCase().includes(activePattern.toLowerCase())) ||
         item.title.toLowerCase().includes(activePattern.toLowerCase());
       return matchesCategory && matchesPattern;
@@ -322,10 +322,10 @@ function Cases() {
           )}
 
           {/* ATTACK PATTERNS DIRECTORY */}
-          <div style={{ 
-            marginBottom: 'var(--space-xxl)', 
-            borderTop: '1px solid var(--color-border)', 
-            paddingTop: 'var(--space-xl)' 
+          <div style={{
+            marginBottom: 'var(--space-xxl)',
+            borderTop: '1px solid var(--color-border)',
+            paddingTop: 'var(--space-xl)'
           }}>
             <span style={{
               fontSize: '0.75rem',
@@ -380,16 +380,16 @@ function Cases() {
 
           {/* EDITORIAL CASES LIST INDEX */}
           <div>
-            <div style={{ 
-              borderBottom: '1px solid var(--color-border)', 
-              paddingBottom: 'var(--space-md)', 
+            <div style={{
+              borderBottom: '1px solid var(--color-border)',
+              paddingBottom: 'var(--space-md)',
               marginBottom: 'var(--space-xl)'
             }}>
-              <div style={{ 
-                display: 'flex', 
-                justifyContent: 'space-between', 
-                alignItems: 'baseline', 
-                flexWrap: 'wrap', 
+              <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'baseline',
+                flexWrap: 'wrap',
                 gap: '12px',
                 marginBottom: 'var(--space-md)'
               }}>
@@ -409,14 +409,14 @@ function Cases() {
                     INCIDENT REGISTRY
                   </h2>
                 </div>
-                
+
                 <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
                   <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: '500', backgroundColor: 'var(--bg-secondary)', padding: '4px 10px', borderRadius: '4px' }}>
                     {filteredCases.length} files
                   </span>
                   {completedCases.length > 0 && (
                     <span style={{ fontSize: '0.85rem', color: 'var(--color-success)', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><polyline points="20 6 9 17 4 12"/></svg>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><polyline points="20 6 9 17 4 12" /></svg>
                       Audited
                     </span>
                   )}
@@ -424,10 +424,10 @@ function Cases() {
               </div>
 
               {/* Integrated Filter Row */}
-              <div style={{ 
-                display: 'flex', 
-                alignItems: 'center', 
-                gap: '12px', 
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px',
                 flexWrap: 'wrap',
                 marginTop: 'var(--space-md)',
                 paddingTop: 'var(--space-sm)',
@@ -489,7 +489,7 @@ function Cases() {
                 {filteredCases.map((cs) => {
                   const tagInfo = getCaseTypeLabel(cs.caseType);
                   const isCompleted = completedCases.includes(cs.slug);
-                  
+
                   return (
                     <div
                       key={cs._id}
@@ -522,9 +522,9 @@ function Cases() {
                             {tagInfo.text}
                           </span>
                           {isCompleted && (
-                            <span style={{ 
-                              fontSize: '0.7rem', 
-                              color: 'var(--color-success)', 
+                            <span style={{
+                              fontSize: '0.7rem',
+                              color: 'var(--color-success)',
                               fontWeight: '700',
                               textTransform: 'uppercase',
                               letterSpacing: '0.5px',
@@ -663,7 +663,7 @@ function Cases() {
                 <span style={{ fontSize: '0.8rem', fontWeight: 'bold', color: 'var(--text-muted)', textTransform: 'uppercase', display: 'block', marginBottom: '16px', letterSpacing: '0.5px' }}>
                   Incident Audit Progression Path
                 </span>
-                
+
                 <div style={{ display: 'flex', justifyContent: 'center', overflowX: 'auto' }}>
                   <svg width="600" height="70" viewBox="0 0 600 70" style={{ minWidth: '500px' }}>
                     {/* Background Connection Lines */}
@@ -705,13 +705,13 @@ function Cases() {
                 <h2 style={{ fontSize: '1.5rem', borderBottom: '2px solid var(--accent-navy)', paddingBottom: '8px', color: 'var(--accent-navy)', fontWeight: 'bold', marginBottom: '20px' }}>
                   THE INCIDENT
                 </h2>
-                
+
                 {/* Loop through sections up to the decision point if locked */}
                 {selectedCase.narrativeSections?.map((section, idx) => {
                   // If narrative is locked, and we have decision points, pause before the last 2 sections
                   const totalSections = selectedCase.narrativeSections.length;
                   const isPostDecisionSection = idx >= Math.max(1, totalSections - 2);
-                  
+
                   if (!narrativeUnlocked && isPostDecisionSection) {
                     return null;
                   }
@@ -748,11 +748,11 @@ function Cases() {
                   <h3 style={{ fontSize: '1.25rem', color: 'var(--text-primary)', fontWeight: 'bold', marginBottom: '16px', lineHeight: '1.5' }}>
                     {selectedCase.decisionPoints[0].questionText}
                   </h3>
-                  
+
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '20px' }}>
                     {selectedCase.decisionPoints[0].options.map((opt, oIdx) => {
                       const isSelected = selectedChoiceIdx === oIdx;
-                      
+
                       let btnBg = 'var(--bg-primary)';
                       let btnBorder = '1px solid var(--color-border)';
                       if (isSelected) {
@@ -847,12 +847,12 @@ function Cases() {
               {/* POST-DECISION DATA BLOCKS (UNLOCKED ONLY) */}
               {narrativeUnlocked && (
                 <div className="unlocked-content-animation">
-                  
+
                   {/* Narrative part 2 */}
                   {selectedCase.narrativeSections?.map((section, idx) => {
                     const totalSections = selectedCase.narrativeSections.length;
                     const isPostDecisionSection = idx >= Math.max(1, totalSections - 2);
-                    
+
                     if (!isPostDecisionSection) return null;
 
                     return (
@@ -915,7 +915,7 @@ function Cases() {
                                   zIndex: 1
                                 }} />
                               )}
-                              
+
                               {/* Circle icon */}
                               <div style={{
                                 width: '24px',
@@ -961,7 +961,7 @@ function Cases() {
                       <h3 style={{ fontSize: '1.25rem', color: 'var(--accent-navy)', fontWeight: 'bold', borderBottom: '1px solid var(--color-border)', paddingBottom: '8px', marginBottom: '16px' }}>
                         Why the Situation was Convincing
                       </h3>
-                      
+
                       {/* Attacker Manipulation Vectors Rating Progress Bars */}
                       <div style={{
                         backgroundColor: 'var(--bg-secondary)',
@@ -973,7 +973,7 @@ function Cases() {
                         <span style={{ fontSize: '0.75rem', fontWeight: 'bold', color: 'var(--text-muted)', textTransform: 'uppercase', display: 'block', marginBottom: '12px', letterSpacing: '0.5px' }}>
                           Attacker Manipulation Vectors
                         </span>
-                        
+
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                           <div>
                             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', fontWeight: '600', marginBottom: '3px' }}>

@@ -42,8 +42,8 @@ function Login({ setUser }) {
       setEmail('user@example.com');
       setPassword('UserPass123!');
     } else if (role === 'admin') {
-      setEmail('admin@cyberportal.gov.in');
-      setPassword('AdminPass123!');
+      setEmail('admin@cyberlawportal.test');
+      setPassword('change_this_in_development');
     }
   };
 
