@@ -15,7 +15,7 @@ const ScenarioSchema = new mongoose.Schema({
   code: {
     type: String,
     lowercase: true,
-    trim: true // e.g. "baseline", "final"
+    trim: true
   },
   description: {
     type: String,
@@ -40,13 +40,19 @@ const ScenarioSchema = new mongoose.Schema({
     enum: ['phishing', 'social-engineering', 'financial-fraud', 'identity-theft', 'mixed'],
     default: 'mixed'
   },
+  domain: {
+    type: String,
+    enum: ['EMAIL', 'SMS', 'PHONE', 'PAYMENT', 'QR', 'DELIVERY', 'ACCOUNT', 'SOCIAL', 'JOB', 'WEB', 'PRIVACY'],
+    default: 'WEB'
+  },
   difficulty: {
     type: String,
-    default: 'Medium'
+    enum: ['Beginner', 'Intermediate', 'Advanced'],
+    default: 'Intermediate'
   },
   estimatedDuration: {
     type: Number,
-    default: 5 // minutes
+    default: 5
   },
   active: {
     type: Boolean,
@@ -65,13 +71,12 @@ const ScenarioSchema = new mongoose.Schema({
   configuredWeights: {
     type: Map,
     of: Number,
-    required: true // e.g. { "Phishing awareness": 30, "Social engineering": 20 }
+    required: true
   }
 }, {
   timestamps: true
 });
 
-// Compound unique key to enforce versioning immutability
 ScenarioSchema.index({ slug: 1, version: 1 }, { unique: true });
 
 module.exports = mongoose.model('Scenario', ScenarioSchema);

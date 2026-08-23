@@ -32,29 +32,49 @@ const AssessmentSessionSchema = new mongoose.Schema({
   },
   score: {
     type: Number,
-    default: 50 // starts at 50, modified by choices
+    default: 50
   },
   categoryScores: {
     type: Map,
     of: Number,
-    default: {} // tracks accumulated scores per category
+    default: {}
   },
-  criticalMistakes: [
-    {
-      type: String // Explanations of critical mistakes made
+  behaviourScores: {
+    type: Map,
+    of: Number,
+    default: {
+      recognition: 100,
+      signalIdentification: 100,
+      verification: 100,
+      decisionQuality: 100,
+      falsePositive: 100,
+      unreviewedAcceptance: 100
     }
-  ],
+  },
+  unreviewedAcceptanceCount: {
+    type: Number,
+    default: 0
+  },
   falsePositiveCount: {
     type: Number,
     default: 0
   },
+  stagesCompleted: {
+    type: Number,
+    default: 0
+  },
+  criticalMistakes: [
+    {
+      type: String
+    }
+  ],
   startedAt: {
     type: Date,
     default: Date.now
   },
   expiresAt: {
     type: Date,
-    required: true // sessions expire to prevent infinite resume pools
+    required: true
   },
   completedAt: {
     type: Date
@@ -62,5 +82,7 @@ const AssessmentSessionSchema = new mongoose.Schema({
 }, {
   timestamps: true
 });
+
+AssessmentSessionSchema.index({ userId: 1, startedAt: -1 });
 
 module.exports = mongoose.model('AssessmentSession', AssessmentSessionSchema);

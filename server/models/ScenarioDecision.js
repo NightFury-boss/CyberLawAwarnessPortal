@@ -17,7 +17,15 @@ const ScenarioDecisionSchema = new mongoose.Schema({
   categoryScoreWeights: {
     type: Map,
     of: Number,
-    default: {} // e.g. { "Phishing awareness": -10 }
+    default: {}
+  },
+  behaviorEffects: {
+    recognition: { type: Number, default: 0 },
+    signalIdentification: { type: Number, default: 0 },
+    verification: { type: Number, default: 0 },
+    decisionQuality: { type: Number, default: 0 },
+    falsePositive: { type: Number, default: 0 },
+    unreviewedAcceptance: { type: Number, default: 0 }
   },
   riskLevel: {
     type: String,
@@ -31,7 +39,7 @@ const ScenarioDecisionSchema = new mongoose.Schema({
   nextStageId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'ScenarioStage',
-    default: null // null indicates completion block in a branch
+    default: null
   },
   explanation: {
     type: String,
@@ -42,11 +50,13 @@ const ScenarioDecisionSchema = new mongoose.Schema({
   },
   outcomeType: {
     type: String,
-    enum: ['correct', 'incorrect', 'false-positive', 'unsafe-action', 'safe-action', 'neutral'],
+    enum: ['correct', 'incorrect', 'false-positive', 'unsafe-action', 'neutral'],
     default: 'neutral'
   }
 }, {
   timestamps: true
 });
+
+ScenarioDecisionSchema.index({ stageId: 1 });
 
 module.exports = mongoose.model('ScenarioDecision', ScenarioDecisionSchema);

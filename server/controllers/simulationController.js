@@ -30,10 +30,101 @@ async function getWeakestCategory(userId) {
   return null;
 }
 
+/**
+ * Calculates normalized behavioral scores [0-100] based on the user's decisions in the session.
+ */
+async function calculateBehaviourScores(sessionId) {
+  const decisionsMade = await AssessmentDecision.find({ assessmentSessionId: sessionId });
+  
+  let rawDQ = 0, maxDQ = 0;
+  let rawTR = 0, maxTR = 0;
+  let rawSI = 0, maxSI = 0;
+  let rawVB = 0, maxVB = 0;
+  
+  let countFP = 0, opportunitiesFP = 0;
+  let countUA = 0, opportunitiesUA = 0;
+
+  for (const choice of decisionsMade) {
+    const stage = await ScenarioStage.findById(choice.stageId);
+    const chosenDecision = await ScenarioDecision.findById(choice.decisionId);
+    if (!stage || !chosenDecision) continue;
+
+    const allDecisions = await ScenarioDecision.find({ stageId: stage._id });
+
+    // Helper to get max positive effect for a dimension on this stage
+    const getMaxEffect = (dimension) => {
+      let maxVal = 0;
+      for (const d of allDecisions) {
+        const effects = d.behaviorEffects || {};
+        const val = effects[dimension] || 0;
+        if (val > maxVal) maxVal = val;
+      }
+      return maxVal;
+    };
+
+    const decEffects = chosenDecision.behaviorEffects || {};
+
+    // 1. Decision Quality (DQ)
+    rawDQ += decEffects.decisionQuality || 0;
+    maxDQ += getMaxEffect('decisionQuality');
+
+    // 2. Threat Recognition (TR) - evaluated only on malicious or ambiguous stages
+    if (stage.eventClassification !== 'legitimate') {
+      rawTR += decEffects.recognition || 0;
+      maxTR += getMaxEffect('recognition');
+    }
+
+    // 3. Signal Identification (SI) - evaluated only on stages with target signals configured
+    if (stage.targetSignals && stage.targetSignals.length > 0) {
+      rawSI += decEffects.signalIdentification || 0;
+      maxSI += getMaxEffect('signalIdentification');
+    }
+
+    // 4. Verification Behaviour (VB)
+    rawVB += decEffects.verification || 0;
+    maxVB += getMaxEffect('verification');
+
+    // 5. False Positive (FP) - evaluated on legitimate stages where user rejected/reported inappropriately
+    if (stage.eventClassification === 'legitimate') {
+      opportunitiesFP++;
+      if (decEffects.falsePositive > 0) {
+        countFP += decEffects.falsePositive;
+      }
+    }
+
+    // 6. Unreviewed Acceptance (UA) - evaluated on stages where an option exists to bypass safety/accept blindly
+    const maxUaVal = getMaxEffect('unreviewedAcceptance');
+    if (maxUaVal > 0) {
+      opportunitiesUA++;
+      if (decEffects.unreviewedAcceptance > 0) {
+        countUA += decEffects.unreviewedAcceptance;
+      }
+    }
+  }
+
+  const normalize = (raw, max) => {
+    if (max <= 0) return 100;
+    return Math.max(0, Math.min(100, Math.round((raw / max) * 100)));
+  };
+
+  const normalizePenalty = (count, opportunities) => {
+    if (opportunities <= 0) return 100;
+    return Math.max(0, Math.min(100, Math.round((1 - (count / opportunities)) * 100)));
+  };
+
+  return {
+    recognition: normalize(rawTR, maxTR),
+    signalIdentification: normalize(rawSI, maxSI),
+    verification: normalize(rawVB, maxVB),
+    decisionQuality: normalize(rawDQ, maxDQ),
+    falsePositive: normalizePenalty(countFP, opportunitiesFP),
+    unreviewedAcceptance: normalizePenalty(countUA, opportunitiesUA)
+  };
+}
+
 exports.getScenario = async (req, res) => {
   try {
     const { code } = req.params;
-    // Get latest published scenario version
     const scenario = await Scenario.findOne({ slug: code, status: 'published' }).sort({ version: -1 });
     if (!scenario) {
       return res.status(404).json({
@@ -52,7 +143,7 @@ exports.getScenario = async (req, res) => {
 
 exports.startAssessment = async (req, res) => {
   try {
-    const { scenarioCode } = req.body; // e.g. "baseline", "final"
+    const { scenarioCode } = req.body;
     const userId = req.user._id;
 
     if (!scenarioCode) {
@@ -62,7 +153,6 @@ exports.startAssessment = async (req, res) => {
       });
     }
 
-    // Load latest published scenario matching code (slug)
     const scenario = await Scenario.findOne({ slug: scenarioCode, status: 'published' }).sort({ version: -1 });
     if (!scenario) {
       return res.status(404).json({
@@ -71,7 +161,6 @@ exports.startAssessment = async (req, res) => {
       });
     }
 
-    // Find starting stage (stageOrder = 1)
     const firstStage = await ScenarioStage.findOne({ scenarioId: scenario._id, stageOrder: 1 });
     if (!firstStage) {
       return res.status(404).json({
@@ -80,7 +169,6 @@ exports.startAssessment = async (req, res) => {
       });
     }
 
-    // Initialize category scores at 50
     const categoryScores = new Map();
     if (scenario.configuredWeights) {
       for (let cat of scenario.configuredWeights.keys()) {
@@ -88,8 +176,16 @@ exports.startAssessment = async (req, res) => {
       }
     }
 
-    // Create session (expires in 2 hours)
-    const expirationPeriod = 2 * 60 * 60 * 1000; // 2 hours
+    const behaviourScores = {
+      recognition: 100,
+      signalIdentification: 100,
+      verification: 100,
+      decisionQuality: 100,
+      falsePositive: 100,
+      unreviewedAcceptance: 100
+    };
+
+    const expirationPeriod = 2 * 60 * 60 * 1000;
     const session = await AssessmentSession.create({
       userId,
       scenarioId: scenario._id,
@@ -99,12 +195,14 @@ exports.startAssessment = async (req, res) => {
       currentStageId: firstStage._id,
       score: 50,
       categoryScores,
+      behaviourScores,
       criticalMistakes: [],
       falsePositiveCount: 0,
+      unreviewedAcceptanceCount: 0,
+      stagesCompleted: 0,
       expiresAt: new Date(Date.now() + expirationPeriod)
     });
 
-    // Query choices for the first stage
     const decisions = await ScenarioDecision.find({ stageId: firstStage._id });
 
     res.json({
@@ -141,7 +239,6 @@ exports.submitStep = async (req, res) => {
       });
     }
 
-    // Pre-flight checks (Fetch first for detailed error messages, but execute updates atomically below)
     const originalSession = await AssessmentSession.findById(assessmentSessionId);
     if (!originalSession) {
       return res.status(404).json({
@@ -165,7 +262,6 @@ exports.submitStep = async (req, res) => {
     }
 
     if (originalSession.expiresAt < new Date()) {
-      // Transition status to abandoned
       await AssessmentSession.findByIdAndUpdate(assessmentSessionId, { status: 'abandoned' });
       return res.status(400).json({
         success: false,
@@ -180,7 +276,6 @@ exports.submitStep = async (req, res) => {
       });
     }
 
-    // Fetch decision details
     const decision = await ScenarioDecision.findById(decisionId);
     if (!decision || decision.stageId.toString() !== stageId.toString()) {
       return res.status(400).json({
@@ -189,7 +284,7 @@ exports.submitStep = async (req, res) => {
       });
     }
 
-    // Save choice event log & enforce replay protection
+    // Lock choice event & block replay double-clicks
     try {
       await AssessmentDecision.create({
         assessmentSessionId,
@@ -206,17 +301,16 @@ exports.submitStep = async (req, res) => {
       throw dbErr;
     }
 
-    // Calculate score increment & updates
     let scoreChange = decision.scoreChange || 0;
     let nextStageId = decision.nextStageId;
 
-    // Adaptive Routing based on baseline weakness:
     const sessionScenario = await Scenario.findById(originalSession.scenarioId);
+
+    // Adaptive Routing
     if (sessionScenario && sessionScenario.slug === 'final' && nextStageId) {
       const nextStageObj = await ScenarioStage.findById(nextStageId);
       if (nextStageObj && nextStageObj.title.includes('Adaptive Segment')) {
         if (req.user && req.user.email === 'test_user@test.com') {
-          // Bypass adaptive segment for automated test compatibility
           const finalUPINode = await ScenarioStage.findOne({
             scenarioId: originalSession.scenarioId,
             stageOrder: 9
@@ -240,26 +334,25 @@ exports.submitStep = async (req, res) => {
       }
     }
 
-    // Test suite compatibility overrides for test_user@test.com
+    // Test runner compatibility overrides
     if (req.user && req.user.email === 'test_user@test.com') {
       if (sessionScenario && sessionScenario.slug === 'baseline') {
         const nextStageObj = nextStageId ? await ScenarioStage.findById(nextStageId) : null;
         if (nextStageObj && nextStageObj.stageOrder >= 3) {
-          // Force terminal completion after Stage 2 for the test runner
           nextStageId = null;
         }
       }
     }
 
-    let falsePositiveIncrement = decision.outcomeType === 'false-positive' ? 1 : 0;
+    let falsePositiveIncrement = (decision.behaviorEffects && decision.behaviorEffects.falsePositive > 0) ? 1 : 0;
+    let unreviewedAcceptanceIncrement = (decision.behaviorEffects && decision.behaviorEffects.unreviewedAcceptance > 0) ? 1 : 0;
 
-    // Build the atomic update parameters
     const categoryUpdates = {};
     if (decision.categoryScoreWeights) {
       for (let [cat, wt] of decision.categoryScoreWeights.entries()) {
         const prevVal = originalSession.categoryScores.get(cat) || 50;
         const newVal = Math.max(0, Math.min(100, prevVal + wt));
-        categoryUpdates[`categoryScores.${cat}`] = newVal;
+        categoryUpdates['categoryScores.' + cat] = newVal;
       }
     }
 
@@ -273,10 +366,10 @@ exports.submitStep = async (req, res) => {
 
     const pushParameters = {};
     if (decision.isCriticalMistake) {
-      pushParameters.criticalMistakes = `${decision.optionText} - ${decision.explanation}`;
+      pushParameters.criticalMistakes = decision.optionText + ' - ' + decision.explanation;
     }
 
-    // Execute atomic Compare-and-Swap state modification
+    // Execute atomic Compare-and-Swap state update
     const session = await AssessmentSession.findOneAndUpdate(
       {
         _id: assessmentSessionId,
@@ -288,14 +381,15 @@ exports.submitStep = async (req, res) => {
         $set: setParameters,
         $inc: {
           score: scoreChange,
-          falsePositiveCount: falsePositiveIncrement
+          falsePositiveCount: falsePositiveIncrement,
+          unreviewedAcceptanceCount: unreviewedAcceptanceIncrement,
+          stagesCompleted: 1
         },
         ...(Object.keys(pushParameters).length > 0 ? { $push: pushParameters } : {})
       },
       { new: true }
     );
 
-    // If session returns null, another concurrent request advanced it first! (Atomic lock safety)
     if (!session) {
       return res.status(400).json({
         success: false,
@@ -303,11 +397,13 @@ exports.submitStep = async (req, res) => {
       });
     }
 
-    // Clamp total score
     session.score = Math.max(0, Math.min(100, session.score));
+    
+    // Compute server-side behavioral scores
+    const calculatedScores = await calculateBehaviourScores(session._id);
+    session.behaviourScores = calculatedScores;
     await session.save();
 
-    // 5. Navigate to Next Stage or Compile Final Report
     if (nextStageId) {
       const nextStage = await ScenarioStage.findById(nextStageId);
       const decisions = await ScenarioDecision.find({ stageId: nextStage._id });
@@ -328,7 +424,7 @@ exports.submitStep = async (req, res) => {
         explanation: decision.explanation
       });
     } else {
-      // Terminal reached: compile final authoritative weighted score
+      // Scenario Completed: Compile final scores and update progress
       const scenario = await Scenario.findById(session.scenarioId);
       const configuredWeights = scenario.configuredWeights;
 
@@ -347,7 +443,6 @@ exports.submitStep = async (req, res) => {
       session.completedAt = new Date();
       await session.save();
 
-      // Update progress credentials and badges
       let progress = await UserProgress.findOne({ userId });
       if (!progress) {
         progress = await UserProgress.create({
@@ -358,7 +453,6 @@ exports.submitStep = async (req, res) => {
         });
       }
 
-      // Check badges
       const badgesEarned = [...(progress.badgesEarned || [])];
       if (finalScore >= 90 && !badgesEarned.includes('Cyber Guardian')) {
         badgesEarned.push('Cyber Guardian');
@@ -367,12 +461,10 @@ exports.submitStep = async (req, res) => {
       }
 
       await UserProgress.findOneAndUpdate({ userId }, {
-        $addToSet: { assessmentAttempts: session._id },
         badgesEarned,
         lastActivity: new Date()
       });
 
-      // Calculate pre/post improvement
       let deltaMessage = null;
       let improvementDelta = 0;
 
@@ -385,7 +477,7 @@ exports.submitStep = async (req, res) => {
 
         if (baselineSession) {
           improvementDelta = finalScore - baselineSession.score;
-          deltaMessage = `Your score changed from ${baselineSession.score} (Baseline) to ${finalScore} (Final). That's a change of ${improvementDelta >= 0 ? '+' : ''}${improvementDelta} points!`;
+          deltaMessage = 'Your score changed from ' + baselineSession.score + ' (Baseline) to ' + finalScore + ' (Final). That\'s a change of ' + (improvementDelta >= 0 ? '+' : '') + improvementDelta + ' points!';
         }
       }
 
@@ -394,8 +486,10 @@ exports.submitStep = async (req, res) => {
         score: finalScore,
         awarenessLevel: getAwarenessLevel(finalScore),
         categoryScores: Object.fromEntries(session.categoryScores),
+        behaviourScores: Object.fromEntries(session.behaviourScores),
         criticalMistakes: session.criticalMistakes,
         falsePositiveCount: session.falsePositiveCount,
+        unreviewedAcceptanceCount: session.unreviewedAcceptanceCount,
         explanation: decision.explanation,
         improvementDelta,
         deltaMessage,

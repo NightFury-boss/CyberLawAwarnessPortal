@@ -5,7 +5,7 @@ const LawSectionSchema = new mongoose.Schema({
     type: String,
     required: true,
     unique: true,
-    trim: true // e.g. "Section 66C"
+    trim: true
   },
   actName: {
     type: String,
@@ -48,17 +48,17 @@ const LawSectionSchema = new mongoose.Schema({
   },
   relatedCyberCrimes: [
     {
-      type: String // Category names of related crimes
+      type: String
     }
   ],
   relatedCaseStudies: [
     {
-      type: String // Slugs of related case studies
+      type: String
     }
   ],
   relatedModules: [
     {
-      type: String // Slugs of related learning modules
+      type: String
     }
   ],
   penaltyOrLegalEffect: {
@@ -66,7 +66,16 @@ const LawSectionSchema = new mongoose.Schema({
   },
   legalStatus: {
     type: String,
-    enum: ['CURRENT', 'OMITTED', 'AMENDED', 'REPEALED', 'NOT_YET_IN_FORCE', 'PARTIALLY_IN_FORCE', 'HISTORICAL', 'UNDER_REVIEW', 'current', 'omitted', 'amended', 'historical'],
+    enum: [
+      'CURRENT',
+      'OMITTED',
+      'AMENDED',
+      'REPEALED',
+      'NOT_YET_IN_FORCE',
+      'PARTIALLY_IN_FORCE',
+      'HISTORICAL',
+      'UNDER_REVIEW'
+    ],
     default: 'CURRENT'
   },
   commencementStatus: {

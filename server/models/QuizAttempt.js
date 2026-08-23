@@ -37,7 +37,7 @@ const QuizAttemptSchema = new mongoose.Schema({
     default: 1
   },
   timeTaken: {
-    type: Number // in seconds
+    type: Number
   },
   completedAt: {
     type: Date,
@@ -46,5 +46,7 @@ const QuizAttemptSchema = new mongoose.Schema({
 }, {
   timestamps: true
 });
+
+QuizAttemptSchema.index({ userId: 1, quizId: 1, completedAt: -1 });
 
 module.exports = mongoose.model('QuizAttempt', QuizAttemptSchema);

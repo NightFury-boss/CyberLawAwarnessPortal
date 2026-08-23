@@ -25,13 +25,44 @@ const ScenarioStageSchema = new mongoose.Schema({
     required: true
   },
   mockInterfaceData: {
-    type: mongoose.Schema.Types.Mixed // stores specific email or chat properties
+    type: mongoose.Schema.Types.Mixed
   },
   eventClassification: {
     type: String,
     enum: ['legitimate', 'malicious', 'ambiguous'],
     default: 'malicious'
   },
+  measurementFocus: {
+    type: String,
+    enum: [
+      'PERMISSION_AWARENESS',
+      'LINK_VERIFICATION',
+      'PAYMENT_VERIFICATION',
+      'AUTHORITY_VERIFICATION',
+      'DATA_MINIMIZATION',
+      'ACCOUNT_SECURITY',
+      'SOCIAL_ENGINEERING',
+      'FALSE_POSITIVE_CONTROL',
+      'REPORTING',
+      'ATTENTION_CHECK'
+    ],
+    default: 'SOCIAL_ENGINEERING'
+  },
+  targetSignals: [
+    {
+      type: String,
+      enum: [
+        'unexpected_domain',
+        'urgency',
+        'unexpected_payment_request',
+        'unusual_permission',
+        'identity_impersonation',
+        'unexpected_attachment',
+        'unusual_contact_method',
+        'unrequested_account_action'
+      ]
+    }
+  ],
   availableDecisionIds: [
     {
       type: mongoose.Schema.Types.ObjectId,
@@ -45,5 +76,7 @@ const ScenarioStageSchema = new mongoose.Schema({
 }, {
   timestamps: true
 });
+
+ScenarioStageSchema.index({ scenarioId: 1, stageOrder: 1 });
 
 module.exports = mongoose.model('ScenarioStage', ScenarioStageSchema);
