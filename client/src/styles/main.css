@@ -671,17 +671,17 @@ h1 {
 
 /* Admin Styles (Distinct visual hierarchy - Dark charcoal slate theme) */
 .admin-theme {
-  --bg-primary: #121824;
-  --bg-secondary: #1a2332;
-  --bg-white: #1e293b;
-  --text-primary: #f8fafc;
-  --text-secondary: #94a3b8;
-  --text-muted: #64748b;
-  --color-border: #334155;
-  --color-border-dark: #475569;
-  --accent-navy: #38bdf8;
-  --accent-navy-hover: #7dd3fc;
-  --accent-navy-light: #0f172a;
+  --bg-primary: #fbfbf9;
+  --bg-secondary: #f4f3ee;
+  --bg-white: #ffffff;
+  --text-primary: #1c1c1e;
+  --text-secondary: #56565c;
+  --text-muted: #8b8b93;
+  --color-border: #e6e5e0;
+  --color-border-dark: #b8b6af;
+  --accent-navy: #0f2537;
+  --accent-navy-hover: #1c3d55;
+  --accent-navy-light: #f0f4f8;
 }
 
 .admin-layout {
