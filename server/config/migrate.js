@@ -17,7 +17,7 @@ const QuizAttempt = require('../models/QuizAttempt');
 async function runMigration() {
   console.log('Connecting to MongoDB...');
   await mongoose.connect(MONGODB_URI, { family: 4 });
-  console.log('Connected to MongoDB. Starting Phase 2.1B migrations...');
+  console.log('Connected to MongoDB. Starting Phase 2.1C migrations...');
 
   // 1. Normalize lowercase legalStatus to uppercase in LawSection
   const lawsToFix = await LawSection.find({});
@@ -72,9 +72,9 @@ async function runMigration() {
       fixedStages++;
     }
   }
-  console.log(`✅ Populated Phase 2.1B fields on ${fixedStages} ScenarioStage documents.`);
+  console.log(`✅ Populated Phase 2.1C fields on ${fixedStages} ScenarioStage documents.`);
 
-  // 4. Migrate ScenarioDecision new fields (identifiedSignals)
+  // 4. Migrate ScenarioDecision new fields and clamp range [0, 1, 2]
   const decisionsToFix = await ScenarioDecision.find({});
   console.log(`Auditing ${decisionsToFix.length} ScenarioDecision documents...`);
   let fixedDecisions = 0;
@@ -91,31 +91,24 @@ async function runMigration() {
     if (dec.behaviorEffects) {
       const effects = dec.behaviorEffects;
       let effectsChanged = false;
-      const clamp = (val) => Math.max(0, Math.min(2, Math.round(val || 0)));
+      
+      const checkAndClamp = (name, val) => {
+        if (typeof val !== 'number' || isNaN(val)) return { val: 0, changed: true };
+        if (val < 0 || val > 2) {
+          console.warn(`[Migration Warning] Decision ID ${dec._id} ("${dec.optionText.substring(0, 30)}") has invalid behaviorEffect "${name}" = ${val}. Clamping safely.`);
+          return { val: Math.max(0, Math.min(2, Math.round(val))), changed: true };
+        }
+        const rounded = Math.round(val);
+        return { val: rounded, changed: rounded !== val };
+      };
 
-      if (effects.recognition !== clamp(effects.recognition)) {
-        effects.recognition = clamp(effects.recognition);
-        effectsChanged = true;
-      }
-      if (effects.signalIdentification !== clamp(effects.signalIdentification)) {
-        effects.signalIdentification = clamp(effects.signalIdentification);
-        effectsChanged = true;
-      }
-      if (effects.verification !== clamp(effects.verification)) {
-        effects.verification = clamp(effects.verification);
-        effectsChanged = true;
-      }
-      if (effects.decisionQuality !== clamp(effects.decisionQuality)) {
-        effects.decisionQuality = clamp(effects.decisionQuality);
-        effectsChanged = true;
-      }
-      if (effects.falsePositive !== clamp(effects.falsePositive)) {
-        effects.falsePositive = clamp(effects.falsePositive);
-        effectsChanged = true;
-      }
-      if (effects.unreviewedAcceptance !== clamp(effects.unreviewedAcceptance)) {
-        effects.unreviewedAcceptance = clamp(effects.unreviewedAcceptance);
-        effectsChanged = true;
+      const metrics = ['recognition', 'signalIdentification', 'verification', 'decisionQuality', 'falsePositive', 'unreviewedAcceptance'];
+      for (const m of metrics) {
+        const res = checkAndClamp(m, effects[m]);
+        if (res.changed) {
+          effects[m] = res.val;
+          effectsChanged = true;
+        }
       }
 
       if (effectsChanged) {
@@ -139,9 +132,9 @@ async function runMigration() {
       fixedDecisions++;
     }
   }
-  console.log(`✅ Populated Phase 2.1B fields and clamped effects on ${fixedDecisions} ScenarioDecision documents.`);
+  console.log(`✅ Populated Phase 2.1C fields and clamped effects on ${fixedDecisions} ScenarioDecision documents.`);
 
-  // 5. Migrate AssessmentSession new fields (behaviourOpportunities)
+  // 5. Migrate AssessmentSession new fields (behaviourOpportunities, penalty points)
   const sessionsToFix = await AssessmentSession.find({});
   console.log(`Auditing ${sessionsToFix.length} AssessmentSession documents...`);
   let fixedSessions = 0;
@@ -160,12 +153,29 @@ async function runMigration() {
       changed = true;
     }
 
+    if (session.falsePositivePenaltyPoints === undefined) {
+      session.falsePositivePenaltyPoints = 0;
+      changed = true;
+    }
+    if (session.falsePositiveMaxPenaltyPoints === undefined) {
+      session.falsePositiveMaxPenaltyPoints = 0;
+      changed = true;
+    }
+    if (session.unreviewedAcceptancePenaltyPoints === undefined) {
+      session.unreviewedAcceptancePenaltyPoints = 0;
+      changed = true;
+    }
+    if (session.unreviewedAcceptanceMaxPenaltyPoints === undefined) {
+      session.unreviewedAcceptanceMaxPenaltyPoints = 0;
+      changed = true;
+    }
+
     if (changed) {
       await session.save();
       fixedSessions++;
     }
   }
-  console.log(`✅ Initialized Phase 2.1B fields on ${fixedSessions} AssessmentSession documents.`);
+  console.log(`✅ Initialized Phase 2.1C fields on ${fixedSessions} AssessmentSession documents.`);
 
   // 6. Synchronize schema indexes
   console.log('Synchronizing schema indexes in MongoDB...');

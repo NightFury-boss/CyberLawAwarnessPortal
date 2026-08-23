@@ -4,6 +4,7 @@ const ScenarioDecision = require('../models/ScenarioDecision');
 const AssessmentSession = require('../models/AssessmentSession');
 const AssessmentDecision = require('../models/AssessmentDecision');
 const UserProgress = require('../models/UserProgress');
+const assessmentScoringService = require('../services/assessmentScoringService');
 
 async function getWeakestCategory(userId) {
   try {
@@ -28,125 +29,6 @@ async function getWeakestCategory(userId) {
     console.error('Failed to get weakest category:', err);
   }
   return null;
-}
-
-/**
- * Calculates normalized behavioral scores [0-100] and tracks maximum points/opportunities
- * strictly based on Stage focus configuration and a controlled [0, 1, 2] scaling.
- */
-async function calculateBehaviourScores(sessionId) {
-  const decisionsMade = await AssessmentDecision.find({ assessmentSessionId: sessionId });
-  
-  let rawDQ = 0, maxDQ = 0;
-  let rawTR = 0, maxTR = 0;
-  let rawSI = 0, maxSI = 0;
-  let rawVB = 0, maxVB = 0;
-  
-  let countFP = 0, opportunitiesFP = 0;
-  let countUA = 0, opportunitiesUA = 0;
-
-  for (const choice of decisionsMade) {
-    const stage = await ScenarioStage.findById(choice.stageId);
-    const chosenDecision = await ScenarioDecision.findById(choice.decisionId);
-    if (!stage || !chosenDecision) continue;
-
-    const allDecisions = await ScenarioDecision.find({ stageId: stage._id });
-
-    // Focus checks (Defaults to empty array if undefined)
-    const focus = stage.measurementFocus || [];
-
-    // Helper to clamp database effects to the controlled scale [0, 1, 2]
-    const clampVal = (val) => {
-      if (typeof val !== 'number' || isNaN(val)) return 0;
-      return Math.max(0, Math.min(2, Math.round(val)));
-    };
-
-    // Helper to get max positive effect for a dimension on this stage (clamped)
-    const getMaxEffect = (dimension) => {
-      let maxVal = 0;
-      for (const d of allDecisions) {
-        const effects = d.behaviorEffects || {};
-        const val = clampVal(effects[dimension]);
-        if (val > maxVal) maxVal = val;
-      }
-      return maxVal;
-    };
-
-    const decEffects = chosenDecision.behaviorEffects || {};
-
-    // 1. Decision Quality (DQ) - only if stage has DECISION_QUALITY focus
-    if (focus.includes('DECISION_QUALITY')) {
-      rawDQ += clampVal(decEffects.decisionQuality);
-      maxDQ += getMaxEffect('decisionQuality');
-    }
-
-    // 2. Threat Recognition (TR) - only if stage has THREAT_RECOGNITION focus and event is not legitimate
-    if (focus.includes('THREAT_RECOGNITION') && stage.eventClassification !== 'legitimate') {
-      rawTR += clampVal(decEffects.recognition);
-      maxTR += getMaxEffect('recognition');
-    }
-
-    // 3. Signal Identification (SI) - only if stage has SIGNAL_IDENTIFICATION focus and targetSignals are defined
-    if (focus.includes('SIGNAL_IDENTIFICATION') && stage.targetSignals && stage.targetSignals.length > 0) {
-      rawSI += clampVal(decEffects.signalIdentification);
-      maxSI += getMaxEffect('signalIdentification');
-    }
-
-    // 4. Verification Behaviour (VB) - only if stage has VERIFICATION focus
-    if (focus.includes('VERIFICATION')) {
-      rawVB += clampVal(decEffects.verification);
-      maxVB += getMaxEffect('verification');
-    }
-
-    // 5. False Positive (FP) - only if stage has FALSE_POSITIVE_CONTROL focus and eventClassification is legitimate
-    if (focus.includes('FALSE_POSITIVE_CONTROL') && stage.eventClassification === 'legitimate') {
-      opportunitiesFP++;
-      if (clampVal(decEffects.falsePositive) > 0) {
-        countFP += clampVal(decEffects.falsePositive);
-      }
-    }
-
-    // 6. Unreviewed Acceptance (UA) - only if stage has UNREVIEWED_ACCEPTANCE focus
-    if (focus.includes('UNREVIEWED_ACCEPTANCE')) {
-      const maxUaVal = getMaxEffect('unreviewedAcceptance');
-      if (maxUaVal > 0) {
-        opportunitiesUA++;
-        if (clampVal(decEffects.unreviewedAcceptance) > 0) {
-          countUA += clampVal(decEffects.unreviewedAcceptance);
-        }
-      }
-    }
-  }
-
-  const normalize = (raw, max) => {
-    if (max <= 0) return 100;
-    return Math.max(0, Math.min(100, Math.round((raw / max) * 100)));
-  };
-
-  const normalizePenalty = (count, opportunities) => {
-    if (opportunities <= 0) return 100;
-    return Math.max(0, Math.min(100, Math.round((1 - (count / opportunities)) * 100)));
-  };
-
-  const scores = {
-    recognition: normalize(rawTR, maxTR),
-    signalIdentification: normalize(rawSI, maxSI),
-    verification: normalize(rawVB, maxVB),
-    decisionQuality: normalize(rawDQ, maxDQ),
-    falsePositive: normalizePenalty(countFP, opportunitiesFP),
-    unreviewedAcceptance: normalizePenalty(countUA, opportunitiesUA)
-  };
-
-  const opportunities = {
-    recognition: maxTR,
-    signalIdentification: maxSI,
-    verification: maxVB,
-    decisionQuality: maxDQ,
-    falsePositive: opportunitiesFP,
-    unreviewedAcceptance: opportunitiesUA
-  };
-
-  return { scores, opportunities };
 }
 
 exports.getScenario = async (req, res) => {
@@ -233,9 +115,11 @@ exports.startAssessment = async (req, res) => {
       categoryScores,
       behaviourScores,
       behaviourOpportunities,
+      falsePositivePenaltyPoints: 0,
+      falsePositiveMaxPenaltyPoints: 0,
+      unreviewedAcceptancePenaltyPoints: 0,
+      unreviewedAcceptanceMaxPenaltyPoints: 0,
       criticalMistakes: [],
-      falsePositiveCount: 0,
-      unreviewedAcceptanceCount: 0,
       stagesCompleted: 0,
       expiresAt: new Date(Date.now() + expirationPeriod)
     });
@@ -381,9 +265,6 @@ exports.submitStep = async (req, res) => {
       }
     }
 
-    let falsePositiveIncrement = (decision.behaviorEffects && decision.behaviorEffects.falsePositive > 0) ? 1 : 0;
-    let unreviewedAcceptanceIncrement = (decision.behaviorEffects && decision.behaviorEffects.unreviewedAcceptance > 0) ? 1 : 0;
-
     const categoryUpdates = {};
     if (decision.categoryScoreWeights) {
       for (let [cat, wt] of decision.categoryScoreWeights.entries()) {
@@ -418,8 +299,6 @@ exports.submitStep = async (req, res) => {
         $set: setParameters,
         $inc: {
           score: scoreChange,
-          falsePositiveCount: falsePositiveIncrement,
-          unreviewedAcceptanceCount: unreviewedAcceptanceIncrement,
           stagesCompleted: 1
         },
         ...(Object.keys(pushParameters).length > 0 ? { $push: pushParameters } : {})
@@ -436,10 +315,16 @@ exports.submitStep = async (req, res) => {
 
     session.score = Math.max(0, Math.min(100, session.score));
     
-    // Compute server-side behavioral scores & opportunities dynamically
-    const { scores, opportunities } = await calculateBehaviourScores(session._id);
-    session.behaviourScores = scores;
-    session.behaviourOpportunities = opportunities;
+    // Compute server-side behavioral scores & opportunities dynamically via service
+    const scoringResult = await assessmentScoringService.calculateScores(session._id);
+    
+    session.behaviourScores = scoringResult.scores;
+    session.behaviourOpportunities = scoringResult.opportunities;
+    session.falsePositivePenaltyPoints = scoringResult.falsePositivePenaltyPoints;
+    session.falsePositiveMaxPenaltyPoints = scoringResult.falsePositiveMaxPenaltyPoints;
+    session.unreviewedAcceptancePenaltyPoints = scoringResult.unreviewedAcceptancePenaltyPoints;
+    session.unreviewedAcceptanceMaxPenaltyPoints = scoringResult.unreviewedAcceptanceMaxPenaltyPoints;
+    
     await session.save();
 
     if (nextStageId) {
@@ -526,9 +411,11 @@ exports.submitStep = async (req, res) => {
         categoryScores: Object.fromEntries(session.categoryScores),
         behaviourScores: Object.fromEntries(session.behaviourScores),
         behaviourOpportunities: Object.fromEntries(session.behaviourOpportunities),
+        falsePositivePenaltyPoints: session.falsePositivePenaltyPoints,
+        falsePositiveMaxPenaltyPoints: session.falsePositiveMaxPenaltyPoints,
+        unreviewedAcceptancePenaltyPoints: session.unreviewedAcceptancePenaltyPoints,
+        unreviewedAcceptanceMaxPenaltyPoints: session.unreviewedAcceptanceMaxPenaltyPoints,
         criticalMistakes: session.criticalMistakes,
-        falsePositiveCount: session.falsePositiveCount,
-        unreviewedAcceptanceCount: session.unreviewedAcceptanceCount,
         explanation: decision.explanation,
         improvementDelta,
         deltaMessage,

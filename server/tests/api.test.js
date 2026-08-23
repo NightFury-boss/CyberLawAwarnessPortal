@@ -383,6 +383,183 @@ async function runTests() {
       }
     }
     console.log('  * PASS: Scenario DB reference integrity validated successfully');
+      // 11. Test Phase 2.1C Refined Assessment Measurement Model
+      console.log('- Testing Phase 2.1C Refined Assessment Measurement Model...');
+      
+      // Pre-cleanup to prevent duplicate key errors
+      await Scenario.deleteOne({ slug: 'measurement-test' });
+
+      // Create isolated test fixture scenario
+      const testScenarioP21c = await Scenario.create({
+        title: 'Measurement Test Scenario',
+        slug: 'measurement-test',
+        code: 'measurement-test',
+        description: 'Testing 2.1c metrics and normalization',
+        version: 1,
+        assessmentType: 'practice',
+        status: 'published',
+        type: 'phishing',
+        domain: 'EMAIL',
+        difficulty: 'Intermediate',
+        configuredWeights: { 'Phishing': 100 }
+      });
+
+      const testStage1P21c = await ScenarioStage.create({
+        scenarioId: testScenarioP21c._id,
+        stageOrder: 1,
+        title: 'Test Stage 1 (Malicious)',
+        description: 'A phishing email prompt',
+        mockInterfaceType: 'email',
+        eventClassification: 'malicious',
+        measurementFocus: ['THREAT_RECOGNITION', 'DECISION_QUALITY'],
+        targetSignals: ['unexpected_domain'],
+        terminal: false
+      });
+
+      const testStage2P21c = await ScenarioStage.create({
+        scenarioId: testScenarioP21c._id,
+        stageOrder: 2,
+        title: 'Test Stage 2 (Legitimate)',
+        description: 'An official update prompt',
+        mockInterfaceType: 'notification',
+        eventClassification: 'legitimate',
+        measurementFocus: ['FALSE_POSITIVE_CONTROL', 'DECISION_QUALITY'],
+        targetSignals: [],
+        terminal: true
+      });
+
+      const t1DecAP21c = await ScenarioDecision.create({
+        stageId: testStage1P21c._id,
+        optionText: 'Click link blindly',
+        scoreChange: -10,
+        behaviorEffects: { recognition: 0, decisionQuality: 0 },
+        nextStageId: testStage2P21c._id,
+        outcomeType: 'incorrect',
+        explanation: 'Clicked phishing link'
+      });
+
+      const t1DecBP21c = await ScenarioDecision.create({
+        stageId: testStage1P21c._id,
+        optionText: 'Verify sender domain',
+        scoreChange: 10,
+        identifiedSignals: ['unexpected_domain'],
+        behaviorEffects: { recognition: 2, decisionQuality: 2 },
+        nextStageId: testStage2P21c._id,
+        outcomeType: 'correct',
+        explanation: 'Verified sender domain'
+      });
+
+      testStage1P21c.availableDecisionIds = [t1DecAP21c._id, t1DecBP21c._id];
+      await testStage1P21c.save();
+
+      const t2DecCP21c = await ScenarioDecision.create({
+        stageId: testStage2P21c._id,
+        optionText: 'Accept notification',
+        scoreChange: 10,
+        behaviorEffects: { decisionQuality: 2, falsePositive: 0 },
+        outcomeType: 'correct',
+        explanation: 'Legitimate update accepted'
+      });
+
+      const t2DecDP21c = await ScenarioDecision.create({
+        stageId: testStage2P21c._id,
+        optionText: 'Falsely report hacking',
+        scoreChange: -10,
+        behaviorEffects: { decisionQuality: 0, falsePositive: 2 },
+        outcomeType: 'false-positive',
+        explanation: 'Falsely reported safe item'
+      });
+
+      testStage2P21c.availableDecisionIds = [t2DecCP21c._id, t2DecDP21c._id];
+      await testStage2P21c.save();
+
+      // Start Session
+      const startResP21c = await fetch(`${BASE_URL}/assessments/start`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${userToken}`
+        },
+        body: JSON.stringify({ scenarioCode: 'measurement-test' })
+      });
+      const startDataP21c = await startResP21c.json();
+      const testSessionIdP21c = startDataP21c.sessionId;
+
+      if (!testSessionIdP21c) {
+        console.error('Start Assessment failed data:', JSON.stringify(startDataP21c, null, 2));
+        throw new Error('Failed to start test session.');
+      }
+
+      // Step 1: Submit Option B (Verify sender domain)
+      const step1ResP21c = await fetch(`${BASE_URL}/assessments/submit-step`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${userToken}`
+        },
+        body: JSON.stringify({
+          assessmentSessionId: testSessionIdP21c,
+          stageId: testStage1P21c._id.toString(),
+          decisionId: t1DecBP21c._id.toString()
+        })
+      });
+      const step1DataP21c = await step1ResP21c.json();
+
+      // Verify TR and DQ scores are 100 on Step 1
+      const activeSessionObjP21c = await AssessmentSession.findById(testSessionIdP21c);
+      if (activeSessionObjP21c.behaviourScores.get('recognition') !== 100) {
+        throw new Error(`Scoring error: TR should be 100. Got: ${activeSessionObjP21c.behaviourScores.get('recognition')}`);
+      }
+      if (activeSessionObjP21c.behaviourScores.get('decisionQuality') !== 100) {
+        throw new Error(`Scoring error: DQ should be 100. Got: ${activeSessionObjP21c.behaviourScores.get('decisionQuality')}`);
+      }
+      // Verification should remain at 100 default as stage lacks verification focus
+      if (activeSessionObjP21c.behaviourScores.get('verification') !== 100) {
+        throw new Error(`Opportunity error: VB should stay at default 100. Got: ${activeSessionObjP21c.behaviourScores.get('verification')}`);
+      }
+
+      // Step 2: Submit Option D (Falsely report hacking)
+      const step2ResP21c = await fetch(`${BASE_URL}/assessments/submit-step`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${userToken}`
+        },
+        body: JSON.stringify({
+          assessmentSessionId: testSessionIdP21c,
+          stageId: testStage2P21c._id.toString(),
+          decisionId: t2DecDP21c._id.toString()
+        })
+      });
+      const step2DataP21c = await step2ResP21c.json();
+
+      if (!step2DataP21c.isCompleted) {
+        console.error('Step 2 result:', JSON.stringify(step2DataP21c, null, 2));
+        throw new Error('Failed to complete test session on terminal node.');
+      }
+
+      // Verify False Positive (FP) penalty applied (should be 0%)
+      if (step2DataP21c.behaviourScores.falsePositive !== 0) {
+        throw new Error(`False Positive score should be 0. Got: ${step2DataP21c.behaviourScores.falsePositive}`);
+      }
+      // Verify False Positive raw penalty points and max penalty points match (2 out of 2)
+      if (step2DataP21c.falsePositivePenaltyPoints !== 2 || step2DataP21c.falsePositiveMaxPenaltyPoints !== 2) {
+        throw new Error(`False Positive penalty points mismatch. Got: ${step2DataP21c.falsePositivePenaltyPoints}/${step2DataP21c.falsePositiveMaxPenaltyPoints}`);
+      }
+      // Verify Decision Quality (DQ) decreased (1 / 2) * 100 in Stage 1, (0 / 2) * 100 in Stage 2 => total DQ raw is 2, max is 4 => (2/4)*100 = 50%
+      if (step2DataP21c.behaviourScores.decisionQuality !== 50) {
+        throw new Error(`Decision Quality score should be 50. Got: ${step2DataP21c.behaviourScores.decisionQuality}`);
+      }
+
+      // Clean up test fixture records from DB
+      await ScenarioDecision.deleteMany({ stageId: { $in: [testStage1P21c._id, testStage2P21c._id] } });
+      await ScenarioStage.deleteMany({ scenarioId: testScenarioP21c._id });
+      await Scenario.deleteOne({ _id: testScenarioP21c._id });
+      await AssessmentDecision.deleteMany({ assessmentSessionId: testSessionIdP21c });
+      await AssessmentSession.deleteOne({ _id: testSessionIdP21c });
+
+      console.log('  * PASS: Phase 2.1C Refined Assessment Measurement Model validated successfully');
+
       // 11. Test Phase 2.1B Refined Assessment Measurement Model
       console.log('- Testing Phase 2.1B Refined Assessment Measurement Model...');
       

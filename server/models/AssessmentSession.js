@@ -62,11 +62,19 @@ const AssessmentSessionSchema = new mongoose.Schema({
       unreviewedAcceptance: 0
     }
   },
-  unreviewedAcceptanceCount: {
+  falsePositivePenaltyPoints: {
     type: Number,
     default: 0
   },
-  falsePositiveCount: {
+  falsePositiveMaxPenaltyPoints: {
+    type: Number,
+    default: 0
+  },
+  unreviewedAcceptancePenaltyPoints: {
+    type: Number,
+    default: 0
+  },
+  unreviewedAcceptanceMaxPenaltyPoints: {
     type: Number,
     default: 0
   },
