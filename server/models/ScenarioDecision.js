@@ -19,6 +19,11 @@ const ScenarioDecisionSchema = new mongoose.Schema({
     of: Number,
     default: {}
   },
+  identifiedSignals: [
+    {
+      type: String
+    }
+  ],
   behaviorEffects: {
     recognition: { type: Number, default: 0 },
     signalIdentification: { type: Number, default: 0 },

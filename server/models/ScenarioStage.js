@@ -32,22 +32,19 @@ const ScenarioStageSchema = new mongoose.Schema({
     enum: ['legitimate', 'malicious', 'ambiguous'],
     default: 'malicious'
   },
-  measurementFocus: {
-    type: String,
-    enum: [
-      'PERMISSION_AWARENESS',
-      'LINK_VERIFICATION',
-      'PAYMENT_VERIFICATION',
-      'AUTHORITY_VERIFICATION',
-      'DATA_MINIMIZATION',
-      'ACCOUNT_SECURITY',
-      'SOCIAL_ENGINEERING',
-      'FALSE_POSITIVE_CONTROL',
-      'REPORTING',
-      'ATTENTION_CHECK'
-    ],
-    default: 'SOCIAL_ENGINEERING'
-  },
+  measurementFocus: [
+    {
+      type: String,
+      enum: [
+        'THREAT_RECOGNITION',
+        'SIGNAL_IDENTIFICATION',
+        'VERIFICATION',
+        'DECISION_QUALITY',
+        'FALSE_POSITIVE_CONTROL',
+        'UNREVIEWED_ACCEPTANCE'
+      ]
+    }
+  ],
   targetSignals: [
     {
       type: String,
@@ -56,10 +53,12 @@ const ScenarioStageSchema = new mongoose.Schema({
         'urgency',
         'unexpected_payment_request',
         'unusual_permission',
-        'identity_impersonation',
+        'authority_impersonation',
         'unexpected_attachment',
         'unusual_contact_method',
-        'unrequested_account_action'
+        'unrequested_account_action',
+        'mismatched_branding',
+        'unexpected_data_request'
       ]
     }
   ],

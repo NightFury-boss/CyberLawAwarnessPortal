@@ -17,8 +17,7 @@ const AssessmentSessionSchema = new mongoose.Schema({
   },
   scenarioCode: {
     type: String,
-    required: true,
-    enum: ['baseline', 'final', 'practice']
+    required: true
   },
   status: {
     type: String,
@@ -49,6 +48,18 @@ const AssessmentSessionSchema = new mongoose.Schema({
       decisionQuality: 100,
       falsePositive: 100,
       unreviewedAcceptance: 100
+    }
+  },
+  behaviourOpportunities: {
+    type: Map,
+    of: Number,
+    default: {
+      recognition: 0,
+      signalIdentification: 0,
+      verification: 0,
+      decisionQuality: 0,
+      falsePositive: 0,
+      unreviewedAcceptance: 0
     }
   },
   unreviewedAcceptanceCount: {

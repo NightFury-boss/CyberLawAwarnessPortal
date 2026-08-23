@@ -3,6 +3,28 @@ const Scenario = require('../models/Scenario');
 const ScenarioStage = require('../models/ScenarioStage');
 const ScenarioDecision = require('../models/ScenarioDecision');
 
+const VALID_MEASUREMENT_FOCUS = [
+  'THREAT_RECOGNITION',
+  'SIGNAL_IDENTIFICATION',
+  'VERIFICATION',
+  'DECISION_QUALITY',
+  'FALSE_POSITIVE_CONTROL',
+  'UNREVIEWED_ACCEPTANCE'
+];
+
+const VALID_TARGET_SIGNALS = [
+  'unexpected_domain',
+  'urgency',
+  'unexpected_payment_request',
+  'unusual_permission',
+  'authority_impersonation',
+  'unexpected_attachment',
+  'unusual_contact_method',
+  'unrequested_account_action',
+  'mismatched_branding',
+  'unexpected_data_request'
+];
+
 /**
  * scenarioIntegrityService checks Scenario graphs for logical consistency and references.
  * It is used dynamically by validators, test suites, and admin managers.
@@ -46,6 +68,24 @@ async function auditScenario(scenarioId) {
         result.errors.push(`Duplicate stageOrder "${stage.stageOrder}" found in stage: ${stage.title}`);
       }
       stageOrders.add(stage.stageOrder);
+
+      // Validate measurementFocus enums
+      const focus = stage.measurementFocus || [];
+      for (const item of focus) {
+        if (!VALID_MEASUREMENT_FOCUS.includes(item)) {
+          result.valid = false;
+          result.errors.push(`Stage "${stage.title}" has invalid measurementFocus: "${item}"`);
+        }
+      }
+
+      // Validate targetSignals enums
+      const signals = stage.targetSignals || [];
+      for (const signal of signals) {
+        if (!VALID_TARGET_SIGNALS.includes(signal)) {
+          result.valid = false;
+          result.errors.push(`Stage "${stage.title}" has invalid targetSignal: "${signal}"`);
+        }
+      }
     }
 
     if (!hasStartNode) {
@@ -90,8 +130,37 @@ async function auditScenario(scenarioId) {
         result.errors.push(`Non-terminal stage "${stage.title}" has 0 decision options.`);
       }
 
-      // Validate nextStageId routing for each decision
+      // Validate nextStageId routing and effects for each decision
       for (const dec of decisions) {
+        // Validate identifiedSignals belongs to parent stage's targetSignals
+        const idSignals = dec.identifiedSignals || [];
+        const stageSignals = stage.targetSignals || [];
+        for (const sig of idSignals) {
+          if (!stageSignals.includes(sig)) {
+            result.valid = false;
+            result.errors.push(`Decision "${dec.optionText.substring(0, 30)}" on Stage "${stage.title}" identifies signal "${sig}" which is not in the parent stage's targetSignals list.`);
+          }
+        }
+
+        // Validate behaviorEffects are within range [0, 1, 2]
+        if (dec.behaviorEffects) {
+          const effects = dec.behaviorEffects;
+          const clamp = (val) => Math.max(0, Math.min(2, Math.round(val || 0)));
+          const checkMetric = (name, val) => {
+            if (val < 0 || val > 2) {
+              result.valid = false;
+              result.errors.push(`Decision "${dec.optionText.substring(0, 30)}" has behaviorEffect "${name}" = ${val} which is outside the controlled range [0, 1, 2].`);
+            }
+          };
+          
+          checkMetric('recognition', effects.recognition);
+          checkMetric('signalIdentification', effects.signalIdentification);
+          checkMetric('verification', effects.verification);
+          checkMetric('decisionQuality', effects.decisionQuality);
+          checkMetric('falsePositive', effects.falsePositive);
+          checkMetric('unreviewedAcceptance', effects.unreviewedAcceptance);
+        }
+
         if (dec.nextStageId) {
           const nextIdStr = dec.nextStageId.toString();
           referencedNextStages.add(nextIdStr);
@@ -105,7 +174,6 @@ async function auditScenario(scenarioId) {
           // Target stage existence in parent scenario
           const targetStage = stageMap.get(nextIdStr);
           if (!targetStage) {
-            // Check if it belongs to another scenario altogether
             const foreignStage = await ScenarioStage.findById(dec.nextStageId);
             if (foreignStage) {
               result.valid = false;
@@ -116,7 +184,6 @@ async function auditScenario(scenarioId) {
             }
           }
         } else {
-          // Terminal branch check: if nextStageId is null, warn if stage is not marked terminal
           if (!stage.terminal && decisions.length === 1) {
             result.warnings.push(`Stage "${stage.title}" is not marked terminal but contains a decision with null nextStageId.`);
           }
@@ -124,13 +191,11 @@ async function auditScenario(scenarioId) {
       }
     }
 
-    // 3. Unreachable stages check (stages after order 1 that are not targets of any decision)
-    // Adaptive stages (5,6,7,8) are dynamically targeted, so we can ignore warnings for them
+    // 3. Unreachable stages check
     for (const stage of stages) {
       if (stage.stageOrder > 1) {
         const sid = stage._id.toString();
         if (!referencedNextStages.has(sid)) {
-          // Check if this is an adaptive branch stage that is dynamically routed
           const isAdaptiveDiagnostic = stage.title.includes('Weakness Diagnostic');
           if (!isAdaptiveDiagnostic) {
             result.warnings.push(`Unreachable Stage detected: Stage "${stage.title}" (order ${stage.stageOrder}) is not the target of any decision.`);
