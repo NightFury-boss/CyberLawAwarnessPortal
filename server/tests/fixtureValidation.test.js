@@ -18,6 +18,10 @@ const ScenarioDecision = require('../models/ScenarioDecision');
 const AssessmentSession = require('../models/AssessmentSession');
 const AssessmentDecision = require('../models/AssessmentDecision');
 
+// Import Services
+const { auditScenario } = require('../services/scenarioIntegrityService');
+const { calculateScores } = require('../services/assessmentScoringService');
+
 // Import Seeder/Clearer
 const seedFixture = require('../config/seedFixture');
 const clearFixture = require('../config/clearFixture');
@@ -26,20 +30,20 @@ const clearFixture = require('../config/clearFixture');
 const auditTrail = [];
 
 function recordAudit(fixtureName, stageName, decisionName, metric, raw, maxPenalty, expected, actual) {
-  const isPass = expected === actual;
+  const isPass = String(expected) === String(actual);
   auditTrail.push({
     fixture: fixtureName,
     stage: stageName,
     decision: decisionName,
     metric: metric,
-    raw: raw,
-    maxPenalty: maxPenalty,
+    raw: raw !== null && raw !== undefined ? `${raw}` : '-',
+    maxPenalty: maxPenalty !== null && maxPenalty !== undefined ? `${maxPenalty}` : '-',
     expected: `${expected}`,
     actual: `${actual}`,
     status: isPass ? 'PASS' : 'FAIL'
   });
   if (!isPass) {
-    throw new Error(`Assertion failed: ${fixtureName} - ${metric} metric mismatch! Expected: ${expected}, Got: ${actual}`);
+    throw new Error(`Assertion failed: ${fixtureName} - ${stageName} - ${metric} mismatch! Expected: ${expected}, Got: ${actual}`);
   }
 }
 
@@ -106,6 +110,19 @@ async function runTests() {
     }
 
     // -------------------------------------------------------------
+    // VALIDATION 0: Scenario Graph Integrity Audit
+    // -------------------------------------------------------------
+    console.log('\n=============================================================');
+    console.log('VALIDATION 0: Scenario Graph Integrity Audit');
+    console.log('=============================================================');
+    const integrityAudit = await auditScenario(scenario._id);
+    if (!integrityAudit.valid || integrityAudit.errors.length > 0) {
+      throw new Error(`Scenario integrity audit failed: ${integrityAudit.errors.join('; ')}`);
+    }
+    recordAudit('Graph Audit', 'All Stages (1-8)', 'Graph Consistency', 'Integrity Status', integrityAudit.errors.length, 0, 1, integrityAudit.valid ? 1 : 0);
+    console.log('  * PASS: Scenario graph integrity validated with 0 errors.');
+
+    // -------------------------------------------------------------
     // VALIDATION 1: Contextually Appropriate Flow
     // -------------------------------------------------------------
     console.log('\n=============================================================');
@@ -135,14 +152,14 @@ async function runTests() {
     const step1Data = await step1Res.json();
     
     // Check metric contributions on Stage 1 (TR raw: 1/2, SI raw: 0/2, VB raw: 2/2, DQ raw: 2/2)
-    const sessAfterSt1 = await AssessmentSession.findById(sessionId);
-    recordAudit('Fixture A', 'Phishing Email', 'Verify separately', 'TR Score', sessAfterSt1.behaviourScores.get('recognition'), null, 50, sessAfterSt1.behaviourScores.get('recognition'));
-    recordAudit('Fixture A', 'Phishing Email', 'Verify separately', 'VB Score', sessAfterSt1.behaviourScores.get('verification'), null, 100, sessAfterSt1.behaviourScores.get('verification'));
-    recordAudit('Fixture A', 'Phishing Email', 'Verify separately', 'DQ Score', sessAfterSt1.behaviourScores.get('decisionQuality'), null, 100, sessAfterSt1.behaviourScores.get('decisionQuality'));
+    const scoring1 = await calculateScores(sessionId);
+    recordAudit('Fixture A', 'Phishing Email', 'Verify separately', 'TR Score', scoring1.rawScores.recognition, scoring1.maxScores.recognition, 50, scoring1.scores.recognition);
+    recordAudit('Fixture A', 'Phishing Email', 'Verify separately', 'VB Score', scoring1.rawScores.verification, scoring1.maxScores.verification, 100, scoring1.scores.verification);
+    recordAudit('Fixture A', 'Phishing Email', 'Verify separately', 'DQ Score', scoring1.rawScores.decisionQuality, scoring1.maxScores.decisionQuality, 100, scoring1.scores.decisionQuality);
 
     // Metric Isolation check on Stage 1 (FP and UA must remain unchanged at default 100%)
-    recordAudit('Fixture A', 'Phishing Email', 'Verify separately', 'FP Isolation', sessAfterSt1.behaviourScores.get('falsePositive'), null, 100, sessAfterSt1.behaviourScores.get('falsePositive'));
-    recordAudit('Fixture A', 'Phishing Email', 'Verify separately', 'UA Isolation', sessAfterSt1.behaviourScores.get('unreviewedAcceptance'), null, 100, sessAfterSt1.behaviourScores.get('unreviewedAcceptance'));
+    recordAudit('Fixture A', 'Phishing Email', 'Verify separately', 'FP Isolation', scoring1.falsePositivePenaltyPoints, scoring1.falsePositiveMaxPenaltyPoints, 100, scoring1.scores.falsePositive);
+    recordAudit('Fixture A', 'Phishing Email', 'Verify separately', 'UA Isolation', scoring1.unreviewedAcceptancePenaltyPoints, scoring1.unreviewedAcceptanceMaxPenaltyPoints, 100, scoring1.scores.unreviewedAcceptance);
 
     // --- STAGE 2: Legitimate Notification ---
     // Opt: Option A (Review normally). Focus: FP, DQ.
@@ -155,13 +172,13 @@ async function runTests() {
     const step2Data = await step2Res.json();
 
     // Check FP and DQ contributions (FP penalty: 0/2 => score 100%, DQ raw: 2+2=4 / max: 2+2=4 => score 100%)
-    const sessAfterSt2 = await AssessmentSession.findById(sessionId);
-    recordAudit('Fixture B', 'Legitimate Notification', 'Review normally', 'FP Score', sessAfterSt2.behaviourScores.get('falsePositive'), null, 100, sessAfterSt2.behaviourScores.get('falsePositive'));
-    recordAudit('Fixture B', 'Legitimate Notification', 'Review normally', 'DQ Score', sessAfterSt2.behaviourScores.get('decisionQuality'), null, 100, sessAfterSt2.behaviourScores.get('decisionQuality'));
+    const scoring2 = await calculateScores(sessionId);
+    recordAudit('Fixture B', 'Legitimate Notification', 'Review normally', 'FP Score', scoring2.falsePositivePenaltyPoints, scoring2.falsePositiveMaxPenaltyPoints, 100, scoring2.scores.falsePositive);
+    recordAudit('Fixture B', 'Legitimate Notification', 'Review normally', 'DQ Score', scoring2.rawScores.decisionQuality, scoring2.maxScores.decisionQuality, 100, scoring2.scores.decisionQuality);
 
     // Isolation check on Stage 2 (TR, VB, SI, UA must remain unchanged)
-    recordAudit('Fixture B', 'Legitimate Notification', 'Review normally', 'TR Isolation', sessAfterSt2.behaviourScores.get('recognition'), null, 50, sessAfterSt2.behaviourScores.get('recognition'));
-    recordAudit('Fixture B', 'Legitimate Notification', 'Review normally', 'VB Isolation', sessAfterSt2.behaviourScores.get('verification'), null, 100, sessAfterSt2.behaviourScores.get('verification'));
+    recordAudit('Fixture B', 'Legitimate Notification', 'Review normally', 'TR Isolation', scoring2.rawScores.recognition, scoring2.maxScores.recognition, 50, scoring2.scores.recognition);
+    recordAudit('Fixture B', 'Legitimate Notification', 'Review normally', 'VB Isolation', scoring2.rawScores.verification, scoring2.maxScores.verification, 100, scoring2.scores.verification);
 
     // --- STAGE 3: Ambiguous UPI Payment ---
     // Opt: Option C (Inspect credentials). Focus: TR, VB, DQ.
@@ -173,11 +190,11 @@ async function runTests() {
     });
     const step3Data = await step3Res.json();
 
-    // Check metrics (TR raw: 1+1=2 / max: 2+1=3 => score 67%, VB raw: 2+2=4 / max: 2+2=4 => score 100%, DQ raw: 2+2=4 / max: 4+2=6 => score 67% => Wait, DQ is 100% since we selected options with 2/2 DQ)
-    const sessAfterSt3 = await AssessmentSession.findById(sessionId);
-    recordAudit('Fixture C', 'Ambiguous Payment', 'Inspect details', 'TR Score', sessAfterSt3.behaviourScores.get('recognition'), null, 67, sessAfterSt3.behaviourScores.get('recognition'));
-    recordAudit('Fixture C', 'Ambiguous Payment', 'Inspect details', 'VB Score', sessAfterSt3.behaviourScores.get('verification'), null, 100, sessAfterSt3.behaviourScores.get('verification'));
-    recordAudit('Fixture C', 'Ambiguous Payment', 'Inspect details', 'DQ Score', sessAfterSt3.behaviourScores.get('decisionQuality'), null, 100, sessAfterSt3.behaviourScores.get('decisionQuality'));
+    // Check metrics (TR raw: 1+1=2 / max: 2+1=3 => score 67%, VB raw: 2+2=4 / max: 2+2=4 => score 100%, DQ raw: 4+2=6 / max: 4+2=6 => score 100%)
+    const scoring3 = await calculateScores(sessionId);
+    recordAudit('Fixture C', 'Ambiguous Payment', 'Inspect details', 'TR Score', scoring3.rawScores.recognition, scoring3.maxScores.recognition, 67, scoring3.scores.recognition);
+    recordAudit('Fixture C', 'Ambiguous Payment', 'Inspect details', 'VB Score', scoring3.rawScores.verification, scoring3.maxScores.verification, 100, scoring3.scores.verification);
+    recordAudit('Fixture C', 'Ambiguous Payment', 'Inspect details', 'DQ Score', scoring3.rawScores.decisionQuality, scoring3.maxScores.decisionQuality, 100, scoring3.scores.decisionQuality);
 
     // --- STAGE 4: Unreviewed Permission ---
     // Opt: Option B (Review details). Focus: VB, UA.
@@ -190,9 +207,9 @@ async function runTests() {
     const step4Data = await step4Res.json();
 
     // Check UA (penalty: 0/2 => score 100%, VB raw: 4+2=6 / max: 4+2=6 => score 100%)
-    const sessAfterSt4 = await AssessmentSession.findById(sessionId);
-    recordAudit('Fixture D', 'Unreviewed Permission', 'Review details', 'UA Score', sessAfterSt4.behaviourScores.get('unreviewedAcceptance'), null, 100, sessAfterSt4.behaviourScores.get('unreviewedAcceptance'));
-    recordAudit('Fixture D', 'Unreviewed Permission', 'Review details', 'VB Score', sessAfterSt4.behaviourScores.get('verification'), null, 100, sessAfterSt4.behaviourScores.get('verification'));
+    const scoring4 = await calculateScores(sessionId);
+    recordAudit('Fixture D', 'Unreviewed Permission', 'Review details', 'UA Score', scoring4.unreviewedAcceptancePenaltyPoints, scoring4.unreviewedAcceptanceMaxPenaltyPoints, 100, scoring4.scores.unreviewedAcceptance);
+    recordAudit('Fixture D', 'Unreviewed Permission', 'Review details', 'VB Score', scoring4.rawScores.verification, scoring4.maxScores.verification, 100, scoring4.scores.verification);
 
     // --- STAGE 5: Explicit Signal ID ---
     // Opt: Option C (Unexpected domain and urgency). Focus: SI.
@@ -204,9 +221,9 @@ async function runTests() {
     });
     const step5Data = await step5Res.json();
 
-    // Check SI (raw: 2 / max: 2 => score 100%)
-    const sessAfterSt5 = await AssessmentSession.findById(sessionId);
-    recordAudit('Fixture E', 'Explicit Signal ID', 'Identified signals', 'SI Score', sessAfterSt5.behaviourScores.get('signalIdentification'), null, 50, sessAfterSt5.behaviourScores.get('signalIdentification'));
+    // Check SI (raw: 2 / max: 4 => score 50%)
+    const scoring5 = await calculateScores(sessionId);
+    recordAudit('Fixture E', 'Explicit Signal ID', 'Identified signals', 'SI Score', scoring5.rawScores.signalIdentification, scoring5.maxScores.signalIdentification, 50, scoring5.scores.signalIdentification);
 
     // --- STAGE 6: Account Message Branching (Start) ---
     // Opt: Option A (Verify safely). Focus: DQ. Destination: Stage 7A.
@@ -245,8 +262,15 @@ async function runTests() {
 
     if (!step7Data.isCompleted) throw new Error('Session did not complete on terminal node 7A.');
 
-    // Assert final scores in completed session
-    recordAudit('Fixture F', 'High Outcome Terminal', 'Proceed normally', 'Session Completed', step7Data.isCompleted ? 1 : 0, null, 1, step7Data.isCompleted ? 1 : 0);
+    // Assert final scores in completed session for Path 1
+    const scoringFinalPath1 = await calculateScores(sessionId);
+    recordAudit('Fixture F', 'High Outcome Terminal', 'Proceed normally', 'Session Completed', 1, null, 1, step7Data.isCompleted ? 1 : 0);
+    recordAudit('Fixture F', 'High Outcome Terminal', 'Proceed normally', 'TR Final Score', scoringFinalPath1.rawScores.recognition, scoringFinalPath1.maxScores.recognition, 67, step7Data.behaviourScores.recognition);
+    recordAudit('Fixture F', 'High Outcome Terminal', 'Proceed normally', 'SI Final Score', scoringFinalPath1.rawScores.signalIdentification, scoringFinalPath1.maxScores.signalIdentification, 50, step7Data.behaviourScores.signalIdentification);
+    recordAudit('Fixture F', 'High Outcome Terminal', 'Proceed normally', 'VB Final Score', scoringFinalPath1.rawScores.verification, scoringFinalPath1.maxScores.verification, 100, step7Data.behaviourScores.verification);
+    recordAudit('Fixture F', 'High Outcome Terminal', 'Proceed normally', 'DQ Final Score', scoringFinalPath1.rawScores.decisionQuality, scoringFinalPath1.maxScores.decisionQuality, 100, step7Data.behaviourScores.decisionQuality);
+    recordAudit('Fixture F', 'High Outcome Terminal', 'Proceed normally', 'FP Final Score', scoringFinalPath1.falsePositivePenaltyPoints, scoringFinalPath1.falsePositiveMaxPenaltyPoints, 100, step7Data.behaviourScores.falsePositive);
+    recordAudit('Fixture F', 'High Outcome Terminal', 'Proceed normally', 'UA Final Score', scoringFinalPath1.unreviewedAcceptancePenaltyPoints, scoringFinalPath1.unreviewedAcceptanceMaxPenaltyPoints, 100, step7Data.behaviourScores.unreviewedAcceptance);
 
     // -------------------------------------------------------------
     // VALIDATION 2: Poor-Decision / Over-Reporting Flow
@@ -273,9 +297,9 @@ async function runTests() {
     });
     const step1DataBad = await step1ResBad.json();
 
-    const sessBadSt1 = await AssessmentSession.findById(sessionIdBad);
-    recordAudit('Fixture A', 'Phishing Email', 'Open blindly', 'TR Score', sessBadSt1.behaviourScores.get('recognition'), null, 0, sessBadSt1.behaviourScores.get('recognition'));
-    recordAudit('Fixture A', 'Phishing Email', 'Open blindly', 'DQ Score', sessBadSt1.behaviourScores.get('decisionQuality'), null, 0, sessBadSt1.behaviourScores.get('decisionQuality'));
+    const scoringBad1 = await calculateScores(sessionIdBad);
+    recordAudit('Fixture A', 'Phishing Email', 'Open blindly', 'TR Score', scoringBad1.rawScores.recognition, scoringBad1.maxScores.recognition, 0, scoringBad1.scores.recognition);
+    recordAudit('Fixture A', 'Phishing Email', 'Open blindly', 'DQ Score', scoringBad1.rawScores.decisionQuality, scoringBad1.maxScores.decisionQuality, 0, scoringBad1.scores.decisionQuality);
 
     // --- STAGE 2: Legitimate Notification ---
     // Bad Choice: Option B (Report as hacking attempt => False Positive).
@@ -288,8 +312,8 @@ async function runTests() {
     const step2DataBad = await step2ResBad.json();
 
     // Check FP penalty (FP penalty: 2 / max: 2 => score 0%)
-    const sessBadSt2 = await AssessmentSession.findById(sessionIdBad);
-    recordAudit('Fixture B', 'Legitimate Notification', 'Report hacking', 'FP Score', sessBadSt2.behaviourScores.get('falsePositive'), null, 0, sessBadSt2.behaviourScores.get('falsePositive'));
+    const scoringBad2 = await calculateScores(sessionIdBad);
+    recordAudit('Fixture B', 'Legitimate Notification', 'Report hacking', 'FP Score', scoringBad2.falsePositivePenaltyPoints, scoringBad2.falsePositiveMaxPenaltyPoints, 0, scoringBad2.scores.falsePositive);
 
     // --- STAGE 3: Ambiguous UPI Payment ---
     // Bad Choice: Option A (Approve payment immediately).
@@ -302,9 +326,9 @@ async function runTests() {
     const step3DataBad = await step3ResBad.json();
 
     // Check TR and VB (TR: 0 / 3 => 0%, VB: 0 / 4 => 0%, DQ: 0 / 6 => 0%)
-    const sessBadSt3 = await AssessmentSession.findById(sessionIdBad);
-    recordAudit('Fixture C', 'Ambiguous Payment', 'Approve blindly', 'TR Score', sessBadSt3.behaviourScores.get('recognition'), null, 0, sessBadSt3.behaviourScores.get('recognition'));
-    recordAudit('Fixture C', 'Ambiguous Payment', 'Approve blindly', 'VB Score', sessBadSt3.behaviourScores.get('verification'), null, 0, sessBadSt3.behaviourScores.get('verification'));
+    const scoringBad3 = await calculateScores(sessionIdBad);
+    recordAudit('Fixture C', 'Ambiguous Payment', 'Approve blindly', 'TR Score', scoringBad3.rawScores.recognition, scoringBad3.maxScores.recognition, 0, scoringBad3.scores.recognition);
+    recordAudit('Fixture C', 'Ambiguous Payment', 'Approve blindly', 'VB Score', scoringBad3.rawScores.verification, scoringBad3.maxScores.verification, 0, scoringBad3.scores.verification);
 
     // --- STAGE 4: Unreviewed Permission ---
     // Bad Choice: Option A (Allow immediately => Unreviewed Acceptance).
@@ -317,8 +341,8 @@ async function runTests() {
     const step4DataBad = await step4ResBad.json();
 
     // Check UA (penalty: 2 / max: 2 => score 0%)
-    const sessBadSt4 = await AssessmentSession.findById(sessionIdBad);
-    recordAudit('Fixture D', 'Unreviewed Permission', 'Allow blindly', 'UA Score', sessBadSt4.behaviourScores.get('unreviewedAcceptance'), null, 0, sessBadSt4.behaviourScores.get('unreviewedAcceptance'));
+    const scoringBad4 = await calculateScores(sessionIdBad);
+    recordAudit('Fixture D', 'Unreviewed Permission', 'Allow blindly', 'UA Score', scoringBad4.unreviewedAcceptancePenaltyPoints, scoringBad4.unreviewedAcceptanceMaxPenaltyPoints, 0, scoringBad4.scores.unreviewedAcceptance);
 
     // --- STAGE 5: Explicit Signal ID ---
     // Bad Choice: Option A (Do not interact).
@@ -330,9 +354,9 @@ async function runTests() {
     });
     const step5DataBad = await step5ResBad.json();
 
-    // Check SI (raw: 0 / max: 2 => score 0%)
-    const sessBadSt5 = await AssessmentSession.findById(sessionIdBad);
-    recordAudit('Fixture E', 'Explicit Signal ID', 'Ignore message', 'SI Score', sessBadSt5.behaviourScores.get('signalIdentification'), null, 0, sessBadSt5.behaviourScores.get('signalIdentification'));
+    // Check SI (raw: 0 / max: 4 => score 0%)
+    const scoringBad5 = await calculateScores(sessionIdBad);
+    recordAudit('Fixture E', 'Explicit Signal ID', 'Ignore message', 'SI Score', scoringBad5.rawScores.signalIdentification, scoringBad5.maxScores.signalIdentification, 0, scoringBad5.scores.signalIdentification);
 
     // --- STAGE 6: Account Message Branching (Start) ---
     // Bad Choice: Option B (Continue blindly). Focus: DQ. Destination: Stage 7B.
@@ -367,14 +391,15 @@ async function runTests() {
 
     if (!step7DataBad.isCompleted) throw new Error('Session did not complete on terminal node 7B.');
 
-    // Assert final scores in completed session (all positive and penalty dimensions should be 0%)
-    recordAudit('Fixture F', 'Low Outcome Terminal', 'End process', 'Session Completed', step7DataBad.isCompleted ? 1 : 0, null, 1, step7DataBad.isCompleted ? 1 : 0);
-    recordAudit('Fixture F', 'Low Outcome Terminal', 'End process', 'TR Final Score', step7DataBad.behaviourScores.recognition, null, 0, step7DataBad.behaviourScores.recognition);
-    recordAudit('Fixture F', 'Low Outcome Terminal', 'End process', 'SI Final Score', step7DataBad.behaviourScores.signalIdentification, null, 0, step7DataBad.behaviourScores.signalIdentification);
-    recordAudit('Fixture F', 'Low Outcome Terminal', 'End process', 'VB Final Score', step7DataBad.behaviourScores.verification, null, 0, step7DataBad.behaviourScores.verification);
-    recordAudit('Fixture F', 'Low Outcome Terminal', 'End process', 'DQ Final Score', step7DataBad.behaviourScores.decisionQuality, null, 0, step7DataBad.behaviourScores.decisionQuality);
-    recordAudit('Fixture F', 'Low Outcome Terminal', 'End process', 'FP Final Score', step7DataBad.behaviourScores.falsePositive, null, 0, step7DataBad.behaviourScores.falsePositive);
-    recordAudit('Fixture F', 'Low Outcome Terminal', 'End process', 'UA Final Score', step7DataBad.behaviourScores.unreviewedAcceptance, null, 0, step7DataBad.behaviourScores.unreviewedAcceptance);
+    // Assert final scores in completed session for Path 2 (all positive and penalty dimensions should be 0%)
+    const scoringFinalPath2 = await calculateScores(sessionIdBad);
+    recordAudit('Fixture F', 'Low Outcome Terminal', 'End process', 'Session Completed', 1, null, 1, step7DataBad.isCompleted ? 1 : 0);
+    recordAudit('Fixture F', 'Low Outcome Terminal', 'End process', 'TR Final Score', scoringFinalPath2.rawScores.recognition, scoringFinalPath2.maxScores.recognition, 0, step7DataBad.behaviourScores.recognition);
+    recordAudit('Fixture F', 'Low Outcome Terminal', 'End process', 'SI Final Score', scoringFinalPath2.rawScores.signalIdentification, scoringFinalPath2.maxScores.signalIdentification, 0, step7DataBad.behaviourScores.signalIdentification);
+    recordAudit('Fixture F', 'Low Outcome Terminal', 'End process', 'VB Final Score', scoringFinalPath2.rawScores.verification, scoringFinalPath2.maxScores.verification, 0, step7DataBad.behaviourScores.verification);
+    recordAudit('Fixture F', 'Low Outcome Terminal', 'End process', 'DQ Final Score', scoringFinalPath2.rawScores.decisionQuality, scoringFinalPath2.maxScores.decisionQuality, 0, step7DataBad.behaviourScores.decisionQuality);
+    recordAudit('Fixture F', 'Low Outcome Terminal', 'End process', 'FP Final Score', scoringFinalPath2.falsePositivePenaltyPoints, scoringFinalPath2.falsePositiveMaxPenaltyPoints, 0, step7DataBad.behaviourScores.falsePositive);
+    recordAudit('Fixture F', 'Low Outcome Terminal', 'End process', 'UA Final Score', scoringFinalPath2.unreviewedAcceptancePenaltyPoints, scoringFinalPath2.unreviewedAcceptanceMaxPenaltyPoints, 0, step7DataBad.behaviourScores.unreviewedAcceptance);
 
     // -------------------------------------------------------------
     // VALIDATION 3: Replay and Sequence State Integrity

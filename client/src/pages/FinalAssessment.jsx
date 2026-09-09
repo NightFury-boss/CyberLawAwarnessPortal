@@ -1,13 +1,16 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
+import RemediationCards from '../components/RemediationCards';
 
 function FinalAssessment({ user, updateProgressTrigger }) {
   const [session, setSession] = useState(null); // active session ID
   const [currentStage, setCurrentStage] = useState(null); // current Mongoose ScenarioStage
-  const [currentStep, setCurrentStep] = useState('start_screen'); // start_screen, active_simulation, reveal_view
+  const [currentStep, setCurrentStep] = useState('start_screen'); // start_screen, active_simulation, reveal_view, completed_summary
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [completedHistory, setCompletedHistory] = useState(null);
+  const stageHeadingRef = useRef(null);
   
   // Custom mock inputs (instantly discarded)
   const [mockUserId, setMockUserId] = useState('');
@@ -17,25 +20,106 @@ function FinalAssessment({ user, updateProgressTrigger }) {
 
   const [result, setResult] = useState(null);
   const [submitting, setSubmitting] = useState(false);
-  
-  // Dialog/Explanation overlay between steps
-  const [stepFeedback, setStepFeedback] = useState('');
 
   const navigate = useNavigate();
+
+  // Detect active or completed session on mount for safe resumption
+  useEffect(() => {
+    let isMounted = true;
+    const initAssessment = async () => {
+      setLoading(true);
+      try {
+        if (!api.isAuthenticated()) {
+          if (isMounted) {
+            setCurrentStep('start_screen');
+            setLoading(false);
+          }
+          return;
+        }
+
+        const cachedSessionId = sessionStorage.getItem('active_final_session_id');
+        if (cachedSessionId) {
+          try {
+            const sessionData = await api.getAssessmentSession(cachedSessionId);
+            if (sessionData && sessionData.status === 'in-progress' && isMounted) {
+              setSession(sessionData.sessionId);
+              setCurrentStage(sessionData.stage);
+              setCurrentStep('active_simulation');
+              setLoading(false);
+              return;
+            }
+          } catch (e) {
+            sessionStorage.removeItem('active_final_session_id');
+          }
+        }
+
+        const statusData = await api.getAssessmentStatus('final');
+        if (!isMounted) return;
+
+        if (statusData.hasActiveSession && statusData.stage) {
+          sessionStorage.setItem('active_final_session_id', statusData.sessionId);
+          setSession(statusData.sessionId);
+          setCurrentStage(statusData.stage);
+          setCurrentStep('active_simulation');
+        } else if (statusData.hasCompletedSession && statusData.completedSession) {
+          setCompletedHistory(statusData.completedSession);
+          setResult(statusData.completedSession);
+          setCurrentStep('completed_summary');
+        } else {
+          setCurrentStep('start_screen');
+        }
+      } catch (err) {
+        if (isMounted) {
+          console.warn('Could not restore final session:', err.message);
+          setCurrentStep('start_screen');
+        }
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    };
+
+    initAssessment();
+    return () => { isMounted = false; };
+  }, []);
 
   const handleStart = async () => {
     setLoading(true);
     setError('');
     try {
       const data = await api.startAssessment('final');
+      sessionStorage.setItem('active_final_session_id', data.sessionId);
       setSession(data.sessionId);
       setCurrentStage(data.stage);
       setCurrentStep('active_simulation');
-      setStepFeedback('');
+      window.scrollTo({ top: 0, behavior: 'instant' });
+      setTimeout(() => stageHeadingRef.current?.focus(), 50);
     } catch (err) {
       setError(err.message || 'Failed to start final assessment.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handlePhoneAction = async (actionType) => {
+    if (submitting || !currentStage) return;
+    if (actionType === 'decline') {
+      const declineDecision = currentStage.decisions.find(d => 
+        d.optionText.toLowerCase().includes('hang up') || 
+        d.optionText.toLowerCase().includes('ignore') ||
+        d.optionText.toLowerCase().includes('decline')
+      );
+      if (declineDecision) {
+        await handleSelectOption(declineDecision.id);
+      }
+    } else if (actionType === 'accept') {
+      const acceptDecision = currentStage.decisions.find(d => 
+        d.optionText.toLowerCase().includes('press 9') || 
+        d.optionText.toLowerCase().includes('connect') ||
+        d.optionText.toLowerCase().includes('accept')
+      );
+      if (acceptDecision) {
+        await handleSelectOption(acceptDecision.id);
+      }
     }
   };
 
@@ -82,9 +166,6 @@ function FinalAssessment({ user, updateProgressTrigger }) {
     setError('');
     try {
       const nextData = await api.submitAssessmentStep(session, currentStage.id, decisionId);
-      
-      // Cache feedback explanation
-      setStepFeedback(nextData.explanation || 'Action submitted.');
 
       // Clear input fields
       setMockUserId('');
@@ -93,12 +174,16 @@ function FinalAssessment({ user, updateProgressTrigger }) {
       setMockZipPassword('');
 
       if (nextData.isCompleted) {
+        sessionStorage.removeItem('active_final_session_id');
         setResult(nextData);
         setCurrentStep('reveal_view');
+        window.scrollTo({ top: 0, behavior: 'instant' });
         if (updateProgressTrigger) updateProgressTrigger();
       } else {
         // Move to next adaptive branch stage returned by backend
         setCurrentStage(nextData.stage);
+        window.scrollTo({ top: 0, behavior: 'instant' });
+        setTimeout(() => stageHeadingRef.current?.focus(), 50);
       }
     } catch (err) {
       setError(err.message || 'Error submitting choice step.');
@@ -109,6 +194,115 @@ function FinalAssessment({ user, updateProgressTrigger }) {
 
   return (
     <div className="container page-entry" style={{ padding: 'var(--space-xl) 0', maxWidth: '800px', fontFamily: 'var(--font-sans)' }}>
+      {/* Accessible Live Region */}
+      <div aria-live="polite" className="sr-only" style={{ position: 'absolute', width: '1px', height: '1px', padding: 0, margin: '-1px', overflow: 'hidden', clip: 'rect(0,0,0,0)', border: 0 }}>
+        {currentStage ? `Situation order ${currentStage.stageOrder}: ${currentStage.title}. ${currentStage.description}` : ''}
+      </div>
+
+      {/* Completed Session Summary Screen */}
+      {currentStep === 'completed_summary' && completedHistory && (
+        <div style={{ maxWidth: '640px', margin: '40px auto', textAlign: 'center' }}>
+          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', marginBottom: 'var(--space-md)' }}>
+            <img src="/logo/cyber-law-logo-icon.svg" alt="" style={{ height: '32px', width: 'auto' }} />
+            <span style={{ fontSize: '0.85rem', fontWeight: 'bold', color: 'var(--accent-navy)', textTransform: 'uppercase', letterSpacing: '1px' }}>
+              Cyber Law Awareness Portal
+            </span>
+          </div>
+          <h1 style={{ fontSize: '2.2rem', marginTop: '10px', marginBottom: 'var(--space-sm)' }}>
+            Final Assessment Completed
+          </h1>
+          <p className="text-secondary" style={{ fontSize: '1.05rem', marginBottom: 'var(--space-lg)' }}>
+            You have completed the final assessment with recorded results.
+          </p>
+
+          {completedHistory.behaviourScores ? (
+            <div style={{
+              border: '1px solid var(--color-border)',
+              padding: 'var(--space-lg)',
+              borderRadius: 'var(--radius-sm)',
+              backgroundColor: 'var(--bg-secondary)',
+              marginBottom: 'var(--space-xl)',
+              textAlign: 'left'
+            }}>
+              <div style={{ fontSize: '0.85rem', fontWeight: '700', color: 'var(--accent-navy)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 'var(--space-md)', textAlign: 'center' }}>
+                Recorded Final Behavioral Profile
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '12px' }}>
+                <div style={{ padding: '10px', backgroundColor: 'var(--bg-primary)', borderRadius: '4px', borderLeft: '3px solid var(--accent-navy)' }}>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Threat Recognition</div>
+                  <div style={{ fontSize: '1.4rem', fontWeight: '700', color: 'var(--accent-navy)' }}>{completedHistory.behaviourScores?.recognition ?? 0}%</div>
+                </div>
+                <div style={{ padding: '10px', backgroundColor: 'var(--bg-primary)', borderRadius: '4px', borderLeft: '3px solid var(--accent-navy)' }}>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Signal Identification</div>
+                  <div style={{ fontSize: '1.4rem', fontWeight: '700', color: 'var(--accent-navy)' }}>{completedHistory.behaviourScores?.signalIdentification ?? 0}%</div>
+                </div>
+                <div style={{ padding: '10px', backgroundColor: 'var(--bg-primary)', borderRadius: '4px', borderLeft: '3px solid var(--accent-navy)' }}>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Verification Habits</div>
+                  <div style={{ fontSize: '1.4rem', fontWeight: '700', color: 'var(--accent-navy)' }}>{completedHistory.behaviourScores?.verification ?? 0}%</div>
+                </div>
+                <div style={{ padding: '10px', backgroundColor: 'var(--bg-primary)', borderRadius: '4px', borderLeft: '3px solid var(--accent-navy)' }}>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Decision Quality</div>
+                  <div style={{ fontSize: '1.4rem', fontWeight: '700', color: 'var(--accent-navy)' }}>{completedHistory.behaviourScores?.decisionQuality ?? 0}%</div>
+                </div>
+                <div style={{ padding: '10px', backgroundColor: 'var(--bg-primary)', borderRadius: '4px', borderLeft: '3px solid var(--accent-navy)' }}>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>False Positive Control</div>
+                  <div style={{ fontSize: '1.4rem', fontWeight: '700', color: 'var(--accent-navy)' }}>{completedHistory.behaviourScores?.falsePositive ?? 0}%</div>
+                </div>
+                <div style={{ padding: '10px', backgroundColor: 'var(--bg-primary)', borderRadius: '4px', borderLeft: '3px solid var(--accent-navy)' }}>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Autopilot Control</div>
+                  <div style={{ fontSize: '1.4rem', fontWeight: '700', color: 'var(--accent-navy)' }}>{completedHistory.behaviourScores?.unreviewedAcceptance ?? 0}%</div>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div style={{
+              borderLeft: '4px solid var(--accent-navy)',
+              padding: 'var(--space-lg)',
+              borderRadius: 'var(--radius-sm)',
+              textAlign: 'center',
+              backgroundColor: 'var(--accent-navy-light)',
+              marginBottom: 'var(--space-xl)'
+            }}>
+              <span style={{ fontSize: '0.85rem', fontWeight: '600', color: 'var(--text-muted)' }}>RECORDED FINAL SCORE</span>
+              <div style={{ fontSize: '3.2rem', fontWeight: '700', color: 'var(--accent-navy)' }}>{completedHistory.score}/100</div>
+              <div style={{ fontWeight: '600', color: completedHistory.score >= 75 ? 'var(--color-success)' : 'var(--color-warning)' }}>
+                Level: {completedHistory.awarenessLevel}
+              </div>
+            </div>
+          )}
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-sm)', maxWidth: '380px', margin: '0 auto' }}>
+            <button 
+              onClick={() => { setResult(completedHistory); setCurrentStep('reveal_view'); }}
+              className="btn btn-primary"
+              style={{ padding: '0.8rem 1.5rem', fontWeight: '600' }}
+            >
+              View Full Behavioral Habits Breakdown
+            </button>
+            <button 
+              onClick={() => navigate('/dashboard')}
+              className="btn btn-secondary"
+              style={{ padding: '0.8rem 1.5rem' }}
+            >
+              Continue to Dashboard
+            </button>
+            <div style={{ marginTop: 'var(--space-md)', paddingTop: 'var(--space-md)', borderTop: '1px solid var(--color-border)' }}>
+              <button 
+                onClick={handleStart}
+                className="btn btn-outline"
+                style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}
+                disabled={loading}
+              >
+                {loading ? 'Starting...' : 'Retake Assessment (New Attempt)'}
+              </button>
+              <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '4px' }}>
+                Starting a new attempt will not overwrite your historical completed records.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Start Screen */}
       {currentStep === 'start_screen' && (
         <div style={{ maxWidth: '600px', margin: '40px auto', textAlign: 'center' }}>
@@ -151,19 +345,12 @@ function FinalAssessment({ user, updateProgressTrigger }) {
             <span>Situation Order: {currentStage.stageOrder}</span>
           </div>
 
-          <h2 style={{ fontSize: '1.8rem', color: 'var(--accent-navy)', marginBottom: 'var(--space-md)' }}>
+          <h2 ref={stageHeadingRef} tabIndex="-1" style={{ fontSize: '1.8rem', color: 'var(--accent-navy)', marginBottom: 'var(--space-md)', outline: 'none' }}>
             {currentStage.title}
           </h2>
           <p className="text-muted" style={{ marginBottom: 'var(--space-lg)', fontSize: '0.95rem' }}>
             {currentStage.description}
           </p>
-
-          {/* Feedback Box showing analysis of previous action */}
-          {stepFeedback && (
-            <div className="alert alert-success" style={{ padding: 'var(--space-sm) var(--space-md)', fontSize: '0.85rem', marginBottom: 'var(--space-md)' }}>
-              <strong>Previous Choice Analysis:</strong> {stepFeedback}
-            </div>
-          )}
 
           {error && <div className="alert alert-error" style={{ marginBottom: 'var(--space-md)' }}>{error}</div>}
 
@@ -176,34 +363,34 @@ function FinalAssessment({ user, updateProgressTrigger }) {
                 <span className="dot-green"></span>
               </div>
               <div className="mock-browser-url">
-                {currentStage.mockInterfaceType === 'email' && 'https://mail.campus-connect.in/inbox'}
-                {currentStage.mockInterfaceType === 'browser' && (currentStage.mockInterfaceData.url || 'chrome://settings/help')}
-                {currentStage.mockInterfaceType === 'website' && (currentStage.mockInterfaceData.url || 'http://verify-bank.com/secure')}
-                {currentStage.mockInterfaceType === 'qr_code' && 'https://tickets-escrow.in/pay/3012'}
+                {currentStage.mockInterfaceType === 'email' && (currentStage.mockInterfaceData.senderEmail ? 'https://mail.google.com/mail/u/0/#inbox' : 'https://mail.personal-inbox.com')}
+                {currentStage.mockInterfaceType === 'browser' && (currentStage.mockInterfaceData.url || 'browser://app-permissions')}
+                {currentStage.mockInterfaceType === 'website' && (currentStage.mockInterfaceData.url || 'https://web-portal.in')}
+                {currentStage.mockInterfaceType === 'qr_code' && 'https://upi-gateway.in/qr-pay'}
                 {currentStage.mockInterfaceType === 'sms' && 'Mobile SMS Inbox'}
-                {currentStage.mockInterfaceType === 'phone_call' && 'Incoming Call...'}
+                {currentStage.mockInterfaceType === 'phone_call' && 'Incoming Audio Call...'}
                 {currentStage.mockInterfaceType === 'checkout' && 'https://upi-gateway.in/secure-checkout'}
-                {currentStage.mockInterfaceType === 'chat' && 'Corporate Messenger Sandbox'}
-                {currentStage.mockInterfaceType === 'notification' && 'System OS Notification Tray'}
+                {(currentStage.mockInterfaceType === 'chat' || currentStage.mockInterfaceType === 'messaging') && 'Mobile Messaging Sandbox'}
+                {currentStage.mockInterfaceType === 'notification' && 'System Notification Tray'}
               </div>
             </div>
 
             {/* Email Inbox Simulation */}
             {currentStage.mockInterfaceType === 'email' && (
-              <div className="mock-email-container" style={{ display: 'flex', backgroundColor: '#fff', border: '1px solid var(--color-border)', borderRadius: '0 0 4px 4px' }}>
-                <div className="mock-email-sidebar" style={{ width: '150px', borderRight: '1px solid var(--color-border)', padding: '12px', backgroundColor: 'var(--bg-secondary)', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <div className="mock-email-container">
+                <div className="mock-email-sidebar">
                   <strong style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Folders</strong>
-                  <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '4px', fontSize: '0.8rem' }}>
-                    <li style={{ padding: '6px 8px', borderRadius: '4px', backgroundColor: 'var(--accent-navy-light)', color: 'var(--accent-navy)', fontWeight: '600' }}>Inbox (1)</li>
-                    <li style={{ padding: '6px 8px', color: 'var(--text-secondary)' }}>Sent</li>
-                    <li style={{ padding: '6px 8px', color: 'var(--text-secondary)' }}>Spam</li>
+                  <ul className="mock-email-folders" style={{ padding: 0, margin: '8px 0 0 0', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                    <li className="active">Inbox (1)</li>
+                    <li>Sent</li>
+                    <li>Spam</li>
                   </ul>
                 </div>
-                <div className="mock-email-body" style={{ flex: 1, padding: '20px' }}>
-                  <div className="email-header-info" style={{ borderBottom: '1px solid var(--color-border)', paddingBottom: '12px', marginBottom: '16px' }}>
+                <div className="mock-email-body">
+                  <div className="email-header-info">
                     <h3 style={{ fontSize: '1.2rem', color: 'var(--accent-navy)', margin: '0 0 8px 0' }}>{currentStage.mockInterfaceData.subject}</h3>
                     <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '4px' }}>
-                      <strong>From:</strong> {currentStage.mockInterfaceData.senderName} &lt;<span style={{ color: 'var(--color-error)', fontWeight: '600' }}>{currentStage.mockInterfaceData.senderEmail || currentStage.mockInterfaceData.sender}</span>&gt;
+                      <strong>From:</strong> {currentStage.mockInterfaceData.senderName} &lt;<span style={{ color: 'var(--accent-navy)', fontWeight: '600' }}>{currentStage.mockInterfaceData.senderEmail || currentStage.mockInterfaceData.sender}</span>&gt;
                     </div>
                   </div>
                   <div style={{ whiteSpace: 'pre-line', fontSize: '0.95rem', color: 'var(--text-primary)', lineHeight: '1.5' }}>
@@ -282,13 +469,13 @@ function FinalAssessment({ user, updateProgressTrigger }) {
                 </div>
 
                 {currentStage.mockInterfaceData.warningText && (
-                  <div className="alert alert-error" style={{ fontSize: '0.85rem', padding: '12px', borderLeft: '4px solid var(--color-error)' }}>
-                    {currentStage.mockInterfaceData.warningText}
+                  <div className="mock-scenario-note" style={{ marginBottom: '16px' }}>
+                    <strong>Observation:</strong> {currentStage.mockInterfaceData.warningText}
                   </div>
                 )}
 
                 {/* If it requires credentials form input */}
-                {currentStage.mockInterfaceData.title && currentStage.mockInterfaceData.title.toLowerCase().includes('checkout') ? (
+                {currentStage.mockInterfaceData.requiresCredentials ? (
                   <div style={{ maxWidth: '400px', margin: '20px auto', border: '1px solid var(--color-border)', padding: '20px', borderRadius: '8px', backgroundColor: '#fff' }}>
                     <form onSubmit={handleLoginSubmit}>
                       <div className="form-group" style={{ marginBottom: '12px' }}>
@@ -382,20 +569,34 @@ function FinalAssessment({ user, updateProgressTrigger }) {
 
                 <div style={{ display: 'flex', justifyContent: 'center', gap: '32px' }}>
                   <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                    <div style={{ width: '40px', height: '40px', borderRadius: '50%', backgroundColor: '#ef4444', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ color: 'white' }}>
+                    <button
+                      type="button"
+                      onClick={() => handlePhoneAction('decline')}
+                      disabled={submitting}
+                      style={{ width: '48px', height: '48px', borderRadius: '50%', backgroundColor: '#ef4444', display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none', cursor: 'pointer', transition: 'transform 0.15s ease' }}
+                      aria-label="Decline Call"
+                      title="Decline Call"
+                    >
+                      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ color: 'white' }}>
                         <path d="M10.68 13.31a16 16 0 0 0 3.41 2.6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91" />
                       </svg>
-                    </div>
-                    <span style={{ fontSize: '0.7rem', color: '#94a3b8', marginTop: '4px' }}>Decline</span>
+                    </button>
+                    <span style={{ fontSize: '0.75rem', color: '#94a3b8', marginTop: '6px' }}>Decline</span>
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                    <div style={{ width: '40px', height: '40px', borderRadius: '50%', backgroundColor: '#22c55e', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ color: 'white' }}>
+                    <button
+                      type="button"
+                      onClick={() => handlePhoneAction('accept')}
+                      disabled={submitting}
+                      style={{ width: '48px', height: '48px', borderRadius: '50%', backgroundColor: '#22c55e', display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none', cursor: 'pointer', transition: 'transform 0.15s ease' }}
+                      aria-label="Accept Call"
+                      title="Accept Call"
+                    >
+                      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ color: 'white' }}>
                         <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
                       </svg>
-                    </div>
-                    <span style={{ fontSize: '0.7rem', color: '#94a3b8', marginTop: '4px' }}>Accept</span>
+                    </button>
+                    <span style={{ fontSize: '0.75rem', color: '#94a3b8', marginTop: '6px' }}>Accept</span>
                   </div>
                 </div>
               </div>
@@ -417,8 +618,8 @@ function FinalAssessment({ user, updateProgressTrigger }) {
                   </div>
 
                   {currentStage.mockInterfaceData.warningText && (
-                    <div className="alert alert-error" style={{ fontSize: '0.8rem', padding: '10px', textAlign: 'left', marginBottom: '0' }}>
-                      <strong>Important:</strong> {currentStage.mockInterfaceData.warningText}
+                    <div className="mock-scenario-note" style={{ textAlign: 'left', marginBottom: '0' }}>
+                      <strong>Observation:</strong> {currentStage.mockInterfaceData.warningText}
                     </div>
                   )}
                 </div>
@@ -426,7 +627,7 @@ function FinalAssessment({ user, updateProgressTrigger }) {
             )}
 
             {/* Chat Sandbox Messenger Simulation */}
-            {currentStage.mockInterfaceType === 'chat' && (
+            {(currentStage.mockInterfaceType === 'chat' || currentStage.mockInterfaceType === 'messaging') && (
               <div style={{ maxWidth: '400px', margin: '30px auto', border: '1px solid var(--color-border)', borderRadius: '8px', overflow: 'hidden', backgroundColor: '#efeae2', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}>
                 <div style={{ backgroundColor: 'var(--accent-navy)', color: '#fff', padding: '10px 16px', fontSize: '0.9rem', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#22c55e' }} />
@@ -470,29 +671,16 @@ function FinalAssessment({ user, updateProgressTrigger }) {
           <div className="editorial-card" style={{ borderTop: '2px solid var(--accent-navy)', marginTop: 'var(--space-md)' }}>
             <h3 style={{ fontSize: '1.25rem', marginBottom: 'var(--space-md)' }}>Select Your Move:</h3>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-sm)' }}>
-              {currentStage.decisions
-                .filter(d => {
-                  if (currentStage.mockInterfaceType === 'email' && (d.optionText.toLowerCase().includes('click') || d.optionText.toLowerCase().includes('open link') || d.optionText.toLowerCase().includes('telegram'))) {
-                    return false;
-                  }
-                  if (currentStage.mockInterfaceType === 'website' && (d.optionText.toLowerCase().includes('enter simulated login') || d.optionText.toLowerCase().includes('credentials'))) {
-                    return false;
-                  }
-                  if (currentStage.mockInterfaceType === 'browser' && currentStage.mockInterfaceData.url && currentStage.mockInterfaceData.url.endsWith('.zip') && (d.optionText.toLowerCase().includes('run') || d.optionText.toLowerCase().includes('extract'))) {
-                    return false;
-                  }
-                  return true;
-                })
-                .map((opt) => (
-                  <button
-                    key={opt.id}
-                    onClick={() => handleSelectOption(opt.id)}
-                    className="btn btn-secondary"
-                    style={{ textAlign: 'left', justifyContent: 'flex-start', padding: '12px 16px', lineHeight: '1.4' }}
-                    disabled={submitting}
-                  >
-                    {opt.optionText}
-                  </button>
+              {currentStage.decisions.map((opt) => (
+                <button
+                  key={opt.id}
+                  onClick={() => handleSelectOption(opt.id)}
+                  className="btn btn-secondary"
+                  style={{ textAlign: 'left', justifyContent: 'flex-start', padding: '12px 16px', lineHeight: '1.4' }}
+                  disabled={submitting}
+                >
+                  {opt.optionText}
+                </button>
               ))}
             </div>
           </div>
@@ -509,53 +697,126 @@ function FinalAssessment({ user, updateProgressTrigger }) {
             Congratulations on completing the **"A Day in Your Digital Life"** branching assessment. We have compiled your decisions and compared them with your baseline score.
           </p>
 
-          {/* Scores grid split */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: 'var(--space-xl)', marginBottom: 'var(--space-xl)' }}>
-            {/* Left side: Category progress bars */}
-            <div>
-              <h3 style={{ fontSize: '1.2rem', marginBottom: 'var(--space-md)' }}>Category Defense Performance</h3>
-              <div className="category-bars">
-                {Object.entries(result.categoryScores || {}).map(([cat, score]) => (
-                  <div key={cat} className="category-bar-row">
-                    <div className="category-bar-label">
-                      <span>{cat}</span>
-                      <strong>{score}%</strong>
-                    </div>
-                    <div className="category-bar-track">
-                      <div
-                        className={`category-bar-fill ${score >= 75 ? 'success' : (score < 50 ? 'warning' : '')}`}
-                        style={{ width: `${score}%` }}
-                      />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
+          <div style={{ marginBottom: 'var(--space-lg)', borderLeft: '3px solid var(--accent-navy)', paddingLeft: '16px' }}>
+            <p style={{ fontSize: '1.05rem', color: 'var(--accent-navy)', fontStyle: 'italic', margin: '0 0 8px 0', fontWeight: 'bold' }}>
+              "You weren’t being tested on whether you could guess what was a scam."
+            </p>
+            <p style={{ fontSize: '1rem', color: 'var(--text-secondary)', margin: 0 }}>
+              "You were being observed on how you make everyday digital decisions."
+            </p>
+          </div>
 
-            {/* Right side: Overall stats card */}
+          {/* Scores grid split */}
+          <div className="reveal-layout-grid">
+            {/* Left side: Observed Digital Habits breakdown */}
             <div>
-              <div style={{
-                borderLeft: '4px solid var(--accent-navy)',
-                padding: 'var(--space-lg)',
-                borderRadius: 'var(--radius-sm)',
-                textAlign: 'center',
-                backgroundColor: 'var(--accent-navy-light)',
-                marginBottom: 'var(--space-md)'
-              }}>
-                <span style={{ fontSize: '0.85rem', fontWeight: '600', color: 'var(--text-muted)' }}>FINAL ASSESSMENT SCORE</span>
-                <div style={{ fontSize: '3.5rem', fontWeight: '700', color: 'var(--accent-navy)' }}>{result.score}/100</div>
-                <div style={{ fontWeight: '600', color: 'var(--accent-navy)', fontSize: '1.1rem', margin: '4px 0' }}>
-                  {result.awarenessLevel}
+              <h3 style={{ fontSize: '1.2rem', marginBottom: 'var(--space-md)' }}>Observed Digital Habits Breakdown</h3>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', fontSize: '0.88rem' }}>
+                <div style={{ padding: '8px 12px', backgroundColor: 'var(--bg-secondary)', borderRadius: '4px', borderLeft: '3px solid var(--accent-navy)' }}>
+                  <strong>What You Recognized (Threat Recognition):</strong> {result.behaviourScores?.recognition || 0}%
+                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '2px' }}>Recognition of deceptive prompts and urgency cues across situations.</div>
+                </div>
+                <div style={{ padding: '8px 12px', backgroundColor: 'var(--bg-secondary)', borderRadius: '4px', borderLeft: '3px solid var(--accent-navy)' }}>
+                  <strong>Where You Verified (Verification Habits):</strong> {result.behaviourScores?.verification || 0}%
+                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '2px' }}>Independent verification through official channels before acting.</div>
+                </div>
+                <div style={{ padding: '8px 12px', backgroundColor: 'var(--bg-secondary)', borderRadius: '4px', borderLeft: '3px solid var(--accent-navy)' }}>
+                  <strong>Decision Quality (Choice Soundness):</strong> {result.behaviourScores?.decisionQuality || 0}%
+                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '2px' }}>Overall quality and soundness of choices across all everyday stages.</div>
+                </div>
+                <div style={{ padding: '8px 12px', backgroundColor: 'var(--bg-secondary)', borderRadius: '4px', borderLeft: '3px solid var(--accent-navy)' }}>
+                  <strong>Signal Identification (Deception Clues):</strong> {result.behaviourScores?.signalIdentification || 0}%
+                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '2px' }}>Detection of specific indicators such as domain mismatches and payment traps.</div>
+                </div>
+                <div style={{ padding: '8px 12px', backgroundColor: 'var(--bg-secondary)', borderRadius: '4px', borderLeft: '3px solid var(--color-warning)' }}>
+                  <strong>What You Accepted on Autopilot (Autopilot Control):</strong> {result.behaviourScores?.unreviewedAcceptance ?? 0}%
+                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '2px' }}>
+                    Occasions where permissions or requests were approved without checking ({result.unreviewedAcceptancePenaltyPoints || 0} penalty point(s)).
+                  </div>
+                </div>
+                <div style={{ padding: '8px 12px', backgroundColor: 'var(--bg-secondary)', borderRadius: '4px', borderLeft: '3px solid var(--color-warning)' }}>
+                  <strong>False Positive Behaviour (Over-Reporting Control):</strong> {result.behaviourScores?.falsePositive ?? 0}%
+                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '2px' }}>
+                    Occasions where authentic notices or system patches were treated as threats ({result.falsePositivePenaltyPoints || 0} penalty point(s)).
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
 
-          {result.deltaMessage && (
-            <div className="alert alert-success" style={{ marginBottom: 'var(--space-lg)', fontSize: '0.95rem' }}>
-              <strong>Pre/Post Delta Report:</strong> {result.deltaMessage}
+            {/* Right side: Authoritative Six-Metric Habit Shift card */}
+            <div>
+              <div style={{
+                border: '1px solid var(--color-border)',
+                borderRadius: 'var(--radius-sm)',
+                padding: 'var(--space-md)',
+                backgroundColor: 'var(--accent-navy-light)',
+                marginBottom: 'var(--space-md)'
+              }}>
+                <span style={{ fontSize: '0.8rem', fontWeight: '700', color: 'var(--accent-navy)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                  Behavioral Habit Shift (Baseline &rarr; Final)
+                </span>
+                <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: '4px 0 12px 0' }}>
+                  Authoritative dimensional comparison of observed habits.
+                </p>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  {[
+                    { key: 'recognition', label: 'Threat Recognition' },
+                    { key: 'signalIdentification', label: 'Signal Identification' },
+                    { key: 'verification', label: 'Verification Habits' },
+                    { key: 'decisionQuality', label: 'Decision Quality' },
+                    { key: 'falsePositive', label: 'False Positive Control' },
+                    { key: 'unreviewedAcceptance', label: 'Autopilot Control' }
+                  ].map((m) => {
+                    const deltaObj = result.behaviourDelta?.[m.key];
+                    const finalVal = result.behaviourScores?.[m.key] ?? 0;
+                    const baseVal = deltaObj?.baseline ?? (result.baselineScores?.[m.key] ?? null);
+                    const diff = deltaObj?.delta ?? (baseVal !== null ? finalVal - baseVal : null);
+
+                    return (
+                      <div key={m.key} style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        padding: '8px 12px',
+                        backgroundColor: 'var(--bg-primary)',
+                        borderRadius: '4px'
+                      }}>
+                        <div>
+                          <div style={{ fontSize: '0.82rem', fontWeight: '600', color: 'var(--text-primary)' }}>{m.label}</div>
+                          <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                            {baseVal !== null ? `${baseVal}% → ${finalVal}%` : `Final: ${finalVal}%`}
+                          </div>
+                        </div>
+                        {diff !== null ? (
+                          <div style={{
+                            fontSize: '0.85rem',
+                            fontWeight: '700',
+                            padding: '2px 8px',
+                            borderRadius: '4px',
+                            backgroundColor: diff > 0 ? 'rgba(40, 167, 69, 0.1)' : diff < 0 ? 'rgba(220, 53, 69, 0.1)' : 'var(--bg-secondary)',
+                            color: diff > 0 ? 'var(--color-success)' : diff < 0 ? 'var(--color-error)' : 'var(--text-muted)'
+                          }}>
+                            {diff > 0 ? `+${diff}%` : `${diff}%`}
+                          </div>
+                        ) : (
+                          <div style={{ fontSize: '0.85rem', fontWeight: '700', color: 'var(--accent-navy)' }}>
+                            {finalVal}%
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {result.deltaMessage && (
+                <div className="alert alert-secondary" style={{ fontSize: '0.85rem', lineHeight: '1.4', borderLeft: '4px solid var(--accent-navy)' }}>
+                  <strong>Observed Shift Summary:</strong> {result.deltaMessage}
+                </div>
+              )}
             </div>
-          )}
+          </div>
 
           {/* Critical Mistakes list */}
           {result.criticalMistakes && result.criticalMistakes.length > 0 && (
@@ -568,6 +829,9 @@ function FinalAssessment({ user, updateProgressTrigger }) {
               </ul>
             </div>
           )}
+
+          {/* Targeted Remediation & Micro-Learning Pathways */}
+          <RemediationCards sessionId={result?.sessionId || session || completedHistory?._id} />
 
           {/* Thematic narrative thread lockup */}
           <div style={{ textAlign: 'center', margin: 'var(--space-lg) 0', paddingTop: '16px', borderTop: '1px dashed var(--color-border)' }}>

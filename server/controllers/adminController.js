@@ -35,12 +35,18 @@ exports.getAnalytics = async (req, res) => {
       const userBaselines = baselines.filter(a => a.userId.toString() === uId);
       const userFinals = finals.filter(a => a.userId.toString() === uId);
 
-      if (userBaselines.length > 0 && userFinals.length > 0) {
-        const lastBase = userBaselines[userBaselines.length - 1].score;
-        const lastFinal = userFinals[userFinals.length - 1].score;
-        totalDelta += (lastFinal - lastBase);
-        usersWithBoth++;
-      }
+      // Only pair baseline and final belonging to the exact same scenarioVersion
+      const distinctVersions = [...new Set([...userBaselines, ...userFinals].map(a => a.scenarioVersion || 1))];
+      distinctVersions.forEach(v => {
+        const vBases = userBaselines.filter(a => (a.scenarioVersion || 1) === v);
+        const vFinals = userFinals.filter(a => (a.scenarioVersion || 1) === v);
+        if (vBases.length > 0 && vFinals.length > 0) {
+          const lastBase = vBases[vBases.length - 1].score;
+          const lastFinal = vFinals[vFinals.length - 1].score;
+          totalDelta += (lastFinal - lastBase);
+          usersWithBoth++;
+        }
+      });
     });
 
     const avgImprovement = usersWithBoth > 0 ? Math.round(totalDelta / usersWithBoth) : 0;
@@ -90,8 +96,13 @@ exports.getUsersProgress = async (req, res) => {
       const prog = progressRecords.find(p => p.userId.toString() === user._id.toString()) || {};
       const userAssessments = assessments.filter(a => a.userId.toString() === user._id.toString());
       
-      const baseline = userAssessments.find(a => a.scenarioCode === 'baseline');
-      const finalVal = userAssessments.find(a => a.scenarioCode === 'final');
+      const userVersions = [...new Set(userAssessments.map(a => a.scenarioVersion || 1))].sort((a, b) => b - a);
+      const targetVersion = userVersions.length > 0 ? userVersions[0] : 2;
+
+      const baseline = userAssessments.find(a => a.scenarioCode === 'baseline' && (a.scenarioVersion || 1) === targetVersion)
+                    || userAssessments.find(a => a.scenarioCode === 'baseline');
+      const finalVal = userAssessments.find(a => a.scenarioCode === 'final' && (a.scenarioVersion || 1) === (baseline ? (baseline.scenarioVersion || 1) : targetVersion))
+                    || userAssessments.find(a => a.scenarioCode === 'final');
 
       return {
         id: user._id,

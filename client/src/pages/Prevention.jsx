@@ -11,6 +11,20 @@ function Prevention() {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  // Handle deep-linked hash anchor navigation (e.g., /prevention#payments)
+  useEffect(() => {
+    if (window.location.hash) {
+      const id = window.location.hash.replace('#', '');
+      const el = document.getElementById(id);
+      if (el) {
+        setTimeout(() => {
+          el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          setActiveTopic(id);
+        }, 150);
+      }
+    }
+  }, []);
+
   // IntersectionObserver to auto-update active navigation link on scroll
   useEffect(() => {
     const sections = ['passwords', 'payments', 'browsing', 'evidence', 'wrong', 'reporting'];

@@ -1460,3 +1460,695 @@ div[onClick]:hover {
     transform: translateX(0);
   }
 }
+
+/* Simulation Reveal & Scenario Note Enhancements */
+.reveal-pane {
+  background-color: var(--bg-white);
+  border-radius: var(--radius-md);
+  padding: var(--space-xl);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+}
+
+.reveal-layout-grid {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: var(--space-xl);
+  margin-bottom: var(--space-xl);
+}
+
+@media (max-width: 768px) {
+  .reveal-layout-grid {
+    grid-template-columns: 1fr;
+    gap: var(--space-lg);
+  }
+}
+
+.mock-scenario-note {
+  background-color: var(--bg-secondary);
+  border-left: 4px solid var(--accent-navy);
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  margin-top: 12px;
+}
+
+/* Phase 3 Remediation Pathways Styles */
+.remediation-section {
+  margin-top: var(--space-xxl);
+  padding-top: var(--space-xl);
+  border-top: 1px solid var(--color-border);
+}
+
+.remediation-header {
+  margin-bottom: var(--space-lg);
+}
+
+.remediation-header-badge {
+  display: inline-block;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--accent-teal);
+  margin-bottom: var(--space-xs);
+}
+
+.remediation-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: var(--space-lg);
+}
+
+.remediation-card {
+  background-color: var(--bg-white);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-lg);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.remediation-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.05);
+}
+
+.remediation-meta-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-sm);
+  font-size: 0.8rem;
+}
+
+.remediation-state-pill {
+  padding: 3px 8px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  background-color: var(--bg-secondary);
+  color: var(--accent-navy);
+}
+
+.remediation-state-pill.consolidated_strength {
+  background-color: #ecfdf5;
+  color: #065f46;
+  border: 1px solid #a7f3d0;
+}
+
+.remediation-state-pill.continued_practice {
+  background-color: #fffbeb;
+  color: #92400e;
+  border: 1px solid #fde68a;
+}
+
+.remediation-state-pill.emerging_gap {
+  background-color: #eff6ff;
+  color: #1e40af;
+  border: 1px solid #bfdbfe;
+}
+
+.remediation-state-pill.mastery {
+  background-color: #f0fdf4;
+  color: #166534;
+  border: 1px solid #bbf7d0;
+}
+
+.remediation-rule-box {
+  background-color: #f8fafc;
+  border-left: 3px solid var(--accent-teal);
+  padding: 10px 14px;
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  margin: var(--space-md) 0;
+  font-size: 0.85rem;
+  color: var(--text-primary);
+  line-height: 1.5;
+}
+
+.remediation-rule-box strong {
+  display: block;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--accent-navy);
+  margin-bottom: 2px;
+}
+
+.remediation-legal-box {
+  background-color: var(--bg-secondary);
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  margin-bottom: var(--space-md);
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.remediation-legal-badge {
+  display: inline-block;
+  background-color: var(--accent-navy);
+  color: white;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  margin-right: 6px;
+}
+
+.remediation-status-note {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  margin-bottom: var(--space-md);
+  font-style: italic;
+}
+
+/* Phase 4 Responsive & Accessibility Enhancements */
+.pathway-runner-modal-backdrop {
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+}
+
+.pathway-runner-modal button:focus-visible {
+  outline: 2px solid var(--accent-navy);
+  outline-offset: 2px;
+}
+
+/* Prevention Handbook Sticky Header Anchor Offsets */
+#passwords,
+#payments,
+#browsing,
+#evidence,
+#wrong,
+#reporting {
+  scroll-margin-top: 140px;
+}
+
+@media (max-width: 768px) {
+  .pathway-runner-modal {
+    max-height: 94vh !important;
+    border-radius: 6px !important;
+  }
+  #passwords,
+  #payments,
+  #browsing,
+  #evidence,
+  #wrong,
+  #reporting {
+    scroll-margin-top: 150px;
+  }
+}
+
+@media (max-width: 480px) {
+  .remediation-grid {
+    grid-template-columns: 1fr;
+  }
+  .pathway-runner-modal-backdrop {
+    padding: var(--space-xs) !important;
+  }
+  .pathway-runner-modal {
+    max-height: 96vh !important;
+  }
+  .pathway-runner-modal .pathway-runner-header {
+    padding: var(--space-sm) var(--space-md) !important;
+  }
+}
+
+/* ========================================================================= */
+/* DASHBOARD UX REDESIGN — PERSONAL LEARNING JOURNEY                         */
+/* ========================================================================= */
+
+.dashboard-journey {
+  max-width: 1040px;
+  margin: 0 auto;
+  padding: var(--space-xl) var(--space-md);
+  color: var(--text-primary);
+  background-color: transparent;
+}
+
+/* Page Header */
+.journey-header {
+  margin-bottom: var(--space-xl);
+  padding-bottom: var(--space-lg);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.journey-header-kicker {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--accent-navy);
+  display: block;
+  margin-bottom: 4px;
+}
+
+.journey-header-title {
+  font-size: clamp(1.8rem, 3.5vw, 2.4rem);
+  font-weight: 700;
+  color: var(--accent-navy);
+  margin: 0 0 6px 0;
+  line-height: 1.2;
+}
+
+.journey-header-subtext {
+  font-size: 0.95rem;
+  color: var(--text-secondary);
+  margin: 0 0 10px 0;
+  max-width: 720px;
+  line-height: 1.5;
+}
+
+.journey-header-meta {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+/* Sections & Visual Rhythm */
+.journey-section {
+  padding-top: var(--space-xl);
+  padding-bottom: var(--space-xl);
+  border-top: 1px solid var(--color-border);
+}
+
+.journey-section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-md);
+}
+
+.journey-section-title {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--accent-navy);
+  margin: 0 0 4px 0;
+}
+
+.journey-section-desc {
+  font-size: 0.88rem;
+  color: var(--text-secondary);
+  margin: 0;
+  max-width: 650px;
+  line-height: 1.5;
+}
+
+/* Current Focus Banner */
+.journey-focus-card {
+  background-color: #ffffff;
+  border: 1px solid var(--color-border);
+  border-left: 4px solid var(--accent-navy);
+  border-radius: 6px;
+  padding: var(--space-lg);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-md);
+  flex-wrap: wrap;
+  margin-bottom: var(--space-md);
+}
+
+.journey-focus-content {
+  flex: 1 1 500px;
+}
+
+.journey-focus-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  color: var(--accent-navy);
+  display: block;
+  margin-bottom: 4px;
+}
+
+.journey-focus-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0 0 6px 0;
+}
+
+.journey-focus-subtext {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  margin: 0;
+  line-height: 1.5;
+}
+
+.journey-focus-action {
+  flex-shrink: 0;
+}
+
+/* Pathway Rows (Compact Learning Interventions) */
+.journey-pathway-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: var(--space-md);
+}
+
+.journey-pathway-row {
+  background-color: #ffffff;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  padding: 14px 18px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  transition: border-color var(--transition-fast);
+}
+
+.journey-pathway-row:hover {
+  border-color: var(--color-border-dark);
+}
+
+.journey-pathway-main {
+  flex: 1 1 450px;
+}
+
+.journey-pathway-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0 0 4px 0;
+}
+
+.journey-pathway-meta {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 4px;
+}
+
+.journey-pathway-rule {
+  font-size: 0.83rem;
+  color: var(--text-secondary);
+  line-height: 1.4;
+  margin: 0;
+}
+
+.journey-pathway-rule strong {
+  color: var(--accent-navy);
+  font-weight: 600;
+}
+
+.journey-pathway-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+/* Knowledge Practice & Trajectory Tables */
+.journey-table-wrapper {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  margin-bottom: var(--space-md);
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  background-color: #ffffff;
+}
+
+.journey-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.88rem;
+  text-align: left;
+}
+
+.journey-table th {
+  padding: 10px 14px;
+  font-weight: 600;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--accent-navy);
+  background-color: var(--bg-secondary);
+  border-bottom: 1px solid var(--color-border);
+  white-space: nowrap;
+}
+
+.journey-table td {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--color-border);
+  vertical-align: middle;
+}
+
+.journey-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.journey-table tbody tr:hover {
+  background-color: #fafafa;
+}
+
+.trajectory-dim-title {
+  font-weight: 600;
+  color: var(--text-primary);
+  display: block;
+}
+
+.trajectory-dim-code {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Pedagogical Disclaimer Callout */
+.journey-callout {
+  padding: 12px 16px;
+  background-color: var(--bg-secondary);
+  border-left: 3px solid var(--accent-navy);
+  border-radius: 4px;
+  font-size: 0.83rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  margin-top: var(--space-md);
+}
+
+/* Compact Expandable Details */
+.journey-details {
+  background-color: #ffffff;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  padding: 14px 18px;
+  margin-top: var(--space-md);
+}
+
+.journey-details summary {
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: var(--accent-navy);
+  cursor: pointer;
+  user-select: none;
+  list-style: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.journey-details summary::-webkit-details-marker {
+  display: none;
+}
+
+.journey-details summary::after {
+  content: '▾';
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  transition: transform var(--transition-fast);
+}
+
+.journey-details[open] summary::after {
+  transform: rotate(180deg);
+}
+
+.journey-details-body {
+  padding-top: var(--space-md);
+  margin-top: var(--space-sm);
+  border-top: 1px solid var(--color-border);
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .journey-focus-card {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .journey-focus-action {
+    width: 100%;
+  }
+  .journey-focus-action .btn {
+    width: 100%;
+    text-align: center;
+  }
+  .journey-pathway-row {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .journey-pathway-controls {
+    width: 100%;
+    justify-content: space-between;
+  }
+}
+
+/* Restrained Status Indicators (No chunky pills or gamified badges) */
+.journey-status-indicator {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.journey-status-tag {
+  font-size: 0.8rem;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  letter-spacing: 0.2px;
+}
+
+.journey-status-tag::before {
+  content: '';
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* Status variants */
+.journey-status-tag.status-completed {
+  color: #166534;
+}
+.journey-status-tag.status-completed::before {
+  background-color: #16a34a;
+}
+
+.journey-status-tag.status-reinforced {
+  color: #1e40af;
+}
+.journey-status-tag.status-reinforced::before {
+  background-color: #2563eb;
+}
+
+.journey-status-tag.status-in-progress {
+  color: #0369a1;
+}
+.journey-status-tag.status-in-progress::before {
+  background-color: #0284c7;
+}
+
+.journey-status-tag.status-recommended {
+  color: #475569;
+}
+.journey-status-tag.status-recommended::before {
+  background-color: #94a3b8;
+}
+
+.journey-status-detail {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+/* Analytical Retention States (Clean typography, no chunky pills) */
+.retention-state-text {
+  font-size: 0.82rem;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  line-height: 1.4;
+}
+
+.retention-state-text::before {
+  content: '';
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.retention-state-text.state-retained {
+  color: #166534;
+}
+.retention-state-text.state-retained::before {
+  background-color: #16a34a;
+}
+
+.retention-state-text.state-stable {
+  color: #0f766e;
+}
+.retention-state-text.state-stable::before {
+  background-color: #0d9488;
+}
+
+.retention-state-text.state-partially-retained {
+  color: #1e40af;
+}
+.retention-state-text.state-partially-retained::before {
+  background-color: #2563eb;
+}
+
+.retention-state-text.state-delayed-improvement {
+  color: #15803d;
+}
+.retention-state-text.state-delayed-improvement::before {
+  background-color: #16a34a;
+}
+
+.retention-state-text.state-developing {
+  color: #b45309;
+}
+.retention-state-text.state-developing::before {
+  background-color: #d97706;
+}
+
+.retention-state-text.state-unimproved {
+  color: #4b5563;
+}
+.retention-state-text.state-unimproved::before {
+  background-color: #6b7280;
+}
+
+.retention-state-text.state-declined {
+  color: #991b1b;
+}
+.retention-state-text.state-declined::before {
+  background-color: #dc2626;
+}
+
+.retention-state-text.state-pending-reassessment {
+  color: #475569;
+}
+.retention-state-text.state-pending-reassessment::before {
+  background-color: #94a3b8;
+}
+
+.retention-state-text.state-pending-data {
+  color: #64748b;
+}
+.retention-state-text.state-pending-data::before {
+  background-color: #cbd5e1;
+}
+
+

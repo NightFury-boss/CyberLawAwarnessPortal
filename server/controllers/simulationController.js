@@ -5,6 +5,7 @@ const AssessmentSession = require('../models/AssessmentSession');
 const AssessmentDecision = require('../models/AssessmentDecision');
 const UserProgress = require('../models/UserProgress');
 const assessmentScoringService = require('../services/assessmentScoringService');
+const remediationEngineService = require('../services/remediationEngineService');
 
 async function getWeakestCategory(userId) {
   try {
@@ -52,7 +53,7 @@ exports.getScenario = async (req, res) => {
 
 exports.startAssessment = async (req, res) => {
   try {
-    const { scenarioCode } = req.body;
+    const { scenarioCode, scenarioVersion } = req.body;
     const userId = req.user._id;
 
     if (!scenarioCode) {
@@ -62,7 +63,12 @@ exports.startAssessment = async (req, res) => {
       });
     }
 
-    const scenario = await Scenario.findOne({ slug: scenarioCode, status: 'published' }).sort({ version: -1 });
+    const query = { slug: scenarioCode, status: 'published' };
+    if (scenarioVersion) {
+      query.version = scenarioVersion;
+    }
+
+    const scenario = await Scenario.findOne(query).sort({ version: -1 });
     if (!scenario) {
       return res.status(404).json({
         success: false,
@@ -231,36 +237,16 @@ exports.submitStep = async (req, res) => {
     if (sessionScenario && sessionScenario.slug === 'final' && nextStageId) {
       const nextStageObj = await ScenarioStage.findById(nextStageId);
       if (nextStageObj && nextStageObj.title.includes('Adaptive Segment')) {
-        if (req.user && req.user.email === 'test_user@test.com') {
-          const finalUPINode = await ScenarioStage.findOne({
+        const weakest = await getWeakestCategory(userId);
+        if (weakest) {
+          const adaptiveStage = await ScenarioStage.findOne({
             scenarioId: originalSession.scenarioId,
-            stageOrder: 9
+            eventClassification: 'malicious',
+            title: new RegExp(weakest.split(' ')[0], 'i')
           });
-          if (finalUPINode) {
-            nextStageId = finalUPINode._id;
+          if (adaptiveStage) {
+            nextStageId = adaptiveStage._id;
           }
-        } else {
-          const weakest = await getWeakestCategory(userId);
-          if (weakest) {
-            const adaptiveStage = await ScenarioStage.findOne({
-              scenarioId: originalSession.scenarioId,
-              eventClassification: 'malicious',
-              title: new RegExp(weakest.split(' ')[0], 'i')
-            });
-            if (adaptiveStage) {
-              nextStageId = adaptiveStage._id;
-            }
-          }
-        }
-      }
-    }
-
-    // Test runner compatibility overrides
-    if (req.user && req.user.email === 'test_user@test.com') {
-      if (sessionScenario && sessionScenario.slug === 'baseline') {
-        const nextStageObj = nextStageId ? await ScenarioStage.findById(nextStageId) : null;
-        if (nextStageObj && nextStageObj.stageOrder >= 3) {
-          nextStageId = null;
         }
       }
     }
@@ -388,24 +374,93 @@ exports.submitStep = async (req, res) => {
         lastActivity: new Date()
       });
 
+function computeBehaviourDelta(baselineSession, finalSession) {
+  if (!baselineSession || !finalSession) return { behaviourDelta: null, baselineScores: null, deltaMessage: null };
+  const baseScores = baselineSession.behaviourScores instanceof Map 
+    ? Object.fromEntries(baselineSession.behaviourScores) 
+    : (baselineSession.behaviourScores || {});
+  const finalScores = finalSession.behaviourScores instanceof Map 
+    ? Object.fromEntries(finalSession.behaviourScores) 
+    : (finalSession.behaviourScores || {});
+
+  const metricsList = [
+    { key: 'recognition', label: 'Threat Recognition' },
+    { key: 'signalIdentification', label: 'Signal Identification' },
+    { key: 'verification', label: 'Verification Behaviour' },
+    { key: 'decisionQuality', label: 'Decision Quality' },
+    { key: 'falsePositive', label: 'False Positive Control' },
+    { key: 'unreviewedAcceptance', label: 'Unreviewed Acceptance Control' }
+  ];
+
+  const behaviourDelta = {};
+  const changesNarrative = [];
+
+  for (const m of metricsList) {
+    const baseVal = baseScores[m.key] !== undefined ? Number(baseScores[m.key]) : null;
+    const finalVal = finalScores[m.key] !== undefined ? Number(finalScores[m.key]) : null;
+
+    if (baseVal !== null && finalVal !== null) {
+      const deltaVal = finalVal - baseVal;
+      behaviourDelta[m.key] = {
+        baseline: baseVal,
+        final: finalVal,
+        delta: deltaVal
+      };
+      if (deltaVal > 0) {
+        changesNarrative.push(`${m.label} (+${deltaVal}%)`);
+      } else if (deltaVal < 0) {
+        changesNarrative.push(`${m.label} (${deltaVal}%)`);
+      }
+    }
+  }
+
+  let deltaMessage = null;
+  if (changesNarrative.length > 0) {
+    deltaMessage = `Behavioral shifts observed: ${changesNarrative.join(', ')}.`;
+  } else {
+    deltaMessage = 'Consistent behavioral habits demonstrated across baseline and final assessments.';
+  }
+
+  return {
+    behaviourDelta,
+    baselineScores: baseScores,
+    deltaMessage
+  };
+}
+
       let deltaMessage = null;
       let improvementDelta = 0;
+      let behaviourDelta = null;
+      let baselineScores = null;
 
       if (session.scenarioCode === 'final') {
+        const targetVersion = session.scenarioVersion || 1;
         const baselineSession = await AssessmentSession.findOne({
           userId,
           scenarioCode: 'baseline',
+          scenarioVersion: targetVersion,
           status: 'completed'
         }).sort({ completedAt: -1 });
 
         if (baselineSession) {
-          improvementDelta = finalScore - baselineSession.score;
-          deltaMessage = 'Your score changed from ' + baselineSession.score + ' (Baseline) to ' + finalScore + ' (Final). That\'s a change of ' + (improvementDelta >= 0 ? '+' : '') + improvementDelta + ' points!';
+          if (targetVersion === 1) {
+            // Historical v1 calculation: Monolithic category-weighted score
+            improvementDelta = finalScore - baselineSession.score;
+            deltaMessage = 'Your score changed from ' + baselineSession.score + ' (Baseline) to ' + finalScore + ' (Final). That\'s a change of ' + (improvementDelta >= 0 ? '+' : '') + improvementDelta + ' points!';
+          } else {
+            // v2: Six-Metric Behavioral Model comparison across all 6 dimensions
+            const deltaResult = computeBehaviourDelta(baselineSession, session);
+            behaviourDelta = deltaResult.behaviourDelta;
+            baselineScores = deltaResult.baselineScores;
+            deltaMessage = deltaResult.deltaMessage;
+            improvementDelta = 0;
+          }
         }
       }
 
       return res.json({
         isCompleted: true,
+        sessionId: session._id,
         score: finalScore,
         awarenessLevel: getAwarenessLevel(finalScore),
         categoryScores: Object.fromEntries(session.categoryScores),
@@ -419,6 +474,8 @@ exports.submitStep = async (req, res) => {
         explanation: decision.explanation,
         improvementDelta,
         deltaMessage,
+        behaviourDelta,
+        baselineScores,
         badgesEarned
       });
     }
@@ -437,3 +494,464 @@ function getAwarenessLevel(score) {
   if (score >= 40) return 'Needs Improvement';
   return 'High Risk Awareness Gap';
 }
+
+exports.getSession = async (req, res) => {
+  try {
+    const { sessionId } = req.params;
+    const userId = req.user._id;
+
+    const session = await AssessmentSession.findById(sessionId);
+    if (!session) {
+      return res.status(404).json({
+        success: false,
+        error: { code: 'SESSION_NOT_FOUND', message: 'Assessment session not found' }
+      });
+    }
+
+    if (session.userId.toString() !== userId.toString()) {
+      return res.status(403).json({
+        success: false,
+        error: { code: 'ACCESS_DENIED', message: 'Access denied, session owner mismatch' }
+      });
+    }
+
+    if (session.status === 'in-progress') {
+      if (session.expiresAt && session.expiresAt < new Date()) {
+        await AssessmentSession.findByIdAndUpdate(session._id, { status: 'abandoned' });
+        return res.json({
+          status: 'abandoned',
+          sessionId: session._id,
+          message: 'Assessment session has expired'
+        });
+      }
+
+      const currentStage = await ScenarioStage.findById(session.currentStageId);
+      if (!currentStage) {
+        return res.status(404).json({
+          success: false,
+          error: { code: 'STAGE_NOT_FOUND', message: 'Current stage not found' }
+        });
+      }
+
+      const decisions = await ScenarioDecision.find({ stageId: currentStage._id });
+      return res.json({
+        status: 'in-progress',
+        sessionId: session._id,
+        scenarioCode: session.scenarioCode,
+        stage: {
+          id: currentStage._id,
+          title: currentStage.title,
+          description: currentStage.description,
+          stageOrder: currentStage.stageOrder,
+          mockInterfaceType: currentStage.mockInterfaceType,
+          mockInterfaceData: currentStage.mockInterfaceData,
+          decisions: decisions.map(d => ({
+            id: d._id,
+            optionText: d.optionText
+          }))
+        }
+      });
+    }
+
+    if (session.status === 'completed') {
+      let behaviourDelta = null;
+      let baselineScores = null;
+      let deltaMessage = null;
+
+      if (session.scenarioCode === 'final' && (session.scenarioVersion || 1) >= 2) {
+        const baselineSession = await AssessmentSession.findOne({
+          userId,
+          scenarioCode: 'baseline',
+          scenarioVersion: session.scenarioVersion,
+          status: 'completed'
+        }).sort({ completedAt: -1 });
+
+        if (baselineSession) {
+          const deltaResult = computeBehaviourDelta(baselineSession, session);
+          behaviourDelta = deltaResult.behaviourDelta;
+          baselineScores = deltaResult.baselineScores;
+          deltaMessage = deltaResult.deltaMessage;
+        }
+      }
+
+      return res.json({
+        status: 'completed',
+        isCompleted: true,
+        sessionId: session._id,
+        scenarioCode: session.scenarioCode,
+        scenarioVersion: session.scenarioVersion || 1,
+        score: session.score,
+        awarenessLevel: getAwarenessLevel(session.score),
+        categoryScores: session.categoryScores ? Object.fromEntries(session.categoryScores) : {},
+        behaviourScores: session.behaviourScores ? Object.fromEntries(session.behaviourScores) : {},
+        behaviourOpportunities: session.behaviourOpportunities ? Object.fromEntries(session.behaviourOpportunities) : {},
+        falsePositivePenaltyPoints: session.falsePositivePenaltyPoints || 0,
+        falsePositiveMaxPenaltyPoints: session.falsePositiveMaxPenaltyPoints || 0,
+        unreviewedAcceptancePenaltyPoints: session.unreviewedAcceptancePenaltyPoints || 0,
+        unreviewedAcceptanceMaxPenaltyPoints: session.unreviewedAcceptanceMaxPenaltyPoints || 0,
+        criticalMistakes: session.criticalMistakes || [],
+        behaviourDelta,
+        baselineScores,
+        deltaMessage,
+        completedAt: session.completedAt
+      });
+    }
+
+    return res.json({
+      status: session.status,
+      sessionId: session._id,
+      message: `Session is ${session.status}`
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: { code: 'GET_SESSION_ERROR', message: error.message }
+    });
+  }
+};
+
+exports.getScenarioStatus = async (req, res) => {
+  try {
+    const { scenarioCode } = req.params;
+    const userId = req.user._id;
+
+    // 1. Check for an active in-progress session
+    const activeSession = await AssessmentSession.findOne({
+      userId,
+      scenarioCode,
+      status: 'in-progress',
+      expiresAt: { $gt: new Date() }
+    }).sort({ createdAt: -1 });
+
+    if (activeSession) {
+      const currentStage = await ScenarioStage.findById(activeSession.currentStageId);
+      if (currentStage) {
+        const decisions = await ScenarioDecision.find({ stageId: currentStage._id });
+        return res.json({
+          hasActiveSession: true,
+          hasCompletedSession: false,
+          status: 'in-progress',
+          sessionId: activeSession._id,
+          stage: {
+            id: currentStage._id,
+            title: currentStage.title,
+            description: currentStage.description,
+            stageOrder: currentStage.stageOrder,
+            mockInterfaceType: currentStage.mockInterfaceType,
+            mockInterfaceData: currentStage.mockInterfaceData,
+            decisions: decisions.map(d => ({
+              id: d._id,
+              optionText: d.optionText
+            }))
+          }
+        });
+      }
+    }
+
+    // 2. Check for latest completed session
+    const completedSession = await AssessmentSession.findOne({
+      userId,
+      scenarioCode,
+      status: 'completed'
+    }).sort({ completedAt: -1 });
+
+    if (completedSession) {
+      let behaviourDelta = null;
+      let baselineScores = null;
+      let deltaMessage = null;
+
+      if (completedSession.scenarioCode === 'final' && (completedSession.scenarioVersion || 1) >= 2) {
+        const baselineSession = await AssessmentSession.findOne({
+          userId,
+          scenarioCode: 'baseline',
+          scenarioVersion: completedSession.scenarioVersion,
+          status: 'completed'
+        }).sort({ completedAt: -1 });
+
+        if (baselineSession) {
+          const deltaResult = computeBehaviourDelta(baselineSession, completedSession);
+          behaviourDelta = deltaResult.behaviourDelta;
+          baselineScores = deltaResult.baselineScores;
+          deltaMessage = deltaResult.deltaMessage;
+        }
+      }
+
+      return res.json({
+        hasActiveSession: false,
+        hasCompletedSession: true,
+        status: 'completed',
+        completedSession: {
+          sessionId: completedSession._id,
+          scenarioCode: completedSession.scenarioCode,
+          scenarioVersion: completedSession.scenarioVersion || 1,
+          score: completedSession.score,
+          awarenessLevel: getAwarenessLevel(completedSession.score),
+          categoryScores: completedSession.categoryScores ? Object.fromEntries(completedSession.categoryScores) : {},
+          behaviourScores: completedSession.behaviourScores ? Object.fromEntries(completedSession.behaviourScores) : {},
+          behaviourOpportunities: completedSession.behaviourOpportunities ? Object.fromEntries(completedSession.behaviourOpportunities) : {},
+          falsePositivePenaltyPoints: completedSession.falsePositivePenaltyPoints || 0,
+          falsePositiveMaxPenaltyPoints: completedSession.falsePositiveMaxPenaltyPoints || 0,
+          unreviewedAcceptancePenaltyPoints: completedSession.unreviewedAcceptancePenaltyPoints || 0,
+          unreviewedAcceptanceMaxPenaltyPoints: completedSession.unreviewedAcceptanceMaxPenaltyPoints || 0,
+          criticalMistakes: completedSession.criticalMistakes || [],
+          behaviourDelta,
+          baselineScores,
+          deltaMessage,
+          completedAt: completedSession.completedAt
+        }
+      });
+    }
+
+    return res.json({
+      hasActiveSession: false,
+      hasCompletedSession: false,
+      status: 'none'
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: { code: 'GET_STATUS_ERROR', message: error.message }
+    });
+  }
+};
+
+exports.getRemediation = async (req, res) => {
+  try {
+    const { sessionId } = req.params;
+    const userId = req.user._id;
+
+    const remediation = await remediationEngineService.generateRemediation(sessionId, userId);
+    return res.json({
+      success: true,
+      ...remediation
+    });
+  } catch (err) {
+    if (err.status && err.code) {
+      return res.status(err.status).json({
+        success: false,
+        error: { code: err.code, message: err.message }
+      });
+    }
+    return res.status(500).json({
+      success: false,
+      error: { code: 'INTERNAL_ERROR', message: err.message || 'Failed to generate remediation recommendations' }
+    });
+  }
+};
+
+/**
+ * Classify retention for a single dimension given baseline, final, and reassessment scores
+ * deltaLearned = final - baseline
+ * deltaRetention = reassessment - final
+ */
+function classifyRetention(baseScore, finalScore, reassessScore) {
+  if (reassessScore === null || reassessScore === undefined) {
+    return 'pending_reassessment';
+  }
+
+  const deltaLearned = finalScore - baseScore;
+  const deltaRetention = reassessScore - finalScore;
+
+  // Case A: Intervention did not shift habit (final remains below 50)
+  if (finalScore < 50) {
+    if (reassessScore < 50) {
+      return 'Unimproved';
+    }
+    if (reassessScore >= 65) {
+      return 'Delayed Improvement';
+    }
+    // Boundary between 50 and 64 inclusive
+    return 'Developing';
+  }
+
+  // Case B: Already-strong baseline and final dimensions (base >= 75 and final >= 75)
+  if (baseScore >= 75 && finalScore >= 75) {
+    if (reassessScore >= 75) {
+      return 'Retained';
+    }
+    if (reassessScore < 70) {
+      return 'Declined';
+    }
+    // Boundary between 70 and 74 inclusive
+    return 'Stable';
+  }
+
+  // Case C: Meaningful intervention gain (deltaLearned >= 10 with final >= 50)
+  if (deltaLearned >= 10) {
+    if (deltaRetention >= -5) {
+      return 'Retained';
+    }
+    if (deltaRetention >= -20 && reassessScore > baseScore) {
+      return 'Partially Retained';
+    }
+    if (deltaRetention < -20 || reassessScore <= baseScore) {
+      return 'Declined';
+    }
+  }
+
+  // Case D: Other combinations (e.g. moderate 50-74, deltaLearned < 10)
+  if (reassessScore >= finalScore) {
+    return 'Retained';
+  }
+  if (reassessScore < baseScore) {
+    return 'Declined';
+  }
+  return 'Stable';
+}
+
+const DIMENSION_DEFS = [
+  { key: 'TR', metricKey: 'recognition', label: 'Threat Recognition' },
+  { key: 'SI', metricKey: 'signalIdentification', label: 'Signal Identification' },
+  { key: 'VB', metricKey: 'verification', label: 'Verification Behaviour' },
+  { key: 'DQ', metricKey: 'decisionQuality', label: 'Decision Quality' },
+  { key: 'FP', metricKey: 'falsePositive', label: 'False Positive Control' },
+  { key: 'UA', metricKey: 'unreviewedAcceptance', label: 'Autopilot Control' }
+];
+
+/**
+ * GET /api/assessments/trajectory
+ * Phase 5B: Multi-Session Habit Retention Trajectory
+ * Authenticated, owner-only, strictly non-composite
+ */
+exports.getTrajectory = async (req, res) => {
+  try {
+    const userId = req.user._id;
+
+    // Load completed v2+ sessions for this user chronologically
+    const allSessions = await AssessmentSession.find({
+      userId,
+      status: 'completed',
+      scenarioVersion: { $gte: 2 }
+    }).sort({ completedAt: 1, createdAt: 1 });
+
+    // Validate 6-dimension schema comparability and valid instrument code
+    const validSessions = allSessions.filter(session => {
+      if (!['baseline', 'final'].includes(session.scenarioCode)) {
+        return false;
+      }
+      const scores = session.behaviourScores instanceof Map
+        ? Object.fromEntries(session.behaviourScores)
+        : (session.behaviourScores || {});
+      return DIMENSION_DEFS.every(d => typeof scores[d.metricKey] === 'number');
+    });
+
+    if (validSessions.length === 0) {
+      return res.json({
+        success: true,
+        comparableSessionsCount: 0,
+        hasBaseline: false,
+        hasFinal: false,
+        hasReassessment: false,
+        baselineSessionId: null,
+        finalSessionId: null,
+        reassessmentSessionId: null,
+        dimensions: {}
+      });
+    }
+
+    const baselineSessions = validSessions.filter(s => s.scenarioCode === 'baseline');
+    const finalSessions = validSessions.filter(s => s.scenarioCode === 'final');
+
+    // To form a valid Baseline -> Final pair:
+    // A Final must be completed chronologically after a Baseline session.
+    let baselineSession = null;
+    let finalSession = null;
+
+    const firstValidFinal = finalSessions.find(f => 
+      baselineSessions.some(b => b.completedAt < f.completedAt)
+    );
+
+    if (firstValidFinal) {
+      finalSession = firstValidFinal;
+      // Pair with the latest baseline completed immediately prior to this final
+      const candidateBaselines = baselineSessions.filter(b => b.completedAt < finalSession.completedAt);
+      baselineSession = candidateBaselines[candidateBaselines.length - 1];
+    } else {
+      // No valid Baseline -> Final sequence completed yet
+      if (baselineSessions.length > 0) {
+        baselineSession = baselineSessions[baselineSessions.length - 1];
+      }
+      if (finalSessions.length > 0) {
+        finalSession = finalSessions[0];
+      }
+    }
+
+    // A Reassessment is valid ONLY IF a valid Baseline -> Final pair exists
+    const hasValidPair = Boolean(
+      baselineSession && 
+      finalSession && 
+      baselineSession.completedAt < finalSession.completedAt
+    );
+
+    let reassessmentSession = null;
+    if (hasValidPair) {
+      const laterSessions = validSessions.filter(
+        s => s.completedAt > finalSession.completedAt && s._id.toString() !== finalSession._id.toString()
+      );
+      if (laterSessions.length > 0) {
+        // Latest voluntary reassessment represents the current longitudinal habit retention state
+        reassessmentSession = laterSessions[laterSessions.length - 1];
+      }
+    }
+
+    const baseScores = (baselineSession && hasValidPair) || (baselineSession && !finalSession)
+      ? (baselineSession.behaviourScores instanceof Map ? Object.fromEntries(baselineSession.behaviourScores) : baselineSession.behaviourScores)
+      : (hasValidPair && baselineSession ? (baselineSession.behaviourScores instanceof Map ? Object.fromEntries(baselineSession.behaviourScores) : baselineSession.behaviourScores) : null);
+
+    const finalScores = (finalSession && hasValidPair) || (finalSession && !baselineSession)
+      ? (finalSession.behaviourScores instanceof Map ? Object.fromEntries(finalSession.behaviourScores) : finalSession.behaviourScores)
+      : (hasValidPair && finalSession ? (finalSession.behaviourScores instanceof Map ? Object.fromEntries(finalSession.behaviourScores) : finalSession.behaviourScores) : null);
+
+    const reassessScores = reassessmentSession
+      ? (reassessmentSession.behaviourScores instanceof Map ? Object.fromEntries(reassessmentSession.behaviourScores) : reassessmentSession.behaviourScores)
+      : null;
+
+    const dimensions = {};
+
+    for (const def of DIMENSION_DEFS) {
+      const baseVal = baseScores && typeof baseScores[def.metricKey] === 'number' ? baseScores[def.metricKey] : null;
+      const finalVal = finalScores && typeof finalScores[def.metricKey] === 'number' ? finalScores[def.metricKey] : null;
+      const reassessVal = reassessScores && typeof reassessScores[def.metricKey] === 'number' ? reassessScores[def.metricKey] : null;
+
+      const deltaLearned = (baseVal !== null && finalVal !== null && hasValidPair) ? (finalVal - baseVal) : null;
+      const deltaRetention = (finalVal !== null && reassessVal !== null && hasValidPair) ? (reassessVal - finalVal) : null;
+
+      let retentionState = 'pending_data';
+      if (hasValidPair && baseVal !== null && finalVal !== null) {
+        retentionState = classifyRetention(baseVal, finalVal, reassessVal);
+      }
+
+      dimensions[def.key] = {
+        label: def.label,
+        metricKey: def.metricKey,
+        baseline: baseVal,
+        final: finalVal,
+        deltaLearned,
+        reassessment: reassessVal,
+        deltaRetention,
+        retentionState
+      };
+    }
+
+    return res.json({
+      success: true,
+      comparableSessionsCount: validSessions.length,
+      hasBaseline: Boolean(baselineSession),
+      hasFinal: Boolean(finalSession),
+      hasValidPair,
+      hasReassessment: Boolean(reassessmentSession),
+      baselineSessionId: baselineSession?._id || null,
+      finalSessionId: finalSession?._id || null,
+      reassessmentSessionId: reassessmentSession?._id || null,
+      dimensions
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      error: { code: 'TRAJECTORY_ERROR', message: error.message }
+    });
+  }
+};
+
+exports.classifyRetention = classifyRetention;
+

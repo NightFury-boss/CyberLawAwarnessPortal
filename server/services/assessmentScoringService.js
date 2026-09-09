@@ -123,6 +123,8 @@ async function calculateScores(sessionId) {
   };
 
   return {
+    rawScores,
+    maxScores,
     scores,
     opportunities,
     falsePositivePenaltyPoints,

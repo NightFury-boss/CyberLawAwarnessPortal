@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import api from '../services/api';
 import PortalSearch from '../components/search/PortalSearch';
 import { searchItems } from '../components/search/searchUtils';
@@ -25,12 +25,23 @@ function Cases() {
 
   // User Reading Progress (Local Storage)
   const [completedCases, setCompletedCases] = useState([]);
+  const location = useLocation();
 
   useEffect(() => {
     fetchCases();
     const stored = JSON.parse(localStorage.getItem('completed_cases') || '[]');
     setCompletedCases(stored);
   }, []);
+
+  // Sync with URL query or hash for deep linking (e.g. /cases?slug=classified-marketplace-qr-fraud)
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const slugParam = params.get('slug') || (location.hash ? location.hash.replace('#', '') : null);
+    if (slugParam && slugParam !== selectedCaseSlug) {
+      setSelectedCaseSlug(slugParam);
+      window.scrollTo(0, 0);
+    }
+  }, [location.search, location.hash]);
 
   useEffect(() => {
     if (selectedCaseSlug) {
@@ -493,6 +504,7 @@ function Cases() {
                   return (
                     <div
                       key={cs._id}
+                      id={cs.slug}
                       onClick={() => handleSelectCase(cs.slug)}
                       style={{
                         padding: 'var(--space-lg) 0',
@@ -571,7 +583,7 @@ function Cases() {
       )}
       {/* 4. CASE DETAILS NARRATIVE VIEW */}
       {!loading && selectedCase && (
-        <div style={{ maxWidth: '850px', margin: '0 auto' }}>
+        <div id={selectedCase.slug} style={{ maxWidth: '850px', margin: '0 auto' }}>
           {/* Top navigation */}
           <button
             onClick={handleReturnToArchive}

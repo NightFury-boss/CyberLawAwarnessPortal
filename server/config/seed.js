@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 const dotenv = require('dotenv');
 const path = require('path');
+const fs = require('fs');
 
 // Load environment variables
 dotenv.config({ path: path.join(__dirname, '../.env') });
@@ -1884,7 +1885,7 @@ async function seed(isReset = false) {
       });
       if (existing) {
         await ScenarioStage.updateOne({ _id: existing._id }, stageData);
-        return existing;
+        return ScenarioStage.findById(existing._id);
       }
       return ScenarioStage.create(stageData);
     }
@@ -1896,7 +1897,7 @@ async function seed(isReset = false) {
       });
       if (existing) {
         await ScenarioDecision.updateOne({ _id: existing._id }, decisionData);
-        return existing;
+        return ScenarioDecision.findById(existing._id);
       }
       return ScenarioDecision.create(decisionData);
     }
@@ -1909,6 +1910,7 @@ async function seed(isReset = false) {
         scenario = await Scenario.create(sData.scenario);
       } else {
         await Scenario.updateOne({ _id: scenario._id }, sData.scenario);
+        scenario = await Scenario.findById(scenario._id);
       }
 
       const stageMap = {};
@@ -1923,7 +1925,9 @@ async function seed(isReset = false) {
           mockInterfaceType: stg.mockInterfaceType,
           mockInterfaceData: stg.mockInterfaceData,
           eventClassification: stg.eventClassification,
-          terminal: stg.terminal
+          measurementFocus: stg.measurementFocus || [],
+          targetSignals: stg.targetSignals || [],
+          terminal: stg.terminal || false
         };
 
         const dbStage = await upsertStage(stagePayload);
@@ -1953,13 +1957,22 @@ async function seed(isReset = false) {
           const decisionPayload = {
             stageId: parentStage._id,
             optionText: dec.optionText,
-            scoreChange: dec.scoreChange,
-            categoryScoreWeights: dec.categoryScoreWeights,
-            riskLevel: dec.riskLevel,
-            isCriticalMistake: dec.isCriticalMistake,
+            scoreChange: dec.scoreChange || 0,
+            categoryScoreWeights: dec.categoryScoreWeights || {},
+            identifiedSignals: dec.identifiedSignals || [],
+            behaviorEffects: dec.behaviorEffects || {
+              recognition: 0,
+              signalIdentification: 0,
+              verification: 0,
+              decisionQuality: 0,
+              falsePositive: 0,
+              unreviewedAcceptance: 0
+            },
+            riskLevel: dec.riskLevel || 'safe',
+            isCriticalMistake: dec.isCriticalMistake || false,
             nextStageId: resolvedNextStageId,
             explanation: dec.explanation,
-            outcomeType: dec.outcomeType
+            outcomeType: dec.outcomeType || 'neutral'
           };
 
           const dbDecision = await upsertDecision(decisionPayload);

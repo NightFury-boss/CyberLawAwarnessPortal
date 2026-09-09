@@ -1,4 +1,6 @@
-const API_URL = 'http://localhost:5000/api';
+const API_URL = (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_API_URL)
+  ? import.meta.env.VITE_API_URL
+  : 'http://localhost:5000/api';
 
 // Helper to get headers
 function getHeaders() {
@@ -199,6 +201,20 @@ const api = {
     return handleResponse(res);
   },
 
+  getAssessmentSession: async (sessionId) => {
+    const res = await fetch(`${API_URL}/assessments/session/${sessionId}`, {
+      headers: getHeaders()
+    });
+    return handleResponse(res);
+  },
+
+  getAssessmentStatus: async (scenarioCode) => {
+    const res = await fetch(`${API_URL}/assessments/status/${scenarioCode}`, {
+      headers: getHeaders()
+    });
+    return handleResponse(res);
+  },
+
   submitAssessmentStep: async (assessmentSessionId, stageId, decisionId) => {
     const res = await fetch(`${API_URL}/assessments/submit-step`, {
       method: 'POST',
@@ -208,9 +224,80 @@ const api = {
     return handleResponse(res);
   },
 
+  getAssessmentRemediation: async (sessionId) => {
+    const res = await fetch(`${API_URL}/assessments/remediation/${sessionId}`, {
+      headers: getHeaders()
+    });
+    return handleResponse(res);
+  },
+
   // Progress Dashboard
   getProgress: async () => {
     const res = await fetch(`${API_URL}/progress`, {
+      headers: getHeaders()
+    });
+    return handleResponse(res);
+  },
+
+  // Learning Pathway Progression (Phase 4)
+  recordPathwayStep: async (pathwayId, sourceSessionId, step, extraData = {}) => {
+    const res = await fetch(`${API_URL}/progress/pathways/step`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify({
+        pathwayId,
+        sourceSessionId,
+        step,
+        ...extraData
+      })
+    });
+    return handleResponse(res);
+  },
+
+  getPathwayCheckpoint: async (pathwayId, sourceSessionId) => {
+    const res = await fetch(`${API_URL}/progress/pathways/${pathwayId}/checkpoint?sourceSessionId=${sourceSessionId}`, {
+      headers: getHeaders()
+    });
+    return handleResponse(res);
+  },
+
+  submitPathwayCheckpoint: async (pathwayId, sourceSessionId, answers) => {
+    const res = await fetch(`${API_URL}/progress/pathways/checkpoint`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify({
+        pathwayId,
+        sourceSessionId,
+        answers
+      })
+    });
+    return handleResponse(res);
+  },
+
+  // Phase 5A: Targeted Habit Reinforcement
+  reinforcePathway: async (pathwayId, sourceSessionId, answers) => {
+    const res = await fetch(`${API_URL}/progress/pathways/reinforce`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify({
+        pathwayId,
+        sourceSessionId,
+        answers
+      })
+    });
+    return handleResponse(res);
+  },
+
+  // Phase 5B: Longitudinal Evidence & Three-Pillar Portfolio
+  getPortfolio: async () => {
+    const res = await fetch(`${API_URL}/progress/portfolio`, {
+      headers: getHeaders()
+    });
+    return handleResponse(res);
+  },
+
+  getTrajectory: async () => {
+    const res = await fetch(`${API_URL}/assessments/trajectory`, {
       headers: getHeaders()
     });
     return handleResponse(res);

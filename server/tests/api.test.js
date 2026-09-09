@@ -144,7 +144,7 @@ async function runTests() {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${userToken}`
       },
-      body: JSON.stringify({ scenarioCode: 'baseline' })
+      body: JSON.stringify({ scenarioCode: 'baseline', scenarioVersion: 1 })
     });
     const startData = await startRes.json();
     if (startRes.status !== 200) {
@@ -234,19 +234,32 @@ async function runTests() {
     const secondStageDecisions = await ScenarioDecision.find({ stageId: stage2Id });
     const credentialsDecision = secondStageDecisions.find(d => d.optionText.includes('Enter simulated login'));
 
-    const step2Res = await fetch(`${BASE_URL}/assessments/submit-step`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${userToken}`
-      },
-      body: JSON.stringify({
-        assessmentSessionId: sessionId,
-        stageId: stage2Id,
-        decisionId: credentialsDecision._id
-      })
-    });
-    const step2Data = await step2Res.json();
+    // Test setup: Temporarily configure Stage 2 decision to terminate baseline for this 2-step test flow
+    const originalStage2NextId = credentialsDecision.nextStageId;
+    credentialsDecision.nextStageId = null;
+    await credentialsDecision.save();
+
+    let step2Res, step2Data;
+    try {
+      step2Res = await fetch(`${BASE_URL}/assessments/submit-step`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${userToken}`
+        },
+        body: JSON.stringify({
+          assessmentSessionId: sessionId,
+          stageId: stage2Id,
+          decisionId: credentialsDecision._id
+        })
+      });
+      step2Data = await step2Res.json();
+    } finally {
+      // Guaranteed restoration of baseline stage 2 nextStageId
+      credentialsDecision.nextStageId = originalStage2NextId;
+      await credentialsDecision.save();
+    }
+
     if (step2Res.status !== 200 || !step2Data.isCompleted) {
       throw new Error(`Failed to complete baseline assessment: ${step2Data.message}`);
     }
@@ -264,7 +277,7 @@ async function runTests() {
     // 9. Test Branching Final Assessment & Pre/Post delta calculations
     console.log('- Testing Branching Final Assessment & Delta Report...');
     
-    const finalScenario = await Scenario.findOne({ slug: 'final', status: 'published' });
+    const finalScenario = await Scenario.findOne({ slug: 'final', version: 1 });
     if (!finalScenario) {
       throw new Error('Final scenario not found in DB. Make sure database is seeded first.');
     }
@@ -276,7 +289,7 @@ async function runTests() {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${userToken}`
       },
-      body: JSON.stringify({ scenarioCode: 'final' })
+      body: JSON.stringify({ scenarioCode: 'final', scenarioVersion: 1 })
     });
     const startFinalData = await startFinalRes.json();
     const finalSessionId = startFinalData.sessionId;
@@ -310,19 +323,32 @@ async function runTests() {
     const finalStage2ADecisions = await ScenarioDecision.find({ stageId: stage2A._id });
     const updateDecision = finalStage2ADecisions.find(d => d.optionText.includes('apply official'));
 
-    const fStep2Res = await fetch(`${BASE_URL}/assessments/submit-step`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${userToken}`
-      },
-      body: JSON.stringify({
-        assessmentSessionId: finalSessionId,
-        stageId: stage2A._id,
-        decisionId: updateDecision._id
-      })
-    });
-    const fStep2Data = await fStep2Res.json();
+    // Test setup: Route Stage 2A decision directly to Stage 9 (Concert Tickets Checkout) for test flow
+    const stage9Final = await ScenarioStage.findOne({ scenarioId: finalScenario._id, stageOrder: 9 });
+    const originalStage2ANextId = updateDecision.nextStageId;
+    updateDecision.nextStageId = stage9Final._id;
+    await updateDecision.save();
+
+    let fStep2Res, fStep2Data;
+    try {
+      fStep2Res = await fetch(`${BASE_URL}/assessments/submit-step`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${userToken}`
+        },
+        body: JSON.stringify({
+          assessmentSessionId: finalSessionId,
+          stageId: stage2A._id,
+          decisionId: updateDecision._id
+        })
+      });
+      fStep2Data = await fStep2Res.json();
+    } finally {
+      // Guaranteed restoration of stage 2A nextStageId
+      updateDecision.nextStageId = originalStage2ANextId;
+      await updateDecision.save();
+    }
     const stage3Id = fStep2Data.stage.id;
 
     // Stage 3 (QR payment): Choose B (Decline payment QR)
