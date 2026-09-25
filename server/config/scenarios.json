@@ -675,24 +675,25 @@
     "stages": [
       {
         "stageOrder": 1,
-        "title": "Salary Credit Alert",
-        "description": "You check your morning notifications and notice an SMS regarding your monthly salary deposit.",
+        "title": "Morning Banking Statement Notification",
+        "description": "You wake up and check your smartphone. A standard SMS notification from your bank appears: 'Dear Customer, your savings account ending in XX4921 has been credited with INR 342.00 towards quarterly interest on 01-Oct-2024. Avail Bal: INR 28,450.00. - HDFC Bank'. There are no links or urgent instructions.",
         "mockInterfaceType": "notification",
         "mockInterfaceData": {
-          "title": "HDFC Bank Alert",
-          "body": "Dear Customer, INR 68,500.00 credited to A/C ending XX4912 on 01-Sep-26 towards Salary. Clear Balance: INR 74,210.00. Thank you for banking with HDFC.",
-          "dateString": "Today 8:30 AM"
+          "sender": "HDFC-BANK",
+          "timestamp": "07:15 AM",
+          "title": "Account Credit Alert",
+          "message": "Dear Customer, your savings account ending in XX4921 has been credited with INR 342.00 towards quarterly interest on 01-Oct-2024. Avail Bal: INR 28,450.00."
         },
         "eventClassification": "legitimate",
         "measurementFocus": [
-          "FALSE_POSITIVE_CONTROL",
-          "DECISION_QUALITY"
+          "DECISION_QUALITY",
+          "FALSE_POSITIVE_CONTROL"
         ],
         "targetSignals": [],
         "terminal": false,
         "decisions": [
           {
-            "optionText": "Acknowledge the notification and check account balance normally",
+            "optionText": "Acknowledge the routine credit alert and continue your morning routine",
             "scoreChange": 10,
             "behaviorEffects": {
               "decisionQuality": 2,
@@ -701,11 +702,11 @@
             "riskLevel": "safe",
             "isCriticalMistake": false,
             "nextStageOrder": 2,
-            "explanation": "Optimal. This is a routine, legitimate bank notification with accurate partial account digits.",
+            "explanation": "Optimal. Routine, legitimate informational banking alerts with accurate masked account numbers require no anxious intervention.",
             "outcomeType": "correct"
           },
           {
-            "optionText": "Report SMS as fraud / attempt to block bank",
+            "optionText": "Panic and call the bank customer care line to demand account freezing",
             "scoreChange": -10,
             "behaviorEffects": {
               "decisionQuality": 0,
@@ -714,34 +715,33 @@
             "riskLevel": "safe",
             "isCriticalMistake": false,
             "nextStageOrder": 2,
-            "explanation": "Over-reporting error. Flagging an authentic bank credit notification creates unnecessary panic and service disruption.",
+            "explanation": "False positive reaction. Normal interest deposits do not indicate security compromises.",
             "outcomeType": "false-positive"
           },
           {
-            "optionText": "Dismiss notification without checking",
-            "scoreChange": 0,
+            "optionText": "Mark the notification as spam and block your bank's official shortcode",
+            "scoreChange": -5,
             "behaviorEffects": {
               "decisionQuality": 1,
-              "falsePositive": 0
+              "falsePositive": 1
             },
-            "riskLevel": "safe",
+            "riskLevel": "low-risk",
             "isCriticalMistake": false,
             "nextStageOrder": 2,
-            "explanation": "Acceptable disengagement, but reviewing verified account statements is standard financial hygiene.",
-            "outcomeType": "neutral"
+            "explanation": "Blocking your bank's legitimate shortcode prevents you from receiving future critical transactional and security alerts.",
+            "outcomeType": "false-positive"
           }
         ]
       },
       {
         "stageOrder": 2,
-        "title": "SpeedPost Delivery Notice",
-        "description": "You receive an SMS claiming an India Post parcel could not be delivered to your address.",
+        "title": "Courier Package Address Failure SMS",
+        "description": "At 9:45 AM, you receive an urgent SMS: 'ALERT: Your package #IN-883921 could not be delivered due to incomplete apartment number. Update your delivery address within 12 hours at https://delhivery-track-support.top/address to prevent parcel return to warehouse. A re-routing fee of INR 15 applies.'",
         "mockInterfaceType": "sms",
         "mockInterfaceData": {
-          "sender": "VK-INDPOST",
-          "senderNumber": "VK-INDPOST",
-          "body": "SpeedPost parcel #IN-84920 could not be delivered due to incomplete street address. Update house number within 12 hours at indiapost-resched.top to prevent immediate return to sender.",
-          "dateString": "10:15 AM"
+          "sender": "+91-9845129981",
+          "timestamp": "09:45 AM",
+          "message": "ALERT: Your package #IN-883921 could not be delivered due to incomplete apartment number. Update your delivery address within 12 hours at https://delhivery-track-support.top/address to prevent parcel return to warehouse. A re-routing fee of INR 15 applies."
         },
         "eventClassification": "malicious",
         "measurementFocus": [
@@ -757,7 +757,7 @@
         "terminal": false,
         "decisions": [
           {
-            "optionText": "Click link immediately to update delivery address",
+            "optionText": "Click the link immediately, fill in your address, and enter debit card details for the INR 15 fee",
             "scoreChange": -20,
             "behaviorEffects": {
               "recognition": 0,
@@ -768,16 +768,12 @@
             "riskLevel": "high-risk",
             "isCriticalMistake": false,
             "nextStageOrder": 3,
-            "explanation": "Unsafe. The link points to an unauthorized non-government domain (indiapost-resched.top) designed to steal card details.",
-            "outcomeType": "incorrect"
+            "explanation": "Critical mistake. Deceptive courier re-routing lures use tiny fees to harvest full debit card numbers, CVVs, and banking OTPs on fake domains.",
+            "outcomeType": "unsafe-action"
           },
           {
-            "optionText": "Open the official India Post website separately to track consignment number",
+            "optionText": "Ignore the link, open your genuine e-commerce or courier app directly, and verify tracking number status",
             "scoreChange": 20,
-            "identifiedSignals": [
-              "unexpected_domain",
-              "urgency"
-            ],
             "behaviorEffects": {
               "recognition": 2,
               "signalIdentification": 2,
@@ -787,35 +783,36 @@
             "riskLevel": "safe",
             "isCriticalMistake": false,
             "nextStageOrder": 3,
-            "explanation": "Excellent independent verification. Using official channels (indiapost.gov.in) protects you from lookalike phishing links.",
+            "explanation": "Optimal independent verification. Authoritative courier apps provide true package telemetry without following unverified SMS links.",
             "outcomeType": "correct"
           },
           {
-            "optionText": "Delete the message without checking tracking status",
+            "optionText": "Reply to the mobile number asking if they can waive the INR 15 fee",
             "scoreChange": 5,
             "behaviorEffects": {
               "recognition": 1,
-              "signalIdentification": 0,
+              "signalIdentification": 1,
               "verification": 0,
               "decisionQuality": 1
             },
             "riskLevel": "low-risk",
             "isCriticalMistake": false,
             "nextStageOrder": 3,
-            "explanation": "Cautious avoidance prevents harm, but independent verification provides certainty regarding legitimate postal deliveries.",
+            "explanation": "Engaging with scam numbers confirms your phone line is active, encouraging further targeted scam attempts.",
             "outcomeType": "neutral"
           }
         ]
       },
       {
         "stageOrder": 3,
-        "title": "Freelance Career Inquiry",
-        "description": "An unsolicited recruiter message reaches you on professional messaging offering flexible remote work.",
+        "title": "Campus Internship Outreach on Telegram",
+        "description": "At 11:30 AM, an unsolicited message arrives on Telegram from 'HR Talent Acquisition - Apex Media Global': 'Congratulations! Your profile has been selected for an online remote data evaluation internship paying INR 1,800 daily for 1 hour of flexible work. To reserve your placement, send your resume and contact details via our WhatsApp desk right now.'",
         "mockInterfaceType": "messaging",
         "mockInterfaceData": {
-          "sender": "Global HR Solutions",
-          "body": "Hi there! We reviewed your profile and shortlisted you for our Part-Time App Reviewer position. Earn ₹15,000/week working 1 hour daily. To activate your starter pack and access corporate training materials, an onboarding registration fee of ₹499 is required.",
-          "dateString": "11:45 AM"
+          "sender": "Apex Media Recruitment Desk",
+          "handle": "@ApexTalentLead",
+          "timestamp": "11:30 AM",
+          "message": "Congratulations! Your profile has been selected for an online remote data evaluation internship paying INR 1,800 daily for 1 hour of flexible work. To reserve your placement, send your resume and contact details via our WhatsApp desk right now."
         },
         "eventClassification": "malicious",
         "measurementFocus": [
@@ -825,12 +822,12 @@
         ],
         "targetSignals": [
           "unexpected_payment_request",
-          "mismatched_branding"
+          "unusual_contact_method"
         ],
         "terminal": false,
         "decisions": [
           {
-            "optionText": "Pay ₹499 upfront fee to secure the job position",
+            "optionText": "Send your resume and personal contact details immediately to lock in the daily salary",
             "scoreChange": -20,
             "behaviorEffects": {
               "recognition": 0,
@@ -840,16 +837,12 @@
             "riskLevel": "high-risk",
             "isCriticalMistake": false,
             "nextStageOrder": 4,
-            "explanation": "Unsafe. Paying upfront fees for job offers is a hallmark of task-based employment fraud.",
-            "outcomeType": "incorrect"
+            "explanation": "High risk. Unsolicited job offers offering inflated wages for trivial tasks are recruitment vectors for task-based financial scams and identity theft.",
+            "outcomeType": "unsafe-action"
           },
           {
-            "optionText": "Decline the upfront payment and independently verify the job posting through the employer's official careers portal",
+            "optionText": "Recognize the disproportionate payout and unverified outreach as a classic task scam; block and report the account",
             "scoreChange": 20,
-            "identifiedSignals": [
-              "unexpected_payment_request",
-              "mismatched_branding"
-            ],
             "behaviorEffects": {
               "recognition": 2,
               "signalIdentification": 2,
@@ -858,15 +851,12 @@
             "riskLevel": "safe",
             "isCriticalMistake": false,
             "nextStageOrder": 4,
-            "explanation": "Optimal contextual reasoning. Unexpected upfront payments and informal contact methods require independent verification through the employer's official careers portal.",
+            "explanation": "Optimal threat recognition. Legitimate campus recruitment does not hire via unsolicited Telegram pings with instant daily payouts.",
             "outcomeType": "correct"
           },
           {
-            "optionText": "Inquire about the fee within the same chat and request further details",
-            "scoreChange": 5,
-            "identifiedSignals": [
-              "unexpected_payment_request"
-            ],
+            "optionText": "Ask the recruiter if they can provide an official corporate website and verifiable office address first",
+            "scoreChange": 10,
             "behaviorEffects": {
               "recognition": 1,
               "signalIdentification": 1,
@@ -875,101 +865,102 @@
             "riskLevel": "medium-risk",
             "isCriticalMistake": false,
             "nextStageOrder": 4,
-            "explanation": "Partial recognition. You noticed the unusual payment, but questioning a scammer within the same chat allows them to deploy persuasive social engineering scripts.",
+            "explanation": "Cautious inquiry, but scammers easily provide links to cloned corporate websites to prolong deceptive engagement.",
             "outcomeType": "neutral"
           }
         ]
       },
       {
         "stageOrder": 4,
-        "title": "UPI Cashback Collect Request",
-        "description": "While checking your payment app around lunch, a full-screen notification request appears.",
-        "mockInterfaceType": "checkout",
+        "title": "Urgent Electricity Disconnection Warning",
+        "description": "At 1:15 PM during lunch, you receive an alarming SMS: 'DEAR CONSUMER: Your electricity connection will be disconnected at 09:30 PM tonight from the power grid substation because previous month bill is unpaid. Immediately call Power Officer Verma at 9811204918 to clear arrears and prevent disconnection.'",
+        "mockInterfaceType": "sms",
         "mockInterfaceData": {
-          "merchantName": "RewardBazaar Offers (rewardbazaar@ybl)",
-          "amount": "1.00",
-          "warningText": "Message from requester: Enter UPI PIN to claim your ₹2,500 festive cash bonus."
+          "sender": "+91-9811204918",
+          "timestamp": "01:15 PM",
+          "message": "DEAR CONSUMER: Your electricity connection will be disconnected at 09:30 PM tonight from the power grid substation because previous month bill is unpaid. Immediately call Power Officer Verma at 9811204918 to clear arrears and prevent disconnection."
         },
         "eventClassification": "malicious",
         "measurementFocus": [
           "THREAT_RECOGNITION",
           "VERIFICATION",
-          "UNREVIEWED_ACCEPTANCE",
-          "DECISION_QUALITY"
+          "DECISION_QUALITY",
+          "UNREVIEWED_ACCEPTANCE"
         ],
         "targetSignals": [
-          "unexpected_payment_request",
+          "authority_impersonation",
           "urgency"
         ],
         "terminal": false,
         "decisions": [
           {
-            "optionText": "Enter UPI PIN to authorize the transaction",
-            "scoreChange": -30,
+            "optionText": "Call the mobile number in panic, download the APK tool the officer recommends, and pay the pending amount immediately",
+            "scoreChange": -25,
             "behaviorEffects": {
               "recognition": 0,
               "verification": 0,
-              "unreviewedAcceptance": 2,
-              "decisionQuality": 0
+              "decisionQuality": 0,
+              "unreviewedAcceptance": 2
             },
             "riskLevel": "critical",
-            "isCriticalMistake": true,
+            "isCriticalMistake": false,
             "nextStageOrder": 5,
-            "explanation": "Critical security mistake! Entering your UPI PIN always authorizes money leaving your account, never receiving cashback.",
+            "explanation": "Catastrophic compliance. Scammers impersonate power department personnel, directing victims to install malicious remote-support APKs that drain bank accounts.",
             "outcomeType": "unsafe-action"
           },
           {
-            "optionText": "Decline the collect request on screen",
-            "scoreChange": 15,
-            "behaviorEffects": {
-              "recognition": 2,
-              "verification": 0,
-              "unreviewedAcceptance": 0,
-              "decisionQuality": 2
-            },
-            "riskLevel": "safe",
-            "isCriticalMistake": false,
-            "nextStageOrder": 5,
-            "explanation": "Safe refusal. Declining the prompt prevents unauthorized debits from your bank account.",
-            "outcomeType": "correct"
-          },
-          {
-            "optionText": "Decline the request and report the unknown VPA inside the payment app",
+            "optionText": "Log into your official state electricity utility portal directly to verify billing status and ignore the private mobile number",
             "scoreChange": 20,
             "behaviorEffects": {
               "recognition": 2,
               "verification": 2,
-              "unreviewedAcceptance": 0,
-              "decisionQuality": 2
+              "decisionQuality": 2,
+              "unreviewedAcceptance": 0
             },
             "riskLevel": "safe",
             "isCriticalMistake": false,
             "nextStageOrder": 5,
-            "explanation": "Optimal response. Refusing the debit and reporting the fraudulent VPA protects the wider payments ecosystem.",
+            "explanation": "Optimal independent verification. State power distribution companies manage consumer accounts through official portals, never ad-hoc personal cell numbers.",
             "outcomeType": "correct"
+          },
+          {
+            "optionText": "Forward the message to your family WhatsApp group asking whether anyone paid the power bill",
+            "scoreChange": 10,
+            "behaviorEffects": {
+              "recognition": 1,
+              "verification": 1,
+              "decisionQuality": 1,
+              "unreviewedAcceptance": 0
+            },
+            "riskLevel": "safe",
+            "isCriticalMistake": false,
+            "nextStageOrder": 5,
+            "explanation": "Checking with household members clarifies billing history, though directly checking the utility portal provides immediate authoritative confirmation.",
+            "outcomeType": "neutral"
           }
         ]
       },
       {
         "stageOrder": 5,
-        "title": "New Browser Sign-In Prompt",
-        "description": "A system dialog appears on your phone asking to verify a recent browser sign-in.",
+        "title": "University LMS Password Expiry Notice",
+        "description": "At 2:45 PM, an official system notification appears in your college student web portal: 'Security Policy Reminder: Your semester portal password expires in 5 days pursuant to academic IT guidelines. Please navigate to Student Profile -> Security to update your credentials.' The notification links directly to the secure internal intranet URL.",
         "mockInterfaceType": "notification",
         "mockInterfaceData": {
-          "title": "Google Account Security",
-          "body": "New sign-in on Chrome (Windows) from your current city. Device: Desktop Workstation. Time: Just now. Was this you?",
-          "dateString": "2:00 PM"
+          "sender": "Academic IT Services",
+          "timestamp": "02:45 PM",
+          "title": "Scheduled Password Rotation",
+          "message": "Security Policy Reminder: Your semester portal password expires in 5 days pursuant to academic IT guidelines. Please navigate to Student Profile -> Security to update your credentials."
         },
         "eventClassification": "legitimate",
         "measurementFocus": [
-          "FALSE_POSITIVE_CONTROL",
-          "DECISION_QUALITY"
+          "DECISION_QUALITY",
+          "FALSE_POSITIVE_CONTROL"
         ],
         "targetSignals": [],
         "terminal": false,
         "decisions": [
           {
-            "optionText": "Review device and location on screen, confirm \"Yes, it's me\"",
+            "optionText": "Acknowledge the reminder and plan to update your password via the standard student portal settings",
             "scoreChange": 10,
             "behaviorEffects": {
               "decisionQuality": 2,
@@ -978,11 +969,11 @@
             "riskLevel": "safe",
             "isCriticalMistake": false,
             "nextStageOrder": 6,
-            "explanation": "Optimal. Confirming legitimate activity after checking the device details and local timestamp maintains account access smoothly.",
+            "explanation": "Optimal response. Routine institutional password rotation notices within authenticated environments represent standard security governance.",
             "outcomeType": "correct"
           },
           {
-            "optionText": "Panicked click on \"No, secure account\"",
+            "optionText": "Panic, submit a cybercrime report against the university IT desk, and refuse to ever log in again",
             "scoreChange": -10,
             "behaviorEffects": {
               "decisionQuality": 0,
@@ -991,12 +982,12 @@
             "riskLevel": "safe",
             "isCriticalMistake": false,
             "nextStageOrder": 6,
-            "explanation": "False positive reaction. Rejecting authentic sign-ins locks your own active sessions and triggers unnecessary password resets.",
+            "explanation": "Extreme false positive. Legitimate internal notifications from institutional administrators are routine administrative processes.",
             "outcomeType": "false-positive"
           },
           {
-            "optionText": "Dismiss prompt without reviewing",
-            "scoreChange": 0,
+            "optionText": "Dismiss the reminder and wait until the 5th day before checking the account",
+            "scoreChange": 5,
             "behaviorEffects": {
               "decisionQuality": 1,
               "falsePositive": 1
@@ -1004,26 +995,30 @@
             "riskLevel": "low-risk",
             "isCriticalMistake": false,
             "nextStageOrder": 6,
-            "explanation": "Neglecting authentication prompts leaves legitimate sign-ins unverified, creating potential security ambiguities.",
+            "explanation": "Acceptable, though delaying password updates until the last day risks account lockout during exams.",
             "outcomeType": "neutral"
           }
         ]
       },
       {
         "stageOrder": 6,
-        "title": "Document Scanner Permissions",
-        "description": "You install a third-party mobile document scanner utility, and an Android permission sheet pops up.",
+        "title": "Cloud File Synchronizer Permissions Prompt",
+        "description": "At 4:10 PM, while browsing an assignment resource site, a popup prompts: 'To download this PDF, install CloudSync Utility APK'. After clicking install, your Android OS displays an accessibility permission warning: 'CloudSync requests full control of your device: View and control screen, view and perform actions, read all notifications including 2FA SMS.'",
         "mockInterfaceType": "browser",
         "mockInterfaceData": {
-          "title": "QuickScan PDF Pro — Permissions",
-          "url": "android://com.quickscan.pdf/permissions",
-          "bodyText": "QuickScan PDF Pro requests the following permissions:\n• Camera (Capture documents)\n• Contacts (Read address book)\n• SMS (Read text messages)\n• Location (Precise GPS coordinates)"
+          "appName": "CloudSync Pro Utility",
+          "requestedPermissions": [
+            "Accessibility Service (Full Device Control)",
+            "Notification Listener (Read incoming SMS & OTPs)",
+            "Draw Over Other Apps"
+          ],
+          "source": "Unknown Web Sideload APK"
         },
         "eventClassification": "malicious",
         "measurementFocus": [
           "VERIFICATION",
-          "UNREVIEWED_ACCEPTANCE",
-          "DECISION_QUALITY"
+          "DECISION_QUALITY",
+          "UNREVIEWED_ACCEPTANCE"
         ],
         "targetSignals": [
           "unusual_permission"
@@ -1031,58 +1026,59 @@
         "terminal": false,
         "decisions": [
           {
-            "optionText": "Tap \"Allow All Permissions\" to proceed quickly",
+            "optionText": "Grant all requested accessibility and notification permissions to expedite your file download",
             "scoreChange": -20,
             "behaviorEffects": {
               "verification": 0,
-              "unreviewedAcceptance": 2,
-              "decisionQuality": 0
+              "decisionQuality": 0,
+              "unreviewedAcceptance": 2
             },
             "riskLevel": "high-risk",
             "isCriticalMistake": false,
             "nextStageOrder": 7,
-            "explanation": "High-risk unreviewed acceptance. Granting SMS and Contacts access to a camera tool exposes private data and OTPs.",
+            "explanation": "Severe risk. Granting accessibility service and notification access allows malicious apps to read screen contents, capture banking OTPs, and control your device remotely.",
             "outcomeType": "unsafe-action"
           },
           {
-            "optionText": "Review requested permissions, allow Camera only, and deny Contacts, SMS, Location",
+            "optionText": "Immediately deny permissions, cancel installation, delete the downloaded APK, and report the website",
             "scoreChange": 20,
             "behaviorEffects": {
               "verification": 2,
-              "unreviewedAcceptance": 0,
-              "decisionQuality": 2
+              "decisionQuality": 2,
+              "unreviewedAcceptance": 0
             },
             "riskLevel": "safe",
             "isCriticalMistake": false,
             "nextStageOrder": 7,
-            "explanation": "Optimal permission hygiene. Enforcing the principle of least privilege allows the app to function without compromising personal privacy.",
+            "explanation": "Optimal defensive containment. PDF documents never require full OS accessibility service permissions to open.",
             "outcomeType": "correct"
           },
           {
-            "optionText": "Cancel installation and remove the application",
+            "optionText": "Deny accessibility permissions but leave the APK file stored in your Downloads folder",
             "scoreChange": 10,
             "behaviorEffects": {
               "verification": 1,
-              "unreviewedAcceptance": 0,
-              "decisionQuality": 1
+              "decisionQuality": 1,
+              "unreviewedAcceptance": 1
             },
             "riskLevel": "safe",
             "isCriticalMistake": false,
             "nextStageOrder": 7,
-            "explanation": "Safe disengagement. Rejecting intrusive software is a solid defensive choice.",
+            "explanation": "Denying permissions prevents active compromise, but leaving unverified malware installers on storage risks accidental execution later.",
             "outcomeType": "neutral"
           }
         ]
       },
       {
         "stageOrder": 7,
-        "title": "Telecom Disconnection Call",
-        "description": "Your phone rings with an automated IVR call claiming urgent government regulatory action.",
+        "title": "Law Enforcement Cyber Cell Threat Call",
+        "description": "At 5:20 PM, you receive a phone call from an unknown landline. A stern, authoritative voice says: 'This is Sub-Inspector Rathore from the Central Cyber Crime Investigation Bureau. An illegal bank account registered with your Aadhaar and SIM card was used to launder money in an international crime syndicate. You are placed under digital surveillance. Press 1 to connect with our senior investigative officer immediately, or a warrant for non-bailable arrest will be dispatched to your address within 30 minutes.'",
         "mockInterfaceType": "phone_call",
         "mockInterfaceData": {
-          "callerName": "Telecom Regulatory Alert",
-          "callerNumber": "+91 8000-TELECOM",
-          "bodyText": "\"This is an urgent automated alert from the Department of Telecommunications. Your primary mobile number is linked to 18 unauthorized SIM cards flagged in financial cybercrimes. All telecom services across your Aadhaar will be disconnected within 2 hours. Press 9 immediately to speak with the cybercrime verification officer.\""
+          "callerNumber": "+91-11-2309-4100",
+          "callerLabel": "Central Cyber Cell Bureau",
+          "timestamp": "05:20 PM",
+          "audioPrompt": "This is Sub-Inspector Rathore. A warrant has been issued under your Aadhaar number for international money laundering. Press 1 immediately to connect with the interrogation room."
         },
         "eventClassification": "malicious",
         "measurementFocus": [
@@ -1097,7 +1093,7 @@
         "terminal": false,
         "decisions": [
           {
-            "optionText": "Hang up and check connection status directly with telecom provider through official customer care",
+            "optionText": "Hang up immediately, recognize the 'digital arrest' script as a criminal extortion scam, and file an incident report on 1930",
             "scoreChange": 20,
             "behaviorEffects": {
               "recognition": 2,
@@ -1107,11 +1103,11 @@
             "riskLevel": "safe",
             "isCriticalMistake": false,
             "nextStageOrder": 8,
-            "explanation": "Optimal independent verification. TRAI and DoT never make automated disconnection calls; checking directly with your telecom provider verifies reality.",
+            "explanation": "Optimal response. Legitimate police, CBI, or customs officials never serve arrest warrants over phone calls or demand secret remote interrogations.",
             "outcomeType": "correct"
           },
           {
-            "optionText": "Press 9 in panic to connect with the investigation desk",
+            "optionText": "Press 1 in sheer panic to cooperate with the officer and prove your innocence",
             "scoreChange": -20,
             "behaviorEffects": {
               "recognition": 0,
@@ -1121,47 +1117,46 @@
             "riskLevel": "critical",
             "isCriticalMistake": false,
             "nextStageOrder": 9,
-            "explanation": "Unsafe compliance. Pressing 9 routes your call directly to organized cyber fraud operators impersonating law enforcement.",
+            "explanation": "Unsafe compliance under authority intimidation. Pressing 1 transfers your line to professional extortion syndicates operating fake video police stations.",
             "outcomeType": "unsafe-action"
           },
           {
-            "optionText": "Hang up immediately and ignore the call without independent verification",
+            "optionText": "Stay on the call and demand the officer's badge number and station address before deciding what to do",
             "scoreChange": 10,
             "behaviorEffects": {
               "recognition": 1,
-              "verification": 0,
+              "verification": 1,
               "decisionQuality": 1
             },
             "riskLevel": "low-risk",
             "isCriticalMistake": false,
             "nextStageOrder": 8,
-            "explanation": "Cautious disengagement avoids immediate harm, though independently confirming your account standing provides complete assurance.",
+            "explanation": "Challenging the caller demonstrates skepticism, though staying connected gives experienced scammers opportunities to manipulate your emotions.",
             "outcomeType": "neutral"
           }
         ]
       },
       {
         "stageOrder": 8,
-        "title": "E-Commerce Order Dispatched",
-        "description": "You check your email in the late afternoon and see a shipping update for an item you ordered yesterday.",
+        "title": "Official Bank KYC Periodic Re-Verification Email",
+        "description": "At 6:30 PM, after safely terminating the extortion call, you check your email. An official communication from your primary bank arrives: 'Dear Valued Customer, in accordance with RBI periodic KYC guidelines, your account is due for routine re-verification by 31-Dec-2024. You may complete this at your convenience by visiting your home branch or logging into official netbanking. Note: Bank staff never solicit passwords, PINs, or OTPs.'",
         "mockInterfaceType": "email",
         "mockInterfaceData": {
-          "senderName": "Amazon.in Shipping Updates",
-          "senderEmail": "shipment-tracking@amazon.in",
-          "subject": "Your package has shipped: Noise Cancelling Earbuds",
-          "body": "Hi Rohan,\n\nGood news! Your order #402-9182301-81923 has shipped via BlueDart. Tracking Number: BD84920194.\n\nEstimated Delivery: Tomorrow by 8:00 PM.\nYou can track your delivery directly inside your Amazon account.",
-          "dateString": "5:00 PM"
+          "from": "alerts@bank-official.co.in",
+          "subject": "Notice: Periodic KYC Update Reminder",
+          "timestamp": "06:30 PM",
+          "body": "Dear Valued Customer, in accordance with RBI periodic KYC guidelines, your account is due for routine re-verification by 31-Dec-2024. You may complete this at your convenience by visiting your home branch or logging into official netbanking. Note: Bank staff never solicit passwords, PINs, or OTPs."
         },
         "eventClassification": "legitimate",
         "measurementFocus": [
-          "FALSE_POSITIVE_CONTROL",
-          "DECISION_QUALITY"
+          "DECISION_QUALITY",
+          "FALSE_POSITIVE_CONTROL"
         ],
         "targetSignals": [],
         "terminal": false,
         "decisions": [
           {
-            "optionText": "Review order status and delivery date normally",
+            "optionText": "Read the email calmly, note the generous timeline, and plan to verify details through your official netbanking portal over the weekend",
             "scoreChange": 10,
             "behaviorEffects": {
               "decisionQuality": 2,
@@ -1170,11 +1165,11 @@
             "riskLevel": "safe",
             "isCriticalMistake": false,
             "nextStageOrder": 10,
-            "explanation": "Optimal. This is a verified shipping confirmation originating from legitimate retail sender infrastructure.",
+            "explanation": "Optimal measured response. Legitimate bank compliance reminders provide ample time and direct customers to official branch or verified netbanking channels.",
             "outcomeType": "correct"
           },
           {
-            "optionText": "Report dispatch confirmation email as phishing attempt",
+            "optionText": "Assume this email is another attack from the fake police caller and mark your bank's verified corporate domain as phishing",
             "scoreChange": -10,
             "behaviorEffects": {
               "decisionQuality": 0,
@@ -1183,33 +1178,34 @@
             "riskLevel": "safe",
             "isCriticalMistake": false,
             "nextStageOrder": 10,
-            "explanation": "False positive reaction. Reporting legitimate purchase dispatch emails as phishing disrupts genuine merchant communications.",
+            "explanation": "Hyper-vigilant false positive. Marking genuine institutional advisory notices as phishing prevents receiving legitimate account status updates.",
             "outcomeType": "false-positive"
           },
           {
-            "optionText": "Archive email",
+            "optionText": "Archive the email without reading it",
             "scoreChange": 5,
             "behaviorEffects": {
               "decisionQuality": 1,
-              "falsePositive": 0
+              "falsePositive": 1
             },
             "riskLevel": "safe",
             "isCriticalMistake": false,
             "nextStageOrder": 10,
-            "explanation": "Acceptable inbox management, though reviewing delivery details is routine digital hygiene.",
+            "explanation": "Benign, but ignoring legitimate KYC re-verification deadlines can eventually lead to temporary transaction restrictions.",
             "outcomeType": "neutral"
           }
         ]
       },
       {
         "stageOrder": 9,
-        "title": "Digital Arrest Video Demand",
-        "description": "Having pressed 9 on the IVR call, you are connected to a high-pressure Skype video session.",
+        "title": "Coercive Skype Digital Escrow Interrogation",
+        "description": "At 6:30 PM, after pressing 1, you are directed to a private Skype video call. A man in a police uniform sits in front of a banner reading 'Cyber Crime Investigation Command'. He shouts: 'You are under digital custody! Do not disconnect or speak to anyone. Under Supreme Court guidelines, you must immediately transfer your account balance of INR 25,000 into our Secret Supreme Court Escrow Account for financial clearance and forensic verification. You will be refunded within 15 minutes if cleared.'",
         "mockInterfaceType": "chat",
         "mockInterfaceData": {
-          "sender": "Cyber Investigation Cell — New Delhi",
-          "body": "Officer Sharma on screen in uniform with police emblems: \"A non-bailable arrest warrant has been issued under PMLA Section 45 against your identity. To avoid physical detention and remand, you must deposit ₹25,000 as a refundable security clearance bond into the Supreme Court escrow account immediately.\"",
-          "dateString": "5:00 PM"
+          "platform": "Skype Video Session",
+          "callerID": "Inspector_Crime_HQ",
+          "timestamp": "06:30 PM",
+          "transcript": "Do not mute! Transfer INR 25,000 to the central RBI clearance VPA right now or armed officers will reach your residence in 15 minutes."
         },
         "eventClassification": "malicious",
         "measurementFocus": [
@@ -1224,7 +1220,7 @@
         "terminal": false,
         "decisions": [
           {
-            "optionText": "Disconnect call immediately and report the incident via official cybercrime channels",
+            "optionText": "Break out of panic, recognize that Indian courts and police never hold 'digital arrests' or demand escrow transfers, disconnect immediately, and alert local authorities",
             "scoreChange": 20,
             "behaviorEffects": {
               "recognition": 2,
@@ -1234,56 +1230,57 @@
             "riskLevel": "safe",
             "isCriticalMistake": false,
             "nextStageOrder": 10,
-            "explanation": "Decisive recovery. Indian law enforcement and courts never conduct 'digital arrest' or demand financial security bonds over video calls.",
+            "explanation": "Resilient course correction. Recognizing fabricated police sets and rejecting financial escrow demands breaks the extortion trap.",
             "outcomeType": "correct"
           },
           {
-            "optionText": "Transfer ₹25,000 security deposit to the provided clearance account",
-            "scoreChange": -30,
+            "optionText": "Transfer the INR 25,000 to the 'clearance account' via UPI out of extreme terror",
+            "scoreChange": -25,
             "behaviorEffects": {
               "recognition": 0,
               "verification": 0,
               "decisionQuality": 0
             },
             "riskLevel": "critical",
-            "isCriticalMistake": true,
+            "isCriticalMistake": false,
             "nextStageOrder": 10,
-            "explanation": "Extorted. Real police officers never accept funds, bonds, or clearance payments via electronic transfer.",
+            "explanation": "Severe financial loss. 'Secret RBI escrow accounts' do not exist; funds transferred under digital arrest coercion are instantly laundered via mule networks.",
             "outcomeType": "unsafe-action"
           },
           {
-            "optionText": "Ask for written notice by official mail while keeping caller on hold",
-            "scoreChange": 5,
+            "optionText": "Ask if you can transfer only INR 5,000 first to test the refund mechanism",
+            "scoreChange": -10,
             "behaviorEffects": {
               "recognition": 1,
-              "verification": 1,
+              "verification": 0,
               "decisionQuality": 1
             },
             "riskLevel": "medium-risk",
             "isCriticalMistake": false,
             "nextStageOrder": 10,
-            "explanation": "Partial resistance, but remaining engaged on the line allows extortionists to escalate intimidation and threats.",
-            "outcomeType": "neutral"
+            "explanation": "Negotiating with extortionists validates their power over you and still results in irreversible financial loss.",
+            "outcomeType": "unsafe-action"
           }
         ]
       },
       {
         "stageOrder": 10,
-        "title": "Cafe Counter QR Sticker",
-        "description": "While paying for an evening snack at a local cafe, you scan the countertop payment stand with your UPI app.",
+        "title": "Merchant Counter QR Sticker Overlay",
+        "description": "At 7:45 PM, you stop at a local pharmacy to purchase medical supplies. At the checkout counter, you scan the counter QR code with your UPI app. You notice that the QR sticker has slightly peeling edges pasted over an older acrylic stand, and when scanned, the UPI screen displays payee: 'QuickCash Pvt Ltd (Merchant Collect)' with an active prompt to 'Enter UPI PIN to complete transaction of INR 450'.",
         "mockInterfaceType": "checkout",
         "mockInterfaceData": {
-          "merchantName": "Cafe QuickPay (quickpay-terminal09@axis)",
-          "amount": "180.00",
-          "warningText": "Notice: The paper sticker on the counter stand looks freshly glued and slightly misaligned over the store's original metal plaque."
+          "merchantName": "QuickCash Pvt Ltd (Collect Request)",
+          "originalCounterName": "Apollo Medicos Pharmacy",
+          "amount": "INR 450.00",
+          "interfacePrompt": "Enter your 6-digit UPI PIN to approve debit"
         },
         "eventClassification": "malicious",
         "measurementFocus": [
           "THREAT_RECOGNITION",
           "SIGNAL_IDENTIFICATION",
           "VERIFICATION",
-          "UNREVIEWED_ACCEPTANCE",
-          "DECISION_QUALITY"
+          "DECISION_QUALITY",
+          "UNREVIEWED_ACCEPTANCE"
         ],
         "targetSignals": [
           "mismatched_branding",
@@ -1292,73 +1289,64 @@
         "terminal": false,
         "decisions": [
           {
-            "optionText": "Enter amount and pay without reviewing merchant name",
+            "optionText": "Enter your UPI PIN immediately without checking the merchant name on your screen",
             "scoreChange": -20,
             "behaviorEffects": {
               "recognition": 0,
               "signalIdentification": 0,
               "verification": 0,
-              "unreviewedAcceptance": 2,
-              "decisionQuality": 0
+              "decisionQuality": 0,
+              "unreviewedAcceptance": 2
             },
             "riskLevel": "high-risk",
             "isCriticalMistake": false,
             "nextStageOrder": 11,
-            "explanation": "Unsafe unreviewed acceptance. Tampered QR stickers redirect payments to fraudster bank accounts instead of the merchant.",
+            "explanation": "Careless debit authorization. Malicious actors paste fraudulent QR overlays in busy stores to divert consumer payments into criminal accounts.",
             "outcomeType": "unsafe-action"
           },
           {
-            "optionText": "Notice merchant name mismatch on payment screen, pause payment, and alert staff",
+            "optionText": "Notice the payee name mismatch and physical overlay sticker; cancel transaction, inform the pharmacist, and pay in cash or via verified terminal",
             "scoreChange": 20,
-            "identifiedSignals": [
-              "mismatched_branding",
-              "unexpected_payment_request"
-            ],
             "behaviorEffects": {
               "recognition": 2,
               "signalIdentification": 2,
               "verification": 2,
-              "unreviewedAcceptance": 0,
-              "decisionQuality": 2
+              "decisionQuality": 2,
+              "unreviewedAcceptance": 0
             },
             "riskLevel": "safe",
             "isCriticalMistake": false,
             "nextStageOrder": 11,
-            "explanation": "Outstanding physical and digital verification. Checking the merchant name on your UPI screen before authorizing payments thwarts QR code tampering.",
+            "explanation": "Optimal vigilance. Cross-checking the merchant name shown on screen against physical store branding catches physical QR tampering.",
             "outcomeType": "correct"
           },
           {
-            "optionText": "Pay with cash instead without reporting",
+            "optionText": "Ask the cashier why their name says QuickCash, and proceed if the cashier shrugs",
             "scoreChange": 5,
-            "identifiedSignals": [
-              "mismatched_branding"
-            ],
             "behaviorEffects": {
               "recognition": 1,
               "signalIdentification": 1,
-              "verification": 0,
-              "unreviewedAcceptance": 0,
-              "decisionQuality": 1
+              "verification": 1,
+              "decisionQuality": 1,
+              "unreviewedAcceptance": 1
             },
             "riskLevel": "low-risk",
             "isCriticalMistake": false,
             "nextStageOrder": 11,
-            "explanation": "Cautious personal protection, though alerting the shopkeeper prevents other customers from being defrauded.",
+            "explanation": "Inquiring is prudent, but cashiers often fail to recognize overlay tampering until transactions fail.",
             "outcomeType": "neutral"
           }
         ]
       },
       {
         "stageOrder": 11,
-        "title": "Streaming Auto-Renewal",
-        "description": "An email notification arrives claiming an unexpected charge for an annual streaming subscription.",
-        "mockInterfaceType": "email",
+        "title": "Income Tax Refund Phishing Notification",
+        "description": "At 8:30 PM, while having dinner, an SMS notification pings: 'Govt of India - Income Tax Dept: An outstanding tax refund of INR 18,420 has been sanctioned for Assessment Year 2024. Please submit your bank account and debit card verification details at https://incometax-gov-efiling.top/refund to receive immediate credit.'",
+        "mockInterfaceType": "sms",
         "mockInterfaceData": {
-          "senderName": "Streaming Services Billing",
-          "senderEmail": "billing-support@stream-premium-renew.com",
-          "subject": "Invoice Paid: ₹3,999 Annual 4K Membership Renewal",
-          "body": "Thank you for renewing your Ultra HD 4K Annual Plan. A charge of ₹3,999 has been scheduled on your default card within 24 hours.\n\nIf you did not authorize this charge or wish to cancel your subscription immediately, click the cancellation link below:\n\n[Cancel Subscription & Request Refund]",
-          "dateString": "7:30 PM"
+          "sender": "+91-7001928310",
+          "timestamp": "08:30 PM",
+          "message": "Govt of India - Income Tax Dept: An outstanding tax refund of INR 18,420 has been sanctioned for Assessment Year 2024. Please submit your bank account and debit card verification details at https://incometax-gov-efiling.top/refund to receive immediate credit."
         },
         "eventClassification": "malicious",
         "measurementFocus": [
@@ -1369,12 +1357,12 @@
         ],
         "targetSignals": [
           "unexpected_domain",
-          "urgency"
+          "unexpected_payment_request"
         ],
         "terminal": false,
         "decisions": [
           {
-            "optionText": "Click \"Cancel Subscription\" link in the email",
+            "optionText": "Click the link and input your debit card number, CVV, and ATM PIN to receive the tax refund",
             "scoreChange": -20,
             "behaviorEffects": {
               "recognition": 0,
@@ -1385,16 +1373,12 @@
             "riskLevel": "high-risk",
             "isCriticalMistake": false,
             "nextStageOrder": 12,
-            "explanation": "Unsafe. The email uses artificial urgency and an unofficial sender domain (stream-premium-renew.com) to drive you to a credential-harvesting clone.",
-            "outcomeType": "incorrect"
+            "explanation": "Severe compromise. Tax departments never request debit card numbers, CVVs, or card PINs to credit refunds.",
+            "outcomeType": "unsafe-action"
           },
           {
-            "optionText": "Spot fake sender domain and verify subscription status inside official app",
+            "optionText": "Recognize that tax refunds are credited automatically to pre-validated bank accounts and never require debit card PINs; report the phishing SMS",
             "scoreChange": 20,
-            "identifiedSignals": [
-              "unexpected_domain",
-              "urgency"
-            ],
             "behaviorEffects": {
               "recognition": 2,
               "signalIdentification": 2,
@@ -1404,38 +1388,35 @@
             "riskLevel": "safe",
             "isCriticalMistake": false,
             "nextStageOrder": 12,
-            "explanation": "Optimal verification habit. Never click renewal cancellation links inside emails; always verify subscription billing directly inside your official app account.",
+            "explanation": "Optimal institutional knowledge. Genuine tax refunds process directly via ECS/RTGS to verified bank accounts without intermediate card harvesting.",
             "outcomeType": "correct"
           },
           {
-            "optionText": "Delete email without checking account status",
-            "scoreChange": 5,
-            "identifiedSignals": [
-              "urgency"
-            ],
+            "optionText": "Forward the message to your accountant to ask if the INR 18,420 figure matches your filing",
+            "scoreChange": 10,
             "behaviorEffects": {
               "recognition": 1,
               "signalIdentification": 1,
-              "verification": 0,
+              "verification": 1,
               "decisionQuality": 1
             },
             "riskLevel": "low-risk",
             "isCriticalMistake": false,
             "nextStageOrder": 12,
-            "explanation": "Cautious avoidance avoids the phishing site, though verifying your genuine subscription ensures you have no unexpected recurring debits.",
+            "explanation": "Consulting a professional avoids direct link compromise, though the non-governmental domain is an obvious phishing indicator.",
             "outcomeType": "neutral"
           }
         ]
       },
       {
         "stageOrder": 12,
-        "title": "Friend's Emergency Medical Transfer",
-        "description": "You receive a late-evening WhatsApp message from a close friend's profile requesting immediate funds.",
+        "title": "Emergency Distress Request from Unknown Number",
+        "description": "At 9:15 PM, you receive a WhatsApp message from an unsaved number: 'Hey, this is Kunal (your cousin). My phone fell into water during travel and died, using a stranger\\'s phone at the train station. I am stuck without ticket money. Please UPI INR 3,000 to this number urgently, I will return it tomorrow as soon as I get home!'",
         "mockInterfaceType": "messaging",
         "mockInterfaceData": {
-          "sender": "Aakash (College Friend)",
-          "body": "Hey, are you free? I'm in a clinic with an urgent family emergency and my UPI daily limit is maxed out. Can you please send ₹4,000 to doctor-deposit@axl? I will transfer it back to you first thing tomorrow morning.",
-          "dateString": "8:45 PM"
+          "sender": "+91-9871029384",
+          "timestamp": "09:15 PM",
+          "message": "Hey, this is Kunal (your cousin). My phone fell into water during travel and died, using a stranger's phone at the train station. I am stuck without ticket money. Please UPI INR 3,000 to this number urgently, I will return it tomorrow as soon as I get home!"
         },
         "eventClassification": "ambiguous",
         "measurementFocus": [
@@ -1450,8 +1431,8 @@
         "terminal": false,
         "decisions": [
           {
-            "optionText": "Send ₹4,000 immediately without verifying",
-            "scoreChange": -20,
+            "optionText": "Transfer INR 3,000 via UPI immediately because family emergencies require unconditional trust",
+            "scoreChange": -15,
             "behaviorEffects": {
               "recognition": 0,
               "verification": 0,
@@ -1460,11 +1441,11 @@
             "riskLevel": "high-risk",
             "isCriticalMistake": false,
             "nextStageOrder": 13,
-            "explanation": "Unsafe. Account takeovers on WhatsApp frequently exploit social trust and urgency to extort emergency funds from contacts.",
+            "explanation": "Unverified transfer under emotional pressure. Impersonating relatives in distress is a prevalent social engineering attack vector.",
             "outcomeType": "unsafe-action"
           },
           {
-            "optionText": "Contact friend through an independent trusted channel, such as their normal cellular phone number",
+            "optionText": "Do not transfer money immediately; call your cousin's parents or mutual family members to verify his actual whereabouts and condition",
             "scoreChange": 20,
             "behaviorEffects": {
               "recognition": 2,
@@ -1474,25 +1455,25 @@
             "riskLevel": "safe",
             "isCriticalMistake": false,
             "nextStageOrder": 13,
-            "explanation": "Strong independent verification. Calling your friend on their normal cellular line outside the messaging app immediately confirms whether their account was compromised.",
+            "explanation": "Optimal dual-path verification. Calling known family numbers verifies whether the emergency is authentic before funds are released.",
             "outcomeType": "correct"
           },
           {
-            "optionText": "Request additional confirmation or specific shared personal detail within the same chat",
-            "scoreChange": 10,
+            "optionText": "Ask the sender a private question only your real cousin would know (e.g., 'What is your grandmother's nickname?')",
+            "scoreChange": 15,
             "behaviorEffects": {
-              "recognition": 1,
+              "recognition": 2,
               "verification": 1,
-              "decisionQuality": 1
+              "decisionQuality": 2
             },
             "riskLevel": "medium-risk",
             "isCriticalMistake": false,
             "nextStageOrder": 13,
-            "explanation": "Partial verification. Asking a personal question in the chat adds some verification, but an attacker who has read previous message history may still answer convincingly.",
-            "outcomeType": "neutral"
+            "explanation": "Good challenge-response verification. Testing secret personal knowledge weeds out imposter syndicates.",
+            "outcomeType": "correct"
           },
           {
-            "optionText": "Decline the transfer citing personal balance limits without verifying",
+            "optionText": "Block the number immediately without attempting to verify whether your cousin is genuinely stranded",
             "scoreChange": 5,
             "behaviorEffects": {
               "recognition": 1,
@@ -1502,31 +1483,32 @@
             "riskLevel": "low-risk",
             "isCriticalMistake": false,
             "nextStageOrder": 13,
-            "explanation": "Cautious avoidance avoids financial loss, though it misses the opportunity to establish truth if your friend genuinely needed help or their account was hacked.",
-            "outcomeType": "neutral"
+            "explanation": "Overly detached reaction. In genuine family emergencies, verifying before discarding maintains relationships while preserving security.",
+            "outcomeType": "false-positive"
           }
         ]
       },
       {
         "stageOrder": 13,
-        "title": "OS Critical Patch Notification",
-        "description": "As you wind down for the night, an official system update prompt appears on your device.",
+        "title": "Official OS Monthly Security Update",
+        "description": "At 10:00 PM, an operating system prompt appears on your phone: 'Android Monthly Security Update (Build 2024-10-QPR1). Size: 42 MB. Contains security patches for known vulnerabilities. Download via Wi-Fi and restart now or schedule overnight at 02:00 AM.'",
         "mockInterfaceType": "notification",
         "mockInterfaceData": {
-          "title": "Android System Security Update",
-          "body": "Security Patch Level: September 2026. Fixes critical kernel vulnerabilities and enhances Bluetooth encryption. Tap to restart and apply now.",
-          "dateString": "9:30 PM"
+          "sender": "Android System Updater",
+          "timestamp": "10:00 PM",
+          "title": "System Update Available",
+          "message": "Android Monthly Security Update (Build 2024-10-QPR1). Size: 42 MB. Contains security patches for known vulnerabilities. Download via Wi-Fi and restart now or schedule overnight at 02:00 AM."
         },
         "eventClassification": "legitimate",
         "measurementFocus": [
-          "FALSE_POSITIVE_CONTROL",
-          "DECISION_QUALITY"
+          "DECISION_QUALITY",
+          "FALSE_POSITIVE_CONTROL"
         ],
         "targetSignals": [],
         "terminal": false,
         "decisions": [
           {
-            "optionText": "Schedule or install official security update",
+            "optionText": "Approve the security update to install overnight while connected to charger and Wi-Fi",
             "scoreChange": 10,
             "behaviorEffects": {
               "decisionQuality": 2,
@@ -1535,11 +1517,11 @@
             "riskLevel": "safe",
             "isCriticalMistake": false,
             "nextStageOrder": 14,
-            "explanation": "Optimal. Promptly installing authentic operating system security patches closes zero-day vulnerabilities.",
+            "explanation": "Optimal cyber hygiene. Installing certified operating system security updates remediates zero-day vulnerabilities promptly.",
             "outcomeType": "correct"
           },
           {
-            "optionText": "Block update service as potential spyware",
+            "optionText": "Reject all system updates permanently because you believe all notifications are malicious hacks",
             "scoreChange": -10,
             "behaviorEffects": {
               "decisionQuality": 0,
@@ -1548,12 +1530,12 @@
             "riskLevel": "safe",
             "isCriticalMistake": false,
             "nextStageOrder": 14,
-            "explanation": "False positive reaction. Disabling core system updates leaves your device vulnerable to known exploits.",
+            "explanation": "Paranoid false positive. Refusing genuine operating system security patches leaves your device vulnerable to known exploits.",
             "outcomeType": "false-positive"
           },
           {
-            "optionText": "Postpone update indefinitely",
-            "scoreChange": 0,
+            "optionText": "Postpone the update for 24 hours to check reviews online",
+            "scoreChange": 5,
             "behaviorEffects": {
               "decisionQuality": 1,
               "falsePositive": 1
@@ -1561,20 +1543,20 @@
             "riskLevel": "low-risk",
             "isCriticalMistake": false,
             "nextStageOrder": 14,
-            "explanation": "Neglecting essential security patches leaves known security holes unpatched on your device.",
+            "explanation": "Acceptable caution, though critical security patches should be applied expeditiously.",
             "outcomeType": "neutral"
           }
         ]
       },
       {
         "stageOrder": 14,
-        "title": "Evening Closure",
-        "description": "Your digital day is complete. You have navigated routine communications, alerts, and interactions from morning to night.",
+        "title": "Nightly Security Assessment Completion",
+        "description": "It is 10:45 PM. You have navigated a comprehensive day of digital communication, payments, authority pressure, and system updates. Your choices have mapped your baseline security behavior, identifying your natural protective reflexes and autopilot vulnerabilities.",
         "mockInterfaceType": "website",
         "mockInterfaceData": {
-          "title": "Your Digital Day: Daily Wrap-Up",
-          "url": "https://cyberlawportal.in/day-complete",
-          "bodyText": "You have reached the end of your day. Every choice you made — what you noticed, where you verified, what you accepted, and where you hesitated — offers valuable insight into your everyday cybersecurity habits."
+          "completedStagesCount": 14,
+          "status": "Diagnostic Baseline Completed",
+          "nextStep": "Review your baseline behavioral dimension profile"
         },
         "eventClassification": "legitimate",
         "measurementFocus": [],
@@ -1582,20 +1564,13 @@
         "terminal": true,
         "decisions": [
           {
-            "optionText": "View Your Digital Habits Breakdown",
+            "optionText": "Complete Assessment and View Behavioral Diagnostics Profile",
             "scoreChange": 0,
-            "behaviorEffects": {
-              "recognition": 0,
-              "signalIdentification": 0,
-              "verification": 0,
-              "decisionQuality": 0,
-              "falsePositive": 0,
-              "unreviewedAcceptance": 0
-            },
+            "behaviorEffects": {},
             "riskLevel": "safe",
             "isCriticalMistake": false,
             "nextStageOrder": null,
-            "explanation": "Transitioning to your personalized behavioral reveal.",
+            "explanation": "Your baseline behavioral profile is generated from your intuitive daily choices.",
             "outcomeType": "correct"
           }
         ]

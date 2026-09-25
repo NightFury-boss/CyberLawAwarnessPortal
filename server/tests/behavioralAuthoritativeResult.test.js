@@ -331,9 +331,12 @@ async function runTests() {
       const baseStart = await startSession('baseline', 2);
       let curStage = baseStart.stage;
       let baseFinalRes;
-      for (let i = 0; i < poorOptionSnippets.length; i++) {
+      while (curStage) {
         const decs = await ScenarioDecision.find({ stageId: curStage.id });
-        const dec = poorOptionSnippets[i] ? (decs.find(d => d.optionText.includes(poorOptionSnippets[i])) || decs[0]) : decs[0];
+        const dec = decs.find(d => d.riskLevel === 'critical')
+          || decs.find(d => d.riskLevel === 'high-risk')
+          || decs.find(d => d.outcomeType === 'unsafe-action')
+          || decs[0];
         const res = await submitStep(baseStart.sessionId, curStage.id, dec._id);
         if (res.data.isCompleted) {
           baseFinalRes = res.data;

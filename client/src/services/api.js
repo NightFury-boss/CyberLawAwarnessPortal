@@ -62,6 +62,7 @@ const api = {
 
   logout: () => {
     localStorage.removeItem('token');
+    localStorage.setItem('workspace_sidebar_collapsed', 'false');
   },
 
   isAuthenticated: () => {

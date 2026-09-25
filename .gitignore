@@ -27,5 +27,11 @@ build/
 # Local database backup (historical JSON database)
 server/data/db.json
 
+# Scratch and reference media
+scratch/
+server/scratch/
+Components Examples/
+*.mp4
+
 # Custom changes tracking folder
 changes/

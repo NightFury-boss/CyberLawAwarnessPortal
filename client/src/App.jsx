@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import api from './services/api';
 
@@ -6,30 +6,73 @@ import api from './services/api';
 import Sidebar from './components/Sidebar';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
-import AssistantWidget from './components/AssistantWidget';
 
-// Pages
-import Home from './pages/Home';
-import About from './pages/About';
-import Laws from './pages/Laws';
-import Crimes from './pages/Crimes';
-import Cases from './pages/Cases';
-import Prevention from './pages/Prevention';
-import Resources from './pages/Resources';
-import Login from './pages/Login';
-import Register from './pages/Register';
-import Dashboard from './pages/Dashboard';
-import BaselineAssessment from './pages/BaselineAssessment';
-import FinalAssessment from './pages/FinalAssessment';
-import Quizzes from './pages/Quizzes';
-import AdminPanel from './pages/AdminPanel';
+// Code-split page route components
+const Home = lazy(() => import('./pages/Home'));
+const About = lazy(() => import('./pages/About'));
+const Laws = lazy(() => import('./pages/Laws'));
+const Crimes = lazy(() => import('./pages/Crimes'));
+const Cases = lazy(() => import('./pages/Cases'));
+const Prevention = lazy(() => import('./pages/Prevention'));
+const Resources = lazy(() => import('./pages/Resources'));
+const Login = lazy(() => import('./pages/Login'));
+const Register = lazy(() => import('./pages/Register'));
+const Dashboard = lazy(() => import('./pages/Dashboard'));
+const BaselineAssessment = lazy(() => import('./pages/BaselineAssessment'));
+const FinalAssessment = lazy(() => import('./pages/FinalAssessment'));
+const Quizzes = lazy(() => import('./pages/Quizzes'));
+const AdminPanel = lazy(() => import('./pages/AdminPanel'));
+
+function PageLoadingFallback() {
+  return (
+    <div className="desk-space page-entry" style={{ padding: 'var(--space-xxl) 0', textAlign: 'center' }}>
+      <p style={{ color: 'var(--text-secondary)', fontSize: '0.92rem' }}>
+        Opening page...
+      </p>
+    </div>
+  );
+}
 
 function AppContent() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [progressTrigger, setProgressTrigger] = useState(0); // increment to trigger reload
-  const [sidebarOpen, setSidebarOpen] = useState(window.innerWidth > 768);
   const location = useLocation();
+
+  // Navigation Context Determination
+  const isWorkspace = location.pathname === '/dashboard' || 
+                      location.pathname === '/quizzes' || 
+                      location.pathname.startsWith('/assessment/') ||
+                      location.pathname.startsWith('/workspace');
+  const isAdminPath = location.pathname.startsWith('/admin');
+
+  // Desktop workspace sidebar collapsed state (persisted during active workspace session)
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
+    return localStorage.getItem('workspace_sidebar_collapsed') === 'true';
+  });
+
+  // Mobile workspace drawer open state
+  const [sidebarMobileOpen, setSidebarMobileOpen] = useState(false);
+
+  // Sync collapsed state to localStorage while in workspace
+  useEffect(() => {
+    if (isWorkspace) {
+      localStorage.setItem('workspace_sidebar_collapsed', sidebarCollapsed ? 'true' : 'false');
+    }
+  }, [sidebarCollapsed, isWorkspace]);
+
+  // Reset desktop workspace sidebar to expanded whenever leaving Workspace shell (public portal, login, etc.)
+  useEffect(() => {
+    if (!isWorkspace) {
+      setSidebarCollapsed(false);
+      localStorage.setItem('workspace_sidebar_collapsed', 'false');
+    }
+  }, [isWorkspace]);
+
+  // Close mobile drawer on route changes
+  useEffect(() => {
+    setSidebarMobileOpen(false);
+  }, [location.pathname]);
 
   // Scroll restoration and anchor navigation handler
   useEffect(() => {
@@ -42,7 +85,7 @@ function AppContent() {
         const scrollToAnchor = () => {
           const element = document.getElementById(targetId);
           if (element) {
-            const header = document.querySelector('.top-header');
+            const header = document.querySelector('.top-header, .workspace-topbar');
             const headerHeight = header ? header.offsetHeight : 64;
             
             element.style.scrollMarginTop = `${headerHeight + 16}px`;
@@ -86,17 +129,6 @@ function AppContent() {
     setLoading(false);
   };
 
-
-  useEffect(() => {
-    const handleKeyDown = (e) => {
-      if (e.key === 'Escape') {
-        setSidebarOpen(false);
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
-
   const triggerProgressUpdate = () => {
     setProgressTrigger(prev => prev + 1);
   };
@@ -109,73 +141,119 @@ function AppContent() {
     );
   }
 
-  // Admin layouts are full screen and have no standard header/footer
-  const isAdminPath = location.pathname.startsWith('/admin');
+  // Compute main content layout class based on context
+  const getContentLayoutClass = () => {
+    if (isAdminPath) return '';
+    if (!isWorkspace) return 'main-content public-layout';
+    return `main-content ${sidebarCollapsed ? 'workspace-collapsed' : 'workspace-expanded'}`;
+  };
 
   return (
     <div className={isAdminPath ? "" : "app-container"}>
-      {!isAdminPath && <Sidebar user={user} isOpen={sidebarOpen} setIsOpen={setSidebarOpen} />}
-      {!isAdminPath && sidebarOpen && (
-        <div 
-          onClick={() => setSidebarOpen(false)}
-          className="sidebar-backdrop"
+      {/* Learner/Admin Workspace Sidebar is mounted only in workspace routes */}
+      {!isAdminPath && isWorkspace && (
+        <Sidebar 
+          user={user} 
+          isCollapsed={sidebarCollapsed} 
+          setIsCollapsed={setSidebarCollapsed}
+          isOpen={sidebarMobileOpen} 
+          setIsOpen={setSidebarMobileOpen} 
         />
       )}
-      <div className={isAdminPath ? "" : `main-content ${sidebarOpen ? 'sidebar-expanded' : 'sidebar-collapsed'}`} style={{ marginLeft: isAdminPath ? 0 : undefined }}>
-        {!isAdminPath && <Navbar user={user} setUser={setUser} sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />}
+
+      <div className={getContentLayoutClass()} style={{ marginLeft: isAdminPath ? 0 : undefined }}>
+        {/* Navbar handles both Public Portal horizontal nav and Workspace Topbar */}
+        {!isAdminPath && (
+          <Navbar 
+            user={user} 
+            setUser={setUser} 
+            isWorkspace={isWorkspace}
+            sidebarOpen={sidebarMobileOpen} 
+            setSidebarOpen={setSidebarMobileOpen} 
+          />
+        )}
         
         <main style={{ flex: 1 }}>
-          <Routes>
-            {/* Public Routes */}
-            <Route path="/" element={<Home user={user} />} />
-            <Route path="/about" element={<About />} />
-            <Route path="/laws" element={<Laws />} />
-            <Route path="/crimes" element={<Crimes />} />
-            <Route path="/cases" element={<Cases />} />
-            <Route path="/prevention" element={<Prevention />} />
-            <Route path="/resources" element={<Resources />} />
-            
-            <Route 
-              path="/login" 
-              element={!user ? <Login setUser={setUser} /> : <Navigate to="/dashboard" />} 
-            />
-            <Route 
-              path="/register" 
-              element={!user ? <Register setUser={setUser} /> : <Navigate to="/dashboard" />} 
-            />
+          <div key={location.pathname} className="portal-page-settle">
+            <Suspense fallback={<PageLoadingFallback />}>
+              <Routes location={location}>
+                {/* Public Routes */}
+                <Route path="/" element={<Home user={user} />} />
+                <Route path="/about" element={<About />} />
+                <Route path="/laws" element={<Laws />} />
+                <Route path="/crimes" element={<Crimes />} />
+                <Route path="/cases" element={<Cases />} />
+                <Route path="/prevention" element={<Prevention />} />
+                <Route path="/resources" element={<Resources />} />
+                
+                <Route 
+                  path="/login" 
+                  element={!user ? <Login setUser={setUser} /> : <Navigate to="/dashboard" />} 
+                />
+                <Route 
+                  path="/register" 
+                  element={!user ? <Register setUser={setUser} /> : <Navigate to="/dashboard" />} 
+                />
 
-            {/* User Protected Routes */}
-            <Route 
-              path="/dashboard" 
-              element={user ? <Dashboard user={user} progressTrigger={progressTrigger} /> : <Navigate to="/login" />} 
-            />
-            <Route 
-              path="/assessment/baseline" 
-              element={user ? <BaselineAssessment user={user} updateProgressTrigger={triggerProgressUpdate} /> : <Navigate to="/login" />} 
-            />
-            <Route 
-              path="/assessment/final" 
-              element={user ? <FinalAssessment user={user} updateProgressTrigger={triggerProgressUpdate} /> : <Navigate to="/login" />} 
-            />
-            <Route 
-              path="/quizzes" 
-              element={user ? <Quizzes user={user} updateProgressTrigger={triggerProgressUpdate} /> : <Navigate to="/login" />} 
-            />
+                {/* User Protected Workspace Routes */}
+                <Route 
+                  path="/dashboard" 
+                  element={user ? <Dashboard user={user} progressTrigger={progressTrigger} /> : <Navigate to="/login" />} 
+                />
+                <Route 
+                  path="/assessment/baseline" 
+                  element={user ? <BaselineAssessment user={user} updateProgressTrigger={triggerProgressUpdate} /> : <Navigate to="/login" />} 
+                />
+                <Route 
+                  path="/assessment/final" 
+                  element={user ? <FinalAssessment user={user} updateProgressTrigger={triggerProgressUpdate} /> : <Navigate to="/login" />} 
+                />
+                <Route 
+                  path="/quizzes" 
+                  element={user ? <Quizzes user={user} updateProgressTrigger={triggerProgressUpdate} /> : <Navigate to="/login" />} 
+                />
 
-            {/* Admin Protected Routes */}
-            <Route 
-              path="/admin" 
-              element={user && user.role === 'admin' ? <AdminPanel user={user} /> : <Navigate to="/login" />} 
-            />
+                {/* Workspace Contextual Content Routes (Protected within Workspace Shell) */}
+                <Route 
+                  path="/workspace" 
+                  element={user ? <Navigate to="/dashboard" replace /> : <Navigate to="/login" replace />} 
+                />
+                <Route 
+                  path="/workspace/laws" 
+                  element={user ? <Laws /> : <Navigate to="/login" replace />} 
+                />
+                <Route 
+                  path="/workspace/crimes" 
+                  element={user ? <Crimes /> : <Navigate to="/login" replace />} 
+                />
+                <Route 
+                  path="/workspace/cases" 
+                  element={user ? <Cases /> : <Navigate to="/login" replace />} 
+                />
+                <Route 
+                  path="/workspace/prevention" 
+                  element={user ? <Prevention /> : <Navigate to="/login" replace />} 
+                />
+                <Route 
+                  path="/workspace/resources" 
+                  element={user ? <Resources /> : <Navigate to="/login" replace />} 
+                />
 
-            {/* Fallback */}
-            <Route path="*" element={<Navigate to="/" />} />
-          </Routes>
+                {/* Admin Protected Routes */}
+                <Route 
+                  path="/admin" 
+                  element={user && user.role === 'admin' ? <AdminPanel user={user} /> : <Navigate to="/login" />} 
+                />
+
+                {/* Fallback */}
+                <Route path="*" element={<Navigate to="/" />} />
+              </Routes>
+            </Suspense>
+          </div>
         </main>
 
-        {!isAdminPath && <Footer />}
+        {!isAdminPath && !isWorkspace && <Footer />}
       </div>
-      {!isAdminPath && <AssistantWidget />}
     </div>
   );
 }

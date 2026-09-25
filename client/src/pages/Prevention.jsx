@@ -1,14 +1,34 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import WorkspaceBreadcrumb from '../components/WorkspaceBreadcrumb';
+import EditorialPageHeader from '../components/common/EditorialPageHeader';
+import EditorialRule from '../components/common/EditorialRule';
+import { performStateTransition } from '../utils/transitionUtils';
 
 function Prevention() {
   const [activeTopic, setActiveTopic] = useState('passwords');
+  const [selectedPhase, setSelectedPhase] = useState('all'); // 'all', 'before', 'during', 'after'
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+
+  const handlePhaseChange = (phase) => {
+    performStateTransition(() => {
+      setSelectedPhase(phase);
+    });
+  };
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth <= 768);
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  // Support ?phase= query param (e.g. from Home page or direct links)
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const p = params.get('phase');
+    if (p && ['before', 'during', 'after', 'all'].includes(p)) {
+      setSelectedPhase(p);
+    }
   }, []);
 
   // Handle deep-linked hash anchor navigation (e.g., /prevention#payments)
@@ -76,74 +96,355 @@ function Prevention() {
     <div className="container page-entry" style={{ padding: 'var(--space-xl) 0', fontFamily: 'var(--font-sans)', color: 'var(--text-primary)' }}>
       
       {/* Editorial Hero Header */}
-      <div style={{ marginBottom: 'var(--space-xxl)', maxWidth: '800px' }}>
-        <span style={{ fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '2px', color: 'var(--accent-navy)', fontWeight: '800', display: 'block', marginBottom: '8px' }}>
-          Prevention Centre
-        </span>
-        <h1 style={{ fontSize: '3rem', fontWeight: 'bold', color: 'var(--accent-navy)', margin: '0 0 12px 0' }}>
-          PREVENTION & DIGITAL HYGIENE
-        </h1>
-        <p style={{ fontSize: '1.1rem', color: 'var(--text-secondary)', lineHeight: '1.6', margin: 0 }}>
-          Practical guidance for protecting your accounts, devices, personal information, and digital transactions — and knowing what to do when something goes wrong.
-        </p>
-      </div>
+      <EditorialPageHeader
+        eyebrow="Prevention Centre"
+        title="Prevention & Digital Hygiene"
+        subtitle='"Knowledge helps most when it changes what we do."'
+        description="Practical guidance for protecting your accounts, devices, personal information, and digital transactions — and knowing what to do when something goes wrong."
+      >
+        <WorkspaceBreadcrumb />
+      </EditorialPageHeader>
 
-      {/* BEFORE / DURING / AFTER VISUAL FRAMEWORK */}
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr 1fr',
-        gap: '24px',
-        backgroundColor: 'var(--accent-navy-light)',
-        padding: '32px',
-        borderRadius: 'var(--radius-md)',
-        marginBottom: 'var(--space-xxl)',
-        borderLeft: '4px solid var(--accent-navy)'
-      }}>
-        {/* Before */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span style={{ fontSize: '0.75rem', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '1px', color: 'var(--accent-navy)' }}>
-              01 / BEFORE
+      {/* BEFORE / DURING / AFTER EDITORIAL FRAMEWORK WITH INTENTIONAL STATE TRANSITIONS */}
+      <div style={{ marginBottom: 'var(--space-2xl)' }}>
+        <div className="prevention-phase-filter-bar">
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+            <span style={{ fontSize: '0.76rem', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.5px', color: 'var(--accent-navy)' }}>
+              Response Lifecycle:
             </span>
+            <div className="portal-state-sequence-bar" style={{ margin: 0 }}>
+              <button 
+                type="button"
+                onClick={() => handlePhaseChange('all')}
+                className={`portal-state-sequence-node ${selectedPhase === 'all' ? 'active' : ''}`}
+                style={{ cursor: 'pointer' }}
+                aria-pressed={selectedPhase === 'all'}
+              >
+                Comprehensive
+              </button>
+              <span className="portal-state-sequence-arrow" aria-hidden="true">&rarr;</span>
+              <button 
+                type="button"
+                onClick={() => handlePhaseChange('before')}
+                className={`portal-state-sequence-node ${selectedPhase === 'before' ? 'active' : ''}`}
+                style={{ cursor: 'pointer' }}
+                aria-pressed={selectedPhase === 'before'}
+              >
+                01 Before
+              </button>
+              <span className="portal-state-sequence-arrow" aria-hidden="true">&rarr;</span>
+              <button 
+                type="button"
+                onClick={() => handlePhaseChange('during')}
+                className={`portal-state-sequence-node ${selectedPhase === 'during' ? 'active' : ''}`}
+                style={{ cursor: 'pointer' }}
+                aria-pressed={selectedPhase === 'during'}
+              >
+                02 During
+              </button>
+              <span className="portal-state-sequence-arrow" aria-hidden="true">&rarr;</span>
+              <button 
+                type="button"
+                onClick={() => handlePhaseChange('after')}
+                className={`portal-state-sequence-node ${selectedPhase === 'after' ? 'active' : ''}`}
+                style={{ cursor: 'pointer' }}
+                aria-pressed={selectedPhase === 'after'}
+              >
+                03 After
+              </button>
+            </div>
           </div>
-          <h3 style={{ fontSize: '1.25rem', color: 'var(--accent-navy)', margin: 0, fontWeight: 'bold' }}>Protect</h3>
-          <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', margin: 0, lineHeight: '1.5' }}>
-            Reduce risk. Build strong defense habits before any contact or system threat occurs.
-          </p>
+
+          <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', fontFamily: 'monospace' }}>
+            {selectedPhase === 'all' && 'Full 3-Phase Lifecycle Overview'}
+            {selectedPhase === 'before' && 'Phase 01: Pre-Attack Verification & Hardening'}
+            {selectedPhase === 'during' && 'Phase 02: Critical Pause & Refusal Rule'}
+            {selectedPhase === 'after' && 'Phase 03: Containment & Helpline 1930'}
+          </div>
         </div>
 
-        {/* During */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', borderLeft: isMobile ? 'none' : '1px solid var(--color-border-dark)', paddingLeft: isMobile ? 0 : '24px', paddingTop: isMobile ? '16px' : 0, borderTop: isMobile ? '1px solid var(--color-border-dark)' : 'none' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span style={{ fontSize: '0.75rem', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '1px', color: 'var(--accent-navy)' }}>
-              02 / DURING
-            </span>
-          </div>
-          <h3 style={{ fontSize: '1.25rem', color: 'var(--accent-navy)', margin: 0, fontWeight: 'bold' }}>Pause + Verify</h3>
-          <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', margin: 0, lineHeight: '1.5' }}>
-            Avoid escalations. Take control of your decisions when confronted with fake urgency.
-          </p>
+        {/* Thin progression line representing active lifecycle position */}
+        <div className="portal-progression-track" style={{ marginBottom: '14px' }} aria-hidden="true">
+          <div 
+            className="portal-progression-indicator" 
+            style={{ 
+              width: selectedPhase === 'all' ? '100%' : selectedPhase === 'before' ? '33.33%' : selectedPhase === 'during' ? '66.66%' : '100%'
+            }} 
+          />
         </div>
 
-        {/* After */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', borderLeft: isMobile ? 'none' : '1px solid var(--color-border-dark)', paddingLeft: isMobile ? 0 : '24px', paddingTop: isMobile ? '16px' : 0, borderTop: isMobile ? '1px solid var(--color-border-dark)' : 'none' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span style={{ fontSize: '0.75rem', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '1px', color: 'var(--accent-navy)' }}>
-              03 / AFTER
-            </span>
-          </div>
-          <h3 style={{ fontSize: '1.25rem', color: 'var(--accent-navy)', margin: 0, fontWeight: 'bold' }}>Respond + Recover</h3>
-          <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', margin: 0, lineHeight: '1.5' }}>
-            Preserve evidence, lock exposed keys/accounts, and report details to safety registries.
-          </p>
-        </div>
-      </div>
+        {/* Persistent Connected 3-Phase Lifecycle Track */}
+        <div className="prevention-ruled-docket" style={{ marginBottom: '16px' }}>
+          <div 
+            className="prevention-phases-row" 
+            role="tablist"
+            aria-label="Incident response lifecycle phases"
+            style={{
+              display: 'grid',
+              gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr 1fr',
+              gap: '16px'
+            }}
+          >
+            {/* Phase 01: Before */}
+            <div 
+              role="tab"
+              tabIndex={0}
+              aria-selected={selectedPhase === 'before'}
+              aria-controls="prevention-phase-panel"
+              onClick={() => handlePhaseChange('before')}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handlePhaseChange('before'); } }}
+              className={`prevention-phase-card ${selectedPhase === 'before' ? 'is-active-phase' : ''}`}
+              style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}
+              title="Click to view Phase 01: Before protocols"
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span className="phase-indicator">01 / BEFORE</span>
+                {selectedPhase === 'before' && (
+                  <span style={{ fontSize: '0.68rem', fontWeight: 'bold', color: 'var(--accent-navy)', textTransform: 'uppercase' }}>Active Protocol</span>
+                )}
+              </div>
+              <h3 style={{ fontSize: '1.15rem', color: 'var(--accent-navy)', margin: 0, fontWeight: 'bold' }}>Protect</h3>
+              <p style={{ fontSize: '0.88rem', color: 'var(--text-secondary)', margin: 0, lineHeight: '1.5' }}>
+                Verify unexpected requests. Protect credentials. Build strong defense habits before any contact or system threat occurs.
+              </p>
+              <div style={{ fontSize: '0.78rem', color: 'var(--accent-navy)', fontWeight: '600', marginTop: 'auto', paddingTop: '6px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <span>{selectedPhase === 'before' ? 'Active Focus' : 'Inspect Protocol'}</span>
+                <span aria-hidden="true">&rarr;</span>
+              </div>
+            </div>
 
-      <div style={{ textAlign: 'center', marginBottom: 'var(--space-xl)' }}>
-        <p style={{ fontSize: '1.05rem', color: 'var(--accent-navy)', fontStyle: 'italic', margin: 0 }}>
-          "Knowledge helps most when it changes what we do."
-        </p>
-      </div>
+            {/* Phase 02: During */}
+            <div 
+              role="tab"
+              tabIndex={0}
+              aria-selected={selectedPhase === 'during'}
+              aria-controls="prevention-phase-panel"
+              onClick={() => handlePhaseChange('during')}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handlePhaseChange('during'); } }}
+              className={`prevention-phase-card ${selectedPhase === 'during' ? 'is-active-phase' : ''}`}
+              style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}
+              title="Click to view Phase 02: During protocols"
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span className="phase-indicator">02 / DURING</span>
+                {selectedPhase === 'during' && (
+                  <span style={{ fontSize: '0.68rem', fontWeight: 'bold', color: 'var(--color-warning)', textTransform: 'uppercase' }}>Active Protocol</span>
+                )}
+              </div>
+              <h3 style={{ fontSize: '1.15rem', color: 'var(--accent-navy)', margin: 0, fontWeight: 'bold' }}>Pause &amp; Verify</h3>
+              <p style={{ fontSize: '0.88rem', color: 'var(--text-secondary)', margin: 0, lineHeight: '1.5' }}>
+                Pause. Verify independently. Avoid sharing sensitive information or one-time codes when confronted with manufactured urgency.
+              </p>
+              <div style={{ fontSize: '0.78rem', color: 'var(--accent-navy)', fontWeight: '600', marginTop: 'auto', paddingTop: '6px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <span>{selectedPhase === 'during' ? 'Active Focus' : 'Inspect Protocol'}</span>
+                <span aria-hidden="true">&rarr;</span>
+              </div>
+            </div>
+
+            {/* Phase 03: After */}
+            <div 
+              role="tab"
+              tabIndex={0}
+              aria-selected={selectedPhase === 'after'}
+              aria-controls="prevention-phase-panel"
+              onClick={() => handlePhaseChange('after')}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handlePhaseChange('after'); } }}
+              className={`prevention-phase-card ${selectedPhase === 'after' ? 'is-active-phase' : ''}`}
+              style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}
+              title="Click to view Phase 03: After protocols"
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span className="phase-indicator">03 / AFTER</span>
+                {selectedPhase === 'after' && (
+                  <span style={{ fontSize: '0.68rem', fontWeight: 'bold', color: 'var(--color-success)', textTransform: 'uppercase' }}>Active Protocol</span>
+                )}
+              </div>
+              <h3 style={{ fontSize: '1.15rem', color: 'var(--accent-navy)', margin: 0, fontWeight: 'bold' }}>Respond &amp; Recover</h3>
+              <p style={{ fontSize: '0.88rem', color: 'var(--text-secondary)', margin: 0, lineHeight: '1.5' }}>
+                Preserve evidence. Secure affected accounts immediately. Report the incident through National Helpline 1930 and official registries.
+              </p>
+              <div style={{ fontSize: '0.78rem', color: 'var(--accent-navy)', fontWeight: '600', marginTop: 'auto', paddingTop: '6px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <span>{selectedPhase === 'after' ? 'Active Focus' : 'Inspect Protocol'}</span>
+                <span aria-hidden="true">&rarr;</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Detailed Protocol Panel for Active Phase */}
+        <div id="prevention-phase-panel" key={selectedPhase} className="prevention-active-phase-card prevention-ruled-docket portal-state-progression">
+          {selectedPhase === 'all' && (
+            <div style={{ padding: '4px 0' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', flexWrap: 'wrap', gap: '8px' }}>
+                <span style={{ fontSize: '0.75rem', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '1px', color: 'var(--accent-navy)' }}>
+                  Comprehensive Response Overview
+                </span>
+                <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+                  Select any phase above to focus on its specific operational checklist
+                </span>
+              </div>
+              <p style={{ fontSize: '0.94rem', color: 'var(--text-secondary)', lineHeight: '1.6', margin: '0 0 16px 0' }}>
+                Effective digital defense is structured across time. Proactive hardening before contact prevents most attacks; the critical pause during an encounter neutralizes psychological pressure; and swift post-incident containment minimizes harm under statutory safe-harbor provisions.
+              </p>
+              <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+                <button
+                  type="button"
+                  onClick={() => handlePhaseChange('before')}
+                  className="btn btn-secondary"
+                  style={{ fontSize: '0.82rem', padding: '6px 14px' }}
+                >
+                  Start Phase 01: Before &rarr;
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handlePhaseChange('during')}
+                  className="btn btn-secondary"
+                  style={{ fontSize: '0.82rem', padding: '6px 14px' }}
+                >
+                  Jump to Phase 02: During &rarr;
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handlePhaseChange('after')}
+                  className="btn btn-secondary"
+                  style={{ fontSize: '0.82rem', padding: '6px 14px' }}
+                >
+                  Jump to Phase 03: After &rarr;
+                </button>
+              </div>
+            </div>
+          )}
+
+          {selectedPhase === 'before' && (
+            <div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', flexWrap: 'wrap', gap: '8px' }}>
+                <span style={{ fontSize: '0.75rem', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '1px', color: 'var(--accent-navy)' }}>
+                  Phase 01 · Proactive Defense
+                </span>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <button 
+                    onClick={() => handlePhaseChange('all')} 
+                    className="btn btn-outline" 
+                    style={{ fontSize: '0.78rem', padding: '3px 10px' }}
+                  >
+                    View All Phases
+                  </button>
+                  <button 
+                    onClick={() => handlePhaseChange('during')} 
+                    className="btn btn-outline" 
+                    style={{ fontSize: '0.78rem', padding: '3px 10px' }}
+                  >
+                    Next: During Attack &rarr;
+                  </button>
+                </div>
+              </div>
+                <h3 style={{ fontSize: '1.35rem', color: 'var(--accent-navy)', margin: '0 0 10px 0', fontWeight: 'bold' }}>
+                  01 / BEFORE: Independent Verification & Zero-Trust Hygiene
+                </h3>
+                <p style={{ fontSize: '0.96rem', color: 'var(--text-secondary)', lineHeight: '1.65', marginBottom: '16px' }}>
+                  Proactive security eliminates vulnerabilities before an attacker makes contact. Do not wait for an alert to test whether your accounts and devices are secure.
+                </p>
+                <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)', gap: '14px' }}>
+                  <div style={{ backgroundColor: 'var(--bg-white, #ffffff)', padding: '16px', borderRadius: '6px', border: '1px solid var(--color-border)', boxShadow: '0 1px 3px rgba(15, 37, 55, 0.04)' }}>
+                    <strong style={{ fontSize: '0.85rem', color: 'var(--accent-navy)', display: 'block', marginBottom: '4px' }}>Credential Separation</strong>
+                    <span style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', lineHeight: '1.5' }}>Use distinct, unshared passwords and dedicated passkeys across financial and personal accounts.</span>
+                  </div>
+                  <div style={{ backgroundColor: 'var(--bg-white, #ffffff)', padding: '16px', borderRadius: '6px', border: '1px solid var(--color-border)', boxShadow: '0 1px 3px rgba(15, 37, 55, 0.04)' }}>
+                    <strong style={{ fontSize: '0.85rem', color: 'var(--accent-navy)', display: 'block', marginBottom: '4px' }}>Direct Bookmarking</strong>
+                    <span style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', lineHeight: '1.5' }}>Bookmark trusted bank portals and utilities directly to avoid sponsored deceptive search ads.</span>
+                  </div>
+                  <div style={{ backgroundColor: 'var(--bg-white, #ffffff)', padding: '16px', borderRadius: '6px', border: '1px solid var(--color-border)', boxShadow: '0 1px 3px rgba(15, 37, 55, 0.04)' }}>
+                    <strong style={{ fontSize: '0.85rem', color: 'var(--accent-navy)', display: 'block', marginBottom: '4px' }}>Multi-Factor Authentication</strong>
+                    <span style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', lineHeight: '1.5' }}>Enable app-based authenticator codes or hardware tokens instead of plaintext SMS fallback.</span>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {selectedPhase === 'during' && (
+              <div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                  <span style={{ fontSize: '0.75rem', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '1px', color: 'var(--color-warning)' }}>
+                    Phase 02 · Active Engagement
+                  </span>
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <button 
+                      onClick={() => handlePhaseChange('before')} 
+                      className="btn btn-outline" 
+                      style={{ fontSize: '0.78rem', padding: '3px 10px' }}
+                    >
+                      &larr; Before
+                    </button>
+                    <button 
+                      onClick={() => handlePhaseChange('after')} 
+                      className="btn btn-outline" 
+                      style={{ fontSize: '0.78rem', padding: '3px 10px' }}
+                    >
+                      Next: After &rarr;
+                    </button>
+                  </div>
+                </div>
+                <h3 style={{ fontSize: '1.35rem', color: 'var(--accent-navy)', margin: '0 0 10px 0', fontWeight: 'bold' }}>
+                  02 / DURING: The Critical Pause & Immediate Refusal
+                </h3>
+                <p style={{ fontSize: '0.96rem', color: 'var(--text-secondary)', lineHeight: '1.65', marginBottom: '16px' }}>
+                  When confronted with urgent demands, threats of disconnection, or arrest claims: pause. Urgency is the primary psychological exploit used by cyber criminals.
+                </p>
+                <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)', gap: '14px' }}>
+                  <div style={{ backgroundColor: 'var(--bg-white, #ffffff)', padding: '16px', borderRadius: '6px', border: '1px solid var(--color-border)', boxShadow: '0 1px 3px rgba(15, 37, 55, 0.04)' }}>
+                    <strong style={{ fontSize: '0.85rem', color: 'var(--accent-navy)', display: 'block', marginBottom: '4px' }}>Refuse One-Time Codes</strong>
+                    <span style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', lineHeight: '1.5' }}>No legitimate agency or bank ever asks for your OTP over phone, chat, or email.</span>
+                  </div>
+                  <div style={{ backgroundColor: 'var(--bg-white, #ffffff)', padding: '16px', borderRadius: '6px', border: '1px solid var(--color-border)', boxShadow: '0 1px 3px rgba(15, 37, 55, 0.04)' }}>
+                    <strong style={{ fontSize: '0.85rem', color: 'var(--accent-navy)', display: 'block', marginBottom: '4px' }}>Reject Screen-Sharing</strong>
+                    <span style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', lineHeight: '1.5' }}>Never install remote desktop apps (AnyDesk, TeamViewer) at the request of an incoming caller.</span>
+                  </div>
+                  <div style={{ backgroundColor: 'var(--bg-white, #ffffff)', padding: '16px', borderRadius: '6px', border: '1px solid var(--color-border)', boxShadow: '0 1px 3px rgba(15, 37, 55, 0.04)' }}>
+                    <strong style={{ fontSize: '0.85rem', color: 'var(--accent-navy)', display: 'block', marginBottom: '4px' }}>Break Contact Channel</strong>
+                    <span style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', lineHeight: '1.5' }}>Hang up the incoming call and redial the organization's verified public number independently.</span>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {selectedPhase === 'after' && (
+              <div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                  <span style={{ fontSize: '0.75rem', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '1px', color: 'var(--color-success)' }}>
+                    Phase 03 · Post-Incident Response
+                  </span>
+                  <button 
+                    onClick={() => handlePhaseChange('during')} 
+                    className="btn btn-outline" 
+                    style={{ fontSize: '0.78rem', padding: '3px 10px' }}
+                  >
+                    &larr; Back: During Attack
+                  </button>
+                </div>
+                <h3 style={{ fontSize: '1.35rem', color: 'var(--accent-navy)', margin: '0 0 10px 0', fontWeight: 'bold' }}>
+                  03 / AFTER: Immediate Containment & Statutory Reporting
+                </h3>
+                <p style={{ fontSize: '0.96rem', color: 'var(--text-secondary)', lineHeight: '1.65', marginBottom: '16px' }}>
+                  If you suspect an incident has occurred or credentials were compromised, the first 2 hours are critical to freezing unauthorized transactions and preserving legal evidence.
+                </p>
+                <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)', gap: '14px' }}>
+                  <div style={{ backgroundColor: 'var(--bg-white, #ffffff)', padding: '16px', borderRadius: '6px', border: '1px solid var(--color-border)', boxShadow: '0 1px 3px rgba(15, 37, 55, 0.04)' }}>
+                    <strong style={{ fontSize: '0.85rem', color: 'var(--accent-navy)', display: 'block', marginBottom: '4px' }}>National Helpline 1930</strong>
+                    <span style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', lineHeight: '1.5' }}>Dial 1930 immediately to trigger the Citizen Financial Cyber Fraud Reporting System.</span>
+                  </div>
+                  <div style={{ backgroundColor: 'var(--bg-white, #ffffff)', padding: '16px', borderRadius: '6px', border: '1px solid var(--color-border)', boxShadow: '0 1px 3px rgba(15, 37, 55, 0.04)' }}>
+                    <strong style={{ fontSize: '0.85rem', color: 'var(--accent-navy)', display: 'block', marginBottom: '4px' }}>Bank Account Freeze</strong>
+                    <span style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', lineHeight: '1.5' }}>Contact your bank's fraud desk to block cards, freeze internet banking, and revoke active UPI handles.</span>
+                  </div>
+                  <div style={{ backgroundColor: 'var(--bg-white, #ffffff)', padding: '16px', borderRadius: '6px', border: '1px solid var(--color-border)', boxShadow: '0 1px 3px rgba(15, 37, 55, 0.04)' }}>
+                    <strong style={{ fontSize: '0.85rem', color: 'var(--accent-navy)', display: 'block', marginBottom: '4px' }}>Preserve Digital Evidence</strong>
+                    <span style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', lineHeight: '1.5' }}>Capture screenshots of payment messages, transaction UTR numbers, caller logs, and chat histories.</span>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
 
       {/* TOPIC NAVIGATION (Desktop sticky / Mobile dropdown) */}
       <div style={{

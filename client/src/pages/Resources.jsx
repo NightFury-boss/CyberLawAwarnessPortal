@@ -2,6 +2,9 @@ import React, { useState, useEffect } from 'react';
 import api from '../services/api';
 import PortalSearch from '../components/search/PortalSearch';
 import { searchItems } from '../components/search/searchUtils';
+import WorkspaceBreadcrumb from '../components/WorkspaceBreadcrumb';
+import EditorialPageHeader from '../components/common/EditorialPageHeader';
+import EditorialRule from '../components/common/EditorialRule';
 
 function FAQItem({ question, answer }) {
   const [isOpen, setIsOpen] = useState(false);
@@ -133,42 +136,31 @@ function Resources() {
     <div className="container page-entry" style={{ padding: 'var(--space-xl) 0', maxWidth: '900px', fontFamily: 'var(--font-sans)', color: 'var(--text-primary)' }}>
       
       {/* Hero Header */}
-      <div style={{ marginBottom: 'var(--space-xl)' }}>
-        <span style={{ fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '2px', color: 'var(--accent-navy)', fontWeight: '800', display: 'block', marginBottom: '8px' }}>
-          RESOURCE CENTRE
-        </span>
-        <h1 style={{ fontSize: '2.5rem', fontWeight: 'bold', color: 'var(--accent-navy)', margin: '0 0 12px 0' }}>
-          Official Cyber & Legal Resources
-        </h1>
-        <p className="text-muted" style={{ fontSize: '1.05rem', lineHeight: '1.6', margin: 0 }}>
-          Find authoritative reporting services, legal sources, government guidance, cyber-safety publications, and official help channels.
-        </p>
-      </div>
+      <EditorialPageHeader
+        eyebrow="Resource Directory"
+        title="Official Cyber & Legal Resources"
+        subtitle='"Knowing where to verify information is part of knowing what to trust."'
+        description="Find authoritative reporting services, legal sources, government guidance, cyber-safety publications, and official help channels."
+      >
+        <WorkspaceBreadcrumb />
 
-      {/* Educational notice banner */}
-      <div style={{
-        padding: '16px 20px',
-        backgroundColor: '#fbf8f3',
-        borderRadius: 'var(--radius-sm)',
-        border: '1px solid #ebdcb9',
-        borderLeft: '4px solid #d49f3c',
-        color: '#6e4f16',
-        fontSize: '0.9rem',
-        lineHeight: '1.5',
-        marginBottom: 'var(--space-xl)'
-      }}>
-        <strong style={{ fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.5px', display: 'block', marginBottom: '4px' }}>
-          EDUCATIONAL NOTICE
-        </strong>
-        This portal is an academic educational resource. For official reporting, legal filings, and current government guidance, use the verified official sources listed below.
-      </div>
-
-      {/* Dynamic branding tagline */}
-      <div style={{ marginBottom: 'var(--space-xl)', borderLeft: '3px solid var(--accent-navy)', paddingLeft: '16px' }}>
-        <p style={{ fontSize: '1rem', color: 'var(--accent-navy)', fontStyle: 'italic', margin: 0 }}>
-          "Knowing where to verify information is part of knowing what to trust."
-        </p>
-      </div>
+        {/* Educational notice banner */}
+        <div style={{
+          padding: '14px 18px',
+          backgroundColor: 'var(--bg-secondary)',
+          borderRadius: '4px',
+          borderLeft: '3px solid var(--accent-navy)',
+          color: 'var(--text-secondary)',
+          fontSize: '0.85rem',
+          lineHeight: '1.6',
+          marginTop: '20px'
+        }}>
+          <strong style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.5px', display: 'block', marginBottom: '4px', color: 'var(--accent-navy)' }}>
+            Educational Notice
+          </strong>
+          This portal is an academic educational resource. For official reporting, legal filings, and current government guidance, use the verified official sources listed below.
+        </div>
+      </EditorialPageHeader>
 
       {loading && (
         <div style={{ display: 'flex', justifyContent: 'center', padding: '40px 0' }}>

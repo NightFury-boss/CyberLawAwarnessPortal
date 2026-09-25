@@ -1875,6 +1875,10 @@ async function seed(isReset = false) {
       );
     }
 
+    // Synchronize questions: remove legacy questions whose questionText is no longer in the fixture bank
+    const activeQuestionTexts = new Set(quizQuestionsData.map(q => q.questionText));
+    await QuizQuestion.deleteMany({ questionText: { $nin: Array.from(activeQuestionTexts) } });
+
     // 8. Scenario Engine Seeding (Baseline & Branching Final)
     console.log('- Seeding scenario engine nodes...');
     
@@ -1944,6 +1948,10 @@ async function seed(isReset = false) {
       for (let dList of decisionsList) {
         const parentStage = stageMap[dList.stageOrder];
         const decisionIds = [];
+
+        // Synchronize decisions for this stage to remove obsolete options from previous scenario versions
+        const validDecisionTexts = dList.decisions.map(d => d.optionText);
+        await ScenarioDecision.deleteMany({ stageId: parentStage._id, optionText: { $nin: validDecisionTexts } });
 
         for (let dec of dList.decisions) {
           let resolvedNextStageId = null;

@@ -1,10 +1,17 @@
-﻿import React, { useState, useEffect, useRef } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState, useEffect, useRef } from 'react';
+import { Link, useLocation } from 'react-router-dom';
 import api from '../services/api';
 import PortalSearch from '../components/search/PortalSearch';
 import { searchItems } from '../components/search/searchUtils';
+import WorkspaceBreadcrumb from '../components/WorkspaceBreadcrumb';
+import EditorialPageHeader from '../components/common/EditorialPageHeader';
+import EditorialRule from '../components/common/EditorialRule';
 
 function Laws() {
+  const location = useLocation();
+  const isWorkspaceContext = location.pathname.startsWith('/workspace');
+  const getContextPath = (p) => (isWorkspaceContext ? `/workspace${p}` : p);
+
   const [laws, setLaws] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -147,7 +154,7 @@ function Laws() {
       id: 'Chapter XI',
       title: 'Chapter XI: Cyber Offences',
       desc: 'Defines criminal offences, arrest powers, and jail sentences.',
-      sections: ['Section 66C', 'Section 66D', 'Section 66E', 'Section 67'] // Removed struck down 66A
+      sections: ['Section 66C', 'Section 66D', 'Section 66E', 'Section 67', 'Section 66A']
     }
   ];
 
@@ -182,9 +189,7 @@ function Laws() {
     setLoading(true);
     try {
       const data = await api.getLaws();
-      // Omit Section 66A from legal display as it has been struck down
-      const activeData = data.filter(l => l.sectionNumber !== 'Section 66A');
-      setLaws(activeData);
+      setLaws(data);
     } catch (err) {
       setError('Failed to fetch cyber law database records.');
     } finally {
@@ -572,7 +577,7 @@ function Laws() {
           <span style={{ color: 'var(--text-primary)' }}>{section.sectionNumber}</span>
           <span>&rarr;</span>
           {section.relatedCyberCrimes && section.relatedCyberCrimes.length > 0 ? (
-            <Link to="/crimes" style={{ color: 'var(--accent-navy)', fontWeight: 'bold', textDecoration: 'underline' }}>
+            <Link to={getContextPath('/crimes')} style={{ color: 'var(--accent-navy)', fontWeight: 'bold', textDecoration: 'underline' }}>
               Crime: {section.relatedCyberCrimes[0]}
             </Link>
           ) : (
@@ -580,7 +585,7 @@ function Laws() {
           )}
           <span>&rarr;</span>
           {section.relatedCaseStudies && section.relatedCaseStudies.length > 0 ? (
-            <Link to="/cases" style={{ color: 'var(--accent-navy)', fontWeight: 'bold', textDecoration: 'underline' }}>
+            <Link to={getContextPath('/cases')} style={{ color: 'var(--accent-navy)', fontWeight: 'bold', textDecoration: 'underline' }}>
               Case File: {section.relatedCaseStudies[0].replace(/-/g, ' ')}
             </Link>
           ) : (
@@ -812,34 +817,28 @@ function Laws() {
     <div className="container" style={{ padding: 'var(--space-xl) 0', fontFamily: 'var(--font-sans)', color: 'var(--text-primary)' }}>
       
       {/* Editorial Header */}
-      <div style={{ marginBottom: 'var(--space-xxl)' }}>
-        <span style={{ fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '2px', color: 'var(--accent-navy)', fontWeight: '800', display: 'block', marginBottom: '8px' }}>
-          National Digital Legislation Library
-        </span>
-        <h1 style={{ fontSize: '3rem', fontWeight: 'bold', color: 'var(--accent-navy)', margin: '0 0 12px 0' }}>
-          INDIAN DIGITAL LAW INDEX
-        </h1>
-        <p style={{ fontSize: '1.25rem', color: 'var(--text-secondary)', margin: '0 0 16px 0', fontFamily: 'var(--font-sans)', fontStyle: 'normal', fontWeight: '400' }}>
-          "Understanding the provision is the first step. Understanding where it matters is the next."
-        </p>
-        <p style={{ maxWidth: '850px', color: 'var(--text-secondary)', lineHeight: '1.7', fontSize: '1rem', margin: 0 }}>
-          Explore India's IT governance, data privacy statutes, and judicial interpretations. Connect statutory clauses to real-world incidents, toggle legal drafts, and bookmark provisions.
-        </p>
+      <EditorialPageHeader
+        eyebrow="Statutory Index"
+        title="Indian Digital Law Index"
+        subtitle='"Understanding the provision is the first step. Understanding where it matters is the next."'
+        description="Explore India's IT governance, data privacy statutes, and judicial interpretations. Connect statutory clauses to real-world incidents, toggle legal drafts, and bookmark provisions."
+      >
+        <WorkspaceBreadcrumb />
 
         {/* Disclaimer Panel */}
         <div style={{
-          borderLeft: '4px solid var(--accent-navy)',
+          borderLeft: '3px solid var(--accent-navy)',
           backgroundColor: 'var(--bg-secondary)',
-          padding: '16px 20px',
+          padding: '14px 18px',
           borderRadius: '4px',
           fontSize: '0.85rem',
           lineHeight: '1.6',
-          marginTop: '24px',
+          marginTop: '20px',
           color: 'var(--text-secondary)'
         }}>
-          <strong>Educational Notice:</strong> This registry is compiled for public legal literacy and security awareness. It maps potentially relevant statutes to scenarios, but is <strong>not legal advice</strong>. Refer to official India Code registries for statutory filings.
+          <strong>Educational Notice:</strong> This index is compiled for public legal literacy and security awareness. It maps potentially relevant statutes to scenarios, but is <strong>not legal advice</strong>. Refer to official India Code publications for statutory filings.
         </div>
-      </div>
+      </EditorialPageHeader>
 
       <PortalSearch
         placeholder="Search laws, sections, or legal topics"
@@ -1248,7 +1247,7 @@ function Laws() {
                         Related Cybercrime Category
                       </span>
                       <Link
-                        to={`/crimes`}
+                        to={getContextPath('/crimes')}
                         style={{
                           color: 'var(--accent-navy)',
                           fontWeight: 'bold',
@@ -1285,7 +1284,7 @@ function Laws() {
                     </button>
                     {selectedSituation.caseStudy && (
                       <Link
-                        to="/cases"
+                        to={getContextPath('/cases')}
                         style={{
                           padding: '8px 16px',
                           borderRadius: '4px',

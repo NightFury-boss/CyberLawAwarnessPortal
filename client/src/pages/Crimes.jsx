@@ -1,10 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import api from '../services/api';
 import PortalSearch from '../components/search/PortalSearch';
 import { searchItems } from '../components/search/searchUtils';
+import WorkspaceBreadcrumb from '../components/WorkspaceBreadcrumb';
+import EditorialPageHeader from '../components/common/EditorialPageHeader';
+import EditorialRule from '../components/common/EditorialRule';
 
 function Crimes() {
+  const location = useLocation();
+  const isWorkspaceContext = location.pathname.startsWith('/workspace');
+  const getContextPath = (p) => (isWorkspaceContext ? `/workspace${p}` : p);
+
   const getCategoryColor = (category) => {
     switch (category) {
       case 'Phishing & Messaging Scams':
@@ -80,11 +87,6 @@ function Crimes() {
     return score;
   };
 
-  // Interactive Game States ("Spot the Red Flags")
-  const [foundFlags, setFoundFlags] = useState([]); // Array of flag indexes clicked
-  const [flagAttempts, setFlagAttempts] = useState(0);
-  const [flagAccuracy, setFlagAccuracy] = useState(100);
-  const [activeFlagExplanation, setActiveFlagExplanation] = useState('');
 
   // Interactive Scenario States ("What Would You Do?")
   const [selectedScenarioOption, setSelectedScenarioOption] = useState(null);
@@ -156,7 +158,7 @@ function Crimes() {
         setRecReason('Start with the most common threats.');
       }
     } catch (err) {
-      setError('Failed to fetch cybercrime intelligence data.');
+      setError('Failed to load threat library data.');
     } finally {
       setLoading(false);
     }
@@ -168,11 +170,6 @@ function Crimes() {
 
   const handleSelectCrime = (crime) => {
     setSelectedCrime(crime);
-    // Reset mini-game/scenario states
-    setFoundFlags([]);
-    setFlagAttempts(0);
-    setFlagAccuracy(100);
-    setActiveFlagExplanation('');
     setSelectedScenarioOption(null);
     setScenarioSubmitted(false);
     setQuickCheckAnswers({});
@@ -206,28 +203,6 @@ function Crimes() {
     localStorage.setItem('completed_crimes', JSON.stringify(updated));
   };
 
-  // Spot the Flag Game Handlers
-  const handleFlagClick = (flagIndex, explanation) => {
-    if (foundFlags.includes(flagIndex)) return;
-    const nextFound = [...foundFlags, flagIndex];
-    setFoundFlags(nextFound);
-    const nextAttempts = flagAttempts + 1;
-    setFlagAttempts(nextAttempts);
-    
-    const totalFlags = selectedCrime.spotTheFlags?.clickableFlags?.length || 0;
-    const accuracy = Math.round((nextFound.length / nextAttempts) * 100);
-    setFlagAccuracy(accuracy);
-    setActiveFlagExplanation(explanation);
-  };
-
-  const handleMisclick = () => {
-    const nextAttempts = flagAttempts + 1;
-    setFlagAttempts(nextAttempts);
-    const totalFlags = selectedCrime.spotTheFlags?.clickableFlags?.length || 0;
-    const accuracy = Math.round((foundFlags.length / nextAttempts) * 100);
-    setFlagAccuracy(accuracy);
-    setActiveFlagExplanation('That text segment is clean. Try scanning for urgency, suspicious links, or irregular sender domains.');
-  };
 
   // Quick Check handlers
   const handleQuickCheckSelect = (qIdx, oIdx) => {
@@ -282,7 +257,7 @@ function Crimes() {
       {/* LOADING STATE */}
       {loading && (
         <div style={{ textAlign: 'center', padding: 'var(--space-xl) 0' }}>
-          <h3 style={{ color: 'var(--accent-navy)' }}>Consulting Threat Intelligence Archives...</h3>
+          <h3 style={{ color: 'var(--accent-navy)' }}>Opening Threat Library...</h3>
         </div>
       )}
 
@@ -290,20 +265,14 @@ function Crimes() {
       {!loading && !selectedCrime && (
         <div>
           {/* Header block */}
-          <div style={{ marginBottom: 'var(--space-xl)' }}>
-            <span className="tag" style={{ textTransform: 'uppercase', fontSize: '0.8rem', fontWeight: '600' }}>
-              Cybercrime Intelligence Registry
-            </span>
-            <h1 style={{ fontSize: '2.8rem', fontWeight: 'bold', marginTop: 'var(--space-xs)', color: 'var(--accent-navy)' }}>
-              CYBERCRIME LIBRARY
-            </h1>
-            <p style={{ fontSize: '1.25rem', fontStyle: 'italic', color: 'var(--text-secondary)', marginTop: '4px' }}>
-              "Know how the attack works before it reaches you."
-            </p>
-            <p className="text-muted" style={{ maxWidth: '750px', marginTop: 'var(--space-sm)', lineHeight: '1.6' }}>
-              Explore common cybercrimes, understand the warning signs, see how attacks unfold, and learn what to do when something feels wrong.
-            </p>
-          </div>
+          <EditorialPageHeader
+            eyebrow="Threat Directory"
+            title="Cybercrime Library"
+            subtitle='"Know how the attack works before it reaches you."'
+            description="Explore common cybercrimes, understand the warning signs, see how attacks unfold, and learn what to do when something feels wrong."
+          >
+            <WorkspaceBreadcrumb />
+          </EditorialPageHeader>
 
           {/* Recommendations Block (Personalized) */}
           {recommendations.length > 0 && (
@@ -334,7 +303,7 @@ function Crimes() {
                       {rec.shortDescription}
                     </p>
                     <div style={{ marginTop: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.8rem' }}>
-                      <span style={{ fontWeight: '500', color: 'var(--accent-navy)' }}>Intelligence Profile &rarr;</span>
+                      <span style={{ fontWeight: '500', color: 'var(--accent-navy)' }}>Threat Profile &rarr;</span>
                       {completedCrimes.includes(rec.slug) && <span style={{ color: 'var(--color-success)' }}>Completed</span>}
                     </div>
                   </div>
@@ -448,44 +417,66 @@ function Crimes() {
           {/* Main Grid of Threat Profiles */}
           <div>
                         {filteredCrimes.length > 0 && (
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: 'var(--space-lg)' }}>
-                {filteredCrimes.map((crime) => (
-                  <div
-                    key={crime._id}
-                    onClick={() => handleSelectCrime(crime)}
-                    tabIndex={0}
-                    onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); handleSelectCrime(crime); } }}
-                    className="editorial-card"
-                    style={{
-                      cursor: 'pointer',
-                      borderLeft: '4px solid var(--accent-navy)',
-                      transition: 'transform 0.2s ease, box-shadow 0.2s ease',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      justifyContent: 'space-between'
-                    }}
-                  >
-                    <div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                        <span className="tag" style={{ fontSize: '0.75rem' }}>{crime.category}</span>
-                        {completedCrimes.includes(crime.slug) && (
-                          <span style={{ color: 'var(--color-success)', fontSize: '0.8rem', fontWeight: 'bold' }}>Done</span>
-                        )}
-                      </div>
-                      <h3 style={{ fontSize: '1.4rem', margin: '4px 0 8px 0', color: 'var(--accent-navy)' }}>
-                        {crime.title}
-                      </h3>
-                      <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', lineHeight: '1.5' }}>
-                        {crime.shortDescription}
-                      </p>
-                    </div>
+              <div className="crimes-reference-directory" role="list" aria-label="Cybercrime threat directory">
+                {filteredCrimes.map((crime, index) => {
+                  const isCompleted = completedCrimes.includes(crime.slug);
+                  const attackMethods = crime.attackVectors?.join(', ') || 'Digital Communications';
+                  const primarySignal = crime.warningSigns?.[0]?.title || crime.attackerTactics?.[0]?.tactic || 'Deceptive impersonation & urgency';
 
-                    <div style={{ marginTop: 'var(--space-md)', paddingTop: 'var(--space-sm)', borderTop: '1px solid var(--color-border-light)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-                      <span>Methods: <strong>{crime.attackVectors?.join(', ') || 'Online'}</strong></span>
-                      <span style={{ color: 'var(--accent-navy)', fontWeight: '600' }}>Examine Profile &rarr;</span>
-                    </div>
-                  </div>
-                ))}
+                  return (
+                    <article
+                      key={crime._id}
+                      role="listitem"
+                      tabIndex={0}
+                      onClick={() => handleSelectCrime(crime)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault();
+                          handleSelectCrime(crime);
+                        }
+                      }}
+                      className="crime-index-entry"
+                      aria-labelledby={`crime-title-${crime.slug}`}
+                    >
+                      {/* Main Column: Identifier, Tag, Title, and Concise Description */}
+                      <div className="crime-index-main">
+                        <div className="crime-index-meta">
+                          <span className="crime-index-ref font-mono">
+                            REF #{String(index + 1).padStart(2, '0')}
+                          </span>
+                          <span className="crime-index-tag">{crime.category}</span>
+                          {isCompleted && (
+                            <span className="crime-index-done font-mono">✓ Reviewed</span>
+                          )}
+                        </div>
+                        <h3 id={`crime-title-${crime.slug}`} className="crime-index-title">
+                          {crime.title}
+                        </h3>
+                        <p className="crime-index-desc">
+                          {crime.shortDescription}
+                        </p>
+                      </div>
+
+                      {/* Middle Column: Structured Signals & Attack Methods */}
+                      <div className="crime-index-signals">
+                        <div className="crime-signal-row">
+                          <span className="crime-signal-label">Methods:</span>
+                          <span className="crime-signal-val font-mono">{attackMethods}</span>
+                        </div>
+                        <div className="crime-signal-row">
+                          <span className="crime-signal-label">Key Signal:</span>
+                          <span className="crime-signal-val">{primarySignal}</span>
+                        </div>
+                      </div>
+
+                      {/* Action Column */}
+                      <div className="crime-index-action" aria-hidden="true">
+                        <span>Threat Profile</span>
+                        <span className="link-arrow">&rarr;</span>
+                      </div>
+                    </article>
+                  );
+                })}
               </div>
             )}
           </div>
@@ -530,6 +521,11 @@ function Crimes() {
       {/* 2. DETAILED THREAT PROFILE VIEW (selectedCrime is active) */}
       {!loading && selectedCrime && (
         <div>
+          <WorkspaceBreadcrumb
+            currentItem={selectedCrime.title}
+            onParentClick={handleBackToLanding}
+          />
+
           {/* Top Return Banner */}
           <button
             onClick={handleBackToLanding}
@@ -607,20 +603,18 @@ function Crimes() {
           }}>
             <a href="#overview" style={{ color: 'var(--text-primary)', fontWeight: '600', textDecoration: 'none', fontSize: '0.9rem' }}>1. Overview</a>
             <a href="#lifecycle" style={{ color: 'var(--text-primary)', fontWeight: '600', textDecoration: 'none', fontSize: '0.9rem' }}>2. How it Unfolds</a>
-            {selectedCrime.spotTheFlags?.messageText && (
-              <a href="#simulator" style={{ color: 'var(--accent-navy)', fontWeight: '600', textDecoration: 'none', fontSize: '0.9rem' }}>3. Spot the Flags Game</a>
-            )}
-            <a href="#prevention" style={{ color: 'var(--text-primary)', fontWeight: '600', textDecoration: 'none', fontSize: '0.9rem' }}>4. Prevention Check</a>
-            <a href="#legal" style={{ color: 'var(--text-primary)', fontWeight: '600', textDecoration: 'none', fontSize: '0.9rem' }}>5. Legal Context</a>
-            <a href="#quickcheck" style={{ color: 'var(--text-primary)', fontWeight: '600', textDecoration: 'none', fontSize: '0.9rem' }}>6. Knowledge Check</a>
+            <a href="#indicators" style={{ color: 'var(--accent-navy)', fontWeight: '600', textDecoration: 'none', fontSize: '0.9rem' }}>3. Critical Indicators</a>
+            <a href="#prevention" style={{ color: 'var(--text-primary)', fontWeight: '600', textDecoration: 'none', fontSize: '0.9rem' }}>4. Prevention Guidelines</a>
+            <a href="#scenario" style={{ color: 'var(--text-primary)', fontWeight: '600', textDecoration: 'none', fontSize: '0.9rem' }}>5. Practice Decision</a>
+            <a href="#legal" style={{ color: 'var(--text-primary)', fontWeight: '600', textDecoration: 'none', fontSize: '0.9rem' }}>6. Legal Context</a>
           </div>
 
           {/* SECTION 1: OVERVIEW */}
           <section id="overview" style={{ marginBottom: 'var(--space-xl)' }}>
             <h2 style={{ fontSize: '1.8rem', color: 'var(--accent-navy)', marginBottom: 'var(--space-md)' }}>
-              1. Threat Intelligence Profile
+              1. Threat Profile & Overview
             </h2>
-            <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: 'var(--space-xl)', flexWrap: 'wrap' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 'var(--space-xl)' }}>
               <div>
                 <h3 style={{ fontSize: '1.15rem', color: 'var(--accent-navy)', marginBottom: '8px' }}>What is it?</h3>
                 <p style={{ color: 'var(--text-primary)', fontSize: '1.05rem', lineHeight: '1.6', marginBottom: 'var(--space-md)' }}>
@@ -748,159 +742,186 @@ function Crimes() {
             )}
           </section>
 
-          {/* SECTION 3: SPOT THE RED FLAGS MINI-GAME */}
-          {selectedCrime.spotTheFlags?.messageText && (
-            <section id="simulator" style={{ marginBottom: 'var(--space-xl)' }}>
-              <h2 style={{ fontSize: '1.8rem', color: 'var(--accent-navy)', marginBottom: 'var(--space-md)' }}>
-                Interactive Activity: Spot the Red Flags
+          <EditorialRule spacing="lg" />
+
+          {/* SECTION 3: CRITICAL INDICATORS TO NOTICE */}
+          <section id="indicators" style={{ marginBottom: 'var(--space-xl)' }}>
+            <div style={{ marginBottom: 'var(--space-md)' }}>
+              <span className="editorial-eyebrow" style={{ color: 'var(--color-portal-blue, #2563eb)' }}>
+                DECEPTION ANALYSIS & SIGNALS
+              </span>
+              <h2 style={{ fontSize: '1.8rem', color: 'var(--accent-navy)', margin: '4px 0 8px 0' }}>
+                3. Critical Indicators to Notice
               </h2>
-              <p className="text-muted" style={{ marginBottom: 'var(--space-md)', fontSize: '0.95rem' }}>
-                Examine the message below. **Click on the phrases or components** that seem suspicious or reveal scam tactics.
+              <p className="text-muted" style={{ margin: 0, fontSize: '0.95rem', maxWidth: '720px' }}>
+                Operational anatomy of this threat: recognize typical deceptive signals, inspect warning indicators, and apply verified safer responses.
               </p>
+            </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: 'var(--space-xl)', alignItems: 'start' }}>
-                {/* Phone mockup */}
-                <div style={{
-                  backgroundColor: '#0a0d14',
-                  borderRadius: '12px',
-                  padding: '16px',
-                  color: '#ffffff',
-                  fontFamily: 'monospace',
-                  border: '8px solid #2d3748',
-                  maxWidth: '480px',
-                  boxShadow: 'var(--shadow-md)'
-                }}>
-                  <div style={{ borderBottom: '1px solid #2d3748', paddingBottom: '8px', marginBottom: '12px', display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                    <span>INCIDENT SIMULATION</span>
-                    <span>100% SECURE</span>
-                  </div>
-
-                  <div style={{
-                    backgroundColor: '#1a202c',
-                    borderRadius: '8px',
-                    padding: '14px',
-                    fontSize: '0.9rem',
-                    lineHeight: '1.6',
-                    whiteSpace: 'pre-wrap',
-                    color: '#e2e8f0'
-                  }}>
-                    {/* Render text segments with click triggers */}
-                    {(() => {
-                      const text = selectedCrime.spotTheFlags.messageText;
-                      const flags = selectedCrime.spotTheFlags.clickableFlags;
-                      
-                      let lastIndex = 0;
-                      const elements = [];
-
-                      flags.forEach((flag, idx) => {
-                        const target = flag.textSegment;
-                        const startIndex = text.indexOf(target, lastIndex);
-                        
-                        if (startIndex !== -1) {
-                          // Before segment
-                          if (startIndex > lastIndex) {
-                            const normalText = text.substring(lastIndex, startIndex);
-                            elements.push(
-                              <span key={`n-${idx}`} onClick={handleMisclick} style={{ cursor: 'pointer' }}>
-                                {normalText}
-                              </span>
-                            );
-                          }
-                          // Clickable segment
-                          elements.push(
-                            <span 
-                              key={`f-${idx}`}
-                              onClick={() => handleFlagClick(idx, flag.explanation)}
-                              style={{
-                                borderBottom: foundFlags.includes(idx) ? '2px solid var(--color-success)' : '2px dashed var(--color-error)',
-                                backgroundColor: foundFlags.includes(idx) ? 'rgba(26, 98, 52, 0.2)' : 'transparent',
-                                color: foundFlags.includes(idx) ? '#48bb78' : 'inherit',
-                                padding: '1px 2px',
-                                fontWeight: foundFlags.includes(idx) ? 'bold' : 'normal',
-                                cursor: 'pointer'
-                              }}
-                              title="Inspect Segment"
-                            >
-                              {target}
-                            </span>
-                          );
-                          lastIndex = startIndex + target.length;
-                        }
-                      });
-
-                      // Remainder text
-                      if (lastIndex < text.length) {
-                        elements.push(
-                          <span key="n-last" onClick={handleMisclick} style={{ cursor: 'pointer' }}>
-                            {text.substring(lastIndex)}
-                          </span>
-                        );
-                      }
-
-                      return elements.length > 0 ? elements : text;
-                    })()}
-                  </div>
-
-                  <div style={{ marginTop: '12px', fontSize: '0.8rem', color: '#a0aec0', textAlign: 'center' }}>
-                    *Click directly on suspicious segments to analyze.*
+            {/* 4-STAGE FLOW: Threat -> Typical Signal -> What to Verify -> Safer Response */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-lg)' }}>
+              
+              {/* STAGE 1: THREAT DEFINITION & ATTACK VECTOR */}
+              <div style={{
+                backgroundColor: 'var(--bg-secondary)',
+                border: '1px solid var(--color-border)',
+                borderRadius: '6px',
+                padding: 'var(--space-md) var(--space-lg)',
+                display: 'flex',
+                flexWrap: 'wrap',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                gap: '12px'
+              }}>
+                <div>
+                  <span style={{ fontSize: '0.72rem', fontWeight: 'bold', textTransform: 'uppercase', color: 'var(--text-muted)' }}>
+                    Threat Profile
+                  </span>
+                  <div style={{ fontSize: '1.15rem', fontWeight: 'bold', color: 'var(--accent-navy)' }}>
+                    {selectedCrime.title}
                   </div>
                 </div>
-
-                {/* Scoreboard & explanations */}
-                <div style={{ backgroundColor: 'var(--bg-secondary)', border: '1px solid var(--color-border)', padding: 'var(--space-lg)', borderRadius: '6px' }}>
-                  <h3 style={{ fontSize: '1.25rem', color: 'var(--accent-navy)', marginBottom: 'var(--space-sm)', fontWeight: 'bold' }}>
-                    Simulation Analysis
-                  </h3>
-                  
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: 'var(--space-md)' }}>
-                    <div style={{ backgroundColor: 'var(--bg-primary)', padding: '10px', borderRadius: '4px', textAlign: 'center' }}>
-                      <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Flags Identified</span>
-                      <h4 style={{ fontSize: '1.5rem', margin: '4px 0 0 0', color: 'var(--accent-navy)', fontWeight: 'bold' }}>
-                        {foundFlags.length} / {selectedCrime.spotTheFlags.clickableFlags.length}
-                      </h4>
-                    </div>
-                    <div style={{ backgroundColor: 'var(--bg-primary)', padding: '10px', borderRadius: '4px', textAlign: 'center' }}>
-                      <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Click Accuracy</span>
-                      <h4 style={{ fontSize: '1.5rem', margin: '4px 0 0 0', color: foundFlags.length > 0 ? 'var(--color-success)' : 'inherit', fontWeight: 'bold' }}>
-                        {flagAccuracy}%
-                      </h4>
-                    </div>
-                  </div>
-
-                  {activeFlagExplanation ? (
-                    <div style={{
-                      backgroundColor: 'var(--bg-primary)',
-                      padding: 'var(--space-md)',
-                      borderRadius: '4px',
-                      borderLeft: '4px solid var(--accent-navy)'
-                    }}>
-                      <h4 style={{ fontSize: '0.95rem', color: 'var(--accent-navy)', fontWeight: 'bold', marginBottom: '6px' }}>
-                        Segment Analysis:
-                      </h4>
-                      <p style={{ fontSize: '0.88rem', color: 'var(--text-primary)', margin: 0, lineHeight: '1.5' }}>
-                        {activeFlagExplanation}
-                      </p>
-                    </div>
-                  ) : (
-                    <p style={{ fontSize: '0.88rem', color: 'var(--text-muted)', fontStyle: 'italic', margin: 0 }}>
-                      No elements selected. Scan the message card and click on indicators you suspect represent deception tactics.
-                    </p>
-                  )}
-
-                  {foundFlags.length === selectedCrime.spotTheFlags.clickableFlags.length && (
-                    <div style={{ marginTop: 'var(--space-md)', backgroundColor: 'var(--color-success-light)', color: '#1a6234', padding: '10px 14px', borderRadius: '4px', fontWeight: '500', fontSize: '0.88rem' }}>
-                      Outstanding! You identified all critical threat markers in this mock transmission.
-                    </div>
-                  )}
+                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                  <span style={{ fontSize: '0.75rem', padding: '3px 8px', borderRadius: '3px', backgroundColor: 'var(--bg-primary)', border: '1px solid var(--color-border)', fontWeight: '600' }}>
+                    Domain: {selectedCrime.category}
+                  </span>
+                  {selectedCrime.attackVectors?.slice(0, 2).map((vec, vIdx) => (
+                    <span key={vIdx} style={{ fontSize: '0.75rem', padding: '3px 8px', borderRadius: '3px', backgroundColor: 'var(--bg-primary)', border: '1px solid var(--color-border)', color: 'var(--text-secondary)' }}>
+                      Vector: {vec}
+                    </span>
+                  ))}
                 </div>
               </div>
-            </section>
-          )}
+
+              {/* STAGE 2: TYPICAL SIGNAL (Authentic Quotation styled like DigitalMomentsSection) */}
+              {selectedCrime.spotTheFlags?.messageText && (
+                <div 
+                  className="digital-moment-item"
+                  style={{
+                    backgroundColor: 'var(--bg-white)',
+                    border: '1px solid var(--color-border)',
+                    borderRadius: '6px',
+                    padding: 'var(--space-lg)'
+                  }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                    <span style={{ fontSize: '0.72rem', fontWeight: '700', textTransform: 'uppercase', color: 'var(--color-warning)', letterSpacing: '0.05em' }}>
+                      Typical Deceptive Signal
+                    </span>
+                    <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                      Simulated Communication Sample
+                    </span>
+                  </div>
+
+                  <blockquote style={{
+                    backgroundColor: 'var(--bg-secondary)',
+                    borderLeft: '4px solid var(--accent-navy)',
+                    padding: '14px 18px',
+                    margin: '8px 0 14px 0',
+                    fontSize: '0.95rem',
+                    lineHeight: '1.65',
+                    fontStyle: 'italic',
+                    color: 'var(--text-primary)',
+                    borderRadius: '0 4px 4px 0'
+                  }}>
+                    &ldquo;{selectedCrime.spotTheFlags.messageText}&rdquo;
+                  </blockquote>
+
+                  <p style={{ fontSize: '0.84rem', color: 'var(--text-secondary)', margin: 0 }}>
+                    Notice how deceptive messages blend official-sounding terminology with abrupt consequences to bypass verification habits.
+                  </p>
+                </div>
+              )}
+
+              {/* STAGE 3: WHAT TO VERIFY (Deception markers breakdown) */}
+              <div style={{
+                backgroundColor: 'var(--bg-white)',
+                border: '1px solid var(--color-border)',
+                borderRadius: '6px',
+                padding: 'var(--space-lg)'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: 'var(--space-md)' }}>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--color-portal-blue, #2563eb)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <circle cx="12" cy="12" r="10" />
+                    <line x1="12" y1="8" x2="12" y2="12" />
+                    <line x1="12" y1="16" x2="12.01" y2="16" />
+                  </svg>
+                  <h3 style={{ fontSize: '1.15rem', color: 'var(--accent-navy)', margin: 0, fontWeight: '700' }}>
+                    What to Verify: Critical Deception Markers
+                  </h3>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '12px' }}>
+                  {(selectedCrime.spotTheFlags?.clickableFlags || selectedCrime.warningSigns || []).map((flag, fIdx) => (
+                    <div
+                      key={fIdx}
+                      style={{
+                        backgroundColor: 'var(--bg-secondary)',
+                        border: '1px solid var(--color-border)',
+                        borderRadius: '4px',
+                        padding: '12px 14px'
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
+                        <span style={{
+                          fontSize: '0.7rem',
+                          fontWeight: '700',
+                          padding: '2px 6px',
+                          borderRadius: '3px',
+                          backgroundColor: 'rgba(211, 84, 0, 0.1)',
+                          color: 'var(--color-warning)'
+                        }}>
+                          Marker {fIdx + 1}
+                        </span>
+                        <strong style={{ fontSize: '0.88rem', color: 'var(--accent-navy)' }}>
+                          {flag.textSegment ? `"${flag.textSegment}"` : flag.title}
+                        </strong>
+                      </div>
+                      <p style={{ fontSize: '0.84rem', color: 'var(--text-secondary)', margin: 0, lineHeight: '1.5' }}>
+                        {flag.explanation || flag.description}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* STAGE 4: SAFER RESPONSE (Independent verification protocol) */}
+              <div style={{
+                backgroundColor: 'var(--bg-secondary)',
+                border: '1px solid var(--color-border)',
+                borderLeft: '4px solid var(--color-success)',
+                borderRadius: '6px',
+                padding: 'var(--space-lg)'
+              }}>
+                <h3 style={{ fontSize: '1.1rem', color: '#1a6234', fontWeight: '700', margin: '0 0 10px 0', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <polyline points="20 6 9 17 4 12" />
+                  </svg>
+                  Safer Response & Verification Protocol
+                </h3>
+                <p style={{ fontSize: '0.88rem', color: 'var(--text-secondary)', margin: '0 0 10px 0', lineHeight: '1.55' }}>
+                  Pause immediately before taking action. Apply these authoritative verification rules:
+                </p>
+                <ul style={{ paddingLeft: 'var(--space-md)', fontSize: '0.88rem', lineHeight: '1.6', color: 'var(--text-primary)' }}>
+                  {(selectedCrime.actionSteps || [
+                    'Never use phone numbers or web addresses provided within the unverified message.',
+                    'Navigate independently to the registered entity portal or call the official customer care number.',
+                    'Check whether the entity communicates through official registered sender headers.'
+                  ]).slice(0, 3).map((step, sIdx) => (
+                    <li key={sIdx} style={{ marginBottom: '4px' }}>{step}</li>
+                  ))}
+                </ul>
+              </div>
+
+            </div>
+          </section>
+
+          <EditorialRule spacing="lg" />
 
           {/* SECTION 4: ACTIONS CHECKLIST */}
           <section id="prevention" style={{ marginBottom: 'var(--space-xl)' }}>
             <h2 style={{ fontSize: '1.8rem', color: 'var(--accent-navy)', marginBottom: 'var(--space-md)' }}>
-              3. Prevention & Response Guidelines
+              4. Prevention & Response Guidelines
             </h2>
 
             {/* Grid of Do/Avoid */}
@@ -970,12 +991,17 @@ function Crimes() {
             </div>
           </section>
 
-          {/* SECTION: WHAT WOULD YOU DO SCENARIO */}
+          {/* SECTION 5: WHAT WOULD YOU DO SCENARIO */}
           {selectedCrime.whatWouldYouDo?.questionText && (
-            <section style={{ marginBottom: 'var(--space-xl)', border: '1px solid var(--color-border)', padding: 'var(--space-lg)', borderRadius: '6px' }}>
-              <h3 style={{ fontSize: '1.3rem', color: 'var(--accent-navy)', marginBottom: 'var(--space-sm)', fontWeight: 'bold' }}>
-                What Would You Do?
-              </h3>
+            <section id="scenario" style={{ marginBottom: 'var(--space-xl)', border: '1px solid var(--color-border)', padding: 'var(--space-lg)', borderRadius: '6px', backgroundColor: 'var(--bg-white)' }}>
+              <div style={{ marginBottom: 'var(--space-sm)' }}>
+                <span className="editorial-eyebrow" style={{ color: 'var(--color-portal-blue, #2563eb)' }}>
+                  DECISION CHECKPOINT
+                </span>
+                <h3 style={{ fontSize: '1.4rem', color: 'var(--accent-navy)', margin: '4px 0 6px 0', fontWeight: 'bold' }}>
+                  5. Practical Decision: What Would You Do?
+                </h3>
+              </div>
               <p style={{ fontSize: '0.95rem', color: 'var(--text-secondary)', marginBottom: 'var(--space-md)' }}>
                 {selectedCrime.whatWouldYouDo.questionText}
               </p>
@@ -995,7 +1021,8 @@ function Crimes() {
                       backgroundColor: selectedScenarioOption === idx ? 'var(--bg-secondary)' : 'var(--bg-primary)',
                       cursor: 'pointer',
                       fontSize: '0.9rem',
-                      fontWeight: selectedScenarioOption === idx ? '600' : '400'
+                      fontWeight: selectedScenarioOption === idx ? '600' : '400',
+                      transition: 'all 0.18s ease'
                     }}
                   >
                     {opt.optionText}
@@ -1022,7 +1049,7 @@ function Crimes() {
                   borderRadius: '4px'
                 }}>
                   <h4 style={{ margin: '0 0 4px 0', fontSize: '0.95rem', fontWeight: 'bold', color: selectedCrime.whatWouldYouDo.options[selectedScenarioOption].isCorrect ? '#1a6234' : '#7b1c12' }}>
-                    {selectedCrime.whatWouldYouDo.options[selectedScenarioOption].isCorrect ? 'CORRECT' : 'UNSAFE'}
+                    {selectedCrime.whatWouldYouDo.options[selectedScenarioOption].isCorrect ? 'CORRECT VERIFICATION' : 'UNSAFE REFLEX'}
                   </h4>
                   <p style={{ fontSize: '0.9rem', margin: 0, lineHeight: '1.5' }}>
                     {selectedCrime.whatWouldYouDo.options[selectedScenarioOption].explanation}
@@ -1055,10 +1082,12 @@ function Crimes() {
             </section>
           )}
 
-          {/* SECTION 5: LEGAL CONTEXT */}
-          <section id="legal" style={{ marginBottom: 'var(--space-xl)', borderTop: '1px solid var(--color-border)', paddingTop: 'var(--space-xl)' }}>
+          <EditorialRule spacing="lg" />
+
+          {/* SECTION 6: LEGAL CONTEXT */}
+          <section id="legal" style={{ marginBottom: 'var(--space-xl)' }}>
             <h2 style={{ fontSize: '1.8rem', color: 'var(--accent-navy)', marginBottom: 'var(--space-md)' }}>
-              4. Relevant Legal Context
+              6. Relevant Legal Context
             </h2>
             <p className="text-muted" style={{ marginBottom: 'var(--space-md)', fontSize: '0.95rem' }}>
               Under Indian cyber law, the following provisions govern behaviors associated with this threat profile:
@@ -1084,7 +1113,7 @@ function Crimes() {
                     Governs identity hijacking, cloned sites, or device intrusions related to this threat.
                   </p>
                   <Link 
-                    to="/laws" 
+                    to={getContextPath('/laws')} 
                     className="btn btn-secondary btn-sm"
                     style={{ fontSize: '0.8rem', padding: '6px 12px' }}
                   >
@@ -1220,7 +1249,7 @@ function Crimes() {
                 Back to Library
               </button>
               <Link to="/quizzes" className="btn btn-primary">
-                Test Assessment Registry
+                Practice Knowledge Quizzes
               </Link>
             </div>
           </div>

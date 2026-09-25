@@ -55,7 +55,7 @@ const ScenarioDecisionSchema = new mongoose.Schema({
   },
   outcomeType: {
     type: String,
-    enum: ['correct', 'incorrect', 'false-positive', 'unsafe-action', 'neutral'],
+    enum: ['correct', 'incorrect', 'false-positive', 'unsafe-action', 'neutral', 'safe-action', 'over-cautious'],
     default: 'neutral'
   }
 }, {

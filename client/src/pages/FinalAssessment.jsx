@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import RemediationCards from '../components/RemediationCards';
+import { performStateTransition } from '../utils/transitionUtils';
 
 function FinalAssessment({ user, updateProgressTrigger }) {
   const [session, setSession] = useState(null); // active session ID
@@ -89,10 +90,12 @@ function FinalAssessment({ user, updateProgressTrigger }) {
       const data = await api.startAssessment('final');
       sessionStorage.setItem('active_final_session_id', data.sessionId);
       setSession(data.sessionId);
-      setCurrentStage(data.stage);
-      setCurrentStep('active_simulation');
-      window.scrollTo({ top: 0, behavior: 'instant' });
-      setTimeout(() => stageHeadingRef.current?.focus(), 50);
+      performStateTransition(() => {
+        setCurrentStage(data.stage);
+        setCurrentStep('active_simulation');
+        window.scrollTo({ top: 0, behavior: 'instant' });
+        setTimeout(() => stageHeadingRef.current?.focus(), 50);
+      });
     } catch (err) {
       setError(err.message || 'Failed to start final assessment.');
     } finally {
@@ -173,18 +176,20 @@ function FinalAssessment({ user, updateProgressTrigger }) {
       setMockOtp('');
       setMockZipPassword('');
 
-      if (nextData.isCompleted) {
-        sessionStorage.removeItem('active_final_session_id');
-        setResult(nextData);
-        setCurrentStep('reveal_view');
-        window.scrollTo({ top: 0, behavior: 'instant' });
-        if (updateProgressTrigger) updateProgressTrigger();
-      } else {
-        // Move to next adaptive branch stage returned by backend
-        setCurrentStage(nextData.stage);
-        window.scrollTo({ top: 0, behavior: 'instant' });
-        setTimeout(() => stageHeadingRef.current?.focus(), 50);
-      }
+      performStateTransition(() => {
+        if (nextData.isCompleted) {
+          sessionStorage.removeItem('active_final_session_id');
+          setResult(nextData);
+          setCurrentStep('reveal_view');
+          window.scrollTo({ top: 0, behavior: 'instant' });
+          if (updateProgressTrigger) updateProgressTrigger();
+        } else {
+          // Move to next adaptive branch stage returned by backend
+          setCurrentStage(nextData.stage);
+          window.scrollTo({ top: 0, behavior: 'instant' });
+          setTimeout(() => stageHeadingRef.current?.focus(), 50);
+        }
+      });
     } catch (err) {
       setError(err.message || 'Error submitting choice step.');
     } finally {
@@ -237,7 +242,7 @@ function FinalAssessment({ user, updateProgressTrigger }) {
                   <div style={{ fontSize: '1.4rem', fontWeight: '700', color: 'var(--accent-navy)' }}>{completedHistory.behaviourScores?.signalIdentification ?? 0}%</div>
                 </div>
                 <div style={{ padding: '10px', backgroundColor: 'var(--bg-primary)', borderRadius: '4px', borderLeft: '3px solid var(--accent-navy)' }}>
-                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Verification Habits</div>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Verification Behaviour</div>
                   <div style={{ fontSize: '1.4rem', fontWeight: '700', color: 'var(--accent-navy)' }}>{completedHistory.behaviourScores?.verification ?? 0}%</div>
                 </div>
                 <div style={{ padding: '10px', backgroundColor: 'var(--bg-primary)', borderRadius: '4px', borderLeft: '3px solid var(--accent-navy)' }}>
@@ -249,7 +254,7 @@ function FinalAssessment({ user, updateProgressTrigger }) {
                   <div style={{ fontSize: '1.4rem', fontWeight: '700', color: 'var(--accent-navy)' }}>{completedHistory.behaviourScores?.falsePositive ?? 0}%</div>
                 </div>
                 <div style={{ padding: '10px', backgroundColor: 'var(--bg-primary)', borderRadius: '4px', borderLeft: '3px solid var(--accent-navy)' }}>
-                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Autopilot Control</div>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Unreviewed Acceptance Control</div>
                   <div style={{ fontSize: '1.4rem', fontWeight: '700', color: 'var(--accent-navy)' }}>{completedHistory.behaviourScores?.unreviewedAcceptance ?? 0}%</div>
                 </div>
               </div>
@@ -260,14 +265,13 @@ function FinalAssessment({ user, updateProgressTrigger }) {
               padding: 'var(--space-lg)',
               borderRadius: 'var(--radius-sm)',
               textAlign: 'center',
-              backgroundColor: 'var(--accent-navy-light)',
+              backgroundColor: 'var(--bg-secondary)',
               marginBottom: 'var(--space-xl)'
             }}>
-              <span style={{ fontSize: '0.85rem', fontWeight: '600', color: 'var(--text-muted)' }}>RECORDED FINAL SCORE</span>
-              <div style={{ fontSize: '3.2rem', fontWeight: '700', color: 'var(--accent-navy)' }}>{completedHistory.score}/100</div>
-              <div style={{ fontWeight: '600', color: completedHistory.score >= 75 ? 'var(--color-success)' : 'var(--color-warning)' }}>
-                Level: {completedHistory.awarenessLevel}
-              </div>
+              <span style={{ fontSize: '0.85rem', fontWeight: '600', color: 'var(--text-muted)' }}>RECORDED FINAL EVALUATION</span>
+              <p style={{ fontSize: '0.92rem', color: 'var(--text-primary)', margin: '8px 0 0 0' }}>
+                Your post-learning evaluation has been recorded across six discrete behavioral dimensions.
+              </p>
             </div>
           )}
 
@@ -316,7 +320,7 @@ function FinalAssessment({ user, updateProgressTrigger }) {
             Cyber Awareness Final Assessment
           </h1>
           <p className="text-muted" style={{ fontSize: '1.05rem', marginBottom: 'var(--space-xl)' }}>
-            Welcome to **"A Day in Your Digital Life"**. You will navigate multiple sequential situations (some legitimate system processes, others malicious threat indicators). Make choices to verify your judgment.
+            Welcome to <strong>&ldquo;A Day in Your Digital Life&rdquo;</strong>. You will navigate multiple sequential situations (some legitimate system processes, others malicious threat indicators). Make choices to verify your judgment.
           </p>
           <div style={{ marginBottom: 'var(--space-xl)', borderLeft: '3px solid var(--accent-navy)', paddingLeft: '16px', display: 'inline-block', textAlign: 'left' }}>
             <p style={{ fontSize: '0.95rem', color: 'var(--accent-navy)', fontStyle: 'italic', margin: 0 }}>
@@ -338,11 +342,24 @@ function FinalAssessment({ user, updateProgressTrigger }) {
 
       {/* Active Simulation */}
       {currentStep === 'active_simulation' && currentStage && (
-        <div style={{ maxWidth: '800px', margin: '0 auto' }}>
+        <div key={currentStage.id} className="portal-state-progression" style={{ maxWidth: '800px', margin: '0 auto' }}>
           {/* Header */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: 'var(--space-sm)' }}>
-            <span>FINAL ASSESSMENT: A DAY IN YOUR DIGITAL LIFE</span>
-            <span>Situation Order: {currentStage.stageOrder}</span>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: 'var(--space-sm)' }}>
+            <div className="portal-assessment-stage-pill">
+              <span className="stage-pill-dot" aria-hidden="true" />
+              <span>FINAL ASSESSMENT: A DAY IN YOUR DIGITAL LIFE</span>
+            </div>
+            <div style={{ fontFamily: 'monospace', fontWeight: '600' }}>
+              Situation {currentStage.stageOrder} of 5
+            </div>
+          </div>
+
+          {/* Thin-line progression track */}
+          <div className="portal-progression-track" style={{ marginBottom: '18px' }} aria-hidden="true">
+            <div 
+              className="portal-progression-indicator" 
+              style={{ width: `${(currentStage.stageOrder / 5) * 100}%` }}
+            />
           </div>
 
           <h2 ref={stageHeadingRef} tabIndex="-1" style={{ fontSize: '1.8rem', color: 'var(--accent-navy)', marginBottom: 'var(--space-md)', outline: 'none' }}>
@@ -390,11 +407,16 @@ function FinalAssessment({ user, updateProgressTrigger }) {
                   <div className="email-header-info">
                     <h3 style={{ fontSize: '1.2rem', color: 'var(--accent-navy)', margin: '0 0 8px 0' }}>{currentStage.mockInterfaceData.subject}</h3>
                     <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '4px' }}>
-                      <strong>From:</strong> {currentStage.mockInterfaceData.senderName} &lt;<span style={{ color: 'var(--accent-navy)', fontWeight: '600' }}>{currentStage.mockInterfaceData.senderEmail || currentStage.mockInterfaceData.sender}</span>&gt;
+                      <strong>From:</strong> {currentStage.mockInterfaceData.senderName || currentStage.mockInterfaceData.from} &lt;<span style={{ color: 'var(--accent-navy)', fontWeight: '600' }}>{currentStage.mockInterfaceData.senderEmail || currentStage.mockInterfaceData.sender || currentStage.mockInterfaceData.from}</span>&gt;
                     </div>
+                    {(currentStage.mockInterfaceData.dateString || currentStage.mockInterfaceData.timestamp) && (
+                      <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                        <strong>Date:</strong> {currentStage.mockInterfaceData.dateString || currentStage.mockInterfaceData.timestamp}
+                      </div>
+                    )}
                   </div>
-                  <div style={{ whiteSpace: 'pre-line', fontSize: '0.95rem', color: 'var(--text-primary)', lineHeight: '1.5' }}>
-                    {currentStage.mockInterfaceData.body}
+                  <div style={{ whiteSpace: 'pre-line', fontSize: '0.95rem', color: 'var(--text-primary)', lineHeight: '1.5', wordBreak: 'break-word', overflowWrap: 'break-word' }}>
+                    {currentStage.mockInterfaceData.body || currentStage.mockInterfaceData.message || currentStage.mockInterfaceData.bodyText}
                   </div>
                   
                   {currentStage.mockInterfaceData.attachmentName && (
@@ -537,16 +559,18 @@ function FinalAssessment({ user, updateProgressTrigger }) {
 
             {/* SMS Message Mockup */}
             {currentStage.mockInterfaceType === 'sms' && (
-              <div style={{ maxWidth: '340px', margin: '30px auto', backgroundColor: '#f1f5f9', border: '1px solid var(--color-border)', borderRadius: '24px', padding: '16px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}>
+              <div style={{ maxWidth: '340px', width: '100%', margin: '30px auto', backgroundColor: '#f1f5f9', border: '1px solid var(--color-border)', borderRadius: '24px', padding: '16px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)', boxSizing: 'border-box' }}>
                 <div style={{ textAlign: 'center', fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '12px', fontWeight: 'bold' }}>
                   SMS from: {currentStage.mockInterfaceData.senderNumber || currentStage.mockInterfaceData.sender}
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  <div style={{ alignSelf: 'flex-start', backgroundColor: '#fff', border: '1px solid var(--color-border)', padding: '12px 16px', borderRadius: '16px 16px 16px 4px', maxWidth: '85%', fontSize: '0.9rem', lineHeight: '1.4', boxShadow: '0 1px 2px rgba(0,0,0,0.02)' }}>
-                    {currentStage.mockInterfaceData.body}
-                    <span style={{ display: 'block', fontSize: '0.7rem', color: 'var(--text-muted)', textAlign: 'right', marginTop: '6px' }}>
-                      {currentStage.mockInterfaceData.dateString}
-                    </span>
+                  <div style={{ alignSelf: 'flex-start', backgroundColor: '#fff', border: '1px solid var(--color-border)', padding: '12px 16px', borderRadius: '16px 16px 16px 4px', maxWidth: '88%', fontSize: '0.9rem', lineHeight: '1.45', color: 'var(--accent-navy)', wordBreak: 'break-word', overflowWrap: 'break-word', whiteSpace: 'pre-wrap', boxShadow: '0 1px 2px rgba(0,0,0,0.02)', boxSizing: 'border-box' }}>
+                    {currentStage.mockInterfaceData.body || currentStage.mockInterfaceData.message || currentStage.mockInterfaceData.bodyText}
+                    {(currentStage.mockInterfaceData.dateString || currentStage.mockInterfaceData.timestamp) && (
+                      <span style={{ display: 'block', fontSize: '0.7rem', color: 'var(--text-muted)', textAlign: 'right', marginTop: '6px' }}>
+                        {currentStage.mockInterfaceData.dateString || currentStage.mockInterfaceData.timestamp}
+                      </span>
+                    )}
                   </div>
                 </div>
               </div>
@@ -560,11 +584,11 @@ function FinalAssessment({ user, updateProgressTrigger }) {
                     <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
                   </svg>
                 </div>
-                <h3 style={{ fontSize: '1.25rem', margin: '0 0 4px 0', color: '#fff' }}>{currentStage.mockInterfaceData.callerName || 'Incoming Call'}</h3>
+                <h3 style={{ fontSize: '1.25rem', margin: '0 0 4px 0', color: '#fff' }}>{currentStage.mockInterfaceData.callerName || currentStage.mockInterfaceData.callerLabel || 'Incoming Call'}</h3>
                 <span style={{ fontSize: '0.85rem', color: '#94a3b8', display: 'block', marginBottom: '20px' }}>{currentStage.mockInterfaceData.callerNumber}</span>
                 
-                <div style={{ border: '1px solid #334155', borderRadius: '8px', padding: '12px', backgroundColor: '#1e293b', fontSize: '0.85rem', lineHeight: '1.4', fontStyle: 'italic', color: '#cbd5e1', marginBottom: '24px', textAlign: 'left' }}>
-                  {currentStage.mockInterfaceData.bodyText || currentStage.mockInterfaceData.body}
+                <div style={{ border: '1px solid #334155', borderRadius: '8px', padding: '12px', backgroundColor: '#1e293b', fontSize: '0.85rem', lineHeight: '1.4', fontStyle: 'italic', color: '#cbd5e1', marginBottom: '24px', textAlign: 'left', wordBreak: 'break-word', overflowWrap: 'break-word' }}>
+                  {currentStage.mockInterfaceData.bodyText || currentStage.mockInterfaceData.body || currentStage.mockInterfaceData.audioPrompt || currentStage.mockInterfaceData.message}
                 </div>
 
                 <div style={{ display: 'flex', justifyContent: 'center', gap: '32px' }}>
@@ -628,15 +652,19 @@ function FinalAssessment({ user, updateProgressTrigger }) {
 
             {/* Chat Sandbox Messenger Simulation */}
             {(currentStage.mockInterfaceType === 'chat' || currentStage.mockInterfaceType === 'messaging') && (
-              <div style={{ maxWidth: '400px', margin: '30px auto', border: '1px solid var(--color-border)', borderRadius: '8px', overflow: 'hidden', backgroundColor: '#efeae2', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}>
+              <div style={{ maxWidth: '400px', width: '100%', margin: '30px auto', border: '1px solid var(--color-border)', borderRadius: '8px', overflow: 'hidden', backgroundColor: '#efeae2', boxShadow: '0 4px 12px rgba(0,0,0,0.05)', boxSizing: 'border-box' }}>
                 <div style={{ backgroundColor: 'var(--accent-navy)', color: '#fff', padding: '10px 16px', fontSize: '0.9rem', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#22c55e' }} />
-                  <span>{currentStage.mockInterfaceData.sender}</span>
+                  <span>{currentStage.mockInterfaceData.sender || currentStage.mockInterfaceData.callerID || currentStage.mockInterfaceData.platform || 'Direct Message'}</span>
                 </div>
                 <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  <div style={{ alignSelf: 'flex-start', backgroundColor: '#fff', padding: '10px 12px', borderRadius: '0 8px 8px 8px', maxWidth: '85%', fontSize: '0.85rem', boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}>
-                    {currentStage.mockInterfaceData.body}
-                    <span style={{ display: 'block', fontSize: '0.7rem', color: 'var(--text-muted)', textAlign: 'right', marginTop: '4px' }}>{currentStage.mockInterfaceData.dateString}</span>
+                  <div style={{ alignSelf: 'flex-start', backgroundColor: '#fff', padding: '10px 12px', borderRadius: '0 8px 8px 8px', maxWidth: '88%', fontSize: '0.85rem', lineHeight: '1.45', color: 'var(--accent-navy)', wordBreak: 'break-word', overflowWrap: 'break-word', whiteSpace: 'pre-wrap', boxShadow: '0 1px 2px rgba(0,0,0,0.05)', boxSizing: 'border-box' }}>
+                    {currentStage.mockInterfaceData.body || currentStage.mockInterfaceData.message || currentStage.mockInterfaceData.transcript || currentStage.mockInterfaceData.bodyText}
+                    {(currentStage.mockInterfaceData.dateString || currentStage.mockInterfaceData.timestamp) && (
+                      <span style={{ display: 'block', fontSize: '0.7rem', color: 'var(--text-muted)', textAlign: 'right', marginTop: '4px' }}>
+                        {currentStage.mockInterfaceData.dateString || currentStage.mockInterfaceData.timestamp}
+                      </span>
+                    )}
                   </div>
                 </div>
               </div>
@@ -656,10 +684,10 @@ function FinalAssessment({ user, updateProgressTrigger }) {
                   <div style={{ flex: 1 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
                       <strong style={{ fontSize: '0.95rem', color: 'var(--accent-navy)' }}>{currentStage.mockInterfaceData.title}</strong>
-                      <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>{currentStage.mockInterfaceData.dateString || 'System Alert'}</span>
+                      <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>{currentStage.mockInterfaceData.dateString || currentStage.mockInterfaceData.timestamp || 'System Alert'}</span>
                     </div>
-                    <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: '0 0 12px 0', lineHeight: '1.4' }}>
-                      {currentStage.mockInterfaceData.body}
+                    <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: '0 0 12px 0', lineHeight: '1.4', wordBreak: 'break-word', overflowWrap: 'break-word' }}>
+                      {currentStage.mockInterfaceData.body || currentStage.mockInterfaceData.message || currentStage.mockInterfaceData.bodyText}
                     </p>
                   </div>
                 </div>
@@ -689,12 +717,12 @@ function FinalAssessment({ user, updateProgressTrigger }) {
 
       {/* Comparison Report View */}
       {currentStep === 'reveal_view' && result && (
-        <div className="reveal-pane" style={{ border: '2px solid var(--accent-navy)' }}>
+        <div className="reveal-pane portal-state-reveal-down" style={{ border: '2px solid var(--accent-navy)' }}>
           <h2 style={{ fontSize: '2.2rem', color: 'var(--accent-navy)', marginBottom: 'var(--space-md)' }}>
             Final Assessment Report
           </h2>
           <p className="text-muted" style={{ marginBottom: 'var(--space-lg)', fontSize: '1.05rem' }}>
-            Congratulations on completing the **"A Day in Your Digital Life"** branching assessment. We have compiled your decisions and compared them with your baseline score.
+            Congratulations on completing the <strong>&ldquo;A Day in Your Digital Life&rdquo;</strong> branching assessment. We have compiled your decisions and compared them with your baseline score.
           </p>
 
           <div style={{ marginBottom: 'var(--space-lg)', borderLeft: '3px solid var(--accent-navy)', paddingLeft: '16px' }}>
@@ -717,7 +745,7 @@ function FinalAssessment({ user, updateProgressTrigger }) {
                   <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '2px' }}>Recognition of deceptive prompts and urgency cues across situations.</div>
                 </div>
                 <div style={{ padding: '8px 12px', backgroundColor: 'var(--bg-secondary)', borderRadius: '4px', borderLeft: '3px solid var(--accent-navy)' }}>
-                  <strong>Where You Verified (Verification Habits):</strong> {result.behaviourScores?.verification || 0}%
+                  <strong>Where You Verified (Verification Behaviour):</strong> {result.behaviourScores?.verification || 0}%
                   <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '2px' }}>Independent verification through official channels before acting.</div>
                 </div>
                 <div style={{ padding: '8px 12px', backgroundColor: 'var(--bg-secondary)', borderRadius: '4px', borderLeft: '3px solid var(--accent-navy)' }}>
@@ -729,7 +757,7 @@ function FinalAssessment({ user, updateProgressTrigger }) {
                   <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '2px' }}>Detection of specific indicators such as domain mismatches and payment traps.</div>
                 </div>
                 <div style={{ padding: '8px 12px', backgroundColor: 'var(--bg-secondary)', borderRadius: '4px', borderLeft: '3px solid var(--color-warning)' }}>
-                  <strong>What You Accepted on Autopilot (Autopilot Control):</strong> {result.behaviourScores?.unreviewedAcceptance ?? 0}%
+                  <strong>Unreviewed Acceptance Control:</strong> {result.behaviourScores?.unreviewedAcceptance ?? 0}%
                   <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '2px' }}>
                     Occasions where permissions or requests were approved without checking ({result.unreviewedAcceptancePenaltyPoints || 0} penalty point(s)).
                   </div>
@@ -763,10 +791,10 @@ function FinalAssessment({ user, updateProgressTrigger }) {
                   {[
                     { key: 'recognition', label: 'Threat Recognition' },
                     { key: 'signalIdentification', label: 'Signal Identification' },
-                    { key: 'verification', label: 'Verification Habits' },
+                    { key: 'verification', label: 'Verification Behaviour' },
                     { key: 'decisionQuality', label: 'Decision Quality' },
                     { key: 'falsePositive', label: 'False Positive Control' },
-                    { key: 'unreviewedAcceptance', label: 'Autopilot Control' }
+                    { key: 'unreviewedAcceptance', label: 'Unreviewed Acceptance Control' }
                   ].map((m) => {
                     const deltaObj = result.behaviourDelta?.[m.key];
                     const finalVal = result.behaviourScores?.[m.key] ?? 0;

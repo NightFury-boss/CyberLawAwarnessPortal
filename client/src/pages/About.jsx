@@ -1,13 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import MethodologyFlow from '../components/about/MethodologyFlow';
+import EditorialScrollStory from '../components/common/EditorialScrollStory';
+import EditorialRule from '../components/common/EditorialRule';
 
 function About() {
-  const [activeStep, setActiveStep] = useState(0);
   const [activeSection, setActiveSection] = useState('overview');
-  const [isMounted, setIsMounted] = useState(false);
-  const [scoreAnimate, setScoreAnimate] = useState(false);
-  const [baselineVal, setBaselineVal] = useState(0);
-  const [finalVal, setFinalVal] = useState(0);
 
   useEffect(() => {
     const observerOptions = {
@@ -19,59 +17,19 @@ function About() {
     const observer = new IntersectionObserver((entries) => {
       entries.forEach((entry) => {
         if (entry.isIntersecting) {
-          if (entry.target.id === 'method') {
-            setIsMounted(true);
-          } else if (entry.target.id === 'assessment') {
-            setScoreAnimate(true);
-          }
-          observer.unobserve(entry.target);
+          setActiveSection(entry.target.id);
         }
       });
     }, observerOptions);
 
-    const methodEl = document.getElementById('method');
-    const assessmentEl = document.getElementById('assessment');
-    if (methodEl) observer.observe(methodEl);
-    if (assessmentEl) observer.observe(assessmentEl);
+    const sectionIds = ['overview', 'method', 'assessment', 'safety', 'project'];
+    sectionIds.forEach(id => {
+      const el = document.getElementById(id);
+      if (el) observer.observe(el);
+    });
 
-    return () => {
-      if (methodEl) observer.unobserve(methodEl);
-      if (assessmentEl) observer.unobserve(assessmentEl);
-    };
+    return () => observer.disconnect();
   }, []);
-
-  useEffect(() => {
-    if (scoreAnimate) {
-      let bStart = 0;
-      const bEnd = 48;
-      const bTimer = setInterval(() => {
-        bStart += 2;
-        if (bStart >= bEnd) {
-          setBaselineVal(bEnd);
-          clearInterval(bTimer);
-        } else {
-          setBaselineVal(bStart);
-        }
-      }, 20);
-
-      let fStart = 0;
-      const fEnd = 87;
-      const fTimer = setInterval(() => {
-        fStart += 3;
-        if (fStart >= fEnd) {
-          setFinalVal(fEnd);
-          clearInterval(fTimer);
-        } else {
-          setFinalVal(fStart);
-        }
-      }, 20);
-
-      return () => {
-        clearInterval(bTimer);
-        clearInterval(fTimer);
-      };
-    }
-  }, [scoreAnimate]);
 
   const sections = [
     { id: 'overview', name: 'Overview' },
@@ -81,36 +39,84 @@ function About() {
     { id: 'project', name: 'Project Stack' }
   ];
 
-  const loopSteps = [
+  const METHODOLOGY_STORY_SECTIONS = [
     {
-      label: 'EXPERIENCE',
-      num: '01',
-      summary: 'Encounter a realistic digital scenario.',
-      desc: 'Users interact with controlled mock interfaces—such as clone login portals or spoofed UPI requests—observing threat indicators in real time.'
+      id: 'method-law',
+      number: '01',
+      navLabel: 'Law',
+      eyebrow: 'STATUTORY FOUNDATION',
+      title: 'Law: Grounding in Indian Digital Statute',
+      description: 'Start with the legal rule that gives the situation its context.',
+      content: (
+        <p style={{ fontSize: '1rem', lineHeight: '1.68', color: 'var(--text-secondary)' }}>
+          Plain-language interpretations of Indian digital statutes—including the Information Technology Act, Bharatiya Nyaya Sanhita (BNS), and Digital Personal Data Protection (DPDP) Act—establish baseline rights, obligations, and jurisdictional boundaries. Knowing the law provides the essential reference point for recognizing illegal actions.
+        </p>
+      )
     },
     {
-      label: 'UNDERSTAND',
-      num: '02',
-      summary: 'Examine decision warning flags.',
-      desc: 'The platform highlights suspicious parameters (e.g. sender headers, urgency cues) and explains why choices were safe or unsafe.'
+      id: 'method-threat',
+      number: '02',
+      navLabel: 'Threat',
+      eyebrow: 'PATTERN RECOGNITION',
+      title: 'Threat: Critical Indicators to Notice',
+      description: 'Recognize how the rule appears in an everyday digital situation.',
+      content: (
+        <p style={{ fontSize: '1rem', lineHeight: '1.68', color: 'var(--text-secondary)' }}>
+          Digital threats rarely announce themselves as attacks. Attackers introduce psychological urgency, deceptive domain variations, spoofed communication headers, and authority leverage designed to rush critical reasoning. Understanding threat signatures turns statutory rules into actionable vigilance.
+        </p>
+      )
     },
     {
-      label: 'LEARN',
-      num: '03',
-      summary: 'Study cybercrime and legal provisions.',
-      desc: 'Users explore plain-language interpretations of Indian digital law (IT Act, BNS, DPDP) and examine investigative case archives.'
+      id: 'method-case',
+      number: '03',
+      navLabel: 'Case',
+      eyebrow: 'REAL INCIDENT ANALYSIS',
+      title: 'Case: Reconstructed Incident Narratives',
+      description: 'See how a real incident makes warning signs easier to understand.',
+      content: (
+        <p style={{ fontSize: '1rem', lineHeight: '1.68', color: 'var(--text-secondary)' }}>
+          Reconstructed incident timelines demonstrate how attackers construct trust, where subtle discrepancies appeared, and at which critical pivot point a safer decision would have prevented harm. Real-world incident forensics bridge abstract legal definitions with concrete events.
+        </p>
+      )
     },
     {
-      label: 'PRACTICE',
-      num: '04',
-      summary: 'Lock in secure habits.',
-      desc: 'Interactive quizzes, scenario assessments, and practical safety checklists help translate legal guidelines into digital hygiene.'
+      id: 'method-prevention',
+      number: '04',
+      navLabel: 'Prevention',
+      eyebrow: 'DEFENSIVE PROTOCOLS',
+      title: 'Prevention: Practical Containment Steps',
+      description: 'Turn understanding into practical defensive habits.',
+      content: (
+        <p style={{ fontSize: '1rem', lineHeight: '1.68', color: 'var(--text-secondary)' }}>
+          Clear operational guidance outlines step-by-step containment protocols across before, during, and after phases. From independent verification of financial requests to immediate incident reporting on the National Cyber Crime Reporting Portal (1930), prevention focuses on repeatable, safe actions.
+        </p>
+      )
     },
     {
-      label: 'IMPROVE',
-      num: '05',
-      summary: 'Measure baseline awareness delta.',
-      desc: 'A final assessment compares threat recognition scores against initial baseline records to track growth.'
+      id: 'method-practice',
+      number: '05',
+      navLabel: 'Practice',
+      eyebrow: 'EXPERIENTIAL SCENARIOS',
+      title: 'Practice: Multi-Branching Decisions',
+      description: 'Apply what you learned through realistic decisions and questions.',
+      content: (
+        <p style={{ fontSize: '1rem', lineHeight: '1.68', color: 'var(--text-secondary)' }}>
+          Multi-branching decision paths place learners in genuine scenarios to calibrate threat recognition, signal identification, and verification behaviour without real-world penalty. Immediate, educational feedback reinforces why specific actions are safer under statutory guidelines.
+        </p>
+      )
+    },
+    {
+      id: 'method-improvement',
+      number: '06',
+      navLabel: 'Improvement',
+      eyebrow: 'MEASURED GROWTH',
+      title: 'Improvement: Behavioral Shifts Over Time',
+      description: 'Use reflection and continued practice to strengthen safer digital behaviour.',
+      content: (
+        <p style={{ fontSize: '1rem', lineHeight: '1.68', color: 'var(--text-secondary)' }}>
+          Defensive competence is tracked across six canonical behavioral dimensions—Threat Recognition, Signal Identification, Verification Behaviour, Decision Quality, False Positive Control, and Unreviewed Acceptance Control. Over repeated interactions, conscious caution evolves into durable defensive instincts.
+        </p>
+      )
     }
   ];
 
@@ -136,26 +142,35 @@ function About() {
   const scrollToSection = (id) => {
     const el = document.getElementById(id);
     if (el) {
+      el.style.scrollMarginTop = 'calc(var(--header-height, 68px) + 52px)';
       el.scrollIntoView({ behavior: 'smooth', block: 'start' });
       setActiveSection(id);
     }
   };
 
   return (
-    <div className="page-entry" style={{ backgroundColor: 'var(--bg-primary)', color: 'var(--text-primary)', fontFamily: 'var(--font-sans)', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+    <div className="page-entry" style={{
+      backgroundColor: 'var(--bg-primary)',
+      color: 'var(--text-primary)',
+      fontFamily: 'var(--font-sans)',
+      minHeight: '100vh',
+      display: 'flex',
+      flexDirection: 'column',
+      '--portal-subnav-height': '49px'
+    }}>
       
       {/* SECTION NAVIGATOR BAR */}
       <nav style={{
         position: 'sticky',
-        top: 0,
+        top: 'var(--header-height, 68px)',
         backgroundColor: 'var(--bg-primary)',
         borderBottom: '1px solid var(--color-border)',
-        zIndex: 100,
+        zIndex: 90,
         padding: '12px 0'
       }}>
         <div className="container" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
-          {/* Desktop Links */}
-          <div style={{ display: 'flex', gap: '20px' }}>
+          {/* Desktop / Mobile Links */}
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px 16px' }}>
             {sections.map((sec) => (
               <button
                 key={sec.id}
@@ -185,7 +200,7 @@ function About() {
 
       {/* HERO / PROJECT STATEMENT */}
       <header style={{ padding: '60px 0 40px 0', borderBottom: '1px solid var(--color-border)' }}>
-        <div className="container" style={{ display: 'grid', gridTemplateColumns: '1.2fr 0.8fr', gap: '40px', alignItems: 'center' }}>
+        <div className="container" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '40px', alignItems: 'center' }}>
           <div>
             <span style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '1.5px', color: 'var(--accent-navy)', fontWeight: 'bold', display: 'block', marginBottom: '8px' }}>
               About the Project
@@ -255,15 +270,15 @@ function About() {
 
           <div style={{ marginTop: '24px' }}>
             <Link to="/crimes" style={{ color: 'var(--accent-navy)', fontWeight: 'bold', textDecoration: 'underline', fontSize: '0.9rem' }}>
-              Explore Cyber Crimes Registry &rarr;
+              Explore Cybercrime Library &rarr;
             </Link>
           </div>
         </div>
       </section>
 
       {/* SECTION 2: THE LEARNING LOOP */}
-      <section id="method" style={{ padding: '60px 0', borderBottom: '1px solid var(--color-border)', backgroundColor: 'var(--bg-secondary)' }}>
-        <div className="container" style={{ maxWidth: '900px' }}>
+      <section id="method" style={{ padding: '60px 0 0 0', borderBottom: '1px solid var(--color-border)', backgroundColor: 'var(--bg-secondary)', scrollMarginTop: 'calc(var(--header-height, 68px) + 52px)' }}>
+        <div className="container" style={{ maxWidth: '960px', marginBottom: '56px' }}>
           <span style={{ fontSize: '0.8rem', fontWeight: 'bold', color: 'var(--text-muted)', textTransform: 'uppercase', display: 'block', marginBottom: '8px', textAlign: 'center' }}>
             Methodology
           </span>
@@ -271,96 +286,21 @@ function About() {
             The Experiential Learning Loop
           </h2>
           <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', textAlign: 'center', marginBottom: '40px', maxWidth: '600px', margin: '0 auto 40px auto' }}>
-            The system guides users through a five-stage progress cycle designed to train rapid threat recognition and evaluate active safety responses.
+            The system guides users through a six-stage sequence designed to train rapid threat recognition, statutory grounding, and verified defensive habits.
           </p>
 
-          {/* Loop horizontal visual map on desktop, stacked on mobile */}
-          <div style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            position: 'relative',
-            marginBottom: '32px',
-            flexWrap: 'wrap',
-            gap: '12px'
-          }}>
-            {/* Desktop continuous path line */}
-            <div 
-              className="motion-progress"
-              style={{
-                position: 'absolute',
-                top: '18px',
-                left: '40px',
-                zIndex: 1,
-                display: 'block',
-                height: '2px',
-                backgroundColor: 'var(--accent-navy)',
-                width: isMounted ? 'calc(100% - 80px)' : '0%',
-                transition: 'width 1.2s cubic-bezier(0.16, 1, 0.3, 1)'
-              }} 
-            />
+          {/* Progressive Reveal Methodology Flow */}
+          <MethodologyFlow />
+        </div>
 
-            {loopSteps.map((step, idx) => {
-              const isActive = activeStep === idx;
-              return (
-                <button
-                  key={step.label}
-                  onClick={() => setActiveStep(idx)}
-                  style={{
-                    border: 'none',
-                    background: 'none',
-                    zIndex: 2,
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    cursor: 'pointer',
-                    flex: '1 1 120px',
-                    outline: 'none'
-                  }}
-                >
-                  <div style={{
-                    width: '36px',
-                    height: '36px',
-                    borderRadius: '50%',
-                    backgroundColor: isActive ? 'var(--accent-navy)' : 'var(--bg-primary)',
-                    border: isActive ? '2px solid var(--accent-navy)' : '2px solid var(--color-border)',
-                    color: isActive ? 'white' : 'var(--text-secondary)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontWeight: 'bold',
-                    fontSize: '0.85rem',
-                    marginBottom: '8px',
-                    transition: 'all 0.2s ease',
-                    boxShadow: isActive ? '0 0 0 3px rgba(10, 37, 64, 0.15)' : 'none'
-                  }}>
-                    {step.num}
-                  </div>
-                  <span style={{ fontSize: '0.75rem', fontWeight: 'bold', color: isActive ? 'var(--accent-navy)' : 'var(--text-secondary)', textTransform: 'uppercase' }}>
-                    {step.label}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-
-          {/* Details Panel card */}
-          <div style={{
-            backgroundColor: 'var(--bg-primary)',
-            border: '1px solid var(--color-border)',
-            borderRadius: '6px',
-            padding: '24px',
-            boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
-          }}>
-            <span style={{ fontSize: '0.75rem', fontWeight: 'bold', color: 'var(--accent-navy)', textTransform: 'uppercase', display: 'block', marginBottom: '6px' }}>
-              Stage {loopSteps[activeStep].num} / {loopSteps[activeStep].label}
-            </span>
-            <h4 style={{ fontSize: '1.2rem', fontWeight: 'bold', color: 'var(--text-primary)', marginBottom: '8px' }}>
-              {loopSteps[activeStep].summary}
-            </h4>
-            <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', margin: 0, lineHeight: '1.6' }}>
-              {loopSteps[activeStep].desc}
-            </p>
-          </div>
+        {/* Editorial Scroll Story */}
+        <div style={{ maxWidth: '1100px', margin: '0 auto', padding: '0 var(--space-md) var(--space-2xl) var(--space-md)' }}>
+          <EditorialScrollStory
+            contextBadge="METHODOLOGY"
+            contextTitle="The Experiential Learning Sequence"
+            contextSubtitle="From statutory literacy to lasting behavioral instincts"
+            sections={METHODOLOGY_STORY_SECTIONS}
+          />
         </div>
       </section>
 
@@ -377,7 +317,7 @@ function About() {
           {/* FROM vs TO Comparison Pathway */}
           <div style={{
             display: 'grid',
-            gridTemplateColumns: '1fr 1fr',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
             gap: '24px',
             marginBottom: '40px',
             backgroundColor: 'var(--bg-secondary)',
@@ -447,77 +387,89 @@ function About() {
 
       {/* SECTION 4: ASSESSMENT ENGINE */}
       <section id="assessment" style={{ padding: '60px 0', borderBottom: '1px solid var(--color-border)', backgroundColor: 'var(--bg-secondary)' }}>
-        <div className="container" style={{ maxWidth: '800px' }}>
+        <div className="container" style={{ maxWidth: '860px' }}>
           <span style={{ fontSize: '0.8rem', fontWeight: 'bold', color: 'var(--text-muted)', textTransform: 'uppercase', display: 'block', marginBottom: '8px', textAlign: 'center' }}>
-            Signature Engine
+            Measurement Model
           </span>
           <h2 style={{ fontSize: '1.6rem', fontWeight: 'bold', color: 'var(--accent-navy)', marginBottom: '12px', textAlign: 'center' }}>
-            Cyber Awareness Assessment Engine
+            Six-Dimensional Behavioral Assessment
           </h2>
-          <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', textAlign: 'center', marginBottom: '32px', maxWidth: '600px', margin: '0 auto 32px auto' }}>
-            Instead of evaluating pure text recall, the portal monitors user actions when exposed to simulated threat vectors, providing a baseline-to-final score delta report.
+          <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', textAlign: 'center', marginBottom: '32px', maxWidth: '640px', margin: '0 auto 32px auto', lineHeight: '1.6' }}>
+            Rather than relying on abstract test recall or misleading composite scores, the portal evaluates decision reflexes across six discrete behavioral dimensions when encountering realistic simulated threat vectors.
           </p>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '30px', alignItems: 'center' }}>
-            {/* Illustrative Journey Meter */}
-            <div style={{
-              backgroundColor: 'var(--bg-primary)',
-              border: '1px solid var(--color-border)',
-              padding: '20px',
-              borderRadius: '6px'
-            }}>
-              <span style={{ fontSize: '0.75rem', fontWeight: 'bold', color: 'var(--text-muted)', textTransform: 'uppercase', display: 'block', marginBottom: '16px' }}>
-                Illustrative Example Journey
-              </span>
-              
-              <div style={{ marginBottom: '16px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', fontWeight: '600', marginBottom: '4px' }}>
-                  <span>Baseline Assessment</span>
-                  <span>{baselineVal} / 100</span>
-                </div>
-                <div style={{ width: '100%', height: '6px', backgroundColor: 'var(--bg-secondary)', borderRadius: '3px', overflow: 'hidden' }}>
-                  <div style={{ width: scoreAnimate ? '48%' : '0%', height: '100%', backgroundColor: 'var(--color-error)', borderRadius: '3px', transition: 'width 1.2s cubic-bezier(0.16, 1, 0.3, 1)' }} />
-                </div>
-              </div>
-
-              <div style={{ marginBottom: '16px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', fontWeight: '600', marginBottom: '4px' }}>
-                  <span>Final Post-Learning</span>
-                  <span>{finalVal} / 100</span>
-                </div>
-                <div style={{ width: '100%', height: '6px', backgroundColor: 'var(--bg-secondary)', borderRadius: '3px', overflow: 'hidden' }}>
-                  <div style={{ width: scoreAnimate ? '87%' : '0%', height: '100%', backgroundColor: 'var(--color-success)', borderRadius: '3px', transition: 'width 1.2s cubic-bezier(0.16, 1, 0.3, 1)' }} />
-                </div>
-              </div>
-
-              <div style={{
-                textAlign: 'center',
-                paddingTop: '12px',
-                borderTop: '1px solid var(--color-border)',
-                color: 'var(--color-success)',
-                fontWeight: 'bold',
-                fontSize: '0.85rem'
-              }}>
-                +39 Points Learning Delta Reported
-              </div>
-            </div>
-
-            {/* Assessment Focus Dimensions */}
-            <div>
-              <h4 style={{ fontSize: '0.95rem', fontWeight: 'bold', color: 'var(--accent-navy)', marginBottom: '12px' }}>
-                Assessment Domains Evaluated:
-              </h4>
-              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '16px' }}>
-                <span style={{ backgroundColor: 'var(--bg-primary)', border: '1px solid var(--color-border)', padding: '4px 8px', borderRadius: '4px', fontSize: '0.75rem', fontWeight: '600' }}>Phishing Awareness</span>
-                <span style={{ backgroundColor: 'var(--bg-primary)', border: '1px solid var(--color-border)', padding: '4px 8px', borderRadius: '4px', fontSize: '0.75rem', fontWeight: '600' }}>Social Engineering</span>
-                <span style={{ backgroundColor: 'var(--bg-primary)', border: '1px solid var(--color-border)', padding: '4px 8px', borderRadius: '4px', fontSize: '0.75rem', fontWeight: '600' }}>Financial Safety</span>
-                <span style={{ backgroundColor: 'var(--bg-primary)', border: '1px solid var(--color-border)', padding: '4px 8px', borderRadius: '4px', fontSize: '0.75rem', fontWeight: '600' }}>Credential Safety</span>
-                <span style={{ backgroundColor: 'var(--bg-primary)', border: '1px solid var(--color-border)', padding: '4px 8px', borderRadius: '4px', fontSize: '0.75rem', fontWeight: '600' }}>Digital Hygiene</span>
-              </div>
-              <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: 0, fontStyle: 'italic', lineHeight: '1.4' }}>
-                *Note: These represent conceptual assessment categories configured to monitor user progression; they are not scientifically or clinically validated psychological measures.
+          {/* Six Dimensions Matrix */}
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
+            gap: '16px',
+            marginBottom: '24px'
+          }}>
+            <div style={{ backgroundColor: 'var(--bg-primary)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-sm)', padding: '16px' }}>
+              <strong style={{ fontSize: '0.9rem', color: 'var(--accent-navy)', display: 'block', marginBottom: '4px' }}>
+                TR · Threat Recognition
+              </strong>
+              <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', margin: 0, lineHeight: '1.45' }}>
+                Identifying deceptive intent, manufactured urgency, and unauthorized solicitation patterns.
               </p>
             </div>
+
+            <div style={{ backgroundColor: 'var(--bg-primary)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-sm)', padding: '16px' }}>
+              <strong style={{ fontSize: '0.9rem', color: 'var(--accent-navy)', display: 'block', marginBottom: '4px' }}>
+                SI · Signal Identification
+              </strong>
+              <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', margin: 0, lineHeight: '1.45' }}>
+                Spotting counterfeit domain variations, spoofed communication headers, and anomalous links.
+              </p>
+            </div>
+
+            <div style={{ backgroundColor: 'var(--bg-primary)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-sm)', padding: '16px' }}>
+              <strong style={{ fontSize: '0.9rem', color: 'var(--accent-navy)', display: 'block', marginBottom: '4px' }}>
+                VB · Verification Behaviour
+              </strong>
+              <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', margin: 0, lineHeight: '1.45' }}>
+                Critical pause to independently confirm unexpected notices via official, out-of-band channels.
+              </p>
+            </div>
+
+            <div style={{ backgroundColor: 'var(--bg-primary)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-sm)', padding: '16px' }}>
+              <strong style={{ fontSize: '0.9rem', color: 'var(--accent-navy)', display: 'block', marginBottom: '4px' }}>
+                DQ · Decision Quality
+              </strong>
+              <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', margin: 0, lineHeight: '1.45' }}>
+                Selecting defensive containment and safe closure over hasty, compliance-driven action.
+              </p>
+            </div>
+
+            <div style={{ backgroundColor: 'var(--bg-primary)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-sm)', padding: '16px' }}>
+              <strong style={{ fontSize: '0.9rem', color: 'var(--accent-navy)', display: 'block', marginBottom: '4px' }}>
+                FP · False Positive Control
+              </strong>
+              <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', margin: 0, lineHeight: '1.45' }}>
+                Differentiating legitimate institutional communications from malicious attempts without unnecessary panic.
+              </p>
+            </div>
+
+            <div style={{ backgroundColor: 'var(--bg-primary)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-sm)', padding: '16px' }}>
+              <strong style={{ fontSize: '0.9rem', color: 'var(--accent-navy)', display: 'block', marginBottom: '4px' }}>
+                UA · Unreviewed Acceptance Control
+              </strong>
+              <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', margin: 0, lineHeight: '1.45' }}>
+                Resisting habitual or rushed consent when requested for sensitive permissions, OTPs, or financial actions.
+              </p>
+            </div>
+          </div>
+
+          <div style={{
+            backgroundColor: 'var(--bg-primary)',
+            border: '1px solid var(--color-border)',
+            borderLeft: '4px solid var(--accent-navy)',
+            padding: '16px 20px',
+            borderRadius: 'var(--radius-sm)'
+          }}>
+            <p style={{ fontSize: '0.84rem', color: 'var(--text-secondary)', margin: 0, lineHeight: '1.5' }}>
+              <strong>No Composite Scores:</strong> Digital safety cannot be summarized as an arbitrary percentage. The portal tracks each dimension discretely across baseline diagnostics, micro-learning pathways, and post-learning evaluation so specific defensive reflexes can be recognized and strengthened.
+            </p>
           </div>
         </div>
       </section>
@@ -624,7 +576,7 @@ function About() {
               </h4>
               <ul style={{ paddingLeft: '16px', margin: 0, fontSize: '0.85rem', color: 'var(--text-secondary)', display: 'flex', flexDirection: 'column', gap: '6px' }}>
                 <li><strong>Indian Digital Laws:</strong> Covering IT Act provisions, BNS 2023, and DPDP 2023.</li>
-                <li><strong>Threat Intelligence:</strong> Common cybercrime vectors (phishing, vishing, UPI scams).</li>
+                <li><strong>Threat Directory:</strong> Common cybercrime vectors (phishing, vishing, UPI scams).</li>
                 <li><strong>Behavioral Metrics:</strong> Baseline action choices and feedback mapping.</li>
                 <li><strong>Secure Implementation:</strong> Parameter isolation, role guards, and data separation.</li>
               </ul>

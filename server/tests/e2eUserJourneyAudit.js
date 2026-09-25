@@ -21,6 +21,7 @@ const AssessmentSession = require('../models/AssessmentSession');
 const Scenario = require('../models/Scenario');
 const ScenarioStage = require('../models/ScenarioStage');
 const ScenarioDecision = require('../models/ScenarioDecision');
+const User = require('../models/User');
 
 let server;
 const PORT = 5994;
@@ -93,16 +94,12 @@ async function runAudit() {
     let baseFinalResult = null;
     while (currentStage) {
       const stageDecisions = await ScenarioDecision.find({ stageId: currentStage.id });
-      // Pick a decision: on stage 1 (SMS), choose urgent link click; on stage 6 (UPI), choose approve collect
+      // Pick a decision: on stages 2 and 4, choose risky decisions to simulate baseline deficit
       let chosenDecision = stageDecisions[0];
-      if (currentStage.title.includes('SMS') || currentStage.title.includes('Courier')) {
-        // pick unverified
-        const unverified = stageDecisions.find(d => d.optionText.toLowerCase().includes('open') || d.optionText.toLowerCase().includes('link'));
-        if (unverified) chosenDecision = unverified;
-      }
-      if (currentStage.title.includes('Payment') || currentStage.title.includes('UPI')) {
-        const approve = stageDecisions.find(d => d.optionText.toLowerCase().includes('pin') || d.optionText.toLowerCase().includes('collect'));
-        if (approve) chosenDecision = approve;
+      const stageDoc = await ScenarioStage.findById(currentStage.id);
+      if (stageDoc && (stageDoc.stageOrder === 2 || stageDoc.stageOrder === 4 || stageDoc.stageOrder === 6)) {
+        const risky = stageDecisions.find(d => d.riskLevel === 'high-risk' || d.riskLevel === 'critical');
+        if (risky) chosenDecision = risky;
       }
 
       const stepRes = await request('POST', '/api/assessments/submit-step', {
@@ -251,14 +248,10 @@ async function runAudit() {
     let finalResult = null;
     while (currentStage) {
       const stageDecisions = await ScenarioDecision.find({ stageId: currentStage.id });
-      // Pick the safest option (verify separately, refuse unreviewed, check domain)
-      let safeDecision = stageDecisions.find(d => 
-        d.optionText.toLowerCase().includes('verify') || 
-        d.optionText.toLowerCase().includes('inspect') || 
-        d.optionText.toLowerCase().includes('official') ||
-        d.optionText.toLowerCase().includes('refuse') ||
-        d.optionText.toLowerCase().includes('review')
-      ) || stageDecisions[0];
+      // Pick the safest option using structural metadata (riskLevel and outcomeType)
+      let safeDecision = stageDecisions.find(d => d.riskLevel === 'safe' && d.outcomeType === 'correct')
+        || stageDecisions.find(d => d.riskLevel === 'safe')
+        || stageDecisions[0];
 
       const stepRes = await request('POST', '/api/assessments/submit-step', {
         assessmentSessionId: finalSessionId,

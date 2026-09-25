@@ -1,3 +1,4 @@
+const mongoose = require('mongoose');
 const Quiz = require('../models/Quiz');
 const QuizQuestion = require('../models/QuizQuestion');
 const QuizAttempt = require('../models/QuizAttempt');
@@ -8,7 +9,7 @@ const { selectQuestions } = require('../services/questionSelectionService');
 exports.getAllQuizzes = async (req, res) => {
   try {
     const quizzes = await Quiz.find();
-    // Return quizzes populated with their questions list, but WITHOUT correct answers or explanations (Security Protection & Test Compatibility)
+    // Return quizzes populated with attempt size and total bank size
     const populated = await Promise.all(quizzes.map(async (quiz) => {
       const questions = await QuizQuestion.find({ quizId: quiz._id, published: true });
       return {
@@ -17,12 +18,16 @@ exports.getAllQuizzes = async (req, res) => {
         category: quiz.category,
         description: quiz.description,
         difficulty: quiz.difficulty,
+        questionCount: Math.min(10, questions.length),
+        totalQuestionsInBank: questions.length,
         questions: questions.map(q => ({
           id: q._id,
           questionText: q.questionText,
           options: q.options,
           relatedLawSection: q.relatedLawSection || q.relatedLaw || '',
-          difficulty: q.difficulty
+          difficulty: q.difficulty,
+          cognitiveLevel: q.cognitiveLevel,
+          questionType: q.questionType
         }))
       };
     }));
@@ -38,7 +43,14 @@ exports.getAllQuizzes = async (req, res) => {
 exports.getQuizQuestions = async (req, res) => {
   try {
     const { quizId } = req.params;
-    const userId = req.user._id;
+    const userId = req.user ? req.user._id : null;
+
+    if (!mongoose.Types.ObjectId.isValid(quizId)) {
+      return res.status(400).json({
+        success: false,
+        error: { code: 'INVALID_QUIZ_ID', message: 'Invalid quiz ID format' }
+      });
+    }
 
     const quiz = await Quiz.findById(quizId);
     if (!quiz) {
@@ -58,6 +70,7 @@ exports.getQuizQuestions = async (req, res) => {
       options: q.options,
       relatedLawSection: q.relatedLawSection || q.relatedLaw || '',
       difficulty: q.difficulty,
+      cognitiveLevel: q.cognitiveLevel,
       questionType: q.questionType
     }));
 
@@ -72,13 +85,21 @@ exports.getQuizQuestions = async (req, res) => {
 
 exports.submitQuiz = async (req, res) => {
   try {
-    const { quizId, answers } = req.body; // answers is an array of { questionId, selectedOptionIndex }
+    const { quizId, answers } = req.body;
     const userId = req.user._id;
 
-    if (!quizId || !Array.isArray(answers)) {
+    // 1. Validate basic parameters
+    if (!quizId || !Array.isArray(answers) || answers.length === 0) {
       return res.status(400).json({
         success: false,
-        error: { code: 'INVALID_PARAMETERS', message: 'quizId and answers array are required' }
+        error: { code: 'INVALID_PARAMETERS', message: 'quizId and non-empty answers array are required' }
+      });
+    }
+
+    if (!mongoose.Types.ObjectId.isValid(quizId)) {
+      return res.status(400).json({
+        success: false,
+        error: { code: 'INVALID_QUIZ_ID', message: 'Invalid quiz ID format' }
       });
     }
 
@@ -90,22 +111,56 @@ exports.submitQuiz = async (req, res) => {
       });
     }
 
-    // Fetch official questions list for validation
-    const questions = await QuizQuestion.find({ quizId });
-    if (questions.length === 0) {
+    // 2. Validate answer payload format
+    for (let i = 0; i < answers.length; i++) {
+      const a = answers[i];
+      if (!a || !a.questionId || !mongoose.Types.ObjectId.isValid(a.questionId)) {
+        return res.status(400).json({
+          success: false,
+          error: { code: 'MALFORMED_ANSWER', message: `Answer at index ${i} has invalid or missing questionId` }
+        });
+      }
+      if (typeof a.selectedOptionIndex !== 'number' || a.selectedOptionIndex < -1 || a.selectedOptionIndex > 3) {
+        return res.status(400).json({
+          success: false,
+          error: { code: 'MALFORMED_ANSWER', message: `Answer at index ${i} has invalid selectedOptionIndex` }
+        });
+      }
+    }
+
+    // 3. Detect duplicate submitted question IDs
+    const submittedQuestionIds = answers.map(a => a.questionId.toString());
+    const uniqueIds = new Set(submittedQuestionIds);
+    if (uniqueIds.size !== submittedQuestionIds.length) {
       return res.status(400).json({
         success: false,
-        error: { code: 'QUIZ_NO_QUESTIONS', message: 'Quiz contains no questions' }
+        error: { code: 'DUPLICATE_QUESTION_IDS', message: 'Duplicate question IDs found in submission' }
       });
     }
 
-    // Backend-Authoritative score calculations
+    // 4. Fetch submitted questions belonging strictly to this quiz
+    const questions = await QuizQuestion.find({
+      _id: { $in: submittedQuestionIds },
+      quizId: quiz._id
+    });
+
+    // Detect unknown IDs or IDs from a different quiz
+    if (questions.length !== submittedQuestionIds.length) {
+      return res.status(400).json({
+        success: false,
+        error: { code: 'INVALID_QUESTION_IDS', message: 'One or more submitted question IDs do not belong to the requested quiz' }
+      });
+    }
+
+    // 5. Backend-Authoritative score calculations out of submitted questions (NOT entire category)
     let correctCount = 0;
     const explanations = [];
+    const questionMap = new Map(questions.map(q => [q._id.toString(), q]));
 
-    for (let question of questions) {
-      const userAns = answers.find(a => a.questionId.toString() === question._id.toString());
-      const selectedIndex = userAns ? userAns.selectedOptionIndex : -1;
+    for (let ans of answers) {
+      const question = questionMap.get(ans.questionId.toString());
+      const selectedIndex = ans.selectedOptionIndex;
+      // Do NOT trust client-supplied correctness; calculate directly against question.correctOptionIndex
       const isCorrect = selectedIndex === question.correctOptionIndex;
 
       if (isCorrect) {
@@ -121,9 +176,10 @@ exports.submitQuiz = async (req, res) => {
       });
     }
 
-    const percentage = Math.round((correctCount / questions.length) * 100);
+    const totalAttemptQuestions = questions.length;
+    const percentage = Math.round((correctCount / totalAttemptQuestions) * 100);
 
-    // Save attempt
+    // 6. Save attempt
     const previousAttemptsCount = await QuizAttempt.countDocuments({ userId, quizId });
     const attemptNumber = previousAttemptsCount + 1;
 
@@ -139,7 +195,7 @@ exports.submitQuiz = async (req, res) => {
       attemptNumber
     });
 
-    // Update progress profiles, streaks, and badges
+    // 7. Update user progress profiles, streaks, and badges
     let progress = await UserProgress.findOne({ userId });
     if (!progress) {
       progress = await UserProgress.create({
@@ -160,7 +216,6 @@ exports.submitQuiz = async (req, res) => {
     // Evaluates "Cyber Law Learner" (complete 3 quizzes with >= 75% score)
     const highAttempts = await QuizAttempt.find({ userId, percentage: { $gte: 75 } });
     const distinctQuizzes = new Set(highAttempts.map(a => a.quizId.toString()));
-    // Include current attempt if it was high score
     if (percentage >= 75) {
       distinctQuizzes.add(quizId.toString());
     }
@@ -195,7 +250,7 @@ exports.submitQuiz = async (req, res) => {
       score: percentage,
       percentage,
       correctCount,
-      totalQuestions: questions.length,
+      totalQuestions: totalAttemptQuestions,
       badgesEarned,
       explanations
     });

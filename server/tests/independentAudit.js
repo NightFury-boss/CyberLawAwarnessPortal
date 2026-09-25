@@ -12,12 +12,18 @@ const AssessmentSession = require('../models/AssessmentSession');
 const AssessmentDecision = require('../models/AssessmentDecision');
 const User = require('../models/User');
 
+const seedFixture = require('../config/seedFixture');
+const clearFixture = require('../config/clearFixture');
 const { auditScenario } = require('../services/scenarioIntegrityService');
 const { calculateScores } = require('../services/assessmentScoringService');
 
 async function runIndependentAudit() {
   await mongoose.connect(MONGODB_URI, { family: 4 });
   console.log('[Audit] Connected to MongoDB.');
+
+  // Seed fixture deterministically
+  await clearFixture(false);
+  await seedFixture(false);
 
   // 1. Clean State Document Verification
   console.log('\n=== 1. CLEAN STATE DOCUMENT VERIFICATION ===');
@@ -57,6 +63,7 @@ async function runIndependentAudit() {
   console.log('Graph Audit Errors:', graphResult.errors);
   console.log('Graph Audit Warnings:', graphResult.warnings);
 
+  await clearFixture(false);
   await mongoose.disconnect();
 }
 

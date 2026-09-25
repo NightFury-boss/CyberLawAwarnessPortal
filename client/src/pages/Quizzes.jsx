@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../services/api';
+import WorkspaceBreadcrumb from '../components/WorkspaceBreadcrumb';
+import EditorialPageHeader from '../components/common/EditorialPageHeader';
+import EditorialRule from '../components/common/EditorialRule';
 
 function Quizzes({ user, updateProgressTrigger }) {
   const [quizzes, setQuizzes] = useState([]);
@@ -107,18 +110,15 @@ function Quizzes({ user, updateProgressTrigger }) {
 
   return (
     <div className="container" style={{ padding: 'var(--space-xl) 0' }}>
-      <h1 style={{ fontSize: '2.5rem', marginBottom: 'var(--space-md)' }}>
-        Interactive Quiz Centre
-      </h1>
-      <p className="text-muted" style={{ marginBottom: 'var(--space-xl)' }}>
-        Test your knowledge of digital threats, cyber hygiene, and legal provisions under the IT Act, 2000.
-      </p>
-      <div style={{ marginBottom: 'var(--space-lg)', borderLeft: '3px solid var(--accent-navy)', paddingLeft: '16px' }}>
-        <p style={{ fontSize: '0.95rem', color: 'var(--accent-navy)', fontStyle: 'italic', margin: 0 }}>
-          "Knowing an answer is useful. Knowing why it matters is better."
-        </p>
-      </div>
-      <p style={{ display: 'none' /* placeholder to preserve indices */ }} />
+      {/* Editorial Header */}
+      <EditorialPageHeader
+        eyebrow="Knowledge Practice"
+        title="Interactive Quiz Centre"
+        subtitle='"Knowing an answer is useful. Knowing why it matters is better."'
+        description="Test your understanding of digital threats, cyber hygiene, and legal provisions under the Information Technology Act, 2000."
+      >
+        <WorkspaceBreadcrumb />
+      </EditorialPageHeader>
 
       {/* Main Container */}
       {!activeQuiz ? (
@@ -126,7 +126,7 @@ function Quizzes({ user, updateProgressTrigger }) {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 'var(--space-lg)' }}>
           {categories.map((cat) => {
             const quizObj = quizzes.find(q => q.category === cat);
-            const count = quizObj ? quizObj.questionCount : 0;
+            const count = quizObj ? (quizObj.questionCount || 10) : 10;
             return (
               <div key={cat} className="editorial-card" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
                 <div>
@@ -178,95 +178,97 @@ function Quizzes({ user, updateProgressTrigger }) {
             // Post-submission evaluations fetched from the backend (Answer Security)
             const expData = explanations.find(e => e.questionId.toString() === q.id.toString()) || {};
             const isCorrect = expData.isCorrect;
-            const correctOptionIndex = expData.correctOptionIndex;
-            const explanationText = expData.explanation;
 
             return (
-              <div key={q.id} className="editorial-card" style={{
-                borderLeft: quizSubmitted 
-                  ? (isCorrect ? '4px solid var(--color-success)' : '4px solid var(--color-error)')
-                  : '1px solid var(--color-border)'
-              }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '4px' }}>
-                  <span>Question {qIndex + 1} of {activeQuiz.questions.length}</span>
-                  <span>Difficulty: {q.difficulty}</span>
+              <div 
+                key={q.id || qIndex} 
+                className="card" 
+                style={{ 
+                  marginBottom: 'var(--space-lg)', 
+                  border: quizSubmitted 
+                    ? (isCorrect ? '1px solid var(--color-success)' : '1px solid var(--color-error)') 
+                    : '1px solid var(--color-border)' 
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 'var(--space-sm)' }}>
+                  <span className="text-muted" style={{ fontSize: '0.85rem' }}>Question {qIndex + 1} of {activeQuiz.questions.length}</span>
+                  {q.relatedLawSection && (
+                    <span className="tag tag-accent">{q.relatedLawSection}</span>
+                  )}
                 </div>
-                
-                <h3 style={{ fontSize: '1.15rem', marginBottom: 'var(--space-md)' }}>{q.questionText}</h3>
 
-                {/* Option list */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-xs)' }}>
+                <h4 style={{ fontSize: '1.1rem', marginBottom: 'var(--space-md)' }}>
+                  {q.questionText}
+                </h4>
+
+                {/* Option Radios */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-sm)' }}>
                   {q.options.map((opt, optIndex) => {
                     const isSelected = chosenOption === optIndex;
-                                        let optionStyle = {
-                      padding: '10px 14px',
+                    let optionStyle = {
+                      padding: 'var(--space-sm)',
                       borderRadius: 'var(--radius-sm)',
-                      border: isSelected ? '1px solid var(--accent-navy)' : '1px solid var(--color-border-dark)',
-                      textAlign: 'left',
-                      background: isSelected ? 'var(--accent-navy-light)' : 'var(--bg-white)',
-                      color: isSelected ? 'var(--accent-navy)' : 'inherit',
+                      border: '1px solid var(--color-border)',
                       cursor: quizSubmitted ? 'default' : 'pointer',
-                      width: '100%',
-                      fontWeight: isSelected ? '600' : '400',
-                      transition: 'var(--transition-fast)'
+                      backgroundColor: isSelected ? 'var(--color-surface)' : 'transparent',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 'var(--space-sm)'
                     };
 
-                    // Highlights after submission using backend-returned values
                     if (quizSubmitted) {
-                      if (optIndex === correctOptionIndex) {
+                      if (optIndex === expData.correctOptionIndex) {
+                        optionStyle.backgroundColor = '#e6ffed';
                         optionStyle.borderColor = 'var(--color-success)';
-                        optionStyle.backgroundColor = 'var(--color-success-light)';
-                        optionStyle.color = '#1a6234';
-                        optionStyle.fontWeight = '600';
                       } else if (isSelected && !isCorrect) {
+                        optionStyle.backgroundColor = '#ffeef0';
                         optionStyle.borderColor = 'var(--color-error)';
-                        optionStyle.backgroundColor = 'var(--color-error-light)';
-                        optionStyle.color = '#7b1c12';
                       }
                     }
 
                     return (
-                      <button
-                        key={optIndex}
-                        type="button"
-                        onClick={() => handleOptionChange(qIndex, optIndex)}
-                        style={optionStyle}
-                        disabled={quizSubmitted}
-                      >
-                        {isSelected ? '●' : '○'} {opt}
-                      </button>
+                      <label key={optIndex} style={optionStyle}>
+                        <input
+                          type="radio"
+                          name={`question-${qIndex}`}
+                          checked={isSelected}
+                          onChange={() => handleOptionChange(qIndex, optIndex)}
+                          disabled={quizSubmitted}
+                        />
+                        <span>{opt}</span>
+                      </label>
                     );
                   })}
                 </div>
 
-                {/* Explanation block */}
-                {quizSubmitted && explanationText && (
-                  <div style={{
-                    marginTop: 'var(--space-md)',
-                    padding: 'var(--space-sm) var(--space-md)',
-                    backgroundColor: 'var(--accent-navy-light)',
-                    borderLeft: '3px solid var(--accent-navy)',
-                    borderRadius: 'var(--radius-xs)',
-                    fontSize: '0.85rem'
-                  }}>
-                    <strong style={{ color: 'var(--accent-navy)' }}>Explanation:</strong> {explanationText}
-                    {q.relatedLawSection && (
-                      <div style={{ marginTop: 'var(--space-xs)', fontSize: '0.8rem' }}>
-                        <em>Related Law:</em> <Link to="/laws" style={{ fontWeight: '600', textDecoration: 'underline' }}>{q.relatedLawSection}</Link>
-                      </div>
-                    )}
+                {/* Post-submit Explanation Box */}
+                {quizSubmitted && expData.explanation && (
+                  <div style={{ marginTop: 'var(--space-md)', padding: 'var(--space-sm)', backgroundColor: 'var(--color-surface)', borderRadius: 'var(--radius-sm)', borderLeft: `4px solid ${isCorrect ? 'var(--color-success)' : 'var(--color-error)'}` }}>
+                    <p style={{ margin: 0, fontSize: '0.9rem' }}>
+                      <strong>{isCorrect ? 'Correct!' : 'Incorrect.'}</strong> {expData.explanation}
+                    </p>
                   </div>
                 )}
               </div>
             );
           })}
 
-          {!quizSubmitted && (
-            <div style={{ textAlign: 'center', marginTop: 'var(--space-xl)' }}>
-              <button onClick={handleSubmitQuiz} className="btn btn-primary" style={{ padding: '0.8rem 2.5rem', fontWeight: '600' }}>
-                Submit Quiz for Scoring
-              </button>
-            </div>
+          {!quizSubmitted ? (
+            <button 
+              onClick={handleSubmitQuiz} 
+              className="btn btn-primary"
+              style={{ width: '100%', padding: 'var(--space-md)', fontSize: '1.1rem' }}
+            >
+              Submit Quiz
+            </button>
+          ) : (
+            <button 
+              onClick={() => setActiveQuiz(null)} 
+              className="btn btn-secondary"
+              style={{ width: '100%', padding: 'var(--space-md)', fontSize: '1.1rem' }}
+            >
+              Choose Another Quiz
+            </button>
           )}
         </div>
       )}
