@@ -1187,7 +1187,7 @@ function Cases() {
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
                         <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
                           <span style={{ fontFamily: 'monospace', fontSize: '0.8rem', color: 'var(--accent-navy)', fontWeight: 'bold' }}>
-                            CASE FILE {cs.caseNumber.replace('CASE-', '')}
+                            {cs.caseNumber?.startsWith('CASE FILE') ? cs.caseNumber : `CASE FILE ${cs.caseNumber?.replace('CASE-', '') || ''}`}
                           </span>
                           <span style={{
                             fontSize: '0.65rem',
