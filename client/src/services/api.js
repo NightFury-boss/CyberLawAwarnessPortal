@@ -21,7 +21,7 @@ async function handleResponse(response) {
     try {
       const data = await response.json();
       errMsg = data.error?.message || data.message || errMsg;
-    } catch (e) {
+    } catch (_e) {
       // JSON parse failed
     }
     throw new Error(errMsg);
@@ -262,6 +262,13 @@ const api = {
     return handleResponse(res);
   },
 
+  getPathwayCheckpointReview: async (pathwayId, sourceSessionId) => {
+    const res = await fetch(`${API_URL}/progress/pathways/${pathwayId}/review?sourceSessionId=${sourceSessionId}`, {
+      headers: getHeaders()
+    });
+    return handleResponse(res);
+  },
+
   submitPathwayCheckpoint: async (pathwayId, sourceSessionId, answers) => {
     const res = await fetch(`${API_URL}/progress/pathways/checkpoint`, {
       method: 'POST',
@@ -282,6 +289,36 @@ const api = {
       headers: getHeaders(),
       body: JSON.stringify({
         pathwayId,
+        sourceSessionId,
+        answers
+      })
+    });
+    return handleResponse(res);
+  },
+
+  // Spaced Retrieval & Follow-Up Learning
+  getDueSpacedRetrievals: async () => {
+    const res = await fetch(`${API_URL}/progress/pathways/spaced-retrieval/due`, {
+      headers: getHeaders()
+    });
+    return handleResponse(res);
+  },
+
+  getSpacedRetrievalQuestions: async (pathwayId, sourceSessionId = '') => {
+    const url = sourceSessionId
+      ? `${API_URL}/progress/pathways/${pathwayId}/spaced-retrieval?sourceSessionId=${sourceSessionId}`
+      : `${API_URL}/progress/pathways/${pathwayId}/spaced-retrieval`;
+    const res = await fetch(url, {
+      headers: getHeaders()
+    });
+    return handleResponse(res);
+  },
+
+  submitSpacedRetrieval: async (pathwayId, sourceSessionId, answers) => {
+    const res = await fetch(`${API_URL}/progress/pathways/${pathwayId}/spaced-retrieval`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify({
         sourceSessionId,
         answers
       })
@@ -322,6 +359,13 @@ const api = {
     return handleResponse(res);
   },
 
+  adminGetDashboardSummary: async () => {
+    const res = await fetch(`${API_URL}/admin/dashboard-summary`, {
+      headers: getHeaders()
+    });
+    return handleResponse(res);
+  },
+
   adminGetUsers: async () => {
     const res = await fetch(`${API_URL}/admin/users-progress`, {
       headers: getHeaders()
@@ -329,8 +373,15 @@ const api = {
     return handleResponse(res);
   },
 
-  adminGetAuditLogs: async () => {
-    const res = await fetch(`${API_URL}/admin/audit-logs`, {
+  adminGetAuditLogs: async (params = {}) => {
+    const searchParams = new URLSearchParams();
+    Object.entries(params).forEach(([key, val]) => {
+      if (val !== undefined && val !== null && val !== '') {
+        searchParams.append(key, val);
+      }
+    });
+    const qs = searchParams.toString() ? `?${searchParams.toString()}` : '';
+    const res = await fetch(`${API_URL}/admin/audit-logs${qs}`, {
       headers: getHeaders()
     });
     return handleResponse(res);
@@ -411,7 +462,19 @@ const api = {
     return handleResponse(res);
   },
 
-  // Quizzes CRUD
+  // Quizzes & Questions Administration
+  adminGetQuizzes: async () => {
+    const res = await fetch(`${API_URL}/admin/quizzes`, {
+      headers: getHeaders()
+    });
+    return handleResponse(res);
+  },
+  adminGetQuiz: async (id) => {
+    const res = await fetch(`${API_URL}/admin/quizzes/${id}`, {
+      headers: getHeaders()
+    });
+    return handleResponse(res);
+  },
   adminCreateQuiz: async (data) => {
     const res = await fetch(`${API_URL}/admin/quizzes`, {
       method: 'POST',
@@ -431,6 +494,49 @@ const api = {
   adminDeleteQuiz: async (id) => {
     const res = await fetch(`${API_URL}/admin/quizzes/${id}`, {
       method: 'DELETE',
+      headers: getHeaders()
+    });
+    return handleResponse(res);
+  },
+  adminCreateQuizQuestion: async (quizId, data) => {
+    const res = await fetch(`${API_URL}/admin/quizzes/${quizId}/questions`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(data)
+    });
+    return handleResponse(res);
+  },
+  adminUpdateQuizQuestion: async (quizId, questionId, data) => {
+    const res = await fetch(`${API_URL}/admin/quizzes/${quizId}/questions/${questionId}`, {
+      method: 'PUT',
+      headers: getHeaders(),
+      body: JSON.stringify(data)
+    });
+    return handleResponse(res);
+  },
+  adminDeleteQuizQuestion: async (quizId, questionId) => {
+    const res = await fetch(`${API_URL}/admin/quizzes/${quizId}/questions/${questionId}`, {
+      method: 'DELETE',
+      headers: getHeaders()
+    });
+    return handleResponse(res);
+  },
+
+  // Scenarios Inspection & Integrity Audit
+  adminGetScenarios: async () => {
+    const res = await fetch(`${API_URL}/admin/scenarios`, {
+      headers: getHeaders()
+    });
+    return handleResponse(res);
+  },
+  adminGetScenario: async (id) => {
+    const res = await fetch(`${API_URL}/admin/scenarios/${id}`, {
+      headers: getHeaders()
+    });
+    return handleResponse(res);
+  },
+  adminAuditScenario: async (id) => {
+    const res = await fetch(`${API_URL}/admin/scenarios/${id}/audit`, {
       headers: getHeaders()
     });
     return handleResponse(res);

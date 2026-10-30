@@ -53,7 +53,11 @@ function SignUpForm({ setUser, onSwitchToSignIn }) {
     try {
       const data = await api.register(cleanEmail, password, cleanName);
       setUser(data.user);
-      navigate('/dashboard');
+      if (data.user?.role === 'admin') {
+        navigate('/admin');
+      } else {
+        navigate('/dashboard');
+      }
     } catch (err) {
       setError(err.message || 'Registration could not be completed. Please try again.');
     } finally {

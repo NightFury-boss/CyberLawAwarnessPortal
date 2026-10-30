@@ -164,7 +164,6 @@ export default function PortalScrollStory({
     return null;
   }
 
-  const activeItem = safeItems[activeIndex] || safeItems[0];
   const totalCount = safeItems.length;
 
   return (

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { Navigate } from 'react-router-dom';
 import api from '../services/api';
 import PathwayRunner from '../components/PathwayRunner';
 import DashboardHeader from '../components/dashboard/DashboardHeader';
@@ -7,6 +8,9 @@ import OrientationSummary from '../components/dashboard/OrientationSummary';
 import LearningPracticeSection from '../components/dashboard/LearningPracticeSection';
 import BehavioralEvolution from '../components/dashboard/BehavioralEvolution';
 import DashboardHistory from '../components/dashboard/DashboardHistory';
+import DefensivePortfolioModal from '../components/dashboard/DefensivePortfolioModal';
+import SpacedRetrievalModal from '../components/dashboard/SpacedRetrievalModal';
+import { selectAuthoritativeRecallCounts } from '../utils/evidenceSelectors';
 
 /**
  * Dashboard Page Container — A Quiet Personal Learning Desk
@@ -29,23 +33,39 @@ function Dashboard({ user, progressTrigger }) {
   const [remediationData, setRemediationData] = useState(null);
   const [portfolioData, setPortfolioData] = useState(null);
   const [trajectoryData, setTrajectoryData] = useState(null);
+  const [dueSpacedReviews, setDueSpacedReviews] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [activePathwayForRunner, setActivePathwayForRunner] = useState(null);
+  const [activeSpacedModal, setActiveSpacedModal] = useState(null);
+  const [isPortfolioModalOpen, setIsPortfolioModalOpen] = useState(false);
+  const [portfolioInitialPillar, setPortfolioInitialPillar] = useState(null);
+
+  const handleOpenPortfolioModal = (target = null) => {
+    setPortfolioInitialPillar(typeof target === 'string' ? target : null);
+    setIsPortfolioModalOpen(true);
+  };
+
+  const handleClosePortfolioModal = () => {
+    setIsPortfolioModalOpen(false);
+    setPortfolioInitialPillar(null);
+  };
 
   const fetchDashboardData = useCallback(async () => {
     setLoading(true);
     setError('');
     try {
-      const [prog, port, traj] = await Promise.all([
+      const [prog, port, traj, spacedRes] = await Promise.all([
         api.getProgress(),
         api.getPortfolio().catch(() => null),
-        api.getTrajectory().catch(() => null)
+        api.getTrajectory().catch(() => null),
+        api.getDueSpacedRetrievals().catch(() => ({ dueReviews: [] }))
       ]);
 
       setProgress(prog);
       setPortfolioData(port);
       setTrajectoryData(traj);
+      setDueSpacedReviews(spacedRes?.dueReviews || []);
 
       if (prog?.latestSessionId) {
         try {
@@ -65,6 +85,10 @@ function Dashboard({ user, progressTrigger }) {
   useEffect(() => {
     fetchDashboardData();
   }, [user, progressTrigger, fetchDashboardData]);
+
+  if (user?.role === 'admin') {
+    return <Navigate to="/admin" replace />;
+  }
 
   if (loading) {
     return (
@@ -90,15 +114,30 @@ function Dashboard({ user, progressTrigger }) {
   const hasFinal = progress.finalScore !== null;
   const hasTrajectoryReassessment = Boolean(trajectoryData?.hasReassessment);
 
-  const completedPathwaysList = portfolioData?.interventions?.completedPathways || progress.completedPathways || [];
-  const reinforcementsList = portfolioData?.interventions?.reinforcementsCompleted || progress.reinforcementsCompleted || [];
+  // Server-authoritative pathway records: progress.completedPathways carries all active stepsCompleted states
+  const completedPathwaysList = progress?.completedPathways || portfolioData?.interventions?.completedPathways || [];
+  const userPathwaysRecords = completedPathwaysList;
+  const reinforcementsList = progress?.reinforcementsCompleted || portfolioData?.interventions?.reinforcementsCompleted || [];
   const quizAttemptsList = portfolioData?.knowledgePractice?.quizAttempts || [];
 
   // Derive Pathway Recommendations Statuses using authoritative session linkage
   const recommendations = remediationData?.recommendations || [];
   const pathwaysWithStatus = recommendations.map(rec => {
-    const completedRecord = completedPathwaysList.find(
-      p => p.pathwayId === rec.pathwayId && (progress?.latestSessionId ? (p.sourceSessionId === progress.latestSessionId || p.sourceSessionId?._id === progress.latestSessionId) : true)
+    if (!rec || !rec.pathwayId) {
+      return {
+        rec: null,
+        isFullyCompleted: false,
+        isInProgress: false,
+        isReinforced: false,
+        isReinforcementEligible: false,
+        completedRecord: null,
+        reinforcementRecord: null,
+        shiftState: null
+      };
+    }
+
+    const completedRecord = userPathwaysRecords.find(
+      p => p.pathwayId === rec.pathwayId && (progress?.latestSessionId ? (String(p.sourceSessionId?._id || p.sourceSessionId) === String(progress.latestSessionId)) : true)
     );
     const isFullyCompleted = Boolean(completedRecord?.completedAt);
     const isInProgress = !isFullyCompleted && Boolean(completedRecord && (completedRecord.stepsCompleted?.caseStudy || completedRecord.stepsCompleted?.prevention));
@@ -109,6 +148,7 @@ function Dashboard({ user, progressTrigger }) {
     const isReinforced = Boolean(reinforcementRecord);
     const shiftState = rec.habitShiftState || rec.state;
     const isReinforcementEligible = hasFinal && (shiftState === 'continued_practice' || shiftState === 'emerging_gap');
+    const isSpacedRetrievalDue = dueSpacedReviews.some(dr => dr.pathwayId === rec.pathwayId);
 
     return {
       rec,
@@ -116,6 +156,7 @@ function Dashboard({ user, progressTrigger }) {
       isInProgress,
       isReinforced,
       isReinforcementEligible,
+      isSpacedRetrievalDue,
       completedRecord,
       reinforcementRecord,
       shiftState
@@ -125,11 +166,36 @@ function Dashboard({ user, progressTrigger }) {
   const completedFocusCount = pathwaysWithStatus.filter(p => p.isFullyCompleted).length;
   const totalFocusCount = pathwaysWithStatus.length;
 
+  // Authoritative recall review counts derived via calibrated evidence selector
+  const { completedRecallCount, passedRecallCount } = selectAuthoritativeRecallCounts({
+    portfolioData,
+    progress
+  });
+
   // Next Action Selection based strictly on authoritative state
   const nextIncompletePathway = pathwaysWithStatus.find(p => !p.isFullyCompleted);
   const nextReinforcePathway = pathwaysWithStatus.find(p => p.isReinforcementEligible && !p.isReinforced);
 
+  const handleLaunchSpacedRetrieval = (itemOrDue) => {
+    const pathwayId = itemOrDue.pathwayId || itemOrDue.rec?.pathwayId;
+    const sourceSessionId = itemOrDue.sourceSessionId || itemOrDue.completedRecord?.sourceSessionId || progress?.latestSessionId;
+    if (!pathwayId) return;
+    setActiveSpacedModal({
+      pathwayId,
+      sourceSessionId
+    });
+  };
+
   const handleLaunchRunner = (pathwayItem, isReinforce = false) => {
+    if (!progress?.latestSessionId) {
+      setError('To start a lesson, please complete your First Check first so we can personalize your learning.');
+      return;
+    }
+    if (!pathwayItem?.rec?.pathwayId) {
+      setError('This lesson could not be opened right now. Please refresh the page or try again in a moment.');
+      return;
+    }
+
     setActivePathwayForRunner({
       pathway: pathwayItem.rec,
       sourceSessionId: progress.latestSessionId,
@@ -159,6 +225,9 @@ function Dashboard({ user, progressTrigger }) {
         hasFinal={hasFinal}
         nextReinforcePathway={nextReinforcePathway}
         hasTrajectoryReassessment={hasTrajectoryReassessment}
+        completedFocusCount={completedFocusCount}
+        totalFocusCount={totalFocusCount}
+        onOpenPortfolioModal={() => handleOpenPortfolioModal()}
       />
 
       {/* ========================================================================= */}
@@ -167,11 +236,15 @@ function Dashboard({ user, progressTrigger }) {
       <PrimaryFocus
         hasBaseline={hasBaseline}
         hasFinal={hasFinal}
+        pathwaysWithStatus={pathwaysWithStatus}
+        dueSpacedReviews={dueSpacedReviews}
+        completedFocusCount={completedFocusCount}
+        totalFocusCount={totalFocusCount}
         nextIncompletePathway={nextIncompletePathway}
         nextReinforcePathway={nextReinforcePathway}
         onLaunchRunner={handleLaunchRunner}
-        completedFocusCount={completedFocusCount}
-        totalFocusCount={totalFocusCount}
+        onLaunchSpacedRetrieval={handleLaunchSpacedRetrieval}
+        onOpenPortfolioModal={() => handleOpenPortfolioModal()}
       />
 
       {/* ========================================================================= */}
@@ -179,10 +252,15 @@ function Dashboard({ user, progressTrigger }) {
       {/* ========================================================================= */}
       <OrientationSummary
         completedFocusCount={completedFocusCount}
+        totalFocusCount={totalFocusCount}
         quizAttemptsCount={quizAttemptsList.length}
+        completedRecallCount={completedRecallCount}
+        passedRecallCount={passedRecallCount}
         hasBaseline={hasBaseline}
         hasFinal={hasFinal}
         hasTrajectoryReassessment={hasTrajectoryReassessment}
+        hasReinforceEligible={Boolean(nextReinforcePathway)}
+        onOpenPortfolioModal={handleOpenPortfolioModal}
       />
 
       {/* ========================================================================= */}
@@ -194,7 +272,10 @@ function Dashboard({ user, progressTrigger }) {
         quizAttemptsList={quizAttemptsList}
         completedPathwaysList={completedPathwaysList}
         reinforcementsList={reinforcementsList}
+        spacedReviewsList={progress?.spacedReviews || []}
+        dueSpacedReviews={dueSpacedReviews}
         onLaunchRunner={handleLaunchRunner}
+        onLaunchSpacedRetrieval={handleLaunchSpacedRetrieval}
         completedFocusCount={completedFocusCount}
         totalFocusCount={totalFocusCount}
       />
@@ -233,6 +314,37 @@ function Dashboard({ user, progressTrigger }) {
           }}
         />
       )}
+
+      {/* Spaced Retrieval & Follow-Up Learning Modal */}
+      {activeSpacedModal && (
+        <SpacedRetrievalModal
+          isOpen={Boolean(activeSpacedModal)}
+          onClose={() => {
+            const wasCompleted = Boolean(activeSpacedModal?.completed);
+            setActiveSpacedModal(null);
+
+            if (wasCompleted) {
+              fetchDashboardData();
+            }
+          }}
+          pathwayId={activeSpacedModal.pathwayId}
+          sourceSessionId={activeSpacedModal.sourceSessionId}
+          onReviewCompleted={() => {
+            setActiveSpacedModal(prev => (prev ? { ...prev, completed: true } : null));
+          }}
+        />
+      )}
+
+      {/* Authoritative Three-Pillar Defensive Portfolio Record & Printable Statement */}
+      <DefensivePortfolioModal
+        isOpen={isPortfolioModalOpen}
+        onClose={handleClosePortfolioModal}
+        user={user}
+        progress={progress}
+        portfolioData={portfolioData}
+        trajectoryData={trajectoryData}
+        initialPillar={portfolioInitialPillar}
+      />
 
     </div>
   );

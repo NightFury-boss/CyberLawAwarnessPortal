@@ -5,6 +5,7 @@ import { searchItems } from '../components/search/searchUtils';
 import WorkspaceBreadcrumb from '../components/WorkspaceBreadcrumb';
 import EditorialPageHeader from '../components/common/EditorialPageHeader';
 import EditorialRule from '../components/common/EditorialRule';
+import IncidentDocketGenerator from '../components/common/IncidentDocketGenerator';
 
 function FAQItem({ question, answer }) {
   const [isOpen, setIsOpen] = useState(false);
@@ -25,7 +26,7 @@ function FAQItem({ question, answer }) {
           textAlign: 'left',
           fontSize: '1.05rem',
           fontWeight: '600',
-          color: 'var(--accent-navy)',
+          color: 'var(--text-primary)',
           fontFamily: 'var(--font-sans)',
           outline: 'none'
         }}
@@ -50,6 +51,42 @@ function Resources() {
   const [error, setError] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState('All');
+  const [copiedHelpline, setCopiedHelpline] = useState(false);
+  const [copyFailed, setCopyFailed] = useState(false);
+
+  const handleCopyHelpline = async () => {
+    let success = false;
+    try {
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText('1930');
+        success = true;
+      } else {
+        const textArea = document.createElement('textarea');
+        textArea.value = '1930';
+        textArea.setAttribute('readonly', '');
+        textArea.style.position = 'fixed';
+        textArea.style.left = '-999999px';
+        textArea.style.top = '-999999px';
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        success = document.execCommand('copy');
+        textArea.remove();
+      }
+    } catch {
+      success = false;
+    }
+
+    if (success) {
+      setCopiedHelpline(true);
+      setCopyFailed(false);
+      setTimeout(() => setCopiedHelpline(false), 2500);
+    } else {
+      setCopyFailed(true);
+      setCopiedHelpline(false);
+      setTimeout(() => setCopyFailed(false), 3000);
+    }
+  };
 
   useEffect(() => {
     fetchResources();
@@ -60,7 +97,7 @@ function Resources() {
     try {
       const data = await api.getResources();
       setResources(data);
-    } catch (err) {
+    } catch (_err) {
       setError('Failed to fetch reference resources.');
     } finally {
       setLoading(false);
@@ -101,7 +138,7 @@ function Resources() {
       ...res,
       authority: 'Verified Institution',
       sourceType: 'OFFICIAL GUIDE',
-      badgeColor: 'var(--accent-navy)',
+      badgeColor: 'var(--color-primary)',
       group: 'REFERENCE_EDUCATIONAL',
       isOfficial: false
     };
@@ -149,18 +186,136 @@ function Resources() {
           padding: '14px 18px',
           backgroundColor: 'var(--bg-secondary)',
           borderRadius: '4px',
-          borderLeft: '3px solid var(--accent-navy)',
+          borderLeft: '3px solid var(--color-primary)',
           color: 'var(--text-secondary)',
           fontSize: '0.85rem',
           lineHeight: '1.6',
           marginTop: '20px'
         }}>
-          <strong style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.5px', display: 'block', marginBottom: '4px', color: 'var(--accent-navy)' }}>
+          <strong style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.5px', display: 'block', marginBottom: '4px', color: 'var(--color-primary)' }}>
             Educational Notice
           </strong>
           This portal is an academic educational resource. For official reporting, legal filings, and current government guidance, use the verified official sources listed below.
         </div>
       </EditorialPageHeader>
+      <EditorialRule />
+
+      {/* Golden Hour Emergency Action Desk */}
+      <div style={{
+        backgroundColor: 'var(--bg-secondary)',
+        border: '1px solid rgba(220, 38, 38, 0.4)',
+        borderLeft: '5px solid var(--color-danger, #dc2626)',
+        borderRadius: '6px',
+        padding: '20px 24px',
+        marginBottom: '28px',
+        boxShadow: '0 2px 8px rgba(220, 38, 38, 0.05)'
+      }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '16px' }}>
+          <div style={{ flex: '1 1 420px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+              <span style={{
+                fontSize: '0.7rem',
+                fontWeight: '800',
+                letterSpacing: '0.8px',
+                textTransform: 'uppercase',
+                backgroundColor: 'var(--color-danger, #dc2626)',
+                color: 'white',
+                padding: '3px 8px',
+                borderRadius: '3px'
+              }}>
+                Emergency First Response • Golden Hour
+              </span>
+              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontFamily: 'monospace' }}>
+                CFCFRMS / MHA
+              </span>
+            </div>
+            <h2 style={{ fontSize: '1.25rem', color: 'var(--text-primary)', margin: '4px 0 8px 0', fontWeight: 'bold' }}>
+              National Cybercrime Helpline: 1930
+            </h2>
+            <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', margin: '0 0 10px 0', lineHeight: '1.6' }}>
+              If you have experienced an unauthorized debit, UPI fraud, or financial cyber scam, reporting immediately within the initial <strong>2 to 3 hour &quot;Golden Hour&quot;</strong> significantly increases the probability that coordinating desk officers can dispatch inter-bank hold alerts through the Citizen Financial Cyber Fraud Reporting and Management System (CFCFRMS). While account freezing or fund recovery cannot be guaranteed and depends on transaction routing speeds, rapid reporting is the single most critical intervention before funds are transferred across intermediate mule accounts. <strong>The Golden Hour is not an exclusion deadline</strong> — reports filed after 3 hours or days later remain vital, officially processed 24/7, and essential for legal remedies and banking dispute protection under RBI rules.
+            </p>
+            <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', lineHeight: '1.5' }}>
+              <strong>Evidence to keep ready when calling:</strong> (1) Debited bank name & account/card digits, (2) Transaction ID / UTR & exact timestamp, (3) Fraudulent beneficiary UPI ID / account or caller phone number, (4) SMS debit alerts & chat transcripts.
+            </div>
+          </div>
+          <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap', alignSelf: 'center' }}>
+            <a
+              href="tel:1930"
+              aria-label="Call National Cybercrime Helpline 1930"
+              style={{
+                backgroundColor: 'var(--color-danger, #dc2626)',
+                color: 'white',
+                padding: '10px 18px',
+                borderRadius: '4px',
+                fontWeight: 'bold',
+                fontSize: '0.88rem',
+                textDecoration: 'none',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px'
+              }}
+            >
+              📞 Dial 1930 Now
+            </a>
+            <button
+              onClick={handleCopyHelpline}
+              aria-label={
+                copiedHelpline
+                  ? 'Helpline number 1930 copied to clipboard'
+                  : copyFailed
+                    ? 'Copy failed, please dial 1930 directly'
+                    : 'Copy National Cybercrime Helpline Number 1930'
+              }
+              style={{
+                backgroundColor: 'var(--bg-white)',
+                color: copyFailed ? 'var(--color-danger, #b91c1c)' : 'var(--text-primary)',
+                border: copyFailed ? '1px solid var(--color-danger, #b91c1c)' : '1px solid var(--color-border-dark)',
+                padding: '9px 16px',
+                borderRadius: '4px',
+                fontWeight: '600',
+                fontSize: '0.88rem',
+                cursor: 'pointer',
+                transition: 'all 0.15s ease'
+              }}
+            >
+              <span aria-live="polite">
+                {copiedHelpline
+                  ? '✓ Copied 1930'
+                  : copyFailed
+                    ? '⚠️ Copy failed — dial 1930'
+                    : '📋 Copy Helpline'}
+              </span>
+            </button>
+            <a
+              href="https://cybercrime.gov.in"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Open Official National Cybercrime Reporting Portal in a new tab"
+              style={{
+                backgroundColor: 'transparent',
+                color: 'var(--color-primary)',
+                border: '1px solid var(--color-primary)',
+                padding: '9px 16px',
+                borderRadius: '4px',
+                fontWeight: '600',
+                fontSize: '0.88rem',
+                textDecoration: 'none',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '4px'
+              }}
+            >
+              cybercrime.gov.in ↗
+            </a>
+          </div>
+        </div>
+      </div>
+
+      {/* Zero-Telemetry Golden Hour Incident Docket Generator */}
+      <div style={{ marginBottom: '32px' }}>
+        <IncidentDocketGenerator />
+      </div>
 
       {loading && (
         <div style={{ display: 'flex', justifyContent: 'center', padding: '40px 0' }}>
@@ -199,7 +354,7 @@ function Resources() {
                         padding: '6px 12px',
                         borderRadius: 'var(--radius-sm)',
                         border: '1px solid var(--color-border-dark)',
-                        backgroundColor: activeCategory === cat ? 'var(--accent-navy)' : 'var(--bg-white)',
+                        backgroundColor: activeCategory === cat ? 'var(--color-primary)' : 'var(--bg-white)',
                         color: activeCategory === cat ? 'white' : 'var(--text-secondary)',
                         fontSize: '0.75rem',
                         fontWeight: 'bold',
@@ -222,7 +377,7 @@ function Resources() {
               {/* Category 1: Report & Get Help */}
               {reportHelpResources.length > 0 && (
                 <div>
-                  <h2 style={{ fontSize: '1.25rem', color: 'var(--accent-navy)', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '1px', borderBottom: '1px solid var(--color-border)', paddingBottom: '8px', marginBottom: '16px' }}>
+                  <h2 style={{ fontSize: '1.25rem', color: 'var(--text-primary)', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '1px', borderBottom: '1px solid var(--color-border)', paddingBottom: '8px', marginBottom: '16px' }}>
                     Report & Get Help
                   </h2>
                   <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', marginBottom: '16px' }}>
@@ -238,7 +393,7 @@ function Resources() {
                             </span>
                             {res.isOfficial && <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)', fontWeight: '600' }}>• GOVERNMENT SOURCE</span>}
                           </div>
-                          <h3 style={{ fontSize: '1.2rem', margin: '0 0 4px 0', color: 'var(--accent-navy)', fontWeight: 'bold' }}>{res.title}</h3>
+                          <h3 style={{ fontSize: '1.2rem', margin: '0 0 4px 0', color: 'var(--text-primary)', fontWeight: 'bold' }}>{res.title}</h3>
                           <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: '0 0 8px 0' }}>{res.description}</p>
                           <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Authority: <strong>{res.authority}</strong></span>
                         </div>
@@ -260,7 +415,7 @@ function Resources() {
               {/* Category 2: Cyber Safety Guides */}
               {safetyGuides.length > 0 && (
                 <div>
-                  <h2 style={{ fontSize: '1.25rem', color: 'var(--accent-navy)', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '1px', borderBottom: '1px solid var(--color-border)', paddingBottom: '8px', marginBottom: '16px' }}>
+                  <h2 style={{ fontSize: '1.25rem', color: 'var(--text-primary)', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '1px', borderBottom: '1px solid var(--color-border)', paddingBottom: '8px', marginBottom: '16px' }}>
                     Cyber Safety Guides
                   </h2>
                   <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', marginBottom: '16px' }}>
@@ -276,7 +431,7 @@ function Resources() {
                             </span>
                             {res.isOfficial && <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)', fontWeight: '600' }}>• GOVERNMENT SOURCE</span>}
                           </div>
-                          <h3 style={{ fontSize: '1.2rem', margin: '0 0 4px 0', color: 'var(--accent-navy)', fontWeight: 'bold' }}>{res.title}</h3>
+                          <h3 style={{ fontSize: '1.2rem', margin: '0 0 4px 0', color: 'var(--text-primary)', fontWeight: 'bold' }}>{res.title}</h3>
                           <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: '0 0 8px 0' }}>{res.description}</p>
                           <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Authority: <strong>{res.authority}</strong></span>
                         </div>
@@ -298,19 +453,19 @@ function Resources() {
               {/* Category 3: Reference & Educational Material */}
               {refEduMaterial.length > 0 && (
                 <div>
-                  <h2 style={{ fontSize: '1.25rem', color: 'var(--accent-navy)', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '1px', borderBottom: '1px solid var(--color-border)', paddingBottom: '8px', marginBottom: '16px' }}>
+                  <h2 style={{ fontSize: '1.25rem', color: 'var(--text-primary)', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '1px', borderBottom: '1px solid var(--color-border)', paddingBottom: '8px', marginBottom: '16px' }}>
                     Reference & Educational Material
                   </h2>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                     {refEduMaterial.map((res) => (
-                      <div key={res._id || res.id} style={{ padding: '20px', borderLeft: '4px solid var(--accent-navy)', backgroundColor: 'var(--bg-secondary)', borderRadius: 'var(--radius-sm)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
+                      <div key={res._id || res.id} style={{ padding: '20px', borderLeft: '4px solid var(--color-primary)', backgroundColor: 'var(--bg-secondary)', borderRadius: 'var(--radius-sm)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
                         <div>
                           <div style={{ display: 'flex', gap: '8px', alignItems: 'center', marginBottom: '6px' }}>
-                            <span style={{ fontSize: '0.65rem', fontWeight: 'bold', color: 'var(--accent-navy)', border: '1px solid var(--accent-navy)', padding: '2px 6px', borderRadius: '3px', textTransform: 'uppercase' }}>
+                            <span style={{ fontSize: '0.65rem', fontWeight: 'bold', color: 'var(--color-primary)', border: '1px solid var(--color-primary)', padding: '2px 6px', borderRadius: '3px', textTransform: 'uppercase' }}>
                               {res.sourceType}
                             </span>
                           </div>
-                          <h3 style={{ fontSize: '1.2rem', margin: '0 0 4px 0', color: 'var(--accent-navy)', fontWeight: 'bold' }}>{res.title}</h3>
+                          <h3 style={{ fontSize: '1.2rem', margin: '0 0 4px 0', color: 'var(--text-primary)', fontWeight: 'bold' }}>{res.title}</h3>
                           <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: '0 0 8px 0' }}>{res.description}</p>
                           <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Authority: <strong>{res.authority}</strong></span>
                         </div>
@@ -336,7 +491,7 @@ function Resources() {
 
       {/* FAQ Section Accordions */}
       <div style={{ marginTop: 'var(--space-xxl)' }}>
-        <h2 style={{ fontSize: '1.75rem', color: 'var(--accent-navy)', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '1px', borderBottom: '1px solid var(--color-border)', paddingBottom: '8px', marginBottom: '16px' }}>
+        <h2 style={{ fontSize: '1.75rem', color: 'var(--text-primary)', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '1px', borderBottom: '1px solid var(--color-border)', paddingBottom: '8px', marginBottom: '16px' }}>
           Common Questions
         </h2>
 

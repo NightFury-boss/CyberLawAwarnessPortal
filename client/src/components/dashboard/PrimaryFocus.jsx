@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { selectPrimaryNextAction } from '../../utils/dashboardJourneySelectors.js';
 
 /**
  * PrimaryFocus Component
@@ -8,35 +9,56 @@ import { Link } from 'react-router-dom';
  * Design:
  * - One dominant bordered paper panel (warm white, 1px neutral border, navy left rule).
  * - Immediate 5-second clarity on the learner's single most meaningful next step.
- * - Dynamic action labels matching real state ('Start pathway →', 'Continue pathway →', 'Take checkpoint →').
- * - Three-step learning sequence for active pathways: Incident Learning → Practical Defense → Learning Checkpoint.
+ * - Dynamic action labels matching real state ('Start First Check →', 'Take Checkpoint Quiz →', 'Start Quick Check →').
+ * - Three-step learning sequence for active pathways: Real Story → Defense Rule → Quick Quiz.
+ * - Unifies all 7 authoritative learner states into a single, cohesive next-action card.
  */
 function PrimaryFocus({
-  hasBaseline,
-  hasFinal,
+  hasBaseline = false,
+  hasFinal = false,
+  pathwaysWithStatus = [],
+  dueSpacedReviews = [],
+  completedFocusCount = 0,
+  totalFocusCount = 0,
   nextIncompletePathway,
   nextReinforcePathway,
   onLaunchRunner,
-  completedFocusCount,
-  totalFocusCount
+  onLaunchSpacedRetrieval,
+  onOpenPortfolioModal
 }) {
-  /* State 1: Pre-Baseline */
-  if (!hasBaseline) {
+  let effectivePathways = pathwaysWithStatus;
+  if ((!effectivePathways || effectivePathways.length === 0) && (nextIncompletePathway || nextReinforcePathway)) {
+    effectivePathways = [];
+    if (nextIncompletePathway) effectivePathways.push(nextIncompletePathway);
+    if (nextReinforcePathway) effectivePathways.push(nextReinforcePathway);
+  }
+
+  const action = selectPrimaryNextAction({
+    hasBaseline,
+    hasFinal,
+    pathwaysWithStatus: effectivePathways,
+    dueSpacedReviews,
+    completedFocusCount,
+    totalFocusCount
+  });
+
+  /* 1. Pre-Baseline */
+  if (action.type === 'PRE_BASELINE') {
     return (
       <section className="desk-focus-section" aria-labelledby="focus-card-heading">
         <div className="desk-focus-box">
           <div className="desk-focus-body">
-            <span className="desk-focus-eyebrow">Primary Focus</span>
+            <span className="desk-focus-eyebrow">{action.eyebrow}</span>
             <h2 id="focus-card-heading" className="desk-focus-heading">
-              Complete Your Digital Day
+              {action.title}
             </h2>
             <p className="desk-focus-text">
-              Begin with Your Digital Day to discover where your everyday digital habits can be strengthened.
+              {action.description}
             </p>
           </div>
           <div className="desk-focus-action">
-            <Link to="/assessment/baseline" className="btn btn-primary desk-focus-btn">
-              Start Your Digital Day &rarr;
+            <Link to={action.destination} className="btn btn-primary desk-focus-btn">
+              {action.actionLabel}
             </Link>
           </div>
         </div>
@@ -44,57 +66,41 @@ function PrimaryFocus({
     );
   }
 
-  /* State 2: Active Incomplete Pathway */
-  if (!hasFinal && nextIncompletePathway) {
-    const rec = nextIncompletePathway.rec;
-    const completedRecord = nextIncompletePathway.completedRecord;
-    const steps = completedRecord?.stepsCompleted || { caseStudy: false, prevention: false, checkpointQuiz: false };
-
-    // Determine 3-step sequence states
-    const step1Done = Boolean(steps.caseStudy);
-    const step2Done = Boolean(steps.prevention);
-    const step3Done = Boolean(steps.checkpointQuiz);
-
-    // Dynamic action button label
-    let actionLabel = 'Start pathway \u2192';
-    if (step2Done && !step3Done) {
-      actionLabel = 'Take checkpoint \u2192';
-    } else if (nextIncompletePathway.isInProgress || step1Done) {
-      actionLabel = 'Continue pathway \u2192';
-    }
-
+  /* 2. Resume Pathway & 4. Start Pathway */
+  if (action.type === 'RESUME_PATHWAY' || action.type === 'START_PATHWAY') {
+    const steps = action.steps || { step1Done: false, step2Done: false, step3Done: false };
     return (
       <section className="desk-focus-section" aria-labelledby="focus-card-heading">
         <div className="desk-focus-box">
           <div className="desk-focus-body">
             <div className="desk-focus-meta-row">
-              <span className="desk-focus-eyebrow">Primary Focus</span>
-              {rec.estimatedMinutes && (
-                <span className="desk-focus-time">~{rec.estimatedMinutes} min</span>
+              <span className="desk-focus-eyebrow">{action.eyebrow}</span>
+              {action.estimatedMinutes && (
+                <span className="desk-focus-time">~{action.estimatedMinutes} min</span>
               )}
             </div>
             <h2 id="focus-card-heading" className="desk-focus-heading">
-              {rec.habitTitle}
+              {action.title}
             </h2>
             <p className="desk-focus-text">
-              {rec.pedagogicalFocus || rec.coreRule || 'A practical guide to strengthening your routine defensive habits.'}
+              {action.description}
             </p>
 
             {/* Three-step micro-learning sequence */}
-            <div className="desk-pathway-sequence" aria-label="Pathway sequence">
-              <span className={`sequence-step ${step1Done ? 'step-done' : 'step-current'}`}>
+            <div className="desk-pathway-sequence" aria-label="Lesson steps">
+              <span className={`sequence-step ${steps.step1Done ? 'step-done' : 'step-current'}`}>
                 <span className="sequence-step-num">1</span>
-                <span>Incident Learning</span>
+                <span>Real Story</span>
               </span>
               <span className="sequence-arrow" aria-hidden="true">&rarr;</span>
-              <span className={`sequence-step ${step2Done ? 'step-done' : (step1Done ? 'step-current' : 'step-upcoming')}`}>
+              <span className={`sequence-step ${steps.step2Done ? 'step-done' : (steps.step1Done ? 'step-current' : 'step-upcoming')}`}>
                 <span className="sequence-step-num">2</span>
-                <span>Practical Defense</span>
+                <span>Defense Rule</span>
               </span>
               <span className="sequence-arrow" aria-hidden="true">&rarr;</span>
-              <span className={`sequence-step ${step3Done ? 'step-done' : (step2Done ? 'step-current' : 'step-upcoming')}`}>
+              <span className={`sequence-step ${steps.step3Done ? 'step-done' : (steps.step2Done ? 'step-current' : 'step-upcoming')}`}>
                 <span className="sequence-step-num">3</span>
-                <span>Learning Checkpoint</span>
+                <span>Quick Quiz</span>
               </span>
             </div>
           </div>
@@ -103,10 +109,10 @@ function PrimaryFocus({
             <button
               type="button"
               className="btn btn-primary desk-focus-btn"
-              onClick={() => onLaunchRunner(nextIncompletePathway, false)}
-              aria-label={`${actionLabel} for ${rec.habitTitle}`}
+              onClick={() => onLaunchRunner && onLaunchRunner(action.targetItem, false)}
+              aria-label={`${action.actionLabel} for ${action.title}`}
             >
-              {actionLabel}
+              {action.actionLabel}
             </button>
           </div>
         </div>
@@ -114,23 +120,63 @@ function PrimaryFocus({
     );
   }
 
-  /* State 3: Pathways Completed, Ready for Final Assessment */
-  if (!hasFinal && (!nextIncompletePathway || (totalFocusCount > 0 && completedFocusCount >= totalFocusCount))) {
+  /* 3. Due Spaced Retrieval (Retention Check) */
+  if (action.type === 'DUE_SPACED_REVIEW') {
+    return (
+      <section className="desk-focus-section" aria-labelledby="focus-card-heading">
+        <div className="desk-focus-box desk-focus-spaced">
+          <div className="desk-focus-body">
+            <div className="desk-focus-meta-row">
+              <span className="desk-focus-eyebrow eyebrow-spaced">{action.eyebrow}</span>
+              {action.estimatedMinutes && (
+                <span className="desk-focus-time">~{action.estimatedMinutes} min check</span>
+              )}
+            </div>
+            <h2 id="focus-card-heading" className="desk-focus-heading">
+              {action.title}
+            </h2>
+            <p className="desk-focus-text">
+              {action.description}
+            </p>
+          </div>
+
+          <div className="desk-focus-action">
+            <button
+              type="button"
+              className="btn btn-primary desk-focus-btn btn-spaced"
+              onClick={() => onLaunchSpacedRetrieval && onLaunchSpacedRetrieval(action.targetItem)}
+              aria-label={`${action.actionLabel} for ${action.title}`}
+            >
+              {action.actionLabel}
+            </button>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  /* 5. Ready for Final Assessment */
+  if (action.type === 'READY_FOR_FINAL') {
     return (
       <section className="desk-focus-section" aria-labelledby="focus-card-heading">
         <div className="desk-focus-box desk-focus-ready">
           <div className="desk-focus-body">
-            <span className="desk-focus-eyebrow">Primary Focus</span>
+            <div className="desk-focus-meta-row">
+              <span className="desk-focus-eyebrow">{action.eyebrow}</span>
+              {action.estimatedMinutes && (
+                <span className="desk-focus-time">~{action.estimatedMinutes} min</span>
+              )}
+            </div>
             <h2 id="focus-card-heading" className="desk-focus-heading">
-              Evaluate Your Habit Shifts in the Final Assessment
+              {action.title}
             </h2>
             <p className="desk-focus-text">
-              You have completed your prioritized learning pathways. Take the final adaptive simulation to observe how your defensive behaviors have evolved across all six dimensions.
+              {action.description}
             </p>
           </div>
           <div className="desk-focus-action">
-            <Link to="/assessment/final" className="btn btn-primary desk-focus-btn">
-              Take Final Assessment &rarr;
+            <Link to={action.destination} className="btn btn-primary desk-focus-btn">
+              {action.actionLabel}
             </Link>
           </div>
         </div>
@@ -138,29 +184,33 @@ function PrimaryFocus({
     );
   }
 
-  /* State 4: Targeted Habit Reinforcement Eligible */
-  if (hasFinal && nextReinforcePathway) {
-    const rec = nextReinforcePathway.rec;
+  /* 6. Targeted Habit Reinforcement */
+  if (action.type === 'REINFORCE_HABIT') {
     return (
       <section className="desk-focus-section" aria-labelledby="focus-card-heading">
         <div className="desk-focus-box desk-focus-reinforce">
           <div className="desk-focus-body">
-            <span className="desk-focus-eyebrow eyebrow-reinforce">Targeted Habit Reinforcement</span>
+            <div className="desk-focus-meta-row">
+              <span className="desk-focus-eyebrow eyebrow-reinforce">{action.eyebrow}</span>
+              {action.estimatedMinutes && (
+                <span className="desk-focus-time">~{action.estimatedMinutes} min practice</span>
+              )}
+            </div>
             <h2 id="focus-card-heading" className="desk-focus-heading">
-              {rec.habitTitle}
+              {action.title}
             </h2>
             <p className="desk-focus-text">
-              Targeted habit reinforcement recommended based on your final assessment. Complete a concise micro-drill to consolidate your routine defensive reflexes.
+              {action.description}
             </p>
           </div>
           <div className="desk-focus-action">
             <button
               type="button"
               className="btn btn-primary desk-focus-btn btn-reinforce"
-              onClick={() => onLaunchRunner(nextReinforcePathway, true)}
-              aria-label={`Reinforce defensive habit for ${rec.habitTitle}`}
+              onClick={() => onLaunchRunner && onLaunchRunner(action.targetItem, true)}
+              aria-label={`${action.actionLabel} for ${action.title}`}
             >
-              Reinforce Defensive Habit &rarr;
+              {action.actionLabel}
             </button>
           </div>
         </div>
@@ -168,23 +218,33 @@ function PrimaryFocus({
     );
   }
 
-  /* State 5: All Caught Up */
+  /* 7. All Caught Up / Maintained */
   return (
     <section className="desk-focus-section" aria-labelledby="focus-card-heading">
       <div className="desk-focus-box desk-focus-caughtup">
         <div className="desk-focus-body">
-          <span className="desk-focus-eyebrow">Up to Date</span>
+          <span className="desk-focus-eyebrow">{action.eyebrow}</span>
           <h2 id="focus-card-heading" className="desk-focus-heading">
-            You're up to date.
+            {action.title}
           </h2>
           <p className="desk-focus-text">
-            Your prioritized learning pathways and targeted reinforcements are complete. You may review your records below, practice statutory quizzes, or retake the simulation when you wish to test habit retention.
+            {action.description}
           </p>
         </div>
-        <div className="desk-focus-action">
-          <Link to="/assessment/final" className="btn btn-secondary desk-focus-btn">
-            Retake Assessment to Test Habit Retention &rarr;
+        <div className="desk-focus-action desk-focus-caughtup-actions">
+          <Link to={action.destination} className="btn btn-primary desk-focus-btn">
+            {action.actionLabel}
           </Link>
+          {onOpenPortfolioModal && (
+            <button
+              type="button"
+              onClick={() => onOpenPortfolioModal()}
+              className="btn btn-secondary desk-focus-btn"
+              aria-label="View verified learning record"
+            >
+              View Learning Record &rarr;
+            </button>
+          )}
         </div>
       </div>
     </section>

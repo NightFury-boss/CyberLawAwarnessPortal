@@ -103,16 +103,16 @@ function Navbar({ user, setUser, isWorkspace, sidebarOpen, setSidebarOpen }) {
   // Workspace Page Title mapping
   const getWorkspaceTitle = () => {
     const path = location.pathname;
-    if (path === '/dashboard' || path === '/workspace') return 'Progress & Skill Dashboard';
-    if (path === '/quizzes') return 'Interactive Knowledge Quizzes';
-    if (path === '/assessment/baseline') return 'Baseline Diagnostic Assessment';
-    if (path === '/assessment/final') return 'Final Evaluation Assessment';
+    if (path === '/dashboard' || path === '/workspace') return 'Your Learning Dashboard';
+    if (path === '/quizzes') return 'Cyber Law Quizzes';
+    if (path === '/assessment/baseline') return 'First Check (Baseline)';
+    if (path === '/assessment/final') return 'Final Check';
     if (path === '/workspace/laws') return 'Cyber Laws Index';
     if (path === '/workspace/crimes') return 'Crimes Library & Warnings';
-    if (path === '/workspace/cases') return 'Incident Case Studies';
+    if (path === '/workspace/cases') return 'Real-Life Case Stories';
     if (path === '/workspace/prevention') return 'Prevention Center';
     if (path === '/workspace/resources') return 'Official Legal Resources';
-    return 'Learner Workspace';
+    return 'Learning Dashboard';
   };
 
   // ----------------------------------------------------
@@ -137,7 +137,7 @@ function Navbar({ user, setUser, isWorkspace, sidebarOpen, setSidebarOpen }) {
           </button>
 
           <div className="workspace-breadcrumb">
-            <span className="workspace-breadcrumb-prefix">Workspace /</span>
+            <span className="workspace-breadcrumb-prefix">Dashboard /</span>
             <span>{getWorkspaceTitle()}</span>
           </div>
         </div>
@@ -228,7 +228,7 @@ function Navbar({ user, setUser, isWorkspace, sidebarOpen, setSidebarOpen }) {
               className="auth-back-link"
               style={{
                 fontSize: '0.88rem',
-                color: 'var(--accent-navy)',
+                color: 'var(--color-primary)',
                 fontWeight: '600',
                 textDecoration: 'none',
                 display: 'flex',
@@ -244,18 +244,20 @@ function Navbar({ user, setUser, isWorkspace, sidebarOpen, setSidebarOpen }) {
           <div className="public-navbar-actions">
             {user ? (
               <>
-                <Link
-                  to="/dashboard"
-                  className="btn btn-secondary"
-                >
-                  Workspace
-                </Link>
-                {user.role === 'admin' && (
+                {user.role === 'admin' ? (
                   <Link
                     to="/admin"
+                    className="btn btn-primary"
+                    style={{ backgroundColor: '#0a192f', borderColor: '#0a192f', color: '#ffffff', fontWeight: '600' }}
+                  >
+                    Admin Dashboard
+                  </Link>
+                ) : (
+                  <Link
+                    to="/dashboard"
                     className="btn btn-secondary"
                   >
-                    Admin
+                    Dashboard
                   </Link>
                 )}
                 <button
@@ -360,16 +362,27 @@ function Navbar({ user, setUser, isWorkspace, sidebarOpen, setSidebarOpen }) {
               {user ? (
                 <>
                   <div style={{ fontSize: '0.84rem', color: 'var(--text-secondary)' }}>
-                    Signed in as <strong>{user.fullName}</strong>
+                    Signed in as <strong>{user.fullName}</strong> {user.role === 'admin' && <span style={{ fontSize: '0.7rem', padding: '2px 6px', borderRadius: '4px', backgroundColor: '#1e3a8a', color: '#fff', marginLeft: '6px' }}>ADMIN</span>}
                   </div>
-                  <Link
-                    to="/dashboard"
-                    className="btn btn-primary"
-                    style={{ width: '100%', justifyContent: 'center' }}
-                    onClick={() => setMobileDrawerOpen(false)}
-                  >
-                    Learner Workspace
-                  </Link>
+                  {user.role === 'admin' ? (
+                    <Link
+                      to="/admin"
+                      className="btn btn-primary"
+                      style={{ width: '100%', justifyContent: 'center', backgroundColor: '#0a192f', borderColor: '#0a192f' }}
+                      onClick={() => setMobileDrawerOpen(false)}
+                    >
+                      Admin Dashboard
+                    </Link>
+                  ) : (
+                    <Link
+                      to="/dashboard"
+                      className="btn btn-primary"
+                      style={{ width: '100%', justifyContent: 'center' }}
+                      onClick={() => setMobileDrawerOpen(false)}
+                    >
+                      Dashboard
+                    </Link>
+                  )}
                   <button
                     onClick={() => {
                       setMobileDrawerOpen(false);

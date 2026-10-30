@@ -293,7 +293,6 @@ export default function DigitalMomentsSection() {
               aria-label="Active digital situation evidence stage"
             >
               <div className="moments-evidence-stage" aria-live="polite">
-                
                 {/* Stage Header */}
                 <div className="evidence-stage-header">
                   <div className="stage-header-left">

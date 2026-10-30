@@ -12,23 +12,62 @@ function Crimes() {
   const isWorkspaceContext = location.pathname.startsWith('/workspace');
   const getContextPath = (p) => (isWorkspaceContext ? `/workspace${p}` : p);
 
-  const getCategoryColor = (category) => {
+  const getCategoryTheme = (category) => {
     switch (category) {
       case 'Phishing & Messaging Scams':
+        return {
+          color: '#1d4ed8',
+          bg: '#eff6ff',
+          border: '#bfdbfe'
+        };
       case 'Online Deception':
-        return 'var(--color-info)';
+        return {
+          color: '#0369a1',
+          bg: '#f0f9ff',
+          border: '#bae6fd'
+        };
       case 'Financial Fraud':
       case 'E-commerce & Marketplace Fraud':
-        return 'var(--accent-navy)';
+        return {
+          color: '#b45309',
+          bg: '#fefce8',
+          border: '#fde68a'
+        };
       case 'Identity & Credential Theft':
-        return 'var(--color-border-dark)';
+      case 'Account Takeover':
+        return {
+          color: '#4338ca',
+          bg: '#eef2ff',
+          border: '#c7d2fe'
+        };
       case 'Online Harassment & Abuse':
+        return {
+          color: '#be123c',
+          bg: '#fff1f2',
+          border: '#fecdd3'
+        };
       case 'Malware & Device Threats':
-        return 'var(--color-danger)';
+        return {
+          color: '#b91c1c',
+          bg: '#fef2f2',
+          border: '#fecaca'
+        };
+      case 'Job & Recruitment Scams':
+        return {
+          color: '#0f766e',
+          bg: '#f0fdfa',
+          border: '#99f6e4'
+        };
       default:
-        return 'var(--accent-navy)';
+        return {
+          color: 'var(--text-primary, #1c1c1e)',
+          bg: 'var(--bg-secondary, #f4f3ee)',
+          border: 'var(--color-border, #e6e5e0)'
+        };
     }
   };
+
+  const getCategoryColor = (category) => getCategoryTheme(category).color;
 
   const [crimes, setCrimes] = useState([]);
   const [recommendations, setRecommendations] = useState([]);
@@ -157,15 +196,11 @@ function Crimes() {
         setRecommendations(defaults);
         setRecReason('Start with the most common threats.');
       }
-    } catch (err) {
+    } catch (_err) {
       setError('Failed to load threat library data.');
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleSearch = (e) => {
-    setSearchQuery(e.target.value);
   };
 
   const handleSelectCrime = (crime) => {
@@ -257,7 +292,7 @@ function Crimes() {
       {/* LOADING STATE */}
       {loading && (
         <div style={{ textAlign: 'center', padding: 'var(--space-xl) 0' }}>
-          <h3 style={{ color: 'var(--accent-navy)' }}>Opening Threat Library...</h3>
+          <h3 style={{ color: 'var(--text-primary)' }}>Loading cybercrime guides...</h3>
         </div>
       )}
 
@@ -266,8 +301,8 @@ function Crimes() {
         <div>
           {/* Header block */}
           <EditorialPageHeader
-            eyebrow="Threat Directory"
-            title="Cybercrime Library"
+            eyebrow="Safety Guides"
+            title="Cybercrime & Safety Guides"
             subtitle='"Know how the attack works before it reaches you."'
             description="Explore common cybercrimes, understand the warning signs, see how attacks unfold, and learn what to do when something feels wrong."
           >
@@ -276,40 +311,69 @@ function Crimes() {
 
           {/* Recommendations Block (Personalized) */}
           {recommendations.length > 0 && (
-            <div style={{
-              backgroundColor: 'var(--accent-navy-light)',
-              borderLeft: '4px solid var(--accent-navy)',
-              padding: 'var(--space-lg)',
-              borderRadius: '4px',
-              marginBottom: 'var(--space-xl)'
-            }}>
-              <h3 style={{ fontSize: '1.1rem', color: 'var(--accent-navy)', display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px', fontWeight: 'bold' }}>
-                RECOMMENDED FOR YOU
-              </h3>
-              <p style={{ fontSize: '0.95rem', color: 'var(--text-primary)', marginBottom: 'var(--space-md)' }}>
-                {recReason}
-              </p>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 'var(--space-md)' }}>
-                {recommendations.map((rec) => (
-                  <div 
-                    key={rec._id} 
-                    onClick={() => handleSelectCrime(rec)}
-                    className="editorial-card" 
-                    style={{ cursor: 'pointer', backgroundColor: 'var(--bg-primary)', border: '1px solid var(--color-border)' }}
-                  >
-                    <span className="tag" style={{ fontSize: '0.75rem', marginBottom: '8px' }}>{rec.category}</span>
-                    <h4 style={{ fontSize: '1.25rem', margin: '4px 0 8px 0', color: 'var(--accent-navy)' }}>{rec.title}</h4>
-                    <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-                      {rec.shortDescription}
-                    </p>
-                    <div style={{ marginTop: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.8rem' }}>
-                      <span style={{ fontWeight: '500', color: 'var(--accent-navy)' }}>Threat Profile &rarr;</span>
-                      {completedCrimes.includes(rec.slug) && <span style={{ color: 'var(--color-success)' }}>Completed</span>}
-                    </div>
-                  </div>
-                ))}
+            <section className="crimes-rec-strip" aria-label="Recommended Topics to Learn">
+              <div className="crimes-rec-header">
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: 'var(--color-accent, #2563eb)', display: 'inline-block' }} aria-hidden="true"></span>
+                  <h3 className="crimes-rec-title">Recommended Topics to Learn</h3>
+                </div>
+                {recReason && (
+                  <span className="crimes-rec-reason">{recReason}</span>
+                )}
               </div>
-            </div>
+              <div className="crimes-rec-items" role="list">
+                {recommendations.map((rec) => {
+                  const catTheme = getCategoryTheme(rec.category);
+                  const isDone = completedCrimes.includes(rec.slug);
+                  return (
+                    <article 
+                      key={rec._id} 
+                      onClick={() => handleSelectCrime(rec)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          handleSelectCrime(rec);
+                        }
+                      }}
+                      className="crimes-rec-item"
+                      role="button"
+                      tabIndex={0}
+                      aria-label={`Examine ${rec.title} threat profile`}
+                    >
+                      <div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                          <span 
+                            className="crime-index-tag" 
+                            style={{ 
+                              color: catTheme.color,
+                              backgroundColor: catTheme.bg,
+                              borderColor: catTheme.border,
+                              fontWeight: '700'
+                            }}
+                          >
+                            {rec.category}
+                          </span>
+                          {isDone && (
+                            <span className="crime-index-done font-mono">✓ Reviewed</span>
+                          )}
+                        </div>
+                        <h4 style={{ fontSize: '1.15rem', margin: '0 0 8px 0', color: 'var(--text-primary)', fontWeight: '700', lineHeight: '1.35' }}>
+                          {rec.title}
+                        </h4>
+                        <p style={{ fontSize: '0.86rem', color: 'var(--text-secondary)', margin: 0, lineHeight: '1.55', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                          {rec.shortDescription}
+                        </p>
+                      </div>
+                      <div className="crimes-rec-footer">
+                        <span className="crimes-rec-action">
+                          Read Guide <span aria-hidden="true">&rarr;</span>
+                        </span>
+                      </div>
+                    </article>
+                  );
+                })}
+              </div>
+            </section>
           )}
 
           <PortalSearch
@@ -318,9 +382,9 @@ function Crimes() {
             onSearchChange={(val) => setSearchQuery(val)}
             onClear={() => setSearchQuery('')}
             results={filteredCrimes}
-            resultTypeLabel="threats found"
-            emptyHeader="NO MATCHING THREATS"
-            emptyText="Try searching for a different crime name, warning sign, or attack method."
+            resultTypeLabel="guides found"
+            emptyHeader="NO MATCHING GUIDES"
+            emptyText="Try searching for a different topic, warning sign, or keyword (e.g. OTP, phishing, fake calls)."
             suggestions={['OTP', 'QR', 'phishing', 'fake support', 'account takeover', 'identity']}
             showFiltersToggle={true}
             showFilters={showFilters}
@@ -328,7 +392,7 @@ function Crimes() {
             filtersDrawerContent={
               <div>
                 <h3 style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: '8px', fontWeight: '800', letterSpacing: '0.5px' }}>
-                  Filter by Threat Domain
+                  Filter by Category
                 </h3>
                 <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
                   {categories.map((cat) => (
@@ -338,9 +402,9 @@ function Crimes() {
                       style={{
                         padding: '6px 12px',
                         borderRadius: 'var(--radius-sm)',
-                        border: '1px solid var(--color-border-dark)',
-                        backgroundColor: activeCategory === cat ? 'var(--accent-navy)' : 'var(--bg-white)',
-                        color: activeCategory === cat ? 'white' : 'var(--text-secondary)',
+                        border: activeCategory === cat ? '1px solid var(--color-primary)' : '1px solid var(--color-border)',
+                        backgroundColor: activeCategory === cat ? 'var(--color-primary)' : 'var(--bg-white)',
+                        color: activeCategory === cat ? '#ffffff' : 'var(--text-secondary)',
                         fontSize: '0.75rem',
                         fontWeight: 'bold',
                         cursor: 'pointer',
@@ -358,8 +422,8 @@ function Crimes() {
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-md)', padding: '8px 12px', backgroundColor: 'var(--bg-secondary)', borderRadius: 'var(--radius-sm)', fontSize: '0.85rem' }}>
                   <div style={{ display: 'flex', gap: '8px', alignItems: 'center', color: 'var(--text-secondary)' }}>
                     <span style={{ fontSize: '0.75rem', fontWeight: 'bold', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Active Filters:</span>
-                    {activeCategory !== 'All' && <span style={{ backgroundColor: 'var(--accent-navy-light)', color: 'var(--accent-navy)', padding: '2px 8px', borderRadius: '4px', fontWeight: '600' }}>{activeCategory}</span>}
-                    {searchQuery && <span style={{ backgroundColor: 'var(--accent-navy-light)', color: 'var(--accent-navy)', padding: '2px 8px', borderRadius: '4px', fontWeight: '600' }}>Search: "{searchQuery}"</span>}
+                    {activeCategory !== 'All' && <span style={{ backgroundColor: 'var(--color-primary-light, #f0f4f8)', color: 'var(--color-primary)', padding: '2px 8px', borderRadius: '4px', fontWeight: '600' }}>{activeCategory}</span>}
+                    {searchQuery && <span style={{ backgroundColor: 'var(--color-primary-light, #f0f4f8)', color: 'var(--color-primary)', padding: '2px 8px', borderRadius: '4px', fontWeight: '600' }}>Search: "{searchQuery}"</span>}
                   </div>
                   <button
                     onClick={() => {
@@ -369,7 +433,7 @@ function Crimes() {
                     style={{
                       background: 'none',
                       border: 'none',
-                      color: 'var(--accent-navy)',
+                      color: 'var(--color-primary)',
                       textDecoration: 'underline',
                       cursor: 'pointer',
                       fontSize: '0.85rem',
@@ -420,6 +484,7 @@ function Crimes() {
               <div className="crimes-reference-directory" role="list" aria-label="Cybercrime threat directory">
                 {filteredCrimes.map((crime, index) => {
                   const isCompleted = completedCrimes.includes(crime.slug);
+                  const catTheme = getCategoryTheme(crime.category);
                   const attackMethods = crime.attackVectors?.join(', ') || 'Digital Communications';
                   const primarySignal = crime.warningSigns?.[0]?.title || crime.attackerTactics?.[0]?.tactic || 'Deceptive impersonation & urgency';
 
@@ -444,7 +509,16 @@ function Crimes() {
                           <span className="crime-index-ref font-mono">
                             REF #{String(index + 1).padStart(2, '0')}
                           </span>
-                          <span className="crime-index-tag">{crime.category}</span>
+                          <span 
+                            className="crime-index-tag"
+                            style={{
+                              color: catTheme.color,
+                              backgroundColor: catTheme.bg,
+                              borderColor: catTheme.border
+                            }}
+                          >
+                            {crime.category}
+                          </span>
                           {isCompleted && (
                             <span className="crime-index-done font-mono">✓ Reviewed</span>
                           )}
@@ -471,7 +545,7 @@ function Crimes() {
 
                       {/* Action Column */}
                       <div className="crime-index-action" aria-hidden="true">
-                        <span>Threat Profile</span>
+                        <span>Read Guide</span>
                         <span className="link-arrow">&rarr;</span>
                       </div>
                     </article>
@@ -481,37 +555,34 @@ function Crimes() {
             )}
           </div>
 
-          {/* Quick Quiz & Legal linkages footer box */}
-          <div style={{
-            marginTop: 'var(--space-xl)',
-            backgroundColor: 'var(--bg-secondary)',
-            borderRadius: '6px',
-            padding: 'var(--space-xl)',
-            display: 'grid',
-            gridTemplateColumns: '1fr 1fr',
-            gap: 'var(--space-xl)',
-            border: '1px solid var(--color-border)'
-          }}>
+          {/* Quick Quiz & Legal linkages footer banner */}
+          <div className="editorial-next-steps-banner">
             <div>
-              <h3 style={{ fontSize: '1.4rem', color: 'var(--accent-navy)', marginBottom: 'var(--space-xs)', fontWeight: 'bold' }}>
-                Test Your Shield
+              <span style={{ fontSize: '0.75rem', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '1px', color: 'var(--text-muted)', display: 'block', marginBottom: '6px' }}>
+                Practice What You've Learned
+              </span>
+              <h3 style={{ fontSize: '1.3rem', color: 'var(--text-primary)', marginBottom: 'var(--space-xs)', fontWeight: 'bold' }}>
+                Test What You've Learned
               </h3>
-              <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem', marginBottom: 'var(--space-md)', lineHeight: '1.5' }}>
-                Review scenarios, identify social engineering hooks, and gauge your readiness against online payment traps.
+              <p style={{ color: 'var(--text-secondary)', fontSize: '0.92rem', marginBottom: 'var(--space-md)', lineHeight: '1.6' }}>
+                Take short quizzes on real situations, common scam tricks, and online payment safety.
               </p>
               <Link to="/quizzes" className="btn btn-primary" style={{ display: 'inline-block' }}>
-                Quiz Center
+                Go to Quizzes &rarr;
               </Link>
             </div>
             <div>
-              <h3 style={{ fontSize: '1.4rem', color: 'var(--accent-navy)', marginBottom: 'var(--space-xs)', fontWeight: 'bold' }}>
-                Interactive Scenarios
+              <span style={{ fontSize: '0.75rem', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '1px', color: 'var(--text-muted)', display: 'block', marginBottom: '6px' }}>
+                Real-Life Situations
+              </span>
+              <h3 style={{ fontSize: '1.3rem', color: 'var(--text-primary)', marginBottom: 'var(--space-xs)', fontWeight: 'bold' }}>
+                Practice in the Simulator
               </h3>
-              <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem', marginBottom: 'var(--space-md)', lineHeight: '1.5' }}>
-                Simulate standard system notifications and alerts. Understand where your authentication inputs can expose profiles.
+              <p style={{ color: 'var(--text-secondary)', fontSize: '0.92rem', marginBottom: 'var(--space-md)', lineHeight: '1.6' }}>
+                Experience realistic emails, calls, and payment alerts to practice making safe choices in everyday life.
               </p>
               <Link to="/dashboard" className="btn btn-secondary" style={{ display: 'inline-block' }}>
-                Practice Simulator
+                Go to Dashboard &rarr;
               </Link>
             </div>
           </div>
@@ -532,7 +603,7 @@ function Crimes() {
             style={{
               background: 'none',
               border: 'none',
-              color: 'var(--accent-navy)',
+              color: 'var(--color-accent)',
               fontSize: '1rem',
               fontWeight: '600',
               cursor: 'pointer',
@@ -542,7 +613,7 @@ function Crimes() {
               gap: '6px'
             }}
           >
-            &larr; Back to Threat Directory
+            &larr; Back to Safety Guides
           </button>
 
           {/* 1. Header Profile block */}
@@ -558,7 +629,7 @@ function Crimes() {
           }}>
             <div>
               <span className="tag" style={{ textTransform: 'uppercase', fontSize: '0.8rem' }}>{selectedCrime.category}</span>
-              <h1 style={{ fontSize: '3rem', fontWeight: 'bold', marginTop: 'var(--space-xs)', color: 'var(--accent-navy)' }}>
+              <h1 style={{ fontSize: '3rem', fontWeight: 'bold', marginTop: 'var(--space-xs)', color: 'var(--text-primary)' }}>
                 {selectedCrime.title}
               </h1>
               <p style={{ fontSize: '1.2rem', color: 'var(--text-secondary)', maxWidth: '800px', marginTop: '4px', lineHeight: '1.6' }}>
@@ -574,16 +645,16 @@ function Crimes() {
               minWidth: '240px'
             }}>
               <h4 style={{ fontSize: '0.8rem', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: '8px', fontWeight: '600' }}>
-                Threat Risk Level
+                Risk Level
               </h4>
               {getRedFlagMeter(selectedCrime.redFlagLevel || 'High')}
 
               <h4 style={{ fontSize: '0.8rem', textTransform: 'uppercase', color: 'var(--text-muted)', margin: '16px 0 8px 0', fontWeight: '600' }}>
-                Primary Methods
+                Common Tricks Used
               </h4>
               <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
                 {selectedCrime.attackVectors?.map((vec) => (
-                  <span key={vec} style={{ fontSize: '0.75rem', backgroundColor: 'var(--accent-navy-light)', color: 'var(--accent-navy)', padding: '2px 8px', borderRadius: '12px', fontWeight: '600' }}>
+                  <span key={vec} style={{ fontSize: '0.75rem', backgroundColor: 'var(--color-primary-light)', color: 'var(--color-primary)', padding: '2px 8px', borderRadius: '12px', fontWeight: '600' }}>
                     {vec}
                   </span>
                 )) || <span style={{ fontSize: '0.8rem', fontWeight: '500' }}>Digital Systems</span>}
@@ -603,24 +674,24 @@ function Crimes() {
           }}>
             <a href="#overview" style={{ color: 'var(--text-primary)', fontWeight: '600', textDecoration: 'none', fontSize: '0.9rem' }}>1. Overview</a>
             <a href="#lifecycle" style={{ color: 'var(--text-primary)', fontWeight: '600', textDecoration: 'none', fontSize: '0.9rem' }}>2. How it Unfolds</a>
-            <a href="#indicators" style={{ color: 'var(--accent-navy)', fontWeight: '600', textDecoration: 'none', fontSize: '0.9rem' }}>3. Critical Indicators</a>
-            <a href="#prevention" style={{ color: 'var(--text-primary)', fontWeight: '600', textDecoration: 'none', fontSize: '0.9rem' }}>4. Prevention Guidelines</a>
-            <a href="#scenario" style={{ color: 'var(--text-primary)', fontWeight: '600', textDecoration: 'none', fontSize: '0.9rem' }}>5. Practice Decision</a>
-            <a href="#legal" style={{ color: 'var(--text-primary)', fontWeight: '600', textDecoration: 'none', fontSize: '0.9rem' }}>6. Legal Context</a>
+            <a href="#indicators" style={{ color: 'var(--text-primary)', fontWeight: '600', textDecoration: 'none', fontSize: '0.9rem' }}>3. Warning Signs</a>
+            <a href="#prevention" style={{ color: 'var(--text-primary)', fontWeight: '600', textDecoration: 'none', fontSize: '0.9rem' }}>4. How to Protect Yourself</a>
+            <a href="#scenario" style={{ color: 'var(--text-primary)', fontWeight: '600', textDecoration: 'none', fontSize: '0.9rem' }}>5. Try a Decision</a>
+            <a href="#legal" style={{ color: 'var(--text-primary)', fontWeight: '600', textDecoration: 'none', fontSize: '0.9rem' }}>6. What the Law Says</a>
           </div>
 
           {/* SECTION 1: OVERVIEW */}
           <section id="overview" style={{ marginBottom: 'var(--space-xl)' }}>
-            <h2 style={{ fontSize: '1.8rem', color: 'var(--accent-navy)', marginBottom: 'var(--space-md)' }}>
-              1. Threat Profile & Overview
+            <h2 style={{ fontSize: '1.8rem', color: 'var(--text-primary)', marginBottom: 'var(--space-md)' }}>
+              1. Overview
             </h2>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 'var(--space-xl)' }}>
               <div>
-                <h3 style={{ fontSize: '1.15rem', color: 'var(--accent-navy)', marginBottom: '8px' }}>What is it?</h3>
+                <h3 style={{ fontSize: '1.15rem', color: 'var(--text-primary)', marginBottom: '8px' }}>What is it?</h3>
                 <p style={{ color: 'var(--text-primary)', fontSize: '1.05rem', lineHeight: '1.6', marginBottom: 'var(--space-md)' }}>
                   {selectedCrime.whatIsIt}
                 </p>
-                <h3 style={{ fontSize: '1.15rem', color: 'var(--accent-navy)', marginBottom: '8px' }}>Operational Concept</h3>
+                <h3 style={{ fontSize: '1.15rem', color: 'var(--text-primary)', marginBottom: '8px' }}>How it Works</h3>
                 <p style={{ color: 'var(--text-secondary)', fontSize: '0.98rem', lineHeight: '1.6' }}>
                   {selectedCrime.howItWorks}
                 </p>
@@ -628,11 +699,11 @@ function Crimes() {
 
               {/* Attacker Objectives */}
               <div style={{ backgroundColor: 'var(--bg-secondary)', padding: 'var(--space-md)', borderRadius: '4px', border: '1px solid var(--color-border)' }}>
-                <h3 style={{ fontSize: '1.1rem', color: 'var(--accent-navy)', marginBottom: 'var(--space-md)', fontWeight: '600' }}>
-                  ATTACKER OBJECTIVES
+                <h3 style={{ fontSize: '1.1rem', color: 'var(--text-primary)', marginBottom: 'var(--space-md)', fontWeight: '600' }}>
+                  WHAT ATTACKERS SEEK
                 </h3>
                 <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '12px' }}>
-                  What the attacker attempts to compromise:
+                  What perpetrators seek to access, compromise, or exploit:
                 </p>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                   {(selectedCrime.attackerObjective || ['Money', 'Credentials']).map((obj) => (
@@ -645,7 +716,7 @@ function Crimes() {
                         borderRadius: '4px',
                         fontSize: '0.9rem',
                         fontWeight: '600',
-                        color: 'var(--accent-navy)',
+                        color: 'var(--text-primary)',
                         display: 'flex',
                         alignItems: 'center',
                         gap: '8px'
@@ -661,7 +732,7 @@ function Crimes() {
 
           {/* SECTION 2: ATTACK LIFECYCLE */}
           <section id="lifecycle" style={{ marginBottom: 'var(--space-xxl)', borderTop: '1px solid var(--color-border)', borderBottom: '1px solid var(--color-border)', padding: 'var(--space-xl) 0', backgroundColor: 'transparent' }}>
-            <h2 style={{ fontSize: '1.8rem', color: 'var(--accent-navy)', marginBottom: 'var(--space-md)' }}>
+            <h2 style={{ fontSize: '1.8rem', color: 'var(--text-primary)', marginBottom: 'var(--space-md)' }}>
               2. How the Attack Unfolds
             </h2>
             <p className="text-muted" style={{ marginBottom: 'var(--space-lg)', fontSize: '0.95rem' }}>
@@ -686,7 +757,7 @@ function Crimes() {
                     gap: 'var(--space-md)',
                     alignItems: 'flex-start',
                     paddingLeft: '12px',
-                    borderLeft: '3px solid var(--accent-navy-light)',
+                    borderLeft: '3px solid var(--color-primary-light)',
                     position: 'relative'
                   }}
                 >
@@ -694,7 +765,7 @@ function Crimes() {
                     width: '28px',
                     height: '28px',
                     borderRadius: '50%',
-                    backgroundColor: 'var(--accent-navy)',
+                    backgroundColor: 'var(--color-primary)',
                     color: '#ffffff',
                     display: 'flex',
                     alignItems: 'center',
@@ -706,7 +777,7 @@ function Crimes() {
                     {step.stepNumber || idx + 1}
                   </div>
                   <div>
-                    <h4 style={{ fontSize: '1.05rem', margin: '2px 0 4px 0', color: 'var(--accent-navy)', fontWeight: 'bold' }}>
+                    <h4 style={{ fontSize: '1.05rem', margin: '2px 0 4px 0', color: 'var(--text-primary)', fontWeight: 'bold' }}>
                       {step.label}
                     </h4>
                     <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', margin: 0, lineHeight: '1.5' }}>
@@ -720,13 +791,13 @@ function Crimes() {
             {/* Attacker tactics */}
             {selectedCrime.attackerTactics && selectedCrime.attackerTactics.length > 0 && (
               <div style={{ marginTop: 'var(--space-xl)', borderTop: '1px solid var(--color-border-light)', paddingTop: 'var(--space-lg)' }}>
-                <h3 style={{ fontSize: '1.15rem', color: 'var(--accent-navy)', marginBottom: 'var(--space-md)', fontWeight: '600' }}>
+                <h3 style={{ fontSize: '1.15rem', color: 'var(--text-primary)', marginBottom: 'var(--space-md)', fontWeight: '600' }}>
                   DECEPTION TACTICS
                 </h3>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 'var(--space-md)' }}>
                   {selectedCrime.attackerTactics.map((tac, idx) => (
                     <div key={idx} style={{ backgroundColor: 'var(--bg-primary)', padding: '14px', borderRadius: '4px', border: '1px solid var(--color-border-light)' }}>
-                      <h4 style={{ fontSize: '1rem', color: 'var(--accent-navy)', fontWeight: 'bold', display: 'flex', gap: '6px', alignItems: 'center' }}>
+                      <h4 style={{ fontSize: '1rem', color: 'var(--text-primary)', fontWeight: 'bold', display: 'flex', gap: '6px', alignItems: 'center' }}>
                         {tac.tactic}
                       </h4>
                       <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: '8px 0' }}>
@@ -750,7 +821,7 @@ function Crimes() {
               <span className="editorial-eyebrow" style={{ color: 'var(--color-portal-blue, #2563eb)' }}>
                 DECEPTION ANALYSIS & SIGNALS
               </span>
-              <h2 style={{ fontSize: '1.8rem', color: 'var(--accent-navy)', margin: '4px 0 8px 0' }}>
+              <h2 style={{ fontSize: '1.8rem', color: 'var(--text-primary)', margin: '4px 0 8px 0' }}>
                 3. Critical Indicators to Notice
               </h2>
               <p className="text-muted" style={{ margin: 0, fontSize: '0.95rem', maxWidth: '720px' }}>
@@ -777,7 +848,7 @@ function Crimes() {
                   <span style={{ fontSize: '0.72rem', fontWeight: 'bold', textTransform: 'uppercase', color: 'var(--text-muted)' }}>
                     Threat Profile
                   </span>
-                  <div style={{ fontSize: '1.15rem', fontWeight: 'bold', color: 'var(--accent-navy)' }}>
+                  <div style={{ fontSize: '1.15rem', fontWeight: 'bold', color: 'var(--text-primary)' }}>
                     {selectedCrime.title}
                   </div>
                 </div>
@@ -815,7 +886,7 @@ function Crimes() {
 
                   <blockquote style={{
                     backgroundColor: 'var(--bg-secondary)',
-                    borderLeft: '4px solid var(--accent-navy)',
+                    borderLeft: '4px solid var(--color-primary)',
                     padding: '14px 18px',
                     margin: '8px 0 14px 0',
                     fontSize: '0.95rem',
@@ -846,7 +917,7 @@ function Crimes() {
                     <line x1="12" y1="8" x2="12" y2="12" />
                     <line x1="12" y1="16" x2="12.01" y2="16" />
                   </svg>
-                  <h3 style={{ fontSize: '1.15rem', color: 'var(--accent-navy)', margin: 0, fontWeight: '700' }}>
+                  <h3 style={{ fontSize: '1.15rem', color: 'var(--text-primary)', margin: 0, fontWeight: '700' }}>
                     What to Verify: Critical Deception Markers
                   </h3>
                 </div>
@@ -873,7 +944,7 @@ function Crimes() {
                         }}>
                           Marker {fIdx + 1}
                         </span>
-                        <strong style={{ fontSize: '0.88rem', color: 'var(--accent-navy)' }}>
+                        <strong style={{ fontSize: '0.88rem', color: 'var(--text-primary)' }}>
                           {flag.textSegment ? `"${flag.textSegment}"` : flag.title}
                         </strong>
                       </div>
@@ -920,7 +991,7 @@ function Crimes() {
 
           {/* SECTION 4: ACTIONS CHECKLIST */}
           <section id="prevention" style={{ marginBottom: 'var(--space-xl)' }}>
-            <h2 style={{ fontSize: '1.8rem', color: 'var(--accent-navy)', marginBottom: 'var(--space-md)' }}>
+            <h2 style={{ fontSize: '1.8rem', color: 'var(--text-primary)', marginBottom: 'var(--space-md)' }}>
               4. Prevention & Response Guidelines
             </h2>
 
@@ -971,7 +1042,7 @@ function Crimes() {
               padding: 'var(--space-lg)',
               borderRadius: '4px'
             }}>
-              <h3 style={{ fontSize: '1.15rem', color: 'var(--accent-navy)', marginBottom: 'var(--space-sm)', fontWeight: 'bold' }}>
+              <h3 style={{ fontSize: '1.15rem', color: 'var(--text-primary)', marginBottom: 'var(--space-sm)', fontWeight: 'bold' }}>
                 IF YOU THINK YOU HAVE BEEN TARGETED:
               </h3>
               <ol style={{ paddingLeft: 'var(--space-md)', fontSize: '0.92rem', lineHeight: '1.6' }}>
@@ -998,7 +1069,7 @@ function Crimes() {
                 <span className="editorial-eyebrow" style={{ color: 'var(--color-portal-blue, #2563eb)' }}>
                   DECISION CHECKPOINT
                 </span>
-                <h3 style={{ fontSize: '1.4rem', color: 'var(--accent-navy)', margin: '4px 0 6px 0', fontWeight: 'bold' }}>
+                <h3 style={{ fontSize: '1.4rem', color: 'var(--text-primary)', margin: '4px 0 6px 0', fontWeight: 'bold' }}>
                   5. Practical Decision: What Would You Do?
                 </h3>
               </div>
@@ -1017,7 +1088,7 @@ function Crimes() {
                       textAlign: 'left',
                       padding: '12px 16px',
                       borderRadius: '4px',
-                      border: selectedScenarioOption === idx ? '2px solid var(--accent-navy)' : '1px solid var(--color-border)',
+                      border: selectedScenarioOption === idx ? '2px solid var(--color-primary)' : '1px solid var(--color-border)',
                       backgroundColor: selectedScenarioOption === idx ? 'var(--bg-secondary)' : 'var(--bg-primary)',
                       cursor: 'pointer',
                       fontSize: '0.9rem',
@@ -1062,7 +1133,7 @@ function Crimes() {
           {/* SECTION: MYTH VS FACT */}
           {selectedCrime.mythFacts && selectedCrime.mythFacts.length > 0 && (
             <section style={{ marginBottom: 'var(--space-xl)' }}>
-              <h3 style={{ fontSize: '1.3rem', color: 'var(--accent-navy)', marginBottom: 'var(--space-md)', fontWeight: 'bold' }}>
+              <h3 style={{ fontSize: '1.3rem', color: 'var(--text-primary)', marginBottom: 'var(--space-md)', fontWeight: 'bold' }}>
                 Myth vs. Fact
               </h3>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 'var(--space-lg)' }}>
@@ -1086,7 +1157,7 @@ function Crimes() {
 
           {/* SECTION 6: LEGAL CONTEXT */}
           <section id="legal" style={{ marginBottom: 'var(--space-xl)' }}>
-            <h2 style={{ fontSize: '1.8rem', color: 'var(--accent-navy)', marginBottom: 'var(--space-md)' }}>
+            <h2 style={{ fontSize: '1.8rem', color: 'var(--text-primary)', marginBottom: 'var(--space-md)' }}>
               6. Relevant Legal Context
             </h2>
             <p className="text-muted" style={{ marginBottom: 'var(--space-md)', fontSize: '0.95rem' }}>
@@ -1101,12 +1172,12 @@ function Crimes() {
                     backgroundColor: 'var(--bg-secondary)', 
                     border: '1px solid var(--color-border)', 
                     padding: 'var(--space-md)', 
-                    borderRadius: '4px',
+                    borderRadius: '4px', 
                     minWidth: '260px',
                     flex: 1
                   }}
                 >
-                  <h4 style={{ fontSize: '1.1rem', color: 'var(--accent-navy)', fontWeight: 'bold', marginBottom: '8px' }}>
+                  <h4 style={{ fontSize: '1.1rem', color: 'var(--text-primary)', fontWeight: 'bold', marginBottom: '8px' }}>
                     {law}
                   </h4>
                   <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '12px' }}>
@@ -1127,7 +1198,7 @@ function Crimes() {
           {/* SECTION 6: QUICK CHECK QUIZ */}
           {selectedCrime.quickCheckQuestions && selectedCrime.quickCheckQuestions.length > 0 && (
             <section id="quickcheck" style={{ marginBottom: 'var(--space-xl)', borderTop: '1px solid var(--color-border)', paddingTop: 'var(--space-xl)' }}>
-              <h2 style={{ fontSize: '1.8rem', color: 'var(--accent-navy)', marginBottom: 'var(--space-md)' }}>
+              <h2 style={{ fontSize: '1.8rem', color: 'var(--text-primary)', marginBottom: 'var(--space-md)' }}>
                 5. Quick Check: Think You Can Spot It?
               </h2>
               <p className="text-muted" style={{ marginBottom: 'var(--space-lg)', fontSize: '0.95rem' }}>
@@ -1137,7 +1208,7 @@ function Crimes() {
               <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-lg)' }}>
                 {selectedCrime.quickCheckQuestions.map((q, qIdx) => (
                   <div key={qIdx} style={{ backgroundColor: 'var(--bg-secondary)', padding: 'var(--space-md)', borderRadius: '6px', border: '1px solid var(--color-border)' }}>
-                    <h4 style={{ fontSize: '1.05rem', color: 'var(--accent-navy)', fontWeight: 'bold', marginBottom: 'var(--space-sm)' }}>
+                    <h4 style={{ fontSize: '1.05rem', color: 'var(--text-primary)', fontWeight: 'bold', marginBottom: 'var(--space-sm)' }}>
                       Question {qIdx + 1}: {q.questionText}
                     </h4>
                     
@@ -1157,7 +1228,7 @@ function Crimes() {
                             bg = 'var(--color-error-light)';
                           }
                         } else if (isSelected) {
-                          borderStyle = '2px solid var(--accent-navy)';
+                          borderStyle = '2px solid var(--color-primary)';
                         }
 
                         return (

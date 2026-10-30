@@ -1,6 +1,8 @@
 const UserProgress = require('../models/UserProgress');
 const AssessmentSession = require('../models/AssessmentSession');
 const QuizAttempt = require('../models/QuizAttempt');
+const spacedRetrievalService = require('../services/spacedRetrievalService');
+const catalog = require('../config/remediationCatalog');
 
 exports.getProgress = async (req, res) => {
   try {
@@ -55,8 +57,30 @@ exports.getProgress = async (req, res) => {
       finalSessionId: finalVal ? finalVal._id : null,
       latestSessionId: (finalVal || baseline) ? (finalVal || baseline)._id : null,
       finalBehaviourScores: finalScoresObj,
-      completedPathways: progress.completedPathways || [],
-      reinforcementsCompleted: progress.reinforcementsCompleted || [],
+      completedPathways: (progress.completedPathways || []).map(p => {
+        const pathwayDef = catalog.find(cat => cat.pathwayId === p.pathwayId);
+        const pObj = p.toObject ? p.toObject() : { ...p };
+        return {
+          ...pObj,
+          habitTitle: pathwayDef?.habitTitle || p.pathwayId
+        };
+      }),
+      reinforcementsCompleted: (progress.reinforcementsCompleted || []).map(r => {
+        const pathwayDef = catalog.find(cat => cat.pathwayId === r.pathwayId);
+        const rObj = r.toObject ? r.toObject() : { ...r };
+        return {
+          ...rObj,
+          habitTitle: pathwayDef?.habitTitle || r.pathwayId
+        };
+      }),
+      spacedReviews: (progress.spacedReviews || []).map(sr => {
+        const pathwayDef = catalog.find(cat => cat.pathwayId === sr.pathwayId);
+        const srObj = sr.toObject ? sr.toObject() : { ...sr };
+        return {
+          ...srObj,
+          habitTitle: pathwayDef?.habitTitle || sr.pathwayId
+        };
+      }),
       assessmentsCount: assessments.length,
       streak: progress.currentStreak
     });
@@ -65,7 +89,6 @@ exports.getProgress = async (req, res) => {
   }
 };
 
-const catalog = require('../config/remediationCatalog');
 const CaseStudy = require('../models/CaseStudy');
 const { generateRemediation } = require('../services/remediationEngineService');
 const mongoose = require('mongoose');
@@ -273,6 +296,86 @@ exports.getPathwayCheckpoint = async (req, res) => {
 };
 
 /**
+ * GET /api/progress/pathways/:pathwayId/review?sourceSessionId=<id>
+ * Fetch completed checkpoint review: questions, submitted answers (if recorded), correctness, and statutory explanations.
+ * STRICT SECURITY: Only available if the pathway was already completed by this user for this session.
+ */
+exports.getPathwayCheckpointReview = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const { pathwayId } = req.params;
+    const { sourceSessionId } = req.query;
+
+    const { pathway } = await validateSessionAndEligibility(userId, sourceSessionId, pathwayId);
+
+    const progress = await UserProgress.findOne({ userId });
+    if (!progress) {
+      return res.status(403).json({
+        success: false,
+        error: { code: 'PATHWAY_NOT_COMPLETED', message: 'Checkpoint review is only available for fully completed pathways.' }
+      });
+    }
+
+    // Check in completedPathways or reinforcementsCompleted
+    const pathwayRecord = (progress.completedPathways || []).find(
+      p => p.pathwayId === pathwayId && p.sourceSessionId.toString() === sourceSessionId.toString()
+    );
+    const reinforceRecord = (progress.reinforcementsCompleted || []).find(
+      r => r.pathwayId === pathwayId && r.sourceSessionId.toString() === sourceSessionId.toString()
+    );
+
+    const isCompleted = Boolean(pathwayRecord?.completedAt || reinforceRecord?.completedAt);
+    if (!isCompleted) {
+      return res.status(403).json({
+        success: false,
+        error: { code: 'PATHWAY_NOT_COMPLETED', message: 'Checkpoint review is only available for fully completed pathways.' }
+      });
+    }
+
+    const answersList = pathwayRecord?.checkpointAnswers || reinforceRecord?.checkpointAnswers || [];
+    const checkpointDef = pathway.checkpoint;
+    if (!checkpointDef || !Array.isArray(checkpointDef.questions)) {
+      return res.status(404).json({
+        success: false,
+        error: { code: 'CHECKPOINT_NOT_CONFIGURED', message: 'No learning checkpoint configured for this pathway.' }
+      });
+    }
+
+    // Construct review payload
+    const reviewQuestions = checkpointDef.questions.map(q => {
+      const userAns = answersList.find(a => a.questionId === q.questionId);
+      return {
+        questionId: q.questionId,
+        questionText: q.questionText,
+        options: q.options,
+        correctOptionIndex: q.correctOptionIndex,
+        explanation: q.explanation,
+        statutoryReference: pathway.statutoryReference || null,
+        selectedOptionIndex: userAns !== undefined ? userAns.selectedOptionIndex : null,
+        isCorrect: userAns !== undefined ? userAns.isCorrect : null
+      };
+    });
+
+    res.json({
+      success: true,
+      pathwayId,
+      sourceSessionId,
+      completedAt: pathwayRecord?.completedAt || reinforceRecord?.completedAt,
+      checkpointScore: pathwayRecord?.checkpointScore ?? reinforceRecord?.checkpointScore ?? null,
+      passingScore: checkpointDef.passingScore,
+      hasStoredAnswers: answersList.length > 0,
+      questions: reviewQuestions
+    });
+  } catch (error) {
+    const status = error.status || 500;
+    res.status(status).json({
+      success: false,
+      error: { code: error.code || 'REVIEW_FETCH_ERROR', message: error.message }
+    });
+  }
+};
+
+/**
  * POST /api/progress/pathways/checkpoint
  * Submit answers, server calculates score against passingScore and updates completion
  */
@@ -359,6 +462,11 @@ exports.submitPathwayCheckpoint = async (req, res) => {
 
     if (passed) {
       pathwayRecord.stepsCompleted.checkpointQuiz = true;
+      pathwayRecord.checkpointAnswers = explanations.map(e => ({
+        questionId: e.questionId,
+        selectedOptionIndex: e.selectedOptionIndex,
+        isCorrect: e.isCorrect
+      }));
       if (!pathwayRecord.completedAt) {
         pathwayRecord.completedAt = new Date();
       }
@@ -546,6 +654,11 @@ exports.reinforcePathway = async (req, res) => {
       if (existingRecord) {
         existingRecord.checkpointScore = calculatedScore;
         existingRecord.completedAt = new Date();
+        existingRecord.checkpointAnswers = explanations.map(e => ({
+          questionId: e.questionId,
+          selectedOptionIndex: e.selectedOptionIndex,
+          isCorrect: e.isCorrect
+        }));
         completedAt = existingRecord.completedAt;
       } else {
         const newRecord = {
@@ -553,7 +666,12 @@ exports.reinforcePathway = async (req, res) => {
           sourceSessionId,
           sourceHabitState,
           completedAt: new Date(),
-          checkpointScore: calculatedScore
+          checkpointScore: calculatedScore,
+          checkpointAnswers: explanations.map(e => ({
+            questionId: e.questionId,
+            selectedOptionIndex: e.selectedOptionIndex,
+            isCorrect: e.isCorrect
+          }))
         };
         progress.reinforcementsCompleted.push(newRecord);
         completedAt = newRecord.completedAt;
@@ -608,29 +726,55 @@ exports.getPortfolio = async (req, res) => {
     // Pillar 1: Learning Interventions
     const completedPathways = (progress?.completedPathways || [])
       .filter(p => Boolean(p.completedAt))
-      .map(p => ({
-        pathwayId: p.pathwayId,
-        sourceSessionId: p.sourceSessionId,
-        completedAt: p.completedAt,
-        checkpointScore: p.checkpointScore
-      }));
+      .map(p => {
+        const pathwayDef = catalog.find(cat => cat.pathwayId === p.pathwayId);
+        return {
+          pathwayId: p.pathwayId,
+          habitTitle: pathwayDef?.habitTitle || p.pathwayId,
+          sourceSessionId: p.sourceSessionId,
+          completedAt: p.completedAt,
+          checkpointScore: p.checkpointScore
+        };
+      });
 
-    const reinforcementsCompleted = (progress?.reinforcementsCompleted || []).map(r => ({
-      pathwayId: r.pathwayId,
-      sourceSessionId: r.sourceSessionId,
-      sourceHabitState: r.sourceHabitState,
-      completedAt: r.completedAt,
-      checkpointScore: r.checkpointScore
-    }));
+    const reinforcementsCompleted = (progress?.reinforcementsCompleted || []).map(r => {
+      const pathwayDef = catalog.find(cat => cat.pathwayId === r.pathwayId);
+      return {
+        pathwayId: r.pathwayId,
+        habitTitle: pathwayDef?.habitTitle || r.pathwayId,
+        sourceSessionId: r.sourceSessionId,
+        sourceHabitState: r.sourceHabitState,
+        completedAt: r.completedAt,
+        checkpointScore: r.checkpointScore
+      };
+    });
+
+    const spacedReviews = (progress?.spacedReviews || [])
+      .filter(sr => sr && sr.pathwayId && sr.completedAt && typeof sr.checkpointScore === 'number')
+      .map(sr => {
+        const pathwayDef = catalog.find(p => p.pathwayId === sr.pathwayId);
+        return {
+          pathwayId: sr.pathwayId,
+          habitTitle: pathwayDef?.habitTitle || sr.pathwayId,
+          sourceSessionId: sr.sourceSessionId,
+          cycleNumber: sr.cycleNumber || 1,
+          completedAt: sr.completedAt,
+          checkpointScore: sr.checkpointScore,
+          passed: Boolean(sr.passed)
+        };
+      });
 
     const interventions = {
       title: 'Learning Interventions',
       description: 'Demonstrates successful performance on the targeted learning checkpoint.',
       completedPathways,
       reinforcementsCompleted,
+      spacedReviews,
       summary: {
         totalCompletedPathways: completedPathways.length,
-        totalReinforcements: reinforcementsCompleted.length
+        totalReinforcements: reinforcementsCompleted.length,
+        totalSpacedReviews: spacedReviews.length,
+        passedSpacedReviews: spacedReviews.filter(r => r.passed).length
       }
     };
 
@@ -715,3 +859,219 @@ function getAwarenessLevel(score) {
   if (score >= 40) return 'Needs Improvement';
   return 'High Risk Awareness Gap';
 }
+
+/**
+ * GET /api/progress/pathways/spaced-retrieval/due
+ * Surface due spaced retrieval reviews when learner opens the dashboard
+ */
+exports.getDueSpacedRetrievals = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const progress = await UserProgress.findOne({ userId });
+    if (!progress) {
+      return res.json({
+        success: true,
+        dueReviews: [],
+        totalDue: 0,
+        delayDaysConfigured: spacedRetrievalService.getSpacedRetrievalDelayDays(),
+        evidenceNotice: 'Spaced retrieval evaluates delayed statutory rule recall; it is distinct from verified live behavioral transfer.'
+      });
+    }
+
+    const dueReviews = spacedRetrievalService.getDueSpacedReviews(progress);
+    res.json({
+      success: true,
+      dueReviews,
+      totalDue: dueReviews.length,
+      delayDaysConfigured: spacedRetrievalService.getSpacedRetrievalDelayDays(),
+      evidenceNotice: 'Spaced retrieval evaluates delayed statutory rule recall; it is distinct from verified live behavioral transfer.'
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: { code: 'DUE_SPACED_REVIEWS_ERROR', message: error.message }
+    });
+  }
+};
+
+/**
+ * GET /api/progress/pathways/:pathwayId/spaced-retrieval?sourceSessionId=<id>
+ * Fetch sanitized retrieval questions without answers or explanations
+ * Strict Security: Pathway must be fully completed by this user
+ */
+exports.getSpacedRetrievalQuestions = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const { pathwayId } = req.params;
+    const { sourceSessionId } = req.query;
+
+    const progress = await UserProgress.findOne({ userId });
+    if (!progress || !Array.isArray(progress.completedPathways)) {
+      return res.status(403).json({
+        success: false,
+        error: { code: 'PATHWAY_NOT_COMPLETED', message: 'Spaced retrieval is only available for fully completed pathways.' }
+      });
+    }
+
+    const completedRecord = progress.completedPathways.find(p => {
+      const matchPathway = p.pathwayId === pathwayId;
+      if (!sourceSessionId) return matchPathway && Boolean(p.completedAt);
+      const sId = String(p.sourceSessionId?._id || p.sourceSessionId);
+      return matchPathway && sId === String(sourceSessionId) && Boolean(p.completedAt);
+    });
+
+    if (!completedRecord || !completedRecord.completedAt) {
+      return res.status(403).json({
+        success: false,
+        error: { code: 'PATHWAY_NOT_COMPLETED', message: 'Spaced retrieval is only available for fully completed pathways.' }
+      });
+    }
+
+    if (sourceSessionId) {
+      if (!mongoose.Types.ObjectId.isValid(sourceSessionId)) {
+        return res.status(400).json({
+          success: false,
+          error: { code: 'INVALID_SESSION_ID', message: 'Invalid source session ID.' }
+        });
+      }
+      const session = await AssessmentSession.findById(sourceSessionId);
+      if (!session) {
+        return res.status(404).json({
+          success: false,
+          error: { code: 'SESSION_NOT_FOUND', message: 'Assessment session not found.' }
+        });
+      }
+      if (session.userId.toString() !== userId.toString()) {
+        return res.status(403).json({
+          success: false,
+          error: { code: 'FORBIDDEN', message: 'Access denied: You do not own this assessment session.' }
+        });
+      }
+    }
+
+    const payload = spacedRetrievalService.getSanitizedRetrievalQuestions(pathwayId);
+    res.json({
+      success: true,
+      ...payload,
+      sourceSessionId: completedRecord.sourceSessionId,
+      originalCompletedAt: completedRecord.completedAt,
+      evidenceNotice: 'Recall the defensive rule before answering. Explanations are revealed upon authoritative grading.'
+    });
+  } catch (error) {
+    const status = error.status || 500;
+    res.status(status).json({
+      success: false,
+      error: { code: error.code || 'SPACED_QUESTIONS_ERROR', message: error.message }
+    });
+  }
+};
+
+/**
+ * POST /api/progress/pathways/:pathwayId/spaced-retrieval
+ * Submit answers, server authoritatively grades submission and updates spacedReviews idempotently
+ */
+exports.submitSpacedRetrieval = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const { pathwayId } = req.params;
+    // Explicitly destructure recognized fields only; client-supplied scores/pass flags are discarded
+    const { sourceSessionId, answers } = req.body;
+
+    let progress = await UserProgress.findOne({ userId });
+    if (!progress || !Array.isArray(progress.completedPathways)) {
+      return res.status(403).json({
+        success: false,
+        error: { code: 'PATHWAY_NOT_COMPLETED', message: 'Spaced retrieval is only available for fully completed pathways.' }
+      });
+    }
+
+    const completedRecord = progress.completedPathways.find(p => {
+      const matchPathway = p.pathwayId === pathwayId;
+      if (!sourceSessionId) return matchPathway && Boolean(p.completedAt);
+      const sId = String(p.sourceSessionId?._id || p.sourceSessionId);
+      return matchPathway && sId === String(sourceSessionId) && Boolean(p.completedAt);
+    });
+
+    if (!completedRecord || !completedRecord.completedAt) {
+      return res.status(403).json({
+        success: false,
+        error: { code: 'PATHWAY_NOT_COMPLETED', message: 'Spaced retrieval is only available for fully completed pathways.' }
+      });
+    }
+
+    const effectiveSessionId = sourceSessionId || completedRecord.sourceSessionId;
+    if (effectiveSessionId && mongoose.Types.ObjectId.isValid(effectiveSessionId)) {
+      const session = await AssessmentSession.findById(effectiveSessionId);
+      if (session && session.userId.toString() !== userId.toString()) {
+        return res.status(403).json({
+          success: false,
+          error: { code: 'FORBIDDEN', message: 'Access denied: You do not own this assessment session.' }
+        });
+      }
+    }
+
+    // Authoritative evaluation
+    const evalResult = spacedRetrievalService.evaluateSpacedRetrievalSubmission(pathwayId, answers);
+
+    if (!Array.isArray(progress.spacedReviews)) {
+      progress.spacedReviews = [];
+    }
+
+    // Idempotency: check if an identical review was submitted within the last 15 minutes
+    const now = new Date();
+    const fifteenMinutesAgo = new Date(now.getTime() - 15 * 60 * 1000);
+    const recentDuplicate = progress.spacedReviews.find(r => 
+      r.pathwayId === pathwayId &&
+      String(r.sourceSessionId) === String(effectiveSessionId) &&
+      new Date(r.completedAt) >= fifteenMinutesAgo
+    );
+
+    let recordedReview;
+    if (recentDuplicate) {
+      // Idempotently update existing recent submission instead of duplicating records
+      recentDuplicate.checkpointScore = evalResult.calculatedScore;
+      recentDuplicate.passed = evalResult.passed;
+      recentDuplicate.reviewAnswers = evalResult.reviewAnswers;
+      recentDuplicate.completedAt = now;
+      recordedReview = recentDuplicate;
+    } else {
+      const priorCount = progress.spacedReviews.filter(r => r.pathwayId === pathwayId).length;
+      recordedReview = {
+        pathwayId,
+        sourceSessionId: effectiveSessionId,
+        cycleNumber: priorCount + 1,
+        completedAt: now,
+        checkpointScore: evalResult.calculatedScore,
+        passed: evalResult.passed,
+        reviewAnswers: evalResult.reviewAnswers
+      };
+      progress.spacedReviews.push(recordedReview);
+    }
+
+    progress.lastActivity = now;
+    await progress.save();
+
+    res.json({
+      success: true,
+      pathwayId,
+      sourceSessionId: effectiveSessionId,
+      score: evalResult.calculatedScore,
+      passingScore: evalResult.passingScore,
+      passed: evalResult.passed,
+      cycleNumber: recordedReview.cycleNumber,
+      completedAt: recordedReview.completedAt,
+      explanations: evalResult.explanations,
+      evidenceNotice: 'Spaced retrieval demonstrates delayed conceptual recall of defensive principles. It does not certify simulated or real-world behavioral immunity.',
+      message: evalResult.passed
+        ? 'Spaced retrieval passed: verified delayed statutory rule recall.'
+        : 'Spaced retrieval not passed: review defensive rule and statutory context.'
+    });
+  } catch (error) {
+    const status = error.status || 500;
+    res.status(status).json({
+      success: false,
+      error: { code: error.code || 'SPACED_SUBMIT_ERROR', message: error.message }
+    });
+  }
+};
+

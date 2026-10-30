@@ -2,24 +2,35 @@ const LawSection = require('../models/LawSection');
 const CyberCrime = require('../models/CyberCrime');
 const CaseStudy = require('../models/CaseStudy');
 const Resource = require('../models/Resource');
+const { escapeRegex } = require('../utils/regexUtils');
 
 exports.askAssistant = async (req, res) => {
   try {
     const { message } = req.body;
 
-    if (!message) {
-      return res.status(400).json({ message: 'Message is required' });
+    if (!message || typeof message !== 'string') {
+      return res.status(400).json({ message: 'A valid text message is required' });
     }
 
-    const query = message.toLowerCase();
+    const query = message.trim().toLowerCase();
+    if (!query) {
+      return res.status(400).json({ message: 'A non-empty message is required' });
+    }
 
-    // Matching regex
-    const regex = new RegExp(query.split(' ').filter(w => w.length > 3).join('|') || query, 'i');
+    // Clean terminal sentence punctuation so queries like "phishing?" match "phishing"
+    const cleanedQuery = query.replace(/[?.,!:;]+$/g, '').trim();
+    const words = query
+      .split(/\s+/)
+      .map(w => w.replace(/[?.,!:;]+$/g, '').trim())
+      .filter(w => w.length > 3)
+      .map(w => escapeRegex(w));
+    const safeRegexPattern = words.length > 0 ? words.join('|') : escapeRegex(cleanedQuery || query);
+    const regex = new RegExp(safeRegexPattern, 'i');
 
     const matchedLaws = await LawSection.find({
       $or: [
         { sectionNumber: regex },
-        { title: regex },
+        { officialTitle: regex },
         { plainLanguageExplanation: regex }
       ]
     });
@@ -36,7 +47,8 @@ exports.askAssistant = async (req, res) => {
       $or: [
         { title: regex },
         { incidentType: regex },
-        { incidentDescription: regex }
+        { shortDescription: regex },
+        { attackVector: regex }
       ]
     });
 
@@ -73,7 +85,9 @@ exports.askAssistant = async (req, res) => {
       if (matchedCases.length > 0) {
         reply += `### 🔍 Connected Case Studies:\n`;
         matchedCases.forEach(cs => {
-          reply += `- **${cs.title}** (${cs.incidentType}): ${cs.incidentDescription.substring(0, 150)}...\n`;
+          const desc = cs.shortDescription || cs.incidentDescription || '';
+          const snippet = desc.length > 150 ? `${desc.substring(0, 150)}...` : desc;
+          reply += `- **${cs.title}** (${cs.incidentType}): ${snippet}\n`;
         });
         reply += `\n`;
       }
@@ -97,7 +111,7 @@ exports.askAssistant = async (req, res) => {
 
     reply += `\n---\n`;
     reply += `📢 **How to Report a Cybercrime in India:**\n`;
-    reply += `- **Financial Fraud:** Call the National Cybercrime Helpline immediately at **1930** to freeze stolen funds, or file a complaint on the official portal: https://cybercrime.gov.in\n`;
+    reply += `- **Financial Fraud:** Call the National Cybercrime Helpline immediately at **1930** (Citizen Financial Cyber Fraud Reporting and Management System / CFCFRMS) within the 2–3 hour Golden Hour to initiate inter-bank hold coordination, or file a complaint on the official portal: https://cybercrime.gov.in. Note that fund holds depend on immediate reporting and inter-bank coordination; recovery cannot be guaranteed.\n`;
     reply += `- **General Cybercrime:** File a digital complaint at the nearest Cyber Cell or online at https://cybercrime.gov.in\n\n`;
     
     // Legal disclaimer

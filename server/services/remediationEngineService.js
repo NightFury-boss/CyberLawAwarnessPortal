@@ -144,7 +144,7 @@ function determineFinalHabitState(finalMetric, baselineMetric) {
   if (baseScore < 75 && finalScore >= 75 && finalMetric.opportunityFactor >= 0.75) {
     return {
       state: 'consolidated_strength',
-      badge: 'Habit Shift Mastered',
+      badge: 'Consolidated Strength',
       message: `Habit shift demonstrated! You improved from ${baseScore}% (Baseline) to ${finalScore}% (Final), resisting pressure.`
     };
   }
@@ -173,8 +173,8 @@ function determineFinalHabitState(finalMetric, baselineMetric) {
   if (finalScore >= 75 && finalMetric.opportunityFactor >= 0.75) {
     return {
       state: 'mastery',
-      badge: 'Habit Mastered',
-      message: 'Consistent digital vigilance demonstrated across all routine and high-pressure scenarios.'
+      badge: 'Consistent Habit',
+      message: 'Consistent digital vigilance demonstrated across simulation scenarios. Continue routine practice to maintain this defensive reflex.'
     };
   }
 

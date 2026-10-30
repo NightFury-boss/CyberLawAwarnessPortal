@@ -57,7 +57,20 @@ const UserProgressSchema = new mongoose.Schema({
           type: Boolean,
           default: false
         }
-      }
+      },
+      checkpointAnswers: [
+        {
+          questionId: {
+            type: String
+          },
+          selectedOptionIndex: {
+            type: Number
+          },
+          isCorrect: {
+            type: Boolean
+          }
+        }
+      ]
     }
   ],
   reinforcementsCompleted: [
@@ -85,7 +98,64 @@ const UserProgressSchema = new mongoose.Schema({
         min: 0,
         max: 100,
         required: true
-      }
+      },
+      checkpointAnswers: [
+        {
+          questionId: {
+            type: String
+          },
+          selectedOptionIndex: {
+            type: Number
+          },
+          isCorrect: {
+            type: Boolean
+          }
+        }
+      ]
+    }
+  ],
+  spacedReviews: [
+    {
+      pathwayId: {
+        type: String,
+        required: true
+      },
+      sourceSessionId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'AssessmentSession',
+        required: true
+      },
+      cycleNumber: {
+        type: Number,
+        default: 1
+      },
+      completedAt: {
+        type: Date,
+        default: Date.now
+      },
+      checkpointScore: {
+        type: Number,
+        min: 0,
+        max: 100,
+        required: true
+      },
+      passed: {
+        type: Boolean,
+        required: true
+      },
+      reviewAnswers: [
+        {
+          questionId: {
+            type: String
+          },
+          selectedOptionIndex: {
+            type: Number
+          },
+          isCorrect: {
+            type: Boolean
+          }
+        }
+      ]
     }
   ]
 }, {

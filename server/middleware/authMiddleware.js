@@ -1,9 +1,11 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
+const { getJwtSecret, validateJwtSecret } = require('../config/productionSecurity');
 
-//hello
-
-const JWT_SECRET = process.env.JWT_SECRET || 'cyber_portal_secret_key_12345';
+// Validate on load if running in production
+if (process.env.NODE_ENV === 'production') {
+  validateJwtSecret(process.env);
+}
 
 async function protect(req, res, next) {
   let token;
@@ -16,7 +18,8 @@ async function protect(req, res, next) {
   }
 
   try {
-    const decoded = jwt.verify(token, JWT_SECRET);
+    const secret = getJwtSecret();
+    const decoded = jwt.verify(token, secret);
     const user = await User.findById(decoded.id).select('-passwordHash');
     if (!user) {
       return res.status(401).json({ message: 'Not authorized, user not found' });
@@ -39,5 +42,9 @@ function adminOnly(req, res, next) {
 module.exports = {
   protect,
   adminOnly,
-  JWT_SECRET
+  getJwtSecret,
+  validateJwtSecret,
+  get JWT_SECRET() {
+    return getJwtSecret();
+  }
 };

@@ -188,7 +188,7 @@ function Home({ user }) {
                     Practical awareness structures your response before an attack begins, while it occurs, and after suspicion arises.
                   </p>
                 </div>
-                <Link to="/prevention" className="value-action-link" style={{ alignSelf: 'flex-start' }}>
+                <Link to="/prevention" className="value-action-link" style={{ alignSelf: 'flex-start', position: 'relative', zIndex: 1 }}>
                   <span>Explore Prevention Guidance</span>
                   <span className="link-arrow" aria-hidden="true">&rarr;</span>
                 </Link>
@@ -214,7 +214,7 @@ function Home({ user }) {
                   <p className="phase-desc">
                     Bookmark trusted portals directly. Assume incoming alerts claiming urgency require external verification.
                   </p>
-                  <span style={{ fontSize: '0.78rem', color: 'var(--accent-navy)', fontWeight: '600', marginTop: 'auto', paddingTop: '8px' }}>
+                  <span style={{ fontSize: '0.78rem', color: 'var(--color-accent)', fontWeight: '600', marginTop: 'auto', paddingTop: '8px' }}>
                     Open Protocol &rarr;
                   </span>
                 </Link>
@@ -227,7 +227,7 @@ function Home({ user }) {
                   <p className="phase-desc">
                     Never share one-time security codes, passwords, or remote screen-sharing access over incoming calls or messages.
                   </p>
-                  <span style={{ fontSize: '0.78rem', color: 'var(--accent-navy)', fontWeight: '600', marginTop: 'auto', paddingTop: '8px' }}>
+                  <span style={{ fontSize: '0.78rem', color: 'var(--color-accent)', fontWeight: '600', marginTop: 'auto', paddingTop: '8px' }}>
                     Open Protocol &rarr;
                   </span>
                 </Link>
@@ -240,7 +240,7 @@ function Home({ user }) {
                   <p className="phase-desc">
                     Freeze compromised credentials immediately with your service provider and report details to Helpline 1930.
                   </p>
-                  <span style={{ fontSize: '0.78rem', color: 'var(--accent-navy)', fontWeight: '600', marginTop: 'auto', paddingTop: '8px' }}>
+                  <span style={{ fontSize: '0.78rem', color: 'var(--color-accent)', fontWeight: '600', marginTop: 'auto', paddingTop: '8px' }}>
                     Open Protocol &rarr;
                   </span>
                 </Link>
@@ -337,10 +337,10 @@ function Home({ user }) {
 
             <div className="closing-cta-buttons">
               <Link 
-                to={user ? "/dashboard" : "/register"} 
+                to={user ? (user.role === 'admin' ? "/admin" : "/dashboard") : "/register"} 
                 className="btn btn-primary closing-btn-primary"
               >
-                <span>Start Learning</span>
+                <span>{user?.role === 'admin' ? "Admin Dashboard" : (user ? "Go to Workspace" : "Start Learning")}</span>
                 <span className="closing-btn-arrow" aria-hidden="true">&rarr;</span>
               </Link>
               <Link 

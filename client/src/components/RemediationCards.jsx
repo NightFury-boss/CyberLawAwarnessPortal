@@ -80,7 +80,7 @@ function RemediationCards({ sessionId, initialData = null, initialProgress = nul
     return (
       <div className="remediation-section" style={{ padding: 'var(--space-md) 0' }}>
         <div style={{ textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.9rem' }}>
-          Loading habit focus recommendations...
+          Loading your recommended lessons...
         </div>
       </div>
     );
@@ -105,13 +105,13 @@ function RemediationCards({ sessionId, initialData = null, initialProgress = nul
   const getShiftBadgeLabel = (shiftState) => {
     switch (shiftState) {
       case 'consolidated_strength':
-        return 'Consolidated Strength';
+        return 'Strong Habit';
       case 'continued_practice':
-        return 'Continued Practice';
+        return 'Keep Practicing';
       case 'emerging_gap':
-        return 'Emerging Habit Focus';
+        return 'Needs Practice';
       case 'mastery':
-        return 'Habit Mastery';
+        return 'Habit Mastered';
       default:
         return null;
     }
@@ -119,15 +119,15 @@ function RemediationCards({ sessionId, initialData = null, initialProgress = nul
 
   return (
     <section className="remediation-section" aria-labelledby="remediation-heading" style={{ marginTop: 'var(--space-xl)', marginBottom: 'var(--space-xl)' }}>
-      <div style={{ borderLeft: '3px solid var(--accent-navy)', paddingLeft: '16px', marginBottom: 'var(--space-md)' }}>
-        <span style={{ fontSize: '0.75rem', fontWeight: '800', color: 'var(--accent-navy)', textTransform: 'uppercase', letterSpacing: '1px' }}>
-          {assessmentType === 'final' ? 'Post-Assessment Guidance' : 'Recommended Learning Path'}
+      <div style={{ borderLeft: '3px solid var(--color-primary)', paddingLeft: '16px', marginBottom: 'var(--space-md)' }}>
+        <span style={{ fontSize: '0.75rem', fontWeight: '800', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '1px' }}>
+          {assessmentType === 'final' ? 'What to Practice Next' : 'Your Recommended Lessons'}
         </span>
-        <h3 id="remediation-heading" style={{ fontSize: '1.4rem', color: 'var(--accent-navy)', margin: '4px 0 6px 0' }}>
-          Recommended Habit Focus Areas
+        <h3 id="remediation-heading" style={{ fontSize: '1.4rem', color: 'var(--text-primary)', margin: '4px 0 6px 0' }}>
+          Lessons to Build Safe Habits
         </h3>
         <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', margin: 0, lineHeight: '1.5' }}>
-          {focusSummary || 'Targeted micro-learning pathways designed to strengthen routine digital habits and explore relevant legal context.'}
+          {focusSummary || 'Short 3-step lessons designed to strengthen your daily digital safety habits and explain relevant Indian cyber laws.'}
         </p>
       </div>
 
@@ -159,13 +159,13 @@ function RemediationCards({ sessionId, initialData = null, initialProgress = nul
                       fontSize: '0.7rem',
                       fontWeight: '700',
                       textTransform: 'uppercase',
-                      color: 'var(--accent-navy)',
-                      backgroundColor: 'var(--accent-navy-light)',
+                      color: 'var(--color-primary)',
+                      backgroundColor: 'var(--color-primary-light)',
                       padding: '2px 8px',
                       borderRadius: '3px',
                       letterSpacing: '0.5px'
                     }}>
-                      Habit Focus
+                      Lesson
                     </span>
                     {rec.difficulty && (
                       <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
@@ -190,7 +190,7 @@ function RemediationCards({ sessionId, initialData = null, initialProgress = nul
                         padding: '2px 8px',
                         borderRadius: '3px'
                       }}>
-                        Reinforced &#10003;
+                        Practiced &#10003;
                       </span>
                     ) : isFullyCompleted ? (
                       <span style={{
@@ -239,14 +239,14 @@ function RemediationCards({ sessionId, initialData = null, initialProgress = nul
                 {/* Practical Defensive Rule */}
                 {rec.coreRule && (
                   <div className="remediation-rule-box">
-                    <strong>Practical Rule:</strong>
+                    <strong>Safety Rule:</strong>
                     {rec.coreRule}
                   </div>
                 )}
 
                 {/* Final Assessment Observed Shift Context */}
                 {shiftSummary && (
-                  <p style={{ fontSize: '0.8rem', color: 'var(--accent-navy)', fontStyle: 'italic', margin: '0 0 var(--space-sm) 0' }}>
+                  <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', fontStyle: 'italic', margin: '0 0 var(--space-sm) 0' }}>
                     {shiftSummary}
                   </p>
                 )}
@@ -254,8 +254,8 @@ function RemediationCards({ sessionId, initialData = null, initialProgress = nul
                 {/* Legal Context Section (Optional) */}
                 {rec.legalReferences && rec.legalReferences.length > 0 ? (
                   <div className="remediation-legal-box">
-                    <div style={{ fontWeight: '700', fontSize: '0.75rem', textTransform: 'uppercase', color: 'var(--accent-navy)', marginBottom: '6px', letterSpacing: '0.5px' }}>
-                      Relevant Legal Context
+                    <div style={{ fontWeight: '700', fontSize: '0.75rem', textTransform: 'uppercase', color: 'var(--text-secondary)', marginBottom: '6px', letterSpacing: '0.5px' }}>
+                      What the Law Says
                     </div>
                     {rec.legalReferences.map((ref, rIdx) => (
                       <div key={rIdx} style={{ marginBottom: rIdx < rec.legalReferences.length - 1 ? '8px' : '0' }}>
@@ -273,7 +273,7 @@ function RemediationCards({ sessionId, initialData = null, initialProgress = nul
                               borderRadius: '2px',
                               border: '1px solid #fde68a'
                             }}>
-                              Enacted &mdash; Future Commencement
+                              Passed by Parliament &mdash; Rules Pending
                             </span>
                           )}
                         </div>
@@ -298,7 +298,7 @@ function RemediationCards({ sessionId, initialData = null, initialProgress = nul
                     backgroundColor: 'var(--bg-secondary)',
                     borderRadius: '3px'
                   }}>
-                    Practical cyber-safety habit &bull; Focuses on defensive hygiene rather than a statutory offence provision.
+                    Everyday safety habit &bull; Focuses on smart safety practices rather than a specific criminal law.
                   </div>
                 )}
               </div>
@@ -314,13 +314,13 @@ function RemediationCards({ sessionId, initialData = null, initialProgress = nul
                       textAlign: 'center',
                       fontSize: '0.88rem',
                       padding: '9px 12px',
-                      backgroundColor: isReinforced ? 'var(--accent-navy)' : '#b45309',
-                      borderColor: isReinforced ? 'var(--accent-navy)' : '#b45309',
+                      backgroundColor: isReinforced ? 'var(--color-primary)' : '#b45309',
+                      borderColor: isReinforced ? 'var(--color-primary)' : '#b45309',
                       color: '#fff',
                       fontWeight: '600'
                     }}
                   >
-                    {isReinforced ? 'Reinforce Defensive Habit (Review \u2713)' : 'Reinforce Defensive Habit \u2192'}
+                    {isReinforced ? 'Practice Habit Again (Done \u2713)' : 'Practice This Habit \u2192'}
                   </button>
                 ) : (
                   <button
@@ -333,7 +333,7 @@ function RemediationCards({ sessionId, initialData = null, initialProgress = nul
                       padding: '8px 12px'
                     }}
                   >
-                    {isFullyCompleted ? 'Review Learning Pathway \u2713' : (isInProgress ? 'Continue Learning Pathway \u2192' : 'Start Learning Pathway \u2192')}
+                    {isFullyCompleted ? 'Review Lesson \u2713' : (isInProgress ? 'Continue Lesson \u2192' : 'Start Lesson \u2192')}
                   </button>
                 )}
 
@@ -347,7 +347,7 @@ function RemediationCards({ sessionId, initialData = null, initialProgress = nul
                       textDecoration: 'underline'
                     }}
                   >
-                    View standalone reference ({rec.actionLabel || 'Case Study / Guide'})
+                    Read full story & guide ({rec.actionLabel || 'Story & Guide'})
                   </Link>
                 )}
               </div>

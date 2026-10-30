@@ -148,11 +148,11 @@ export default function HomeHero({ user }) {
 
           <div className="portal-hero-cta-group hero-enter-cta">
             <Link
-              to={user ? "/dashboard" : "/register"}
+              to={user ? (user.role === 'admin' ? "/admin" : "/dashboard") : "/register"}
               className="btn btn-primary portal-hero-btn-primary"
-              aria-label="Start Learning — Begin your cyber safety journey"
+              aria-label={user?.role === 'admin' ? "Admin Dashboard — Access administration console" : "Start Learning — Begin your cyber safety journey"}
             >
-              <span>Start Learning</span>
+              <span>{user?.role === 'admin' ? "Admin Dashboard" : (user ? "Go to Dashboard" : "Start Learning")}</span>
               <span className="hero-btn-arrow" aria-hidden="true">&rarr;</span>
             </Link>
 
@@ -165,6 +165,19 @@ export default function HomeHero({ user }) {
               <span>Explore What You Can Learn</span>
               <span className="hero-btn-arrow" aria-hidden="true">&rarr;</span>
             </a>
+          </div>
+
+          <div className="portal-hero-emergency hero-enter-cta" role="note" aria-label="Immediate Incident Assistance">
+            <span className="portal-hero-emergency-badge">
+              <span className="portal-hero-emergency-dot" aria-hidden="true" />
+              Emergency 1930
+            </span>
+            <span className="portal-hero-emergency-text">
+              Under attack or lost funds? Call <strong>1930</strong> (24/7) or generate an{' '}
+              <Link to="/resources#emergency-incident-docket" className="portal-hero-emergency-link">
+                Offline Evidence Docket &rarr;
+              </Link>
+            </span>
           </div>
 
           <div className="portal-hero-framework-line hero-enter-footnote" aria-hidden="true">
@@ -183,12 +196,12 @@ export default function HomeHero({ user }) {
           <div className="hero-flow-card">
             <div className="flow-card-header">
               <div className="flow-card-header-top">
-                <span className="flow-card-eyebrow">Curriculum Pipeline</span>
-                <span className="flow-card-stage-pill">4-Stage Methodology</span>
+                <span className="flow-card-eyebrow">How You Learn</span>
+                <span className="flow-card-stage-pill">4 Simple Steps</span>
               </div>
-              <h2 className="flow-card-title">From Legal Principle to Safer Action</h2>
+              <h2 className="flow-card-title">From Law to Safe Decisions</h2>
               <p className="flow-card-subtitle">
-                How statutory provisions guide practical decision-making during unexpected digital situations
+                How understanding cyber laws helps you make calm, smart choices online
               </p>
             </div>
 

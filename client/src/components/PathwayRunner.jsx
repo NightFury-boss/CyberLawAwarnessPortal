@@ -51,6 +51,18 @@ function PathwayRunner({ pathway, sourceSessionId, initialProgress = null, isRei
   const [checkpointResult, setCheckpointResult] = useState(null);
   const [errorMsg, setErrorMsg] = useState('');
 
+  // Step 4 Completed Checkpoint Review states
+  const [isReviewOpen, setIsReviewOpen] = useState(false);
+  const [reviewData, setReviewData] = useState(null);
+  const [loadingReview, setLoadingReview] = useState(false);
+  const [reviewError, setReviewError] = useState('');
+
+  // Tab navigation refs for keyboard arrow movement
+  const tab1Ref = useRef(null);
+  const tab2Ref = useRef(null);
+  const tab3Ref = useRef(null);
+  const tabRefs = [tab1Ref, tab2Ref, tab3Ref];
+
   // Fetch Case Study details on mount
   useEffect(() => {
     let isMounted = true;
@@ -188,6 +200,68 @@ function PathwayRunner({ pathway, sourceSessionId, initialProgress = null, isRei
     setErrorMsg('');
   };
 
+  // Toggle expandable completed checkpoint review in Step 4
+  const handleToggleReview = () => {
+    const nextOpen = !isReviewOpen;
+    setIsReviewOpen(nextOpen);
+    if (nextOpen && !reviewData) {
+      setLoadingReview(true);
+      setReviewError('');
+      api.getPathwayCheckpointReview(pathway.pathwayId, sourceSessionId)
+        .then(res => {
+          setReviewData(res);
+          setLoadingReview(false);
+        })
+        .catch(err => {
+          if (!checkpointResult?.explanations) {
+            setReviewError(err.message || 'Unable to retrieve completed checkpoint review.');
+          }
+          setLoadingReview(false);
+        });
+    }
+  };
+
+  // Accessible roving tabIndex Left/Right arrow key navigation
+  const handleTabKeyDown = (e, stepIndex) => {
+    if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(e.key)) return;
+
+    e.preventDefault();
+
+    const enabledSteps = [1];
+    if (stepsCompleted.caseStudy) enabledSteps.push(2);
+    if (stepsCompleted.prevention) enabledSteps.push(3);
+
+    let targetStep = stepIndex;
+
+    if (e.key === 'ArrowRight') {
+      const currentPos = enabledSteps.indexOf(stepIndex);
+      if (currentPos !== -1 && currentPos < enabledSteps.length - 1) {
+        targetStep = enabledSteps[currentPos + 1];
+      } else if (currentPos === enabledSteps.length - 1) {
+        targetStep = enabledSteps[0]; // Wrap to first enabled tab
+      }
+    } else if (e.key === 'ArrowLeft') {
+      const currentPos = enabledSteps.indexOf(stepIndex);
+      if (currentPos > 0) {
+        targetStep = enabledSteps[currentPos - 1];
+      } else if (currentPos === 0) {
+        targetStep = enabledSteps[enabledSteps.length - 1]; // Wrap to last enabled tab
+      }
+    } else if (e.key === 'Home') {
+      targetStep = enabledSteps[0];
+    } else if (e.key === 'End') {
+      targetStep = enabledSteps[enabledSteps.length - 1];
+    }
+
+    if (targetStep && targetStep !== stepIndex) {
+      setCurrentStep(targetStep);
+      const targetRef = tabRefs[targetStep - 1];
+      if (targetRef?.current) {
+        targetRef.current.focus();
+      }
+    }
+  };
+
   // Focus management references
   const modalRef = useRef(null);
   const triggerElementRef = useRef(null);
@@ -276,7 +350,7 @@ function PathwayRunner({ pathway, sourceSessionId, initialProgress = null, isRei
         left: 0,
         right: 0,
         bottom: 0,
-        backgroundColor: 'rgba(15, 23, 42, 0.75)',
+        backgroundColor: 'rgba(15, 37, 55, 0.6)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -292,7 +366,7 @@ function PathwayRunner({ pathway, sourceSessionId, initialProgress = null, isRei
         aria-labelledby="pathway-runner-title"
         tabIndex="-1"
         style={{
-          backgroundColor: 'var(--bg-card, #ffffff)',
+          backgroundColor: 'var(--bg-white, #ffffff)',
           color: 'var(--text-primary)',
           width: '100%',
           maxWidth: '780px',
@@ -311,14 +385,14 @@ function PathwayRunner({ pathway, sourceSessionId, initialProgress = null, isRei
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
-          backgroundColor: 'var(--bg-secondary, #f8fafc)'
+          backgroundColor: 'var(--bg-secondary, #f4f3ee)'
         }}>
           <div>
-            <span style={{ fontSize: '0.75rem', fontWeight: '800', color: isReinforcementMode ? '#b45309' : 'var(--accent-navy)', textTransform: 'uppercase', letterSpacing: '1px' }}>
-              {isReinforcementMode ? 'Targeted Habit Reinforcement' : 'Micro-Learning Pathway'} &bull; {pathway.difficulty || 'Essential'}
+            <span style={{ fontSize: '0.75rem', fontWeight: '800', color: isReinforcementMode ? '#b45309' : 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '1px' }}>
+              {isReinforcementMode ? 'Habit Practice' : 'Lesson'} &bull; {pathway.difficulty || 'Essential'}
             </span>
-            <h3 id="pathway-runner-title" style={{ margin: '4px 0 0 0', fontSize: '1.25rem', color: 'var(--accent-navy)', fontWeight: '700' }}>
-              {isReinforcementMode ? `Reinforce: ${pathway.habitTitle}` : pathway.habitTitle}
+            <h3 id="pathway-runner-title" style={{ margin: '4px 0 0 0', fontSize: '1.25rem', color: 'var(--text-primary)', fontWeight: '700' }}>
+              {isReinforcementMode ? `Practice: ${pathway.habitTitle}` : pathway.habitTitle}
             </h3>
           </div>
           <button
@@ -326,83 +400,105 @@ function PathwayRunner({ pathway, sourceSessionId, initialProgress = null, isRei
             onClick={onClose}
             className="btn btn-secondary"
             style={{ padding: '6px 12px', fontSize: '0.85rem' }}
-            aria-label="Close learning runner"
+            aria-label="Close lesson"
           >
             ✕ Close
           </button>
         </div>
 
-        {/* Step Indicator Bar */}
-        <nav
-          aria-label="Learning pathway stages"
+        {/* Step Indicator Bar with Accessible Tab Semantics */}
+        <div
+          role="tablist"
+          aria-label="Lesson steps"
+          aria-orientation="horizontal"
           style={{
             display: 'flex',
             borderBottom: '1px solid var(--color-border)',
-            backgroundColor: '#fff',
+            backgroundColor: 'var(--bg-white, #ffffff)',
             flexWrap: 'wrap'
           }}
         >
           <button
+            ref={tab1Ref}
+            id="pathway-stage-tab-1"
+            role="tab"
+            aria-selected={currentStep === 1}
+            aria-controls="pathway-stage-panel-1"
+            tabIndex={currentStep === 1 || currentStep === 4 ? 0 : -1}
             onClick={() => setCurrentStep(1)}
-            aria-current={currentStep === 1 ? 'step' : undefined}
-            aria-label="Step 1: Incident Learning"
+            onKeyDown={(e) => handleTabKeyDown(e, 1)}
+            aria-label="Step 1: Real Story"
             style={{
               flex: '1 1 120px',
               padding: '12px 8px',
               border: 'none',
-              background: currentStep === 1 ? 'var(--accent-navy-light, #f0f4f8)' : 'transparent',
-              borderBottom: currentStep === 1 ? '3px solid var(--accent-navy)' : '3px solid transparent',
+              background: currentStep === 1 ? 'var(--color-primary-light, #f0f4f8)' : 'transparent',
+              borderBottom: currentStep === 1 ? '3px solid var(--color-primary)' : '3px solid transparent',
               fontWeight: currentStep === 1 ? '700' : '500',
-              color: currentStep === 1 ? 'var(--accent-navy)' : 'var(--text-secondary)',
+              color: currentStep === 1 ? 'var(--color-primary)' : 'var(--text-secondary)',
               fontSize: '0.85rem',
               cursor: 'pointer'
             }}
           >
-            1. Incident {stepsCompleted.caseStudy ? '✓' : ''}
+            1. Real Story {stepsCompleted.caseStudy ? '✓' : ''}
           </button>
 
           <button
-            onClick={() => stepsCompleted.caseStudy && setCurrentStep(2)}
+            ref={tab2Ref}
+            id="pathway-stage-tab-2"
+            role="tab"
+            aria-selected={currentStep === 2}
+            aria-controls="pathway-stage-panel-2"
+            tabIndex={currentStep === 2 ? 0 : -1}
             disabled={!stepsCompleted.caseStudy}
-            aria-current={currentStep === 2 ? 'step' : undefined}
-            aria-label="Step 2: Practical Defense"
+            aria-disabled={!stepsCompleted.caseStudy}
+            onClick={() => stepsCompleted.caseStudy && setCurrentStep(2)}
+            onKeyDown={(e) => handleTabKeyDown(e, 2)}
+            aria-label="Step 2: Safety Rule"
             style={{
               flex: '1 1 120px',
               padding: '12px 8px',
               border: 'none',
-              background: currentStep === 2 ? 'var(--accent-navy-light, #f0f4f8)' : 'transparent',
-              borderBottom: currentStep === 2 ? '3px solid var(--accent-navy)' : '3px solid transparent',
+              background: currentStep === 2 ? 'var(--color-primary-light, #f0f4f8)' : 'transparent',
+              borderBottom: currentStep === 2 ? '3px solid var(--color-primary)' : '3px solid transparent',
               fontWeight: currentStep === 2 ? '700' : '500',
-              color: currentStep === 2 ? 'var(--accent-navy)' : 'var(--text-secondary)',
+              color: currentStep === 2 ? 'var(--color-primary)' : 'var(--text-secondary)',
               fontSize: '0.85rem',
               cursor: stepsCompleted.caseStudy ? 'pointer' : 'not-allowed',
               opacity: stepsCompleted.caseStudy ? 1 : 0.5
             }}
           >
-            2. Defense {stepsCompleted.prevention ? '✓' : ''}
+            2. Safety Rule {stepsCompleted.prevention ? '✓' : ''}
           </button>
 
           <button
-            onClick={() => stepsCompleted.prevention && setCurrentStep(3)}
+            ref={tab3Ref}
+            id="pathway-stage-tab-3"
+            role="tab"
+            aria-selected={currentStep === 3}
+            aria-controls="pathway-stage-panel-3"
+            tabIndex={currentStep === 3 ? 0 : -1}
             disabled={!stepsCompleted.prevention}
-            aria-current={currentStep === 3 ? 'step' : undefined}
-            aria-label="Step 3: Learning Checkpoint"
+            aria-disabled={!stepsCompleted.prevention}
+            onClick={() => stepsCompleted.prevention && setCurrentStep(3)}
+            onKeyDown={(e) => handleTabKeyDown(e, 3)}
+            aria-label="Step 3: Quick Quiz"
             style={{
               flex: '1 1 120px',
               padding: '12px 8px',
               border: 'none',
-              background: currentStep === 3 ? 'var(--accent-navy-light, #f0f4f8)' : 'transparent',
-              borderBottom: currentStep === 3 ? '3px solid var(--accent-navy)' : '3px solid transparent',
+              background: currentStep === 3 ? 'var(--color-primary-light, #f0f4f8)' : 'transparent',
+              borderBottom: currentStep === 3 ? '3px solid var(--color-primary)' : '3px solid transparent',
               fontWeight: currentStep === 3 ? '700' : '500',
-              color: currentStep === 3 ? 'var(--accent-navy)' : 'var(--text-secondary)',
+              color: currentStep === 3 ? 'var(--color-primary)' : 'var(--text-secondary)',
               fontSize: '0.85rem',
               cursor: stepsCompleted.prevention ? 'pointer' : 'not-allowed',
               opacity: stepsCompleted.prevention ? 1 : 0.5
             }}
           >
-            3. Checkpoint {stepsCompleted.checkpointQuiz ? '✓' : ''}
+            3. Quick Quiz {stepsCompleted.checkpointQuiz ? '✓' : ''}
           </button>
-        </nav>
+        </div>
 
         {/* Runner Body */}
         <div style={{ padding: 'var(--space-lg)', flex: 1, overflowY: 'auto' }}>
@@ -427,20 +523,25 @@ function PathwayRunner({ pathway, sourceSessionId, initialProgress = null, isRei
           {/* STEP 1: INCIDENT LEARNING (CASE STUDY)                                    */}
           {/* ========================================================================= */}
           {currentStep === 1 && (
-            <div>
-              <span style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.5px', color: 'var(--accent-navy)', fontWeight: '700' }}>
-                Step 1 of 3: Incident Context & Narrative
+            <div
+              role="tabpanel"
+              id="pathway-stage-panel-1"
+              aria-labelledby="pathway-stage-tab-1"
+              tabIndex="0"
+            >
+              <span style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.5px', color: 'var(--text-secondary)', fontWeight: '700' }}>
+                Step 1 of 3: Real Story & Situation
               </span>
               <h4 style={{ fontSize: '1.2rem', margin: '4px 0 12px 0', color: 'var(--text-primary)' }}>
-                {caseStudyData ? caseStudyData.title : (pathway.caseStudyTitle || 'Incident Case Study')}
+                {caseStudyData ? caseStudyData.title : (pathway.caseStudyTitle || 'Real-Life Story')}
               </h4>
 
               {loadingCase ? (
-                <p style={{ color: 'var(--text-muted)' }}>Loading incident breakdown...</p>
+                <p style={{ color: 'var(--text-muted)' }}>Loading story...</p>
               ) : (
                 <div>
                   <div style={{
-                    backgroundColor: 'var(--bg-secondary, #f8fafc)',
+                    backgroundColor: 'var(--bg-secondary, #f4f3ee)',
                     padding: 'var(--space-md)',
                     borderRadius: '6px',
                     border: '1px solid var(--color-border)',
@@ -448,15 +549,15 @@ function PathwayRunner({ pathway, sourceSessionId, initialProgress = null, isRei
                     fontSize: '0.9rem',
                     lineHeight: '1.6'
                   }}>
-                    <strong style={{ display: 'block', color: 'var(--accent-navy)', marginBottom: '4px' }}>
-                      Incident Summary:
+                    <strong style={{ display: 'block', color: 'var(--text-primary)', marginBottom: '4px' }}>
+                      Story Summary:
                     </strong>
                     {caseStudyData?.shortDescription || pathway.pedagogicalFocus}
                   </div>
 
                   {caseStudyData?.attackVector && (
                     <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: 'var(--space-md)' }}>
-                      <strong>Attack Vector:</strong> {caseStudyData.attackVector} &bull; <strong>Difficulty:</strong> {caseStudyData.difficulty}
+                      <strong>How the scam worked:</strong> {caseStudyData.attackVector} &bull; <strong>Difficulty:</strong> {caseStudyData.difficulty}
                     </div>
                   )}
 
@@ -465,12 +566,12 @@ function PathwayRunner({ pathway, sourceSessionId, initialProgress = null, isRei
                     <div style={{
                       marginTop: 'var(--space-md)',
                       padding: 'var(--space-md)',
-                      border: '1px solid var(--accent-navy-light)',
+                      border: '1px solid var(--color-border)',
                       borderRadius: '6px',
-                      backgroundColor: '#fcfdfe'
+                      backgroundColor: 'var(--bg-white, #ffffff)'
                     }}>
-                      <h5 style={{ margin: '0 0 10px 0', fontSize: '1rem', color: 'var(--accent-navy)' }}>
-                        Learning Decision Point:
+                      <h5 style={{ margin: '0 0 10px 0', fontSize: '1rem', color: 'var(--text-primary)' }}>
+                        What would you do?
                       </h5>
                       <p style={{ fontSize: '0.9rem', marginBottom: '12px' }}>
                         {caseStudyData.decisionPoints[0].questionText}
@@ -478,7 +579,7 @@ function PathwayRunner({ pathway, sourceSessionId, initialProgress = null, isRei
 
                       <div
                         role="radiogroup"
-                        aria-label="Incident learning choices"
+                        aria-label="Choose your action"
                         style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}
                       >
                         {caseStudyData.decisionPoints[0].options?.map((opt, oIdx) => (
@@ -492,8 +593,8 @@ function PathwayRunner({ pathway, sourceSessionId, initialProgress = null, isRei
                               textAlign: 'left',
                               padding: '10px 14px',
                               borderRadius: '6px',
-                              border: selectedDecisionIdx === oIdx ? '2px solid var(--accent-navy)' : '1px solid var(--color-border)',
-                              backgroundColor: selectedDecisionIdx === oIdx ? 'var(--accent-navy-light)' : '#fff',
+                              border: selectedDecisionIdx === oIdx ? '2px solid var(--color-primary)' : '1px solid var(--color-border)',
+                              backgroundColor: selectedDecisionIdx === oIdx ? 'var(--color-primary-light)' : 'var(--bg-white, #ffffff)',
                               color: 'var(--text-primary)',
                               fontSize: '0.88rem',
                               cursor: stepsCompleted.caseStudy ? 'default' : 'pointer'
@@ -514,7 +615,7 @@ function PathwayRunner({ pathway, sourceSessionId, initialProgress = null, isRei
                           fontSize: '0.85rem',
                           borderRadius: '4px'
                         }}>
-                          <strong>Analysis:</strong> {decisionFeedback}
+                          <strong>Feedback:</strong> {decisionFeedback}
                         </div>
                       )}
 
@@ -526,7 +627,7 @@ function PathwayRunner({ pathway, sourceSessionId, initialProgress = null, isRei
                             className="btn btn-primary"
                             style={{ padding: '8px 16px', fontSize: '0.9rem' }}
                           >
-                            {submittingStep1 ? 'Recording...' : 'Submit Learning Decision'}
+                            {submittingStep1 ? 'Saving choice...' : 'Submit Choice'}
                           </button>
                           {isReinforcementMode && (
                             <button
@@ -534,7 +635,7 @@ function PathwayRunner({ pathway, sourceSessionId, initialProgress = null, isRei
                               className="btn btn-secondary"
                               style={{ padding: '8px 16px', fontSize: '0.9rem' }}
                             >
-                              Review Defensive Rule &rarr;
+                              Review Safety Rule &rarr;
                             </button>
                           )}
                         </div>
@@ -545,7 +646,7 @@ function PathwayRunner({ pathway, sourceSessionId, initialProgress = null, isRei
                             className="btn btn-primary"
                             style={{ padding: '8px 18px', fontSize: '0.9rem' }}
                           >
-                            Continue to Step 2: Practical Defense &rarr;
+                            Continue to Step 2: Safety Rule &rarr;
                           </button>
                         </div>
                       )}
@@ -563,7 +664,7 @@ function PathwayRunner({ pathway, sourceSessionId, initialProgress = null, isRei
                         }}
                         className="btn btn-primary"
                       >
-                        Continue to Step 2: Practical Defense &rarr;
+                        Continue to Step 2: Safety Rule &rarr;
                       </button>
                     </div>
                   )}
@@ -576,26 +677,32 @@ function PathwayRunner({ pathway, sourceSessionId, initialProgress = null, isRei
           {/* STEP 2: PRACTICAL DEFENSE (RULE & ACTION CHECKLIST)                        */}
           {/* ========================================================================= */}
           {currentStep === 2 && (
-            <div>
-              <span style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.5px', color: 'var(--accent-navy)', fontWeight: '700' }}>
-                Step 2 of 3: Practical Defense & Habit Rule
+            <div
+              role="tabpanel"
+              id="pathway-stage-panel-2"
+              aria-labelledby="pathway-stage-tab-2"
+              tabIndex="0"
+            >
+              <span style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.5px', color: 'var(--text-secondary)', fontWeight: '700' }}>
+                Step 2 of 3: Safety Rule & Checklist
               </span>
               <h4 style={{ fontSize: '1.2rem', margin: '4px 0 16px 0', color: 'var(--text-primary)' }}>
-                Core Defensive Principle
+                Your Key Safety Rule
               </h4>
 
-              {/* Authoritative Practical Rule Callout */}
+              {/* Practical Rule Callout */}
               <div style={{
-                backgroundColor: 'var(--accent-navy-light, #f0f4f8)',
-                borderLeft: '4px solid var(--accent-navy)',
+                backgroundColor: 'var(--bg-white)',
+                border: '1px solid var(--color-border)',
+                borderLeft: '4px solid var(--color-primary)',
                 padding: 'var(--space-md)',
                 borderRadius: '4px',
                 marginBottom: 'var(--space-lg)'
               }}>
-                <span style={{ fontSize: '0.75rem', fontWeight: '800', textTransform: 'uppercase', color: 'var(--accent-navy)', letterSpacing: '0.5px' }}>
-                  Authoritative Habit Rule
+                <span style={{ fontSize: '0.75rem', fontWeight: '800', textTransform: 'uppercase', color: 'var(--color-primary)', letterSpacing: '0.5px' }}>
+                  Safety Rule to Remember
                 </span>
-                <p style={{ margin: '6px 0 0 0', fontSize: '1.05rem', fontWeight: '700', color: 'var(--accent-navy)', lineHeight: '1.4' }}>
+                <p style={{ margin: '6px 0 0 0', fontSize: '1.05rem', fontWeight: '700', color: 'var(--text-primary)', lineHeight: '1.4' }}>
                   "{pathway.coreRule}"
                 </p>
               </div>
@@ -603,13 +710,13 @@ function PathwayRunner({ pathway, sourceSessionId, initialProgress = null, isRei
               {/* Practical Checklist */}
               <div style={{ marginBottom: 'var(--space-lg)' }}>
                 <h5 style={{ fontSize: '0.95rem', fontWeight: '700', color: 'var(--text-primary)', marginBottom: '8px' }}>
-                  Everyday Digital Defense Checklist:
+                  Simple Steps to Protect Yourself:
                 </h5>
                 <ul style={{ margin: 0, paddingLeft: '20px', fontSize: '0.88rem', lineHeight: '1.7', color: 'var(--text-secondary)' }}>
-                  <li>Never approve incoming payment notifications or scan unfamiliar QR codes to claim funds.</li>
-                  <li>Verify caller or sender claims through a secondary, independent channel before acting.</li>
-                  <li>Inspect root domain spelling in browser bars rather than relying on logos or headers.</li>
-                  <li>Do not treat automated bank balance confirmations as urgent crises without checking passbooks.</li>
+                  <li>Never approve incoming payment requests or scan unfamiliar QR codes to receive money.</li>
+                  <li>Verify any caller or sender claims through a trusted separate channel before acting.</li>
+                  <li>Inspect website domain spellings carefully in your browser bar rather than trusting logos.</li>
+                  <li>Do not let panic make your choices; check your actual bank account or app directly.</li>
                 </ul>
               </div>
 
@@ -617,17 +724,17 @@ function PathwayRunner({ pathway, sourceSessionId, initialProgress = null, isRei
               {pathway.legalReferences && pathway.legalReferences.length > 0 && (
                 <div style={{
                   padding: 'var(--space-md)',
-                  backgroundColor: 'var(--bg-secondary, #f8fafc)',
+                  backgroundColor: 'var(--bg-secondary, #f4f3ee)',
                   border: '1px solid var(--color-border)',
                   borderRadius: '6px',
                   marginBottom: 'var(--space-lg)'
                 }}>
-                  <div style={{ fontSize: '0.75rem', fontWeight: '700', textTransform: 'uppercase', color: 'var(--accent-navy)', marginBottom: '4px' }}>
-                    Relevant Statutory Framework (India)
+                  <div style={{ fontSize: '0.75rem', fontWeight: '700', textTransform: 'uppercase', color: 'var(--text-secondary)', marginBottom: '4px' }}>
+                    What Indian Cyber Law Says
                   </div>
                   {pathway.legalReferences.map((ref, idx) => (
                     <div key={idx} style={{ marginTop: '6px', fontSize: '0.82rem', lineHeight: '1.5' }}>
-                      <strong>{ref.act} &bull; {ref.section}</strong> ({ref.status === 'ENACTED_FUTURE_COMMENCEMENT' ? 'Enacted — Future Commencement' : 'In Force'})
+                      <strong>{ref.act} &bull; {ref.section}</strong> ({ref.status === 'ENACTED_FUTURE_COMMENCEMENT' ? 'Passed by Parliament — Rules Pending' : 'Active Law'})
                       <p style={{ margin: '2px 0 0 0', color: 'var(--text-secondary)' }}>
                         {ref.educationalContext || ref.attribution}
                       </p>
@@ -650,7 +757,7 @@ function PathwayRunner({ pathway, sourceSessionId, initialProgress = null, isRei
                   className="btn btn-secondary"
                   style={{ padding: '8px 14px', fontSize: '0.85rem' }}
                 >
-                  &larr; Back to Step 1
+                  &larr; Back to Step 1: Real Story
                 </button>
 
                 <button
@@ -659,7 +766,7 @@ function PathwayRunner({ pathway, sourceSessionId, initialProgress = null, isRei
                   className="btn btn-primary"
                   style={{ padding: '8px 20px', fontSize: '0.9rem' }}
                 >
-                  {submittingStep2 ? 'Saving...' : 'Acknowledge Rule & Proceed to Checkpoint \u2192'}
+                  {submittingStep2 ? 'Saving...' : 'I Understand This Rule \u2022 Take Quick Quiz \u2192'}
                 </button>
               </div>
             </div>
@@ -669,19 +776,24 @@ function PathwayRunner({ pathway, sourceSessionId, initialProgress = null, isRei
           {/* STEP 3: LEARNING CHECKPOINT (SERVER-AUTHORITATIVE MICRO-QUIZ)              */}
           {/* ========================================================================= */}
           {currentStep === 3 && (
-            <div>
-              <span style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.5px', color: 'var(--accent-navy)', fontWeight: '700' }}>
-                Step 3 of 3: Learning Checkpoint
+            <div
+              role="tabpanel"
+              id="pathway-stage-panel-3"
+              aria-labelledby="pathway-stage-tab-3"
+              tabIndex="0"
+            >
+              <span style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.5px', color: 'var(--text-secondary)', fontWeight: '700' }}>
+                Step 3 of 3: Quick Quiz
               </span>
               <h4 style={{ fontSize: '1.2rem', margin: '4px 0 6px 0', color: 'var(--text-primary)' }}>
-                Targeted Knowledge Checkpoint
+                Check Your Understanding
               </h4>
               <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: '0 0 16px 0' }}>
-                Answer the following practice questions to demonstrate successful performance on the targeted learning checkpoint. Passing threshold: {passingScore}% (Server-Enforced).
+                Answer these quick questions to check what you’ve learned about this safety habit and the law. Passing score: {passingScore}%.
               </p>
 
               {loadingCheckpoint ? (
-                <p style={{ color: 'var(--text-muted)' }} aria-live="polite">Loading sanitized checkpoint questions...</p>
+                <p style={{ color: 'var(--text-muted)' }} aria-live="polite">Loading quiz questions...</p>
               ) : checkpointQuestions.length === 0 && errorMsg ? (
                 <div style={{ textAlign: 'center', padding: 'var(--space-md)' }}>
                   <button
@@ -702,7 +814,7 @@ function PathwayRunner({ pathway, sourceSessionId, initialProgress = null, isRei
                     className="btn btn-secondary"
                     style={{ padding: '8px 18px', fontSize: '0.85rem' }}
                   >
-                    Retry Loading Checkpoint
+                    Retry Loading Quiz
                   </button>
                 </div>
               ) : checkpointResult?.passed ? (
@@ -716,17 +828,17 @@ function PathwayRunner({ pathway, sourceSessionId, initialProgress = null, isRei
                 }}>
                   <div style={{ fontSize: '2.5rem', marginBottom: '8px' }}>✓</div>
                   <h4 style={{ color: '#065f46', fontSize: '1.3rem', margin: '0 0 6px 0' }}>
-                    {isReinforcementMode ? 'Targeted Habit Reinforcement Completed!' : 'Learning Checkpoint Passed!'}
+                    {isReinforcementMode ? 'Practice Completed!' : 'Quick Quiz Passed!'}
                   </h4>
                   <p style={{ color: '#047857', fontSize: '0.9rem', margin: '0 0 16px 0' }}>
-                    Score: {checkpointResult.score}% &bull; Passing Threshold: {checkpointResult.passingScore}%
+                    Score: {checkpointResult.score}% &bull; Passing Score: {checkpointResult.passingScore}%
                   </p>
                   <p style={{ fontSize: '0.85rem', color: '#065f46', maxWidth: '500px', margin: '0 auto 12px auto', lineHeight: '1.5' }}>
-                    You have demonstrated successful performance on the targeted learning checkpoint for <strong>{pathway.habitTitle}</strong>. {isReinforcementMode ? 'Targeted habit reinforcement is now recorded for this assessment session.' : 'This remediation pathway is now marked completed for your assessment session.'}
+                    Great job! You passed the quick quiz for <strong>{pathway.habitTitle}</strong>. {isReinforcementMode ? 'Your extra practice has been recorded.' : 'This lesson is now marked completed.'}
                   </p>
                   {isReinforcementMode && (
                     <p style={{ fontSize: '0.8rem', color: '#047857', maxWidth: '480px', margin: '0 auto 18px auto', fontStyle: 'italic', lineHeight: '1.4' }}>
-                      Targeted reinforcement strengthens deliberate defensive habits against deception tactics. Continued vigilance across everyday routines remains essential.
+                      Practicing safety habits after a break helps them stick. Staying alert in everyday situations is always important.
                     </p>
                   )}
 
@@ -752,10 +864,10 @@ function PathwayRunner({ pathway, sourceSessionId, initialProgress = null, isRei
                       marginBottom: 'var(--space-md)'
                     }}>
                       <strong style={{ color: '#92400e', fontSize: '0.9rem', display: 'block' }}>
-                        Checkpoint Incomplete ({checkpointResult.score}% &mdash; Required: {checkpointResult.passingScore}%)
+                        Score: {checkpointResult.score}% &mdash; Needed to pass: {checkpointResult.passingScore}%
                       </strong>
                       <span style={{ fontSize: '0.82rem', color: '#b45309' }}>
-                        Review the feedback below and try again to reinforce this defensive habit.
+                        Review the feedback below and try again.
                       </span>
                     </div>
                   )}
@@ -769,9 +881,9 @@ function PathwayRunner({ pathway, sourceSessionId, initialProgress = null, isRei
                           padding: 'var(--space-md)',
                           border: '1px solid var(--color-border)',
                           borderRadius: '6px',
-                          backgroundColor: '#fafbfc'
+                          backgroundColor: 'var(--bg-white, #ffffff)'
                         }}>
-                          <div style={{ fontSize: '0.8rem', fontWeight: '700', color: 'var(--accent-navy)', marginBottom: '4px' }}>
+                          <div style={{ fontSize: '0.8rem', fontWeight: '700', color: 'var(--text-primary)', marginBottom: '4px' }}>
                             Question {idx + 1} of {checkpointQuestions.length}
                           </div>
                           <p style={{ fontSize: '0.92rem', fontWeight: '600', color: 'var(--text-primary)', margin: '0 0 10px 0' }}>
@@ -797,8 +909,8 @@ function PathwayRunner({ pathway, sourceSessionId, initialProgress = null, isRei
                                     textAlign: 'left',
                                     padding: '8px 12px',
                                     borderRadius: '5px',
-                                    border: isSelected ? '2px solid var(--accent-navy)' : '1px solid var(--color-border)',
-                                    backgroundColor: isSelected ? 'var(--accent-navy-light)' : '#fff',
+                                    border: isSelected ? '2px solid var(--color-primary)' : '1px solid var(--color-border)',
+                                    backgroundColor: isSelected ? 'var(--color-primary-light)' : 'var(--bg-white, #ffffff)',
                                     fontSize: '0.85rem',
                                     cursor: 'pointer'
                                   }}
@@ -833,7 +945,7 @@ function PathwayRunner({ pathway, sourceSessionId, initialProgress = null, isRei
                       className="btn btn-secondary"
                       style={{ padding: '8px 14px', fontSize: '0.85rem' }}
                     >
-                      &larr; Back to Step 2
+                      &larr; Back to Step 2: Safety Rule
                     </button>
 
                     {checkpointResult && !checkpointResult.passed ? (
@@ -851,7 +963,7 @@ function PathwayRunner({ pathway, sourceSessionId, initialProgress = null, isRei
                         className="btn btn-primary"
                         style={{ padding: '8px 20px', fontSize: '0.9rem' }}
                       >
-                        {submittingCheckpoint ? 'Evaluating...' : 'Submit Answers for Verification'}
+                        {submittingCheckpoint ? 'Checking answers...' : 'Submit Quiz Answers'}
                       </button>
                     )}
                   </div>
@@ -861,35 +973,236 @@ function PathwayRunner({ pathway, sourceSessionId, initialProgress = null, isRei
           )}
 
           {/* ========================================================================= */}
-          {/* STEP 4: COMPLETED SUMMARY                                                 */}
+          {/* STEP 4: COMPLETED SUMMARY & ACCESSIBLE CHECKPOINT REVIEW                  */}
           {/* ========================================================================= */}
           {currentStep === 4 && (
-            <div style={{ textAlign: 'center', padding: 'var(--space-md) 0' }}>
+            <div
+              role="tabpanel"
+              id="pathway-stage-panel-4"
+              aria-labelledby="pathway-stage-tab-3"
+              tabIndex="0"
+              style={{ textAlign: 'center', padding: 'var(--space-md) 0' }}
+            >
               <div style={{ fontSize: '2.5rem', marginBottom: '8px' }}>✓</div>
-              <h4 style={{ color: 'var(--accent-navy)', fontSize: '1.3rem', margin: '0 0 6px 0' }}>
-                {isReinforcementMode ? 'Habit Reinforcement Already Completed' : 'Pathway Already Completed'}
+              <h4 style={{ color: 'var(--text-primary)', fontSize: '1.3rem', margin: '0 0 6px 0' }}>
+                {isReinforcementMode ? 'Practice Already Completed' : 'Lesson Already Completed'}
               </h4>
-              <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginBottom: 'var(--space-md)' }}>
+              <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginBottom: 'var(--space-sm)' }}>
                 {isReinforcementMode
-                  ? `You completed targeted habit reinforcement for this pathway on ${completedAt ? new Date(completedAt).toLocaleDateString() : 'this session'}.`
-                  : `You completed this habit pathway on ${completedAt ? new Date(completedAt).toLocaleDateString() : 'earlier session'}.`}
+                  ? `You completed practice for this lesson on ${completedAt ? new Date(completedAt).toLocaleDateString() : 'this session'}.`
+                  : `You completed this lesson on ${completedAt ? new Date(completedAt).toLocaleDateString() : 'earlier session'}.`}
               </p>
-              <div style={{ display: 'flex', justifyContent: 'center', gap: '12px' }}>
+              {(initialProgress?.checkpointScore !== null && initialProgress?.checkpointScore !== undefined) && (
+                <p style={{ color: '#065f46', fontWeight: '700', fontSize: '0.9rem', marginBottom: 'var(--space-sm)' }}>
+                  Quiz Score: {initialProgress.checkpointScore}%
+                </p>
+              )}
+
+              <div style={{
+                maxWidth: '560px',
+                margin: '0 auto var(--space-md) auto',
+                padding: '8px 14px',
+                backgroundColor: 'var(--bg-white, #ffffff)',
+                border: '1px solid var(--color-border)',
+                borderLeft: '3px solid #64748b',
+                textAlign: 'left',
+                fontSize: '0.8rem',
+                color: 'var(--text-secondary)',
+                lineHeight: '1.45',
+                borderRadius: '3px'
+              }}>
+                <strong>Note on your learning:</strong> Completing lessons and quizzes shows you understand these safety rules and Indian laws. How your habits change in practice is measured separately in your checks.
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'center', gap: '12px', flexWrap: 'wrap', marginBottom: 'var(--space-lg)' }}>
                 <button
+                  type="button"
+                  onClick={handleToggleReview}
+                  aria-expanded={isReviewOpen}
+                  aria-controls="completed-checkpoint-review-panel"
+                  className="btn btn-secondary"
+                  style={{ padding: '8px 18px', fontSize: '0.85rem' }}
+                >
+                  {isReviewOpen ? 'Hide Quiz Review ▲' : 'Review Quiz Questions & Law Explanations ▼'}
+                </button>
+                <button
+                  type="button"
                   onClick={() => setCurrentStep(1)}
                   className="btn btn-secondary"
                   style={{ padding: '8px 18px', fontSize: '0.85rem' }}
                 >
-                  Review Materials Again
+                  Review Lesson Again
                 </button>
                 <button
+                  type="button"
                   onClick={onClose}
                   className="btn btn-primary"
-                  style={{ padding: '8px 18px', fontSize: '0.85rem' }}
+                  style={{ padding: '8px 24px', fontSize: '0.85rem' }}
                 >
                   Close
                 </button>
               </div>
+
+              {/* Expandable Completed Checkpoint Review Panel */}
+              {isReviewOpen && (
+                <div
+                  id="completed-checkpoint-review-panel"
+                  role="region"
+                  aria-label="Quiz Questions and Law Explanations"
+                  style={{
+                    textAlign: 'left',
+                    marginTop: 'var(--space-md)',
+                    padding: 'var(--space-md)',
+                    border: '1px solid var(--color-border)',
+                    borderRadius: '6px',
+                    backgroundColor: 'var(--bg-secondary, #fafaf9)'
+                  }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-md)', borderBottom: '1px solid var(--color-border)', paddingBottom: '8px' }}>
+                    <h5 style={{ margin: 0, fontSize: '1rem', color: 'var(--text-primary)' }}>
+                      Quiz Questions & Law Explanations
+                    </h5>
+                    <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                      Answers & review
+                    </span>
+                  </div>
+
+                  {loadingReview ? (
+                    <p style={{ color: 'var(--text-muted)' }} aria-live="polite">Loading quiz review...</p>
+                  ) : reviewError ? (
+                    <div
+                      role="alert"
+                      style={{
+                        padding: '10px 14px',
+                        backgroundColor: '#fef2f2',
+                        borderLeft: '4px solid #ef4444',
+                        color: '#991b1b',
+                        fontSize: '0.85rem',
+                        borderRadius: '4px'
+                      }}
+                    >
+                      {reviewError}
+                    </div>
+                  ) : (
+                    <div>
+                      {/* Notice for historical records without granular answer storage */}
+                      {reviewData && !reviewData.hasStoredAnswers && (
+                        <div style={{
+                          padding: '10px 14px',
+                          backgroundColor: '#f0fdf4',
+                          borderLeft: '4px solid #10b981',
+                          color: '#065f46',
+                          fontSize: '0.82rem',
+                          marginBottom: 'var(--space-md)',
+                          borderRadius: '4px'
+                        }}>
+                          Completed lesson record (Score: {reviewData.checkpointScore !== null ? `${reviewData.checkpointScore}%` : 'Passed'}). Questions, correct answers, and law explanations are provided below for study.
+                        </div>
+                      )}
+
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                        {(reviewData?.questions || (checkpointResult?.explanations && checkpointQuestions.length > 0 ? checkpointQuestions.map(q => {
+                          const expl = checkpointResult.explanations.find(e => e.questionId === q.questionId);
+                          return {
+                            questionId: q.questionId,
+                            questionText: q.questionText,
+                            options: q.options,
+                            correctOptionIndex: expl?.isCorrect ? expl.selectedOptionIndex : null,
+                            explanation: expl?.explanation || '',
+                            selectedOptionIndex: expl?.selectedOptionIndex ?? null,
+                            isCorrect: expl?.isCorrect ?? null
+                          };
+                        }) : [])).map((q, qIdx) => (
+                          <div
+                            key={q.questionId || qIdx}
+                            style={{
+                              padding: 'var(--space-md)',
+                              backgroundColor: 'var(--bg-white, #ffffff)',
+                              border: '1px solid var(--color-border)',
+                              borderRadius: '6px'
+                            }}
+                          >
+                            <div style={{ fontSize: '0.78rem', fontWeight: '700', color: 'var(--text-secondary)', marginBottom: '4px' }}>
+                              Question {qIdx + 1}
+                            </div>
+                            <p style={{ fontSize: '0.92rem', fontWeight: '600', color: 'var(--text-primary)', margin: '0 0 10px 0' }}>
+                              {q.questionText}
+                            </p>
+
+                            {/* Options List */}
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginBottom: '10px' }}>
+                              {q.options?.map((opt, optIdx) => {
+                                const isSelected = q.selectedOptionIndex === optIdx;
+                                const isCorrectOption = q.correctOptionIndex === optIdx;
+
+                                let optBg = 'var(--bg-white, #ffffff)';
+                                let optBorder = '1px solid var(--color-border)';
+                                let optColor = 'var(--text-primary)';
+                                let optBadge = null;
+
+                                if (isSelected && q.isCorrect) {
+                                  optBg = '#ecfdf5';
+                                  optBorder = '2px solid #10b981';
+                                  optColor = '#065f46';
+                                  optBadge = <span style={{ fontSize: '0.75rem', fontWeight: '700', color: '#065f46', marginLeft: 'auto' }}>✓ Your Answer (Correct)</span>;
+                                } else if (isSelected && !q.isCorrect) {
+                                  optBg = '#fef2f2';
+                                  optBorder = '2px solid #ef4444';
+                                  optColor = '#991b1b';
+                                  optBadge = <span style={{ fontSize: '0.75rem', fontWeight: '700', color: '#991b1b', marginLeft: 'auto' }}>✕ Your Answer (Incorrect)</span>;
+                                } else if (isCorrectOption) {
+                                  optBg = '#f0fdf4';
+                                  optBorder = '1px solid #86efac';
+                                  optColor = '#166534';
+                                  optBadge = <span style={{ fontSize: '0.75rem', fontWeight: '700', color: '#166534', marginLeft: 'auto' }}>✓ Correct Defensive Rule</span>;
+                                }
+
+                                return (
+                                  <div
+                                    key={optIdx}
+                                    style={{
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      justifyContent: 'space-between',
+                                      padding: '8px 12px',
+                                      backgroundColor: optBg,
+                                      border: optBorder,
+                                      borderRadius: '5px',
+                                      fontSize: '0.85rem',
+                                      color: optColor
+                                    }}
+                                  >
+                                    <span>{opt}</span>
+                                    {optBadge}
+                                  </div>
+                                );
+                              })}
+                            </div>
+
+                            {/* Statutory Explanation */}
+                            {q.explanation && (
+                              <div style={{
+                                padding: '8px 12px',
+                                backgroundColor: '#f8fafc',
+                                borderLeft: '3px solid var(--color-primary)',
+                                color: 'var(--text-secondary)',
+                                fontSize: '0.82rem',
+                                borderRadius: '3px',
+                                lineHeight: '1.45'
+                              }}>
+                                <strong style={{ color: 'var(--color-primary)', display: 'block', marginBottom: '2px' }}>
+                                  Statutory Rule & Defensive Logic:
+                                </strong>
+                                {q.explanation}
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           )}
         </div>

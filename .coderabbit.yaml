@@ -1,0 +1,197 @@
+# yaml-language-server: $schema=https://www.coderabbit.ai/integrations/schema.v2.json
+# ==============================================================================
+# CodeRabbit AI Configuration - Cyber Law Awareness Portal
+# Repository: NightFury-boss/CyberLawAwarnessPortal
+# ==============================================================================
+
+language: "en-US"
+early_access: false
+
+tone_instructions: >-
+  Act as a Senior Security Architect. Provide concise, technically rigorous, and
+  constructive feedback with concrete remediation. Explain the 'why' behind
+  issues. Avoid stylistic nitpicks, formatting commentary, or decorative prose.
+
+reviews:
+  profile: "chill"
+  request_changes_workflow: false
+  high_level_summary: true
+  poem: false
+  collapse_walkthrough: false
+
+  auto_review:
+    enabled: true
+    auto_incremental_review: true
+    drafts: false
+    base_branches:
+      - "main"
+      - "master"
+      - "develop"
+
+  slop_detection:
+    enabled: true
+
+  path_filters:
+    # Build artifacts and compiled assets
+    - "!dist/**"
+    - "!client/dist/**"
+    - "!build/**"
+    - "!**/*.min.js"
+    - "!**/*.min.css"
+    - "!**/*.map"
+    # Dependencies and package manager locks
+    - "!**/node_modules/**"
+    - "!package-lock.json"
+    - "!client/package-lock.json"
+    - "!server/package-lock.json"
+    - "!pnpm-lock.yaml"
+    - "!yarn.lock"
+    # Static media, fonts, and binaries
+    - "!**/*.png"
+    - "!**/*.jpg"
+    - "!**/*.jpeg"
+    - "!**/*.gif"
+    - "!**/*.svg"
+    - "!**/*.ico"
+    - "!**/*.webp"
+    - "!**/*.pdf"
+    - "!**/*.woff"
+    - "!**/*.woff2"
+    - "!**/*.ttf"
+    - "!**/*.eot"
+    # Agent logs, IDE cache, and internal scratchdirs (keeping .agents/rules/ and .agents/skills/ reviewable)
+    - "!.agents/**/*.log"
+    - "!.agents/**/logs/**"
+    - "!.gemini/**"
+    - "!.reticle/**"
+    - "!.planning/**"
+
+  tools:
+    ast-grep:
+      enabled: true
+      essential_rules: true
+    gitleaks:
+      enabled: true
+    trufflehog:
+      enabled: true
+    presidio:
+      enabled: true
+    reactDoctor:
+      enabled: true
+    dotenvLint:
+      enabled: true
+    shellcheck:
+      enabled: true
+    markdownlint:
+      enabled: true
+    htmlhint:
+      enabled: true
+
+  path_instructions:
+    # --------------------------------------------------------------------------
+    # 1. Backend & Server Core (Express, Node.js, Middleware, Routes)
+    # --------------------------------------------------------------------------
+    - path: "server/**"
+      instructions: |
+        Architecture & Security Standards for Node.js / Express Backend:
+        1. Authentication & Authorization:
+           - Enforce JWT authentication middleware (`authMiddleware`) on all protected learner and admin routes.
+           - Verify that JWT tokens are parsed safely and user context (`req.user`) is validated before data access.
+           - Ensure proper role-based access control (RBAC): admin endpoints must strictly require `role: 'admin'`.
+        2. Secrets & Credential Management:
+           - NEVER commit or hardcode secrets, tokens, MongoDB connection strings, or JWT keys. All credentials must load strictly via `process.env`.
+        3. NoSQL Injection & Query Hygiene:
+           - Protect MongoDB/Mongoose queries against NoSQL injection. Always validate and sanitize user-supplied query parameters and route params (`req.params.id`, `req.body`) before querying.
+           - For Mongoose updates, avoid unvalidated `$set: req.body` spreads; explicitly whitelist allowed fields.
+        4. Error Handling & Async Reliability:
+           - All asynchronous Express handlers must be wrapped in try/catch or an async error boundary, forwarding unexpected errors to `next(err)`.
+           - Return consistent JSON error envelopes: `{ success: false, message: '...' }` with accurate HTTP status codes (400 for bad request, 401 for unauthenticated, 403 for unauthorized, 404 for not found, 500 for server error).
+        5. Statutory Accuracy (Indian Cyber Law):
+           - All statutory citations must strictly align with primary Indian legislation: Information Technology Act 2000 (IT Act), Digital Personal Data Protection Act 2023 (DPDP Act), and Bharatiya Nyaya Sanhita 2023 (BNS).
+           - IT Act Section 66A was struck down as unconstitutional by the Supreme Court of India in Shreya Singhal v. Union of India (2015). NEVER permit Section 66A to be cited or enforced as an active, punishable offense.
+           - Emergency reporting guidance must reference National Cybercrime Helpline 1930 and the official portal cybercrime.gov.in (including the Citizen Financial Cyber Fraud Reporting and Management System / CFCFRMS and Golden Hour reporting within 2–3 hours). Never guarantee fund freezes or monetary recovery.
+
+    # --------------------------------------------------------------------------
+    # 2. Controllers & Remediation Engine (Scoring & Behavioral Integrity)
+    # --------------------------------------------------------------------------
+    - path: "server/controllers/**"
+      instructions: |
+        Scoring Integrity & Behavioral Engine Standards:
+        1. Authoritative Server-Side Scoring:
+           - All scoring, evaluation, and grade calculations MUST remain authoritative on the server. Never trust scores or dimensional evaluations supplied by the frontend client.
+        2. Non-Composite Behavioral Dimensions:
+           - The portal models learner capability exclusively across six discrete behavioral dimensions:
+             * TR (Threat Recognition)
+             * SI (Systematic Inspection)
+             * VB (Verification Behavior)
+             * DQ (Deliberate Questioning)
+             * FP (Fault Preparedness)
+             * UA (Uncertainty Acknowledgment)
+           - DO NOT collapse or average these six dimensions into an arbitrary single composite 'cyber safety score' or 'overall score percentage'. Each dimension represents an independent cognitive trait.
+        3. Immutability of Historical Assessments:
+           - Baseline assessment records, final assessment results, and historical scenario trial logs must be immutable. Once committed, historical assessment sessions and their dimension vectors must never be overwritten in-place.
+        4. Administrative Auditing:
+           - Privileged changes to scenarios, quizzes, or user states must generate persistent audit log entries in `AdminAuditLog` recording the actor ID, action type, IP address, and changed payload.
+
+    # --------------------------------------------------------------------------
+    # 3. Data Models (Mongoose Schemas & Database Operations)
+    # --------------------------------------------------------------------------
+    - path: "server/models/**"
+      instructions: |
+        Mongoose Data Modeling & Storage Standards:
+        1. Schema Integrity & Validation:
+           - Ensure all schema fields have explicit types, required constraints, trims, and enum bounds where applicable.
+           - Timestamps (`createdAt`, `updatedAt`) should be enabled for auditability.
+        2. Query Indexing:
+           - Verify that fields frequently queried in lookups, filters, or sorting (such as `userId`, `slug`, `scenarioId`, `createdAt`) are indexed appropriately.
+        3. Backward Compatibility:
+           - Schema modifications must maintain backward compatibility with existing user progress and portfolio records. Do not introduce breaking schema shifts or drop fields without migration guards.
+
+    # --------------------------------------------------------------------------
+    # 4. Frontend Application (React 19, Vite, UI Components)
+    # --------------------------------------------------------------------------
+    - path: "client/src/**"
+      instructions: |
+        React 19 & Frontend Architectural Standards:
+        1. Modern React Architecture:
+           - Use functional components and modern React hooks. Ensure complete dependency arrays in `useEffect`, `useCallback`, and `useMemo` to prevent stale closures and infinite re-render loops.
+           - Avoid unnecessary prop-drilling or duplicated state; derive state synchronously when possible.
+        2. Visual Identity & Editorial Design:
+           - The Cyber Law Awareness Portal maintains a warm, restrained, editorial aesthetic inspired by legal briefs, warm paper-like surfaces, deep navy typography (`#0f172a`), restrained blue accents (`#1e3a8a`, `#2563eb`), and generous whitespace.
+           - Strictly avoid cyberpunk tropes, dark neon palettes, glitch animations, terminal green styling, or flashy arcade-like gamification.
+        3. Accessibility (WCAG 2.1 AA):
+           - Ensure semantic HTML (`main`, `nav`, `section`, `article`, `header`, `button`).
+           - Interactive controls must be keyboard operable (Enter / Space support) and have visible focus indicators (`focus-visible`).
+           - Modals (such as Defensive Portfolio and Spaced Retrieval) must implement focus trapping, background scroll locking, and Escape key dismissal.
+           - Color contrast ratios must satisfy WCAG AA minimums (at least 4.5:1 for body text).
+        4. Print & PDF Fidelity:
+           - Defensive portfolio and summary components must maintain dedicated `@media print` rules. Ensure navigation headers, floating action buttons, backdrops, and interactive controls are hidden on print, and tables avoid awkward page-break splits (`break-inside: avoid`).
+        5. Educational Notice Clarity:
+           - Display clear educational disclaimers stating that the portal provides awareness and simulation training, not formal legal advice or statutory legal certification. Distinguish clearly between quizzes passed versus quiz attempts.
+
+    # --------------------------------------------------------------------------
+    # 5. Journey Selectors & State Selectors (Pure Utility Logic)
+    # --------------------------------------------------------------------------
+    - path: "client/src/utils/**"
+      instructions: |
+        Utility & Selector Logic Standards:
+        1. Pure & Deterministic Functions:
+           - Journey selectors (`dashboardJourneySelectors.js`) and evidence aggregators (`evidenceSelectors.js`) must remain pure functions without side effects.
+           - Always handle null, undefined, or partial progress objects gracefully with safe fallback states.
+        2. Contract Consistency:
+           - Return consistent shape definitions for recommendations (e.g. `{ actionKey, title, description, route, ctaText }`).
+
+    # --------------------------------------------------------------------------
+    # 6. Test Suites (Backend & Frontend Unit/Contract Tests)
+    # --------------------------------------------------------------------------
+    - path: "server/tests/**"
+      instructions: |
+        Backend Test Suite Standards:
+        1. Test Isolation & Reliability:
+           - Tests must run deterministically without depending on remote external networks or shared unseeded state.
+           - Verify statutory catalog fixtures, dimensional score bounds [0.0 to 1.0], and journey selector state transitions.
+           - Assert both positive and negative validation flows (e.g., rejecting invalid tokens, malformed payloads, or composite scores).
+
+chat:
+  auto_reply: true
+

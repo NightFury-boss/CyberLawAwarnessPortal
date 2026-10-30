@@ -1,14 +1,49 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
 import WorkspaceBreadcrumb from '../components/WorkspaceBreadcrumb';
 import EditorialPageHeader from '../components/common/EditorialPageHeader';
-import EditorialRule from '../components/common/EditorialRule';
 import { performStateTransition } from '../utils/transitionUtils';
+import IncidentDocketGenerator from '../components/common/IncidentDocketGenerator';
 
 function Prevention() {
   const [activeTopic, setActiveTopic] = useState('passwords');
   const [selectedPhase, setSelectedPhase] = useState('all'); // 'all', 'before', 'during', 'after'
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+  const [copiedHelpline, setCopiedHelpline] = useState(false);
+  const [copyFailed, setCopyFailed] = useState(false);
+
+  const handleCopyHelpline = async () => {
+    let success = false;
+    try {
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText('1930');
+        success = true;
+      } else {
+        const textArea = document.createElement('textarea');
+        textArea.value = '1930';
+        textArea.setAttribute('readonly', '');
+        textArea.style.position = 'fixed';
+        textArea.style.left = '-999999px';
+        textArea.style.top = '-999999px';
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        success = document.execCommand('copy');
+        textArea.remove();
+      }
+    } catch {
+      success = false;
+    }
+
+    if (success) {
+      setCopiedHelpline(true);
+      setCopyFailed(false);
+      setTimeout(() => setCopiedHelpline(false), 2500);
+    } else {
+      setCopyFailed(true);
+      setCopiedHelpline(false);
+      setTimeout(() => setCopyFailed(false), 3000);
+    }
+  };
 
   const handlePhaseChange = (phase) => {
     performStateTransition(() => {
@@ -97,8 +132,8 @@ function Prevention() {
       
       {/* Editorial Hero Header */}
       <EditorialPageHeader
-        eyebrow="Prevention Centre"
-        title="Prevention & Digital Hygiene"
+        eyebrow="Stay Safe Online"
+        title="Online Safety & Prevention Guide"
         subtitle='"Knowledge helps most when it changes what we do."'
         description="Practical guidance for protecting your accounts, devices, personal information, and digital transactions — and knowing what to do when something goes wrong."
       >
@@ -109,8 +144,8 @@ function Prevention() {
       <div style={{ marginBottom: 'var(--space-2xl)' }}>
         <div className="prevention-phase-filter-bar">
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-            <span style={{ fontSize: '0.76rem', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.5px', color: 'var(--accent-navy)' }}>
-              Response Lifecycle:
+            <span style={{ fontSize: '0.76rem', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.5px', color: 'var(--color-primary)' }}>
+              Step-by-Step Defense:
             </span>
             <div className="portal-state-sequence-bar" style={{ margin: 0 }}>
               <button 
@@ -120,7 +155,7 @@ function Prevention() {
                 style={{ cursor: 'pointer' }}
                 aria-pressed={selectedPhase === 'all'}
               >
-                Comprehensive
+                All Advice
               </button>
               <span className="portal-state-sequence-arrow" aria-hidden="true">&rarr;</span>
               <button 
@@ -130,7 +165,7 @@ function Prevention() {
                 style={{ cursor: 'pointer' }}
                 aria-pressed={selectedPhase === 'before'}
               >
-                01 Before
+                01 Before an Incident
               </button>
               <span className="portal-state-sequence-arrow" aria-hidden="true">&rarr;</span>
               <button 
@@ -140,7 +175,7 @@ function Prevention() {
                 style={{ cursor: 'pointer' }}
                 aria-pressed={selectedPhase === 'during'}
               >
-                02 During
+                02 If Targeted
               </button>
               <span className="portal-state-sequence-arrow" aria-hidden="true">&rarr;</span>
               <button 
@@ -150,16 +185,16 @@ function Prevention() {
                 style={{ cursor: 'pointer' }}
                 aria-pressed={selectedPhase === 'after'}
               >
-                03 After
+                03 After an Attack
               </button>
             </div>
           </div>
 
           <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', fontFamily: 'monospace' }}>
-            {selectedPhase === 'all' && 'Full 3-Phase Lifecycle Overview'}
-            {selectedPhase === 'before' && 'Phase 01: Pre-Attack Verification & Hardening'}
-            {selectedPhase === 'during' && 'Phase 02: Critical Pause & Refusal Rule'}
-            {selectedPhase === 'after' && 'Phase 03: Containment & Helpline 1930'}
+            {selectedPhase === 'all' && 'All 3 Safety Stages'}
+            {selectedPhase === 'before' && 'Stage 01: Protecting Yourself Beforehand'}
+            {selectedPhase === 'during' && 'Stage 02: Pausing & Verifying Under Pressure'}
+            {selectedPhase === 'after' && 'Stage 03: Fast Action & Helpline 1930'}
           </div>
         </div>
 
@@ -195,20 +230,20 @@ function Prevention() {
               onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handlePhaseChange('before'); } }}
               className={`prevention-phase-card ${selectedPhase === 'before' ? 'is-active-phase' : ''}`}
               style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}
-              title="Click to view Phase 01: Before protocols"
+              title="Click to view Stage 01: Before steps"
             >
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <span className="phase-indicator">01 / BEFORE</span>
                 {selectedPhase === 'before' && (
-                  <span style={{ fontSize: '0.68rem', fontWeight: 'bold', color: 'var(--accent-navy)', textTransform: 'uppercase' }}>Active Protocol</span>
+                  <span style={{ fontSize: '0.68rem', fontWeight: 'bold', color: 'var(--color-primary)', textTransform: 'uppercase' }}>Viewing Now</span>
                 )}
               </div>
-              <h3 style={{ fontSize: '1.15rem', color: 'var(--accent-navy)', margin: 0, fontWeight: 'bold' }}>Protect</h3>
+              <h3 style={{ fontSize: '1.15rem', color: 'var(--text-primary)', margin: 0, fontWeight: 'bold' }}>Protect</h3>
               <p style={{ fontSize: '0.88rem', color: 'var(--text-secondary)', margin: 0, lineHeight: '1.5' }}>
                 Verify unexpected requests. Protect credentials. Build strong defense habits before any contact or system threat occurs.
               </p>
-              <div style={{ fontSize: '0.78rem', color: 'var(--accent-navy)', fontWeight: '600', marginTop: 'auto', paddingTop: '6px', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                <span>{selectedPhase === 'before' ? 'Active Focus' : 'Inspect Protocol'}</span>
+              <div style={{ fontSize: '0.78rem', color: 'var(--color-primary)', fontWeight: '600', marginTop: 'auto', paddingTop: '6px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <span>{selectedPhase === 'before' ? 'Current View' : 'View Steps'}</span>
                 <span aria-hidden="true">&rarr;</span>
               </div>
             </div>
@@ -223,20 +258,20 @@ function Prevention() {
               onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handlePhaseChange('during'); } }}
               className={`prevention-phase-card ${selectedPhase === 'during' ? 'is-active-phase' : ''}`}
               style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}
-              title="Click to view Phase 02: During protocols"
+              title="Click to view Stage 02: If Targeted steps"
             >
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <span className="phase-indicator">02 / DURING</span>
                 {selectedPhase === 'during' && (
-                  <span style={{ fontSize: '0.68rem', fontWeight: 'bold', color: 'var(--color-warning)', textTransform: 'uppercase' }}>Active Protocol</span>
+                  <span style={{ fontSize: '0.68rem', fontWeight: 'bold', color: 'var(--color-warning)', textTransform: 'uppercase' }}>Viewing Now</span>
                 )}
               </div>
-              <h3 style={{ fontSize: '1.15rem', color: 'var(--accent-navy)', margin: 0, fontWeight: 'bold' }}>Pause &amp; Verify</h3>
+              <h3 style={{ fontSize: '1.15rem', color: 'var(--text-primary)', margin: 0, fontWeight: 'bold' }}>Pause &amp; Verify</h3>
               <p style={{ fontSize: '0.88rem', color: 'var(--text-secondary)', margin: 0, lineHeight: '1.5' }}>
                 Pause. Verify independently. Avoid sharing sensitive information or one-time codes when confronted with manufactured urgency.
               </p>
-              <div style={{ fontSize: '0.78rem', color: 'var(--accent-navy)', fontWeight: '600', marginTop: 'auto', paddingTop: '6px', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                <span>{selectedPhase === 'during' ? 'Active Focus' : 'Inspect Protocol'}</span>
+              <div style={{ fontSize: '0.78rem', color: 'var(--color-primary)', fontWeight: '600', marginTop: 'auto', paddingTop: '6px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <span>{selectedPhase === 'during' ? 'Current View' : 'View Steps'}</span>
                 <span aria-hidden="true">&rarr;</span>
               </div>
             </div>
@@ -251,20 +286,20 @@ function Prevention() {
               onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handlePhaseChange('after'); } }}
               className={`prevention-phase-card ${selectedPhase === 'after' ? 'is-active-phase' : ''}`}
               style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}
-              title="Click to view Phase 03: After protocols"
+              title="Click to view Stage 03: After steps"
             >
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <span className="phase-indicator">03 / AFTER</span>
                 {selectedPhase === 'after' && (
-                  <span style={{ fontSize: '0.68rem', fontWeight: 'bold', color: 'var(--color-success)', textTransform: 'uppercase' }}>Active Protocol</span>
+                  <span style={{ fontSize: '0.68rem', fontWeight: 'bold', color: 'var(--color-success)', textTransform: 'uppercase' }}>Viewing Now</span>
                 )}
               </div>
-              <h3 style={{ fontSize: '1.15rem', color: 'var(--accent-navy)', margin: 0, fontWeight: 'bold' }}>Respond &amp; Recover</h3>
+              <h3 style={{ fontSize: '1.15rem', color: 'var(--text-primary)', margin: 0, fontWeight: 'bold' }}>Respond &amp; Recover</h3>
               <p style={{ fontSize: '0.88rem', color: 'var(--text-secondary)', margin: 0, lineHeight: '1.5' }}>
                 Preserve evidence. Secure affected accounts immediately. Report the incident through National Helpline 1930 and official registries.
               </p>
-              <div style={{ fontSize: '0.78rem', color: 'var(--accent-navy)', fontWeight: '600', marginTop: 'auto', paddingTop: '6px', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                <span>{selectedPhase === 'after' ? 'Active Focus' : 'Inspect Protocol'}</span>
+              <div style={{ fontSize: '0.78rem', color: 'var(--color-primary)', fontWeight: '600', marginTop: 'auto', paddingTop: '6px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <span>{selectedPhase === 'after' ? 'Current View' : 'View Steps'}</span>
                 <span aria-hidden="true">&rarr;</span>
               </div>
             </div>
@@ -276,15 +311,15 @@ function Prevention() {
           {selectedPhase === 'all' && (
             <div style={{ padding: '4px 0' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', flexWrap: 'wrap', gap: '8px' }}>
-                <span style={{ fontSize: '0.75rem', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '1px', color: 'var(--accent-navy)' }}>
-                  Comprehensive Response Overview
+                <span style={{ fontSize: '0.75rem', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '1px', color: 'var(--text-primary)' }}>
+                  Your Complete Online Safety Guide
                 </span>
                 <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
-                  Select any phase above to focus on its specific operational checklist
+                  Click any stage above to see specific steps
                 </span>
               </div>
               <p style={{ fontSize: '0.94rem', color: 'var(--text-secondary)', lineHeight: '1.6', margin: '0 0 16px 0' }}>
-                Effective digital defense is structured across time. Proactive hardening before contact prevents most attacks; the critical pause during an encounter neutralizes psychological pressure; and swift post-incident containment minimizes harm under statutory safe-harbor provisions.
+                Staying safe online happens in three simple stages: setting up strong protection beforehand, taking a calm pause when someone contacts you with urgency, and acting quickly if an incident happens.
               </p>
               <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
                 <button
@@ -293,7 +328,7 @@ function Prevention() {
                   className="btn btn-secondary"
                   style={{ fontSize: '0.82rem', padding: '6px 14px' }}
                 >
-                  Start Phase 01: Before &rarr;
+                  See Stage 01: Before &rarr;
                 </button>
                 <button
                   type="button"
@@ -301,7 +336,7 @@ function Prevention() {
                   className="btn btn-secondary"
                   style={{ fontSize: '0.82rem', padding: '6px 14px' }}
                 >
-                  Jump to Phase 02: During &rarr;
+                  See Stage 02: If Targeted &rarr;
                 </button>
                 <button
                   type="button"
@@ -309,7 +344,7 @@ function Prevention() {
                   className="btn btn-secondary"
                   style={{ fontSize: '0.82rem', padding: '6px 14px' }}
                 >
-                  Jump to Phase 03: After &rarr;
+                  See Stage 03: After an Attack &rarr;
                 </button>
               </div>
             </div>
@@ -318,7 +353,7 @@ function Prevention() {
           {selectedPhase === 'before' && (
             <div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', flexWrap: 'wrap', gap: '8px' }}>
-                <span style={{ fontSize: '0.75rem', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '1px', color: 'var(--accent-navy)' }}>
+                <span style={{ fontSize: '0.75rem', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '1px', color: 'var(--text-primary)' }}>
                   Phase 01 · Proactive Defense
                 </span>
                 <div style={{ display: 'flex', gap: '8px' }}>
@@ -338,7 +373,7 @@ function Prevention() {
                   </button>
                 </div>
               </div>
-                <h3 style={{ fontSize: '1.35rem', color: 'var(--accent-navy)', margin: '0 0 10px 0', fontWeight: 'bold' }}>
+                <h3 style={{ fontSize: '1.35rem', color: 'var(--text-primary)', margin: '0 0 10px 0', fontWeight: 'bold' }}>
                   01 / BEFORE: Independent Verification & Zero-Trust Hygiene
                 </h3>
                 <p style={{ fontSize: '0.96rem', color: 'var(--text-secondary)', lineHeight: '1.65', marginBottom: '16px' }}>
@@ -346,15 +381,15 @@ function Prevention() {
                 </p>
                 <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)', gap: '14px' }}>
                   <div style={{ backgroundColor: 'var(--bg-white, #ffffff)', padding: '16px', borderRadius: '6px', border: '1px solid var(--color-border)', boxShadow: '0 1px 3px rgba(15, 37, 55, 0.04)' }}>
-                    <strong style={{ fontSize: '0.85rem', color: 'var(--accent-navy)', display: 'block', marginBottom: '4px' }}>Credential Separation</strong>
+                    <strong style={{ fontSize: '0.85rem', color: 'var(--text-primary)', display: 'block', marginBottom: '4px' }}>Credential Separation</strong>
                     <span style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', lineHeight: '1.5' }}>Use distinct, unshared passwords and dedicated passkeys across financial and personal accounts.</span>
                   </div>
                   <div style={{ backgroundColor: 'var(--bg-white, #ffffff)', padding: '16px', borderRadius: '6px', border: '1px solid var(--color-border)', boxShadow: '0 1px 3px rgba(15, 37, 55, 0.04)' }}>
-                    <strong style={{ fontSize: '0.85rem', color: 'var(--accent-navy)', display: 'block', marginBottom: '4px' }}>Direct Bookmarking</strong>
+                    <strong style={{ fontSize: '0.85rem', color: 'var(--text-primary)', display: 'block', marginBottom: '4px' }}>Direct Bookmarking</strong>
                     <span style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', lineHeight: '1.5' }}>Bookmark trusted bank portals and utilities directly to avoid sponsored deceptive search ads.</span>
                   </div>
                   <div style={{ backgroundColor: 'var(--bg-white, #ffffff)', padding: '16px', borderRadius: '6px', border: '1px solid var(--color-border)', boxShadow: '0 1px 3px rgba(15, 37, 55, 0.04)' }}>
-                    <strong style={{ fontSize: '0.85rem', color: 'var(--accent-navy)', display: 'block', marginBottom: '4px' }}>Multi-Factor Authentication</strong>
+                    <strong style={{ fontSize: '0.85rem', color: 'var(--text-primary)', display: 'block', marginBottom: '4px' }}>Multi-Factor Authentication</strong>
                     <span style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', lineHeight: '1.5' }}>Enable app-based authenticator codes or hardware tokens instead of plaintext SMS fallback.</span>
                   </div>
                 </div>
@@ -384,7 +419,7 @@ function Prevention() {
                     </button>
                   </div>
                 </div>
-                <h3 style={{ fontSize: '1.35rem', color: 'var(--accent-navy)', margin: '0 0 10px 0', fontWeight: 'bold' }}>
+                <h3 style={{ fontSize: '1.35rem', color: 'var(--text-primary)', margin: '0 0 10px 0', fontWeight: 'bold' }}>
                   02 / DURING: The Critical Pause & Immediate Refusal
                 </h3>
                 <p style={{ fontSize: '0.96rem', color: 'var(--text-secondary)', lineHeight: '1.65', marginBottom: '16px' }}>
@@ -392,15 +427,15 @@ function Prevention() {
                 </p>
                 <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)', gap: '14px' }}>
                   <div style={{ backgroundColor: 'var(--bg-white, #ffffff)', padding: '16px', borderRadius: '6px', border: '1px solid var(--color-border)', boxShadow: '0 1px 3px rgba(15, 37, 55, 0.04)' }}>
-                    <strong style={{ fontSize: '0.85rem', color: 'var(--accent-navy)', display: 'block', marginBottom: '4px' }}>Refuse One-Time Codes</strong>
+                    <strong style={{ fontSize: '0.85rem', color: 'var(--text-primary)', display: 'block', marginBottom: '4px' }}>Refuse One-Time Codes</strong>
                     <span style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', lineHeight: '1.5' }}>No legitimate agency or bank ever asks for your OTP over phone, chat, or email.</span>
                   </div>
                   <div style={{ backgroundColor: 'var(--bg-white, #ffffff)', padding: '16px', borderRadius: '6px', border: '1px solid var(--color-border)', boxShadow: '0 1px 3px rgba(15, 37, 55, 0.04)' }}>
-                    <strong style={{ fontSize: '0.85rem', color: 'var(--accent-navy)', display: 'block', marginBottom: '4px' }}>Reject Screen-Sharing</strong>
+                    <strong style={{ fontSize: '0.85rem', color: 'var(--text-primary)', display: 'block', marginBottom: '4px' }}>Reject Screen-Sharing</strong>
                     <span style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', lineHeight: '1.5' }}>Never install remote desktop apps (AnyDesk, TeamViewer) at the request of an incoming caller.</span>
                   </div>
                   <div style={{ backgroundColor: 'var(--bg-white, #ffffff)', padding: '16px', borderRadius: '6px', border: '1px solid var(--color-border)', boxShadow: '0 1px 3px rgba(15, 37, 55, 0.04)' }}>
-                    <strong style={{ fontSize: '0.85rem', color: 'var(--accent-navy)', display: 'block', marginBottom: '4px' }}>Break Contact Channel</strong>
+                    <strong style={{ fontSize: '0.85rem', color: 'var(--text-primary)', display: 'block', marginBottom: '4px' }}>Break Contact Channel</strong>
                     <span style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', lineHeight: '1.5' }}>Hang up the incoming call and redial the organization's verified public number independently.</span>
                   </div>
                 </div>
@@ -421,7 +456,7 @@ function Prevention() {
                     &larr; Back: During Attack
                   </button>
                 </div>
-                <h3 style={{ fontSize: '1.35rem', color: 'var(--accent-navy)', margin: '0 0 10px 0', fontWeight: 'bold' }}>
+                <h3 style={{ fontSize: '1.35rem', color: 'var(--text-primary)', margin: '0 0 10px 0', fontWeight: 'bold' }}>
                   03 / AFTER: Immediate Containment & Statutory Reporting
                 </h3>
                 <p style={{ fontSize: '0.96rem', color: 'var(--text-secondary)', lineHeight: '1.65', marginBottom: '16px' }}>
@@ -429,15 +464,15 @@ function Prevention() {
                 </p>
                 <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)', gap: '14px' }}>
                   <div style={{ backgroundColor: 'var(--bg-white, #ffffff)', padding: '16px', borderRadius: '6px', border: '1px solid var(--color-border)', boxShadow: '0 1px 3px rgba(15, 37, 55, 0.04)' }}>
-                    <strong style={{ fontSize: '0.85rem', color: 'var(--accent-navy)', display: 'block', marginBottom: '4px' }}>National Helpline 1930</strong>
+                    <strong style={{ fontSize: '0.85rem', color: 'var(--text-primary)', display: 'block', marginBottom: '4px' }}>National Helpline 1930</strong>
                     <span style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', lineHeight: '1.5' }}>Dial 1930 immediately to trigger the Citizen Financial Cyber Fraud Reporting System.</span>
                   </div>
                   <div style={{ backgroundColor: 'var(--bg-white, #ffffff)', padding: '16px', borderRadius: '6px', border: '1px solid var(--color-border)', boxShadow: '0 1px 3px rgba(15, 37, 55, 0.04)' }}>
-                    <strong style={{ fontSize: '0.85rem', color: 'var(--accent-navy)', display: 'block', marginBottom: '4px' }}>Bank Account Freeze</strong>
+                    <strong style={{ fontSize: '0.85rem', color: 'var(--text-primary)', display: 'block', marginBottom: '4px' }}>Bank Account Freeze</strong>
                     <span style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', lineHeight: '1.5' }}>Contact your bank's fraud desk to block cards, freeze internet banking, and revoke active UPI handles.</span>
                   </div>
                   <div style={{ backgroundColor: 'var(--bg-white, #ffffff)', padding: '16px', borderRadius: '6px', border: '1px solid var(--color-border)', boxShadow: '0 1px 3px rgba(15, 37, 55, 0.04)' }}>
-                    <strong style={{ fontSize: '0.85rem', color: 'var(--accent-navy)', display: 'block', marginBottom: '4px' }}>Preserve Digital Evidence</strong>
+                    <strong style={{ fontSize: '0.85rem', color: 'var(--text-primary)', display: 'block', marginBottom: '4px' }}>Preserve Digital Evidence</strong>
                     <span style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', lineHeight: '1.5' }}>Capture screenshots of payment messages, transaction UTR numbers, caller logs, and chat histories.</span>
                   </div>
                 </div>
@@ -458,7 +493,7 @@ function Prevention() {
       }}>
         {isMobile ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-            <label style={{ fontSize: '0.75rem', fontWeight: 'bold', color: 'var(--accent-navy)', textTransform: 'uppercase' }}>
+            <label style={{ fontSize: '0.75rem', fontWeight: 'bold', color: 'var(--text-primary)', textTransform: 'uppercase' }}>
               Jump to Handbook Section
             </label>
             <select
@@ -493,8 +528,8 @@ function Prevention() {
                   style={{
                     background: 'none',
                     border: 'none',
-                    borderBottom: isActive ? '3px solid var(--accent-navy)' : '3px solid transparent',
-                    color: isActive ? 'var(--accent-navy)' : 'var(--text-secondary)',
+                    borderBottom: isActive ? '3px solid var(--color-primary)' : '3px solid transparent',
+                    color: isActive ? 'var(--color-primary)' : 'var(--text-secondary)',
                     fontWeight: isActive ? 'bold' : '500',
                     fontSize: '0.85rem',
                     cursor: 'pointer',
@@ -519,10 +554,10 @@ function Prevention() {
           {/* Section 01: Passwords */}
           <section id="passwords" style={{ marginBottom: 'var(--space-xxl)', borderBottom: '1px solid var(--color-border)', paddingBottom: 'var(--space-xxl)' }}>
             <div style={{ fontSize: '2.5rem', fontWeight: '300', color: 'var(--text-muted)', fontFamily: 'monospace' }}>01</div>
-            <h2 style={{ fontSize: '2rem', color: 'var(--accent-navy)', fontWeight: 'bold', marginTop: '4px', marginBottom: '16px' }}>
+            <h2 style={{ fontSize: '2rem', color: 'var(--text-primary)', fontWeight: 'bold', marginTop: '4px', marginBottom: '16px' }}>
               PASSWORD HYGIENE & MFA
             </h2>
-            <div style={{ width: '40px', height: '3px', backgroundColor: 'var(--accent-navy)', borderRadius: '1.5px', marginBottom: '20px' }} />
+            <div style={{ width: '40px', height: '3px', backgroundColor: 'var(--color-primary)', borderRadius: '1.5px', marginBottom: '20px' }} />
             
             <p style={{ fontSize: '1rem', lineHeight: '1.6', color: 'var(--text-secondary)', marginBottom: '24px' }}>
               Password reuse makes you highly vulnerable to credential stuffing. If a hacker breaches one forum, they test your email/password on banking apps.
@@ -531,7 +566,7 @@ function Prevention() {
             <h4 style={{ fontSize: '0.75rem', fontWeight: 'bold', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '12px' }}>
               Why It Matters
             </h4>
-            <div style={{ padding: '16px 20px', backgroundColor: 'var(--bg-secondary)', borderRadius: 'var(--radius-sm)', marginBottom: '24px', borderLeft: '3px solid var(--accent-navy)' }}>
+            <div style={{ padding: '16px 20px', backgroundColor: 'var(--bg-secondary)', borderRadius: 'var(--radius-sm)', marginBottom: '24px', borderLeft: '3px solid var(--color-primary)' }}>
               A single compromised password can lead to account takeovers across multiple unrelated sites. Multi-factor authentication acts as a secondary block even if credentials leak.
             </div>
 
@@ -560,10 +595,10 @@ function Prevention() {
           {/* Section 02: Payments */}
           <section id="payments" style={{ marginBottom: 'var(--space-xxl)', borderBottom: '1px solid var(--color-border)', paddingBottom: 'var(--space-xxl)' }}>
             <div style={{ fontSize: '2.5rem', fontWeight: '300', color: 'var(--text-muted)', fontFamily: 'monospace' }}>02</div>
-            <h2 style={{ fontSize: '2rem', color: 'var(--accent-navy)', fontWeight: 'bold', marginTop: '4px', marginBottom: '16px' }}>
+            <h2 style={{ fontSize: '2rem', color: 'var(--text-primary)', fontWeight: 'bold', marginTop: '4px', marginBottom: '16px' }}>
               UPI & PAYMENT SECURITY
             </h2>
-            <div style={{ width: '40px', height: '3px', backgroundColor: 'var(--accent-navy)', borderRadius: '1.5px', marginBottom: '20px' }} />
+            <div style={{ width: '40px', height: '3px', backgroundColor: 'var(--color-primary)', borderRadius: '1.5px', marginBottom: '20px' }} />
             
             <p style={{ fontSize: '1rem', lineHeight: '1.6', color: 'var(--text-secondary)', marginBottom: '24px' }}>
               UPI payments transfer funds instantly out of your bank account. There is no escrow reversal mechanism.
@@ -595,10 +630,10 @@ function Prevention() {
           {/* Section 03: Browsing */}
           <section id="browsing" style={{ marginBottom: 'var(--space-xxl)', borderBottom: '1px solid var(--color-border)', paddingBottom: 'var(--space-xxl)' }}>
             <div style={{ fontSize: '2.5rem', fontWeight: '300', color: 'var(--text-muted)', fontFamily: 'monospace' }}>03</div>
-            <h2 style={{ fontSize: '2rem', color: 'var(--accent-navy)', fontWeight: 'bold', marginTop: '4px', marginBottom: '16px' }}>
+            <h2 style={{ fontSize: '2rem', color: 'var(--text-primary)', fontWeight: 'bold', marginTop: '4px', marginBottom: '16px' }}>
               SAFE BROWSING & LINKS
             </h2>
-            <div style={{ width: '40px', height: '3px', backgroundColor: 'var(--accent-navy)', borderRadius: '1.5px', marginBottom: '20px' }} />
+            <div style={{ width: '40px', height: '3px', backgroundColor: 'var(--color-primary)', borderRadius: '1.5px', marginBottom: '20px' }} />
             
             <p style={{ fontSize: '1rem', lineHeight: '1.6', color: 'var(--text-secondary)', marginBottom: '24px' }}>
               Fake portals cloning banking/university login pages are hosted on domains registered to look similar.
@@ -606,23 +641,23 @@ function Prevention() {
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', marginBottom: '24px' }}>
               <div style={{ display: 'flex', gap: '16px', alignItems: 'flex-start' }}>
-                <div style={{ width: '24px', height: '24px', borderRadius: '50%', backgroundColor: 'var(--accent-navy-light)', color: 'var(--accent-navy)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', flexShrink: 0 }}>1</div>
+                <div style={{ width: '24px', height: '24px', borderRadius: '50%', backgroundColor: 'var(--bg-secondary)', color: 'var(--color-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', flexShrink: 0 }}>1</div>
                 <div>
-                  <h4 style={{ fontSize: '1rem', color: 'var(--accent-navy)', margin: '0 0 4px 0', fontWeight: 'bold' }}>Check the destination TLD</h4>
+                  <h4 style={{ fontSize: '1rem', color: 'var(--text-primary)', margin: '0 0 4px 0', fontWeight: 'bold' }}>Check the destination TLD</h4>
                   <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', margin: 0 }}>Official Indian government portals end in <code>.gov.in</code>. Scammers buy cheap domains like <code>.verify-gov.in</code> to spoof users.</p>
                 </div>
               </div>
               <div style={{ display: 'flex', gap: '16px', alignItems: 'flex-start' }}>
-                <div style={{ width: '24px', height: '24px', borderRadius: '50%', backgroundColor: 'var(--accent-navy-light)', color: 'var(--accent-navy)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', flexShrink: 0 }}>2</div>
+                <div style={{ width: '24px', height: '24px', borderRadius: '50%', backgroundColor: 'var(--bg-secondary)', color: 'var(--color-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', flexShrink: 0 }}>2</div>
                 <div>
-                  <h4 style={{ fontSize: '1rem', color: 'var(--accent-navy)', margin: '0 0 4px 0', fontWeight: 'bold' }}>Look for HTTPS</h4>
+                  <h4 style={{ fontSize: '1rem', color: 'var(--text-primary)', margin: '0 0 4px 0', fontWeight: 'bold' }}>Look for HTTPS</h4>
                   <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', margin: 0 }}>Never enter credentials on pages labeled "Not Secure" (HTTP) inside the URL bar.</p>
                 </div>
               </div>
               <div style={{ display: 'flex', gap: '16px', alignItems: 'flex-start' }}>
-                <div style={{ width: '24px', height: '24px', borderRadius: '50%', backgroundColor: 'var(--accent-navy-light)', color: 'var(--accent-navy)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', flexShrink: 0 }}>3</div>
+                <div style={{ width: '24px', height: '24px', borderRadius: '50%', backgroundColor: 'var(--bg-secondary)', color: 'var(--color-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', flexShrink: 0 }}>3</div>
                 <div>
-                  <h4 style={{ fontSize: '1rem', color: 'var(--accent-navy)', margin: '0 0 4px 0', fontWeight: 'bold' }}>Hover and Inspect URLs</h4>
+                  <h4 style={{ fontSize: '1rem', color: 'var(--text-primary)', margin: '0 0 4px 0', fontWeight: 'bold' }}>Hover and Inspect URLs</h4>
                   <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', margin: 0 }}>Hover your mouse over links inside emails and chat logs to view the destination before tapping.</p>
                 </div>
               </div>
@@ -632,23 +667,23 @@ function Prevention() {
           {/* Section 04: Evidence */}
           <section id="evidence" style={{ marginBottom: 'var(--space-xxl)', borderBottom: '1px solid var(--color-border)', paddingBottom: 'var(--space-xxl)' }}>
             <div style={{ fontSize: '2.5rem', fontWeight: '300', color: 'var(--text-muted)', fontFamily: 'monospace' }}>04</div>
-            <h2 style={{ fontSize: '2rem', color: 'var(--accent-navy)', fontWeight: 'bold', marginTop: '4px', marginBottom: '16px' }}>
+            <h2 style={{ fontSize: '2rem', color: 'var(--text-primary)', fontWeight: 'bold', marginTop: '4px', marginBottom: '16px' }}>
               DIGITAL EVIDENCE PRESERVATION
             </h2>
-            <div style={{ width: '40px', height: '3px', backgroundColor: 'var(--accent-navy)', borderRadius: '1.5px', marginBottom: '20px' }} />
+            <div style={{ width: '40px', height: '3px', backgroundColor: 'var(--color-primary)', borderRadius: '1.5px', marginBottom: '20px' }} />
             
             <p style={{ fontSize: '1rem', lineHeight: '1.6', color: 'var(--text-secondary)', marginBottom: '24px' }}>
               If you fall victim to a cybercrime, preserving evidence is critical to secure an official investigation.
             </p>
 
             <div style={{
-              borderLeft: '4px solid var(--accent-navy)',
-              backgroundColor: 'var(--accent-navy-light)',
+              borderLeft: '4px solid var(--color-primary)',
+              backgroundColor: 'var(--bg-secondary)',
               padding: '20px 24px',
               borderRadius: 'var(--radius-sm)',
               marginBottom: '24px'
             }}>
-              <h4 style={{ fontSize: '0.95rem', fontWeight: 'bold', color: 'var(--accent-navy)', textTransform: 'uppercase', letterSpacing: '0.5px', marginTop: 0, marginBottom: '8px' }}>
+              <h4 style={{ fontSize: '0.95rem', fontWeight: 'bold', color: 'var(--text-primary)', textTransform: 'uppercase', letterSpacing: '0.5px', marginTop: 0, marginBottom: '8px' }}>
                 IF SOMETHING HAS ALREADY HAPPENED
               </h4>
               <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: 0, lineHeight: '1.5' }}>
@@ -658,19 +693,19 @@ function Prevention() {
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
               <div style={{ padding: '16px', backgroundColor: 'var(--bg-secondary)', borderRadius: 'var(--radius-sm)' }}>
-                <h5 style={{ fontWeight: 'bold', color: 'var(--accent-navy)', margin: '0 0 6px 0', fontSize: '0.9rem' }}>Screenshots</h5>
+                <h5 style={{ fontWeight: 'bold', color: 'var(--text-primary)', margin: '0 0 6px 0', fontSize: '0.9rem' }}>Screenshots</h5>
                 <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', margin: 0 }}>Capture profile handles, phone numbers, threat letters, and chat transcripts.</p>
               </div>
               <div style={{ padding: '16px', backgroundColor: 'var(--bg-secondary)', borderRadius: 'var(--radius-sm)' }}>
-                <h5 style={{ fontWeight: 'bold', color: 'var(--accent-navy)', margin: '0 0 6px 0', fontSize: '0.9rem' }}>Transactions</h5>
+                <h5 style={{ fontWeight: 'bold', color: 'var(--text-primary)', margin: '0 0 6px 0', fontSize: '0.9rem' }}>Transactions</h5>
                 <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', margin: 0 }}>Record transaction IDs, debit bank account numbers, UPI references, and timestamps.</p>
               </div>
               <div style={{ padding: '16px', backgroundColor: 'var(--bg-secondary)', borderRadius: 'var(--radius-sm)' }}>
-                <h5 style={{ fontWeight: 'bold', color: 'var(--accent-navy)', margin: '0 0 6px 0', fontSize: '0.9rem' }}>Headers & Links</h5>
+                <h5 style={{ fontWeight: 'bold', color: 'var(--text-primary)', margin: '0 0 6px 0', fontSize: '0.9rem' }}>Headers & Links</h5>
                 <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', margin: 0 }}>Save raw EML files or copy destination spoof hyperlinks without loading them.</p>
               </div>
               <div style={{ padding: '16px', backgroundColor: 'var(--bg-secondary)', borderRadius: 'var(--radius-sm)' }}>
-                <h5 style={{ fontWeight: 'bold', color: 'var(--accent-navy)', margin: '0 0 6px 0', fontSize: '0.9rem' }}>Alert Logs</h5>
+                <h5 style={{ fontWeight: 'bold', color: 'var(--text-primary)', margin: '0 0 6px 0', fontSize: '0.9rem' }}>Alert Logs</h5>
                 <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', margin: 0 }}>Keep SMS alerts, email notification logs, and browser connection warning codes.</p>
               </div>
             </div>
@@ -679,10 +714,10 @@ function Prevention() {
           {/* Section 05: If Something Goes Wrong */}
           <section id="wrong" style={{ marginBottom: 'var(--space-xxl)', borderBottom: '1px solid var(--color-border)', paddingBottom: 'var(--space-xxl)' }}>
             <div style={{ fontSize: '2.5rem', fontWeight: '300', color: 'var(--text-muted)', fontFamily: 'monospace' }}>05</div>
-            <h2 style={{ fontSize: '2rem', color: 'var(--accent-navy)', fontWeight: 'bold', marginTop: '4px', marginBottom: '16px' }}>
+            <h2 style={{ fontSize: '2rem', color: 'var(--text-primary)', fontWeight: 'bold', marginTop: '4px', marginBottom: '16px' }}>
               IF SOMETHING GOES WRONG
             </h2>
-            <div style={{ width: '40px', height: '3px', backgroundColor: 'var(--accent-navy)', borderRadius: '1.5px', marginBottom: '20px' }} />
+            <div style={{ width: '40px', height: '3px', backgroundColor: 'var(--color-primary)', borderRadius: '1.5px', marginBottom: '20px' }} />
             
             <p style={{ fontSize: '1rem', lineHeight: '1.6', color: 'var(--text-secondary)', marginBottom: '24px' }}>
               A standard incident response checklist to guide your recovery actions in real time:
@@ -692,21 +727,21 @@ function Prevention() {
               <div style={{ display: 'flex', gap: '16px', alignItems: 'flex-start' }}>
                 <span style={{ fontSize: '0.7rem', fontWeight: 'bold', padding: '2px 8px', borderRadius: '3px', color: 'var(--color-success)', backgroundColor: 'var(--color-success-light)', minWidth: '100px', textAlign: 'center', textTransform: 'uppercase' }}>Before</span>
                 <div>
-                  <h4 style={{ fontSize: '1rem', color: 'var(--accent-navy)', margin: '0 0 4px 0', fontWeight: 'bold' }}>Security Hygiene</h4>
+                  <h4 style={{ fontSize: '1rem', color: 'var(--text-primary)', margin: '0 0 4px 0', fontWeight: 'bold' }}>Security Hygiene</h4>
                   <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', margin: 0 }}>Keep recovery email links updated and enable secondary keys on account credentials.</p>
                 </div>
               </div>
               <div style={{ display: 'flex', gap: '16px', alignItems: 'flex-start' }}>
                 <span style={{ fontSize: '0.7rem', fontWeight: 'bold', padding: '2px 8px', borderRadius: '3px', color: 'var(--color-info)', backgroundColor: 'var(--color-info-light)', minWidth: '100px', textAlign: 'center', textTransform: 'uppercase' }}>During</span>
                 <div>
-                  <h4 style={{ fontSize: '1rem', color: 'var(--accent-navy)', margin: '0 0 4px 0', fontWeight: 'bold' }}>Pause and Verify</h4>
+                  <h4 style={{ fontSize: '1rem', color: 'var(--text-primary)', margin: '0 0 4px 0', fontWeight: 'bold' }}>Pause and Verify</h4>
                   <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', margin: 0 }}>Refuse transaction deadlines and do not enter authentication codes under duress.</p>
                 </div>
               </div>
               <div style={{ display: 'flex', gap: '16px', alignItems: 'flex-start' }}>
                 <span style={{ fontSize: '0.7rem', fontWeight: 'bold', padding: '2px 8px', borderRadius: '3px', color: 'var(--color-danger)', backgroundColor: 'var(--color-danger-light)', minWidth: '100px', textAlign: 'center', textTransform: 'uppercase' }}>After</span>
                 <div>
-                  <h4 style={{ fontSize: '1rem', color: 'var(--accent-navy)', margin: '0 0 4px 0', fontWeight: 'bold' }}>Secure, Preserve, Report</h4>
+                  <h4 style={{ fontSize: '1rem', color: 'var(--text-primary)', margin: '0 0 4px 0', fontWeight: 'bold' }}>Secure, Preserve, Report</h4>
                   <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', margin: 0 }}>Lock credentials, debited bank links, take screenshots, and raise coordinate flags on official support portals.</p>
                 </div>
               </div>
@@ -716,30 +751,105 @@ function Prevention() {
           {/* Section 06: Reporting */}
           <section id="reporting" style={{ marginBottom: 'var(--space-xxl)' }}>
             <div style={{ fontSize: '2.5rem', fontWeight: '300', color: 'var(--text-muted)', fontFamily: 'monospace' }}>06</div>
-            <h2 style={{ fontSize: '2rem', color: 'var(--accent-navy)', fontWeight: 'bold', marginTop: '4px', marginBottom: '16px' }}>
+            <h2 style={{ fontSize: '2rem', color: 'var(--text-primary)', fontWeight: 'bold', marginTop: '4px', marginBottom: '16px' }}>
               REPORTING & RESPONSE CHANNELS
             </h2>
-            <div style={{ width: '40px', height: '3px', backgroundColor: 'var(--accent-navy)', borderRadius: '1.5px', marginBottom: '20px' }} />
+            <div style={{ width: '40px', height: '3px', backgroundColor: 'var(--color-primary)', borderRadius: '1.5px', marginBottom: '20px' }} />
             
             <p style={{ fontSize: '1rem', lineHeight: '1.6', color: 'var(--text-secondary)', marginBottom: '24px' }}>
               Use official channels to file complaints. Keep reference files ready when registering reports:
             </p>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '24px' }}>
-              <div style={{ padding: '16px 20px', backgroundColor: 'var(--bg-secondary)', borderRadius: 'var(--radius-sm)' }}>
-                <h4 style={{ fontSize: '1rem', color: 'var(--accent-navy)', margin: '0 0 8px 0', fontWeight: 'bold' }}>National Cyber Crime Reporting Helpline</h4>
-                <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '12px' }}>Official government portal for filing complaints about financial scams, identity frauds, and abusive posts.</p>
-                <div style={{ display: 'flex', gap: '16px', alignItems: 'center', fontSize: '0.85rem' }}>
-                  <span>Phone: <strong>1930</strong> (24/7 Helpline)</span>
-                  <span>Link: <a href="https://cybercrime.gov.in" target="_blank" rel="noopener noreferrer" style={{ fontWeight: '600', color: 'var(--accent-navy)', textDecoration: 'underline' }}>cybercrime.gov.in</a></span>
+              <div style={{
+                padding: '20px 24px',
+                backgroundColor: 'var(--bg-secondary)',
+                borderRadius: 'var(--radius-sm)',
+                borderLeft: '4px solid var(--color-danger, #dc2626)',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'flex-start',
+                flexWrap: 'wrap',
+                gap: '16px'
+              }}>
+                <div style={{ flex: '1 1 360px' }}>
+                  <div style={{ display: 'flex', gap: '8px', alignItems: 'center', marginBottom: '6px' }}>
+                    <span style={{ fontSize: '0.65rem', fontWeight: 'bold', color: 'var(--color-danger, #dc2626)', border: '1px solid var(--color-danger, #dc2626)', padding: '2px 6px', borderRadius: '3px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                      Emergency Service • Golden Hour Window
+                    </span>
+                    <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>CFCFRMS / MHA</span>
+                  </div>
+                  <h4 style={{ fontSize: '1.15rem', color: 'var(--text-primary)', margin: '0 0 6px 0', fontWeight: 'bold' }}>
+                    National Cyber Crime Reporting Helpline: 1930
+                  </h4>
+                  <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '8px', lineHeight: '1.5' }}>
+                    Official 24/7 national coordination helpline for financial fraud and unauthorized debits. Reporting within the initial <strong>2–3 hour &quot;Golden Hour&quot;</strong> significantly enhances the chances of coordinating inter-bank hold alerts via the CFCFRMS to restrict illicit withdrawals before funds are dispersed across mule accounts. Fund freezing is not guaranteed and depends on rapid notification. <strong>The Golden Hour is not an exclusion deadline</strong> — reports filed after 3 hours or days later remain vital, officially processed 24/7, and essential for legal remedies.
+                  </p>
+                  <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+                    Official Web Portal: <a href="https://cybercrime.gov.in" target="_blank" rel="noopener noreferrer" aria-label="Open cybercrime.gov.in in a new tab" style={{ fontWeight: '600', color: 'var(--color-primary)', textDecoration: 'underline' }}>cybercrime.gov.in</a>
+                  </div>
+                </div>
+                <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap', alignSelf: 'center' }}>
+                  <a
+                    href="tel:1930"
+                    aria-label="Dial Helpline 1930"
+                    style={{
+                      backgroundColor: 'var(--color-danger, #dc2626)',
+                      color: 'white',
+                      padding: '8px 16px',
+                      borderRadius: '4px',
+                      fontWeight: 'bold',
+                      fontSize: '0.82rem',
+                      textDecoration: 'none',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '4px'
+                    }}
+                  >
+                    📞 Dial 1930
+                  </a>
+                  <button
+                    onClick={handleCopyHelpline}
+                    aria-label={
+                      copiedHelpline
+                        ? 'Helpline number 1930 copied to clipboard'
+                        : copyFailed
+                          ? 'Copy failed, please dial 1930 directly'
+                          : 'Copy National Cyber Crime Helpline Number 1930'
+                    }
+                    style={{
+                      backgroundColor: 'var(--bg-white)',
+                      color: copyFailed ? 'var(--color-danger, #b91c1c)' : 'var(--text-primary)',
+                      border: copyFailed ? '1px solid var(--color-danger, #b91c1c)' : '1px solid var(--color-border-dark)',
+                      padding: '7px 14px',
+                      borderRadius: '4px',
+                      fontWeight: '600',
+                      fontSize: '0.82rem',
+                      cursor: 'pointer',
+                      transition: 'all 0.15s ease'
+                    }}
+                  >
+                    <span aria-live="polite">
+                      {copiedHelpline
+                        ? '✓ Copied'
+                        : copyFailed
+                          ? '⚠️ Copy failed — dial 1930'
+                          : '📋 Copy 1930'}
+                    </span>
+                  </button>
                 </div>
               </div>
 
+              {/* Zero-Telemetry Golden Hour Incident Docket Generator */}
+              <div style={{ margin: '20px 0' }}>
+                <IncidentDocketGenerator />
+              </div>
+
               <div style={{ padding: '16px 20px', backgroundColor: 'var(--bg-secondary)', borderRadius: 'var(--radius-sm)' }}>
-                <h4 style={{ fontSize: '1rem', color: 'var(--accent-navy)', margin: '0 0 8px 0', fontWeight: 'bold' }}>RBI Banking Ombudsman</h4>
+                <h4 style={{ fontSize: '1rem', color: 'var(--text-primary)', margin: '0 0 8px 0', fontWeight: 'bold' }}>RBI Banking Ombudsman</h4>
                 <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '12px' }}>Official ombudsman for resolving banking disputes, unauthorized electronic debits, and UPI merchant claims.</p>
                 <div style={{ fontSize: '0.85rem' }}>
-                  Link: <a href="https://cms.rbi.org.in" target="_blank" rel="noopener noreferrer" style={{ fontWeight: '600', color: 'var(--accent-navy)', textDecoration: 'underline' }}>cms.rbi.org.in</a>
+                  Link: <a href="https://cms.rbi.org.in" target="_blank" rel="noopener noreferrer" style={{ fontWeight: '600', color: 'var(--color-primary)', textDecoration: 'underline' }}>cms.rbi.org.in</a>
                 </div>
               </div>
             </div>
@@ -754,7 +864,7 @@ function Prevention() {
         {/* Desktop Optional Right Rail */}
         {!isMobile && (
           <div style={{ position: 'sticky', top: '140px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
-            <div style={{ borderLeft: '3px solid var(--accent-navy)', paddingLeft: '16px', backgroundColor: 'var(--bg-secondary)', padding: '16px', borderRadius: 'var(--radius-sm)' }}>
+            <div style={{ borderLeft: '3px solid var(--color-primary)', paddingLeft: '16px', backgroundColor: 'var(--bg-secondary)', padding: '16px', borderRadius: 'var(--radius-sm)' }}>
               <h4 style={{ fontSize: '0.8rem', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: '12px', fontWeight: '800', letterSpacing: '0.5px' }}>
                 Quick Checklist
               </h4>
@@ -773,7 +883,7 @@ function Prevention() {
 
       {/* Dynamic branding tagline at the bottom */}
       <div style={{ textAlign: 'center', marginTop: 'var(--space-xxl)', paddingTop: '24px', borderTop: '1px dashed var(--color-border)' }}>
-        <span style={{ fontSize: '1rem', fontWeight: 'bold', color: 'var(--accent-navy)', letterSpacing: '0.5px' }}>
+        <span style={{ fontSize: '1rem', fontWeight: '600', color: 'var(--text-secondary)', letterSpacing: '0.5px' }}>
           Learn. Recognize. Stay Safe.
         </span>
       </div>

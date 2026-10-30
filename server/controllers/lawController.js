@@ -1,5 +1,7 @@
+const mongoose = require('mongoose');
 const LawSection = require('../models/LawSection');
 const LegalSource = require('../models/LegalSource');
+const { escapeRegex } = require('../utils/regexUtils');
 
 exports.getAllLaws = async (req, res) => {
   try {
@@ -12,6 +14,9 @@ exports.getAllLaws = async (req, res) => {
 
 exports.getLawById = async (req, res) => {
   try {
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      return res.status(400).json({ message: 'Invalid law section ID format' });
+    }
     const law = await LawSection.findById(req.params.id).populate('officialSourceId');
     if (!law) {
       return res.status(404).json({ message: 'Law section not found' });
@@ -25,12 +30,13 @@ exports.getLawById = async (req, res) => {
 exports.searchLaws = async (req, res) => {
   try {
     const { q } = req.query;
-    if (!q) {
+    if (!q || typeof q !== 'string' || !q.trim()) {
       const laws = await LawSection.find().populate('officialSourceId');
       return res.json(laws);
     }
 
-    const regex = new RegExp(q, 'i');
+    const safePattern = escapeRegex(q.trim());
+    const regex = new RegExp(safePattern, 'i');
     const filtered = await LawSection.find({
       $or: [
         { sectionNumber: regex },

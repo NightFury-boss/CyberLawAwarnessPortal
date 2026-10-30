@@ -1,0 +1,26 @@
+{
+  "version": 2,
+  "name": "drive-s98063dee-f5b0-49ea-8458-4fc20e88aa6c-resources",
+  "projectId": "client-a541be49",
+  "startPath": "/resources",
+  "createdAt": 1793328751965,
+  "steps": [
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "role",
+        "role": "button",
+        "name": "Copy National Cybercrime Helpline Number 1930"
+      },
+      "source": {
+        "file": "src/pages/Resources.jsx",
+        "line": 261
+      },
+      "action": "click",
+      "args": {},
+      "expect": {
+        "kind": "settled"
+      }
+    }
+  ]
+}

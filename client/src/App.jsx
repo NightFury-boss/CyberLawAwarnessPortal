@@ -6,6 +6,7 @@ import api from './services/api';
 import Sidebar from './components/Sidebar';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
+import ErrorBoundary from './components/common/ErrorBoundary';
 
 // Code-split page route components
 const Home = lazy(() => import('./pages/Home'));
@@ -135,7 +136,7 @@ function AppContent() {
 
   if (loading) {
     return (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', fontFamily: 'var(--font-sans)', color: 'var(--accent-navy)' }}>
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', fontFamily: 'var(--font-sans)', color: 'var(--text-primary)' }}>
         <h3>Loading Portal Environment...</h3>
       </div>
     );
@@ -175,80 +176,102 @@ function AppContent() {
         
         <main style={{ flex: 1 }}>
           <div key={location.pathname} className="portal-page-settle">
-            <Suspense fallback={<PageLoadingFallback />}>
-              <Routes location={location}>
-                {/* Public Routes */}
-                <Route path="/" element={<Home user={user} />} />
-                <Route path="/about" element={<About />} />
-                <Route path="/laws" element={<Laws />} />
-                <Route path="/crimes" element={<Crimes />} />
-                <Route path="/cases" element={<Cases />} />
-                <Route path="/prevention" element={<Prevention />} />
-                <Route path="/resources" element={<Resources />} />
-                
-                <Route 
-                  path="/login" 
-                  element={!user ? <Login setUser={setUser} /> : <Navigate to="/dashboard" />} 
-                />
-                <Route 
-                  path="/register" 
-                  element={!user ? <Register setUser={setUser} /> : <Navigate to="/dashboard" />} 
-                />
+            <ErrorBoundary>
+              <Suspense fallback={<PageLoadingFallback />}>
+                <Routes location={location}>
+                  {/* Public Routes */}
+                  <Route path="/" element={<Home user={user} />} />
+                  <Route path="/about" element={<About />} />
+                  <Route path="/laws" element={<Laws />} />
+                  <Route path="/crimes" element={<Crimes />} />
+                  <Route path="/cases" element={<Cases />} />
+                  <Route path="/prevention" element={<Prevention />} />
+                  <Route path="/resources" element={<Resources />} />
+                  
+                  <Route 
+                    path="/login" 
+                    element={!user ? <Login setUser={setUser} /> : <Navigate to={user.role === 'admin' ? "/admin" : "/dashboard"} replace />} 
+                  />
+                  <Route 
+                    path="/register" 
+                    element={!user ? <Register setUser={setUser} /> : <Navigate to={user.role === 'admin' ? "/admin" : "/dashboard"} replace />} 
+                  />
 
-                {/* User Protected Workspace Routes */}
-                <Route 
-                  path="/dashboard" 
-                  element={user ? <Dashboard user={user} progressTrigger={progressTrigger} /> : <Navigate to="/login" />} 
-                />
-                <Route 
-                  path="/assessment/baseline" 
-                  element={user ? <BaselineAssessment user={user} updateProgressTrigger={triggerProgressUpdate} /> : <Navigate to="/login" />} 
-                />
-                <Route 
-                  path="/assessment/final" 
-                  element={user ? <FinalAssessment user={user} updateProgressTrigger={triggerProgressUpdate} /> : <Navigate to="/login" />} 
-                />
-                <Route 
-                  path="/quizzes" 
-                  element={user ? <Quizzes user={user} updateProgressTrigger={triggerProgressUpdate} /> : <Navigate to="/login" />} 
-                />
+                  {/* User Protected Workspace Routes */}
+                  <Route 
+                    path="/dashboard" 
+                    element={
+                      user ? (
+                        user.role === 'admin' ? (
+                          <Navigate to="/admin" replace />
+                        ) : (
+                          <Dashboard user={user} progressTrigger={progressTrigger} />
+                        )
+                      ) : (
+                        <Navigate to="/login" replace />
+                      )
+                    } 
+                  />
+                  <Route 
+                    path="/assessment/baseline" 
+                    element={user ? <BaselineAssessment user={user} updateProgressTrigger={triggerProgressUpdate} /> : <Navigate to="/login" />} 
+                  />
+                  <Route 
+                    path="/assessment/final" 
+                    element={user ? <FinalAssessment user={user} updateProgressTrigger={triggerProgressUpdate} /> : <Navigate to="/login" />} 
+                  />
+                  <Route 
+                    path="/quizzes" 
+                    element={user ? <Quizzes user={user} updateProgressTrigger={triggerProgressUpdate} /> : <Navigate to="/login" />} 
+                  />
 
-                {/* Workspace Contextual Content Routes (Protected within Workspace Shell) */}
-                <Route 
-                  path="/workspace" 
-                  element={user ? <Navigate to="/dashboard" replace /> : <Navigate to="/login" replace />} 
-                />
-                <Route 
-                  path="/workspace/laws" 
-                  element={user ? <Laws /> : <Navigate to="/login" replace />} 
-                />
-                <Route 
-                  path="/workspace/crimes" 
-                  element={user ? <Crimes /> : <Navigate to="/login" replace />} 
-                />
-                <Route 
-                  path="/workspace/cases" 
-                  element={user ? <Cases /> : <Navigate to="/login" replace />} 
-                />
-                <Route 
-                  path="/workspace/prevention" 
-                  element={user ? <Prevention /> : <Navigate to="/login" replace />} 
-                />
-                <Route 
-                  path="/workspace/resources" 
-                  element={user ? <Resources /> : <Navigate to="/login" replace />} 
-                />
+                  {/* Workspace Contextual Content Routes (Protected within Workspace Shell) */}
+                  <Route 
+                    path="/workspace" 
+                    element={
+                      user ? (
+                        user.role === 'admin' ? (
+                          <Navigate to="/admin" replace />
+                        ) : (
+                          <Navigate to="/dashboard" replace />
+                        )
+                      ) : (
+                        <Navigate to="/login" replace />
+                      )
+                    } 
+                  />
+                  <Route 
+                    path="/workspace/laws" 
+                    element={user ? <Laws /> : <Navigate to="/login" replace />} 
+                  />
+                  <Route 
+                    path="/workspace/crimes" 
+                    element={user ? <Crimes /> : <Navigate to="/login" replace />} 
+                  />
+                  <Route 
+                    path="/workspace/cases" 
+                    element={user ? <Cases /> : <Navigate to="/login" replace />} 
+                  />
+                  <Route 
+                    path="/workspace/prevention" 
+                    element={user ? <Prevention /> : <Navigate to="/login" replace />} 
+                  />
+                  <Route 
+                    path="/workspace/resources" 
+                    element={user ? <Resources /> : <Navigate to="/login" replace />} 
+                  />
 
-                {/* Admin Protected Routes */}
-                <Route 
-                  path="/admin" 
-                  element={user && user.role === 'admin' ? <AdminPanel user={user} /> : <Navigate to="/login" />} 
-                />
+                  {/* Admin Protected Routes */}
+                  <Route 
+                    path="/admin" 
+                    element={user && user.role === 'admin' ? <AdminPanel user={user} /> : <Navigate to="/login" />} 
+                  />
 
-                {/* Fallback */}
-                <Route path="*" element={<Navigate to="/" />} />
-              </Routes>
-            </Suspense>
+                  {/* Fallback */}
+                  <Route path="*" element={<Navigate to="/" />} />
+                </Routes>
+              </Suspense>
+            </ErrorBoundary>
           </div>
         </main>
 
@@ -260,9 +283,11 @@ function AppContent() {
 
 function App() {
   return (
-    <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-      <AppContent />
-    </Router>
+    <ErrorBoundary>
+      <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+        <AppContent />
+      </Router>
+    </ErrorBoundary>
   );
 }
 

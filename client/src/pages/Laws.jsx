@@ -290,41 +290,151 @@ function Laws() {
     localStorage.setItem('law_notes', JSON.stringify(nextNotes));
   };
 
-  // Mock quiz questions mapped to provisions for inline check
+  // Statutory concept check questions mapped to provisions for inline check
   const getKnowledgeCheck = (secNumber) => {
     switch (secNumber) {
-      case 'Section 66C':
+      case 'Section 43A':
         return {
-          question: 'Under Section 66C of the IT Act, which of the following is considered an identity theft offence?',
+          statusBadge: 'CURRENT STATUTE (SLATED FOR OMISSION UNDER DPDP ACT S. 44(2))',
+          statusType: 'current',
+          question: 'Under Section 43A of the IT Act, when is a body corporate held liable to pay compensation for personal data leaks?',
           options: [
-            'Sharing political opinions on messaging boards.',
-            'Fraudulently using another person\'s UPI PIN or password.',
-            'Exposing location details in a public restaurant check-in.'
+            'Only when corporate leadership intentionally distributes proprietary user records to foreign buyers.',
+            'When it is negligent in implementing and maintaining reasonable security practices, causing wrongful loss or wrongful gain.',
+            'Whenever an enterprise cloud hosting infrastructure experiences temporary unplanned downtime.'
           ],
           correctIdx: 1,
-          explanation: 'Section 66C strictly criminalizes the dishonest or fraudulent use of passwords, PINs, biometrics, or electronic signatures.'
+          explanation: 'Section 43A of the IT Act mandates that bodies corporate possessing or handling Sensitive Personal Data or Information (SPDI) must maintain reasonable security practices. Negligence resulting in wrongful loss or gain triggers civil compensation damages, adjudicated by the State Adjudicating Officer under Section 46 of the IT Act. (Statutory Accuracy Note: Under Section 44(2) of the Digital Personal Data Protection Act, 2023, Section 43A is slated for omission once that provision is notified in the Official Gazette pursuant to DPDP Act Section 1(2). As of the current date, that commencement notification has not been gazetted, so Section 43A and the SPDI Rules 2011 remain active operative law. Educational guidance; not formal legal counsel).'
+        };
+      case 'Section 66C':
+        return {
+          statusBadge: 'CURRENT STATUTE (CRIMINAL OFFENCE)',
+          statusType: 'current',
+          question: 'Under Section 66C of the IT Act, which of the following is considered a criminal identity theft offence?',
+          options: [
+            'Sharing political opinions or news links on public discussion forums.',
+            'Dishonestly or fraudulently using another person\'s electronic signature, password, UPI PIN, or unique biometric identifier.',
+            'Voluntarily sharing public check-in location markers on social media profiles.'
+          ],
+          correctIdx: 1,
+          explanation: 'Section 66C strictly criminalizes the fraudulent or dishonest use of another person\'s electronic signature, password, or any other unique identification feature. The offence is punishable with imprisonment of either description for up to 3 years and a fine of up to ₹1,00,000.'
         };
       case 'Section 66D':
         return {
-          question: 'If a scammer sets up a mock website pretending to be your official bank portal to steal funds, which section applies?',
+          statusBadge: 'CURRENT STATUTE (CRIMINAL OFFENCE)',
+          statusType: 'current',
+          question: 'If a scammer sets up a mock website pretending to be an official bank or creates a fake customer support account to cheat a victim of funds, which section applies?',
           options: [
             'Section 66A',
-            'Section 66D (Cheating by Personation)',
-            'Section 43A (Compensation)'
+            'Section 66D (Cheating by Personation using Computer Resource)',
+            'Section 43A (Corporate Compensation)'
           ],
           correctIdx: 1,
-          explanation: 'Using communication devices or networks to cheat by pretending to be an institution or another person falls under Section 66D.'
+          explanation: 'Section 66D criminalizes cheating by personation by means of any communication device or computer resource, punishable with imprisonment for up to 3 years and a fine of up to ₹1,00,000. In cyber fraud investigations, police routinely charge Section 66D alongside general penal cheating provisions (BNS Section 318/319).'
+        };
+      case 'Section 66E':
+        return {
+          statusBadge: 'CURRENT STATUTE (CRIMINAL OFFENCE)',
+          statusType: 'current',
+          question: 'What conduct is explicitly criminalized under Section 66E of the IT Act?',
+          options: [
+            'Intentionally capturing, publishing, or transmitting images of private areas of any person without consent.',
+            'Recording internal customer service training calls without audible beep tones.',
+            'Screen-recording a public video webinar without the host\'s prior written approval.'
+          ],
+          correctIdx: 0,
+          explanation: 'Section 66E criminalizes intentionally or knowingly capturing, publishing, or transmitting the image of a private area of any person without consent under circumstances violating privacy. The offence carries imprisonment of up to 3 years, or a fine up to ₹2,00,000, or both.'
+        };
+      case 'Section 67':
+        return {
+          statusBadge: 'CURRENT STATUTE (CRIMINAL OFFENCE)',
+          statusType: 'current',
+          question: 'What is the scope of Section 67 of the Information Technology Act?',
+          options: [
+            'Regulating software licensing agreements and open-source copyright exemptions.',
+            'Punishing the electronic publication or transmission of obscene material.',
+            'Governing inter-state taxation on e-commerce logistics providers.'
+          ],
+          correctIdx: 1,
+          explanation: 'Section 67 punishes the publication or transmission in electronic form of material that is lascivious or appeals to the prurient interest (first conviction: imprisonment up to 3 years and fine up to ₹5,00,000; subsequent convictions: up to 5 years and fine up to ₹10,00,000). Note that Sections 67A and 67B provide specialized, more severe penalties for sexually explicit acts and child abuse materials.'
+        };
+      case 'Section 66A':
+        return {
+          statusBadge: 'STRUCK DOWN / UNCONSTITUTIONAL (VOID)',
+          statusType: 'omitted',
+          question: 'What is the current legal status of Section 66A of the IT Act?',
+          options: [
+            'It is fully active and allows local authorities to arrest users for annoying online messages.',
+            'It was struck down as unconstitutional by the Supreme Court in Shreya Singhal (2015) and cannot be legally invoked.',
+            'It was expanded by the DPDP Act 2023 to apply to international data transmissions.'
+          ],
+          correctIdx: 1,
+          explanation: 'In Shreya Singhal v. Union of India (2015) 5 SCC 1, the Supreme Court of India struck down Section 66A in its entirety as unconstitutional for violating the fundamental right to freedom of speech and expression under Article 19(1)(a). It is completely invalid and has no legal force. The Supreme Court has repeatedly ordered that no police officer or court may register complaints or prosecute citizens under this omitted provision.'
         };
       case 'DPDP Section 6':
         return {
-          question: 'What does the DPDP Act require for a user\'s consent to be valid?',
+          statusBadge: 'ENACTED (COMMENCEMENT PENDING NOTIFICATION)',
+          statusType: 'pending',
+          question: 'Under Section 6 of the Digital Personal Data Protection Act 2023, what standard is required for consent to be valid?',
           options: [
-            'A pre-ticked checkbox hidden in terms of service pages.',
-            'A free, specific, informed, and unambiguous affirmative action.',
-            'Just a generic notice stating that cookies are processed.'
+            'A pre-ticked checkbox hidden inside standard terms of service documents.',
+            'A free, specific, informed, unconditional, and unambiguous affirmative action.',
+            'A general website footer notice stating that user analytics cookies are collected.'
           ],
           correctIdx: 1,
-          explanation: 'DPDP Section 6 mandates that consent must be active, unambiguous, specific, and easily withdrawable.'
+          explanation: 'DPDP Act Section 6 mandates that consent given by a Data Principal must be free, specific, informed, unconditional, and unambiguous with a clear affirmative action, limited to necessary processing. Pre-ticked checkboxes and bundled consents do not meet this standard. (Statutory Status: The DPDP Act received Presidential assent in August 2023; operational commencement of substantive sections is pending notification of DPDP Rules and establishment of the Data Protection Board of India).'
+        };
+      case 'DPDP Section 11':
+        return {
+          statusBadge: 'ENACTED (COMMENCEMENT PENDING NOTIFICATION)',
+          statusType: 'pending',
+          question: 'Which statutory right does Section 11 of the DPDP Act 2023 guarantee to individuals (Data Principals)?',
+          options: [
+            'The right to receive free broadband internet from public utilities.',
+            'The right to obtain a summary of processed personal data and request correction, completion, or erasure.',
+            'The right to trade anonymized medical data on public exchanges.'
+          ],
+          correctIdx: 1,
+          explanation: 'DPDP Act Section 11 guarantees Data Principals the right to obtain a summary of their personal data processed by a Data Fiduciary, the identities of all processors, and the right to correction, completion, updating, and erasure of personal data that is no longer necessary for the specified purpose. (Statutory Status: Enacted statute; operational enforcement pending notification).'
+        };
+      case 'BNS Section 318':
+        return {
+          statusBadge: 'CURRENT STATUTE (REPLACES IPC 420 AS OF 1 JULY 2024)',
+          statusType: 'current',
+          question: 'Which erstwhile provision of the Indian Penal Code (IPC) is replaced by Section 318 of the Bharatiya Nyaya Sanhita (BNS)?',
+          options: [
+            'IPC Section 302 (Punishment for murder)',
+            'IPC Section 420 (Cheating and dishonestly inducing delivery of property)',
+            'IPC Section 124A (Sedition)'
+          ],
+          correctIdx: 1,
+          explanation: 'BNS Section 318 replaced IPC Section 420 effective 1 July 2024. It is the core general penal provision punishing cheating and dishonestly inducing delivery of property, carrying imprisonment of up to 7 years and fine. It is routinely invoked in financial cyber fraud cases.'
+        };
+      case 'BNS Section 319':
+        return {
+          statusBadge: 'CURRENT STATUTE (REPLACES IPC 419 AS OF 1 JULY 2024)',
+          statusType: 'current',
+          question: 'How does BNS Section 319 (Cheating by personation) apply in cyber fraud cases?',
+          options: [
+            'It penalizes attackers who cheat by pretending to be someone else or substituting identities, replacing IPC Section 419.',
+            'It applies exclusively to intellectual property copyright disputes between corporations.',
+            'It regulates broadband spectrum allocation among telecommunications carriers.'
+          ],
+          correctIdx: 0,
+          explanation: 'BNS Section 319 replaced IPC Section 419 on 1 July 2024, punishing cheating by personation with imprisonment for up to 3 years, or fine, or both. It operates alongside IT Act Section 66D for online identity impersonation.'
+        };
+      case 'IT Intermediary Rules':
+        return {
+          statusBadge: 'SUBORDINATE LEGISLATION (IN FORCE)',
+          statusType: 'current',
+          question: 'Under the Information Technology Intermediary Rules, what is the consequence if an online platform fails to observe mandatory due diligence?',
+          options: [
+            'The platform immediately loses its registered domain names.',
+            'The platform loses its statutory safe harbour immunity under Section 79 of the IT Act.',
+            'The platform\'s executives receive an automatic fine from the Ministry of Finance.'
+          ],
+          correctIdx: 1,
+          explanation: 'Under Section 79 of the IT Act, an intermediary enjoys safe harbour immunity from liability for third-party user content conditional upon observing due diligence under the IT (Intermediary Guidelines and Digital Media Ethics Code) Rules, 2021 (as amended). Failing to observe due diligence or failing to act expeditiously upon lawful takedown notices forfeits this safe harbour under Section 79(2)/(3).'
         };
       default:
         return null;
@@ -337,6 +447,15 @@ function Laws() {
 
   const handleQuizSubmit = (secNumber) => {
     setSubmittedQuizzes({ ...submittedQuizzes, [secNumber]: true });
+  };
+
+  const handleQuizReset = (secNumber) => {
+    const nextAnswers = { ...quizAnswers };
+    delete nextAnswers[secNumber];
+    setQuizAnswers(nextAnswers);
+    const nextSubmitted = { ...submittedQuizzes };
+    delete nextSubmitted[secNumber];
+    setSubmittedQuizzes(nextSubmitted);
   };
 
   // Client Filter Logic (Filters the provisions pool dynamically)
@@ -376,7 +495,7 @@ function Laws() {
     const noteText = notes[section.sectionNumber] || '';
     const inlineQuiz = getKnowledgeCheck(section.sectionNumber);
     
-    let accentColor = 'var(--accent-navy)';
+    let accentColor = 'var(--color-primary)';
     if (isOmitted) accentColor = 'var(--color-error)';
     else if (isNotYetInForce) accentColor = '#f59e0b';
     else if (section.role === 'Data Protection') accentColor = '#10b981';
@@ -402,7 +521,7 @@ function Laws() {
             <span style={{ fontSize: '0.75rem', fontWeight: 'bold', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1px' }}>
               {section.actName} • {section.role}
             </span>
-            <h3 style={{ fontSize: '1.6rem', color: 'var(--accent-navy)', fontWeight: '700', marginTop: '6px', lineHeight: '1.2' }}>
+            <h3 style={{ fontSize: '1.6rem', color: 'var(--text-primary)', fontWeight: '700', marginTop: '6px', lineHeight: '1.2' }}>
               {section.sectionNumber}: {section.officialTitle}
             </h3>
             <div style={{ width: '40px', height: '3px', backgroundColor: accentColor, borderRadius: '1.5px', marginBottom: '16px' }} />
@@ -423,7 +542,7 @@ function Laws() {
               }}
               title={hasBookmark ? 'Remove Bookmark' : 'Bookmark Section'}
             >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill={hasBookmark ? "var(--accent-navy)" : "none"} stroke="var(--accent-navy)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill={hasBookmark ? "var(--color-primary)" : "none"} stroke="var(--color-primary)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
             </button>
             <span style={{
               fontSize: '0.7rem',
@@ -431,9 +550,9 @@ function Laws() {
               textTransform: 'uppercase',
               padding: '4px 10px',
               borderRadius: '3px',
-              backgroundColor: isOmitted ? 'rgba(239, 68, 68, 0.08)' : (isNotYetInForce ? 'rgba(245, 158, 11, 0.08)' : 'var(--accent-navy-light)'),
-              color: isOmitted ? 'var(--color-error)' : (isNotYetInForce ? '#d35400' : 'var(--accent-navy)'),
-              border: `1px solid ${accentColor}`
+              backgroundColor: isOmitted ? 'rgba(239, 68, 68, 0.08)' : (isNotYetInForce ? 'rgba(245, 158, 11, 0.08)' : 'var(--bg-secondary)'),
+              color: isOmitted ? 'var(--color-error)' : (isNotYetInForce ? '#d35400' : 'var(--text-primary)'),
+              border: isOmitted ? '1px solid var(--color-error)' : (isNotYetInForce ? '1px solid #f59e0b' : '1px solid var(--color-border)')
             }}>
               {section.legalStatus}
             </span>
@@ -476,7 +595,7 @@ function Laws() {
             <button
               onClick={() => setTextViews({ ...textViews, [section.sectionNumber]: 'plain' })}
               style={{
-                backgroundColor: textToggleView === 'plain' ? 'var(--accent-navy)' : 'transparent',
+                backgroundColor: textToggleView === 'plain' ? 'var(--color-primary)' : 'transparent',
                 color: textToggleView === 'plain' ? 'white' : 'var(--text-secondary)',
                 border: 'none',
                 padding: '6px 14px',
@@ -492,7 +611,7 @@ function Laws() {
             <button
               onClick={() => setTextViews({ ...textViews, [section.sectionNumber]: 'official' })}
               style={{
-                backgroundColor: textToggleView === 'official' ? 'var(--accent-navy)' : 'transparent',
+                backgroundColor: textToggleView === 'official' ? 'var(--color-primary)' : 'transparent',
                 color: textToggleView === 'official' ? 'white' : 'var(--text-secondary)',
                 border: 'none',
                 padding: '6px 14px',
@@ -543,7 +662,7 @@ function Laws() {
           marginBottom: '24px'
         }}>
           <div>
-            <h4 style={{ fontSize: '0.85rem', color: 'var(--accent-navy)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '8px', fontWeight: 'bold' }}>
+            <h4 style={{ fontSize: '0.85rem', color: 'var(--text-primary)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '8px', fontWeight: 'bold' }}>
               Why It Matters to You
             </h4>
             <p style={{ color: 'var(--text-secondary)', margin: 0, lineHeight: '1.5' }}>
@@ -552,7 +671,7 @@ function Laws() {
           </div>
 
           <div>
-            <h4 style={{ fontSize: '0.85rem', color: 'var(--accent-navy)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '8px', fontWeight: 'bold' }}>
+            <h4 style={{ fontSize: '0.85rem', color: 'var(--text-primary)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '8px', fontWeight: 'bold' }}>
               Everyday Real-Life Situation
             </h4>
             <p style={{ color: 'var(--text-secondary)', margin: 0, lineHeight: '1.5', fontStyle: 'italic' }}>
@@ -573,11 +692,11 @@ function Laws() {
           flexWrap: 'wrap',
           marginBottom: '24px'
         }}>
-          <span style={{ fontWeight: 'bold', color: 'var(--accent-navy)' }}>PROVISION ROADMAP:</span>
+          <span style={{ fontWeight: 'bold', color: 'var(--text-secondary)' }}>HOW THIS CONNECTS:</span>
           <span style={{ color: 'var(--text-primary)' }}>{section.sectionNumber}</span>
           <span>&rarr;</span>
           {section.relatedCyberCrimes && section.relatedCyberCrimes.length > 0 ? (
-            <Link to={getContextPath('/crimes')} style={{ color: 'var(--accent-navy)', fontWeight: 'bold', textDecoration: 'underline' }}>
+            <Link to={getContextPath('/crimes')} style={{ color: 'var(--color-accent)', fontWeight: 'bold', textDecoration: 'underline' }}>
               Crime: {section.relatedCyberCrimes[0]}
             </Link>
           ) : (
@@ -585,7 +704,7 @@ function Laws() {
           )}
           <span>&rarr;</span>
           {section.relatedCaseStudies && section.relatedCaseStudies.length > 0 ? (
-            <Link to={getContextPath('/cases')} style={{ color: 'var(--accent-navy)', fontWeight: 'bold', textDecoration: 'underline' }}>
+            <Link to={getContextPath('/cases')} style={{ color: 'var(--color-accent)', fontWeight: 'bold', textDecoration: 'underline' }}>
               Case File: {section.relatedCaseStudies[0].replace(/-/g, ' ')}
             </Link>
           ) : (
@@ -599,11 +718,32 @@ function Laws() {
             backgroundColor: 'var(--bg-secondary)',
             borderRadius: '4px',
             padding: '20px',
-            marginBottom: '24px'
+            marginBottom: '24px',
+            border: '1px solid var(--color-border)'
           }}>
-            <span style={{ display: 'block', fontSize: '0.75rem', color: 'var(--accent-navy)', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '8px' }}>
-              Concept Check
-            </span>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px', marginBottom: '12px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '1px' }}>
+                  Quick Law Check
+                </span>
+                {inlineQuiz.statusBadge && (
+                  <span style={{
+                    fontSize: '0.65rem',
+                    fontWeight: '800',
+                    padding: '2px 7px',
+                    borderRadius: '3px',
+                    backgroundColor: inlineQuiz.statusType === 'omitted' ? 'var(--color-error-light)' : inlineQuiz.statusType === 'pending' ? 'rgba(245, 158, 11, 0.1)' : 'var(--bg-white)',
+                    color: inlineQuiz.statusType === 'omitted' ? 'var(--color-error)' : inlineQuiz.statusType === 'pending' ? '#b45309' : 'var(--color-primary)',
+                    border: '1px solid var(--color-border)'
+                  }}>
+                    {inlineQuiz.statusBadge}
+                  </span>
+                )}
+              </div>
+              <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontStyle: 'italic' }}>
+                Educational Practice • Not Legal Advice
+              </span>
+            </div>
             <p style={{ fontSize: '0.95rem', fontWeight: '600', margin: '0 0 16px 0', color: 'var(--text-primary)' }}>
               {inlineQuiz.question}
             </p>
@@ -625,8 +765,8 @@ function Laws() {
                     optBorder = '1px solid var(--color-error)';
                   }
                 } else if (isSelected) {
-                  optBg = 'var(--accent-navy-light)';
-                  optBorder = '1px solid var(--accent-navy)';
+                  optBg = 'var(--color-primary-light)';
+                  optBorder = '1px solid var(--color-primary)';
                 }
 
                 return (
@@ -657,7 +797,7 @@ function Laws() {
                 onClick={() => handleQuizSubmit(section.sectionNumber)}
                 style={{
                   marginTop: '16px',
-                  backgroundColor: 'var(--accent-navy)',
+                  backgroundColor: 'var(--color-primary)',
                   color: 'white',
                   border: 'none',
                   padding: '8px 16px',
@@ -673,11 +813,27 @@ function Laws() {
             )}
 
             {submittedQuizzes[section.sectionNumber] && (
-              <div style={{ marginTop: '16px', fontSize: '0.85rem', color: 'var(--text-secondary)', borderLeft: '3px solid var(--accent-navy)', paddingLeft: '12px' }}>
-                <strong>
-                  {quizAnswers[section.sectionNumber] === inlineQuiz.correctIdx ? 'Correct' : 'Incorrect'}
-                </strong>
-                <p style={{ margin: '4px 0 0 0', lineHeight: '1.4' }}>{inlineQuiz.explanation}</p>
+              <div style={{ marginTop: '16px', fontSize: '0.85rem', color: 'var(--text-secondary)', borderLeft: '3px solid var(--color-primary)', paddingLeft: '12px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                  <strong style={{ color: quizAnswers[section.sectionNumber] === inlineQuiz.correctIdx ? 'var(--color-success)' : 'var(--color-error)' }}>
+                    {quizAnswers[section.sectionNumber] === inlineQuiz.correctIdx ? '✓ Correct Understanding' : '✗ Review Statutory Provision'}
+                  </strong>
+                  <button
+                    onClick={() => handleQuizReset(section.sectionNumber)}
+                    style={{
+                      backgroundColor: 'transparent',
+                      border: '1px solid var(--color-border)',
+                      borderRadius: '3px',
+                      padding: '2px 8px',
+                      fontSize: '0.75rem',
+                      cursor: 'pointer',
+                      color: 'var(--text-secondary)'
+                    }}
+                  >
+                    ↺ Reset Check
+                  </button>
+                </div>
+                <p style={{ margin: '4px 0 0 0', lineHeight: '1.5' }}>{inlineQuiz.explanation}</p>
               </div>
             )}
           </div>
@@ -754,7 +910,7 @@ function Laws() {
                   style={{
                     backgroundColor: 'transparent',
                     border: 'none',
-                    color: 'var(--accent-navy)',
+                    color: 'var(--color-accent)',
                     textDecoration: 'underline',
                     fontSize: '0.75rem',
                     cursor: 'pointer',
@@ -802,7 +958,7 @@ function Laws() {
           </span>
           {section.officialSourceId && (
             <span>
-              Official Source: <a href={section.officialSourceId.url} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'underline', color: 'var(--accent-navy)', fontWeight: 'bold' }}>
+              Official Source: <a href={section.officialSourceId.url} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'underline', color: 'var(--color-accent)', fontWeight: 'bold' }}>
                 {section.officialSourceId.title} ({section.officialSourceId.authority})
               </a>
             </span>
@@ -827,7 +983,7 @@ function Laws() {
 
         {/* Disclaimer Panel */}
         <div style={{
-          borderLeft: '3px solid var(--accent-navy)',
+          borderLeft: '3px solid var(--color-primary)',
           backgroundColor: 'var(--bg-secondary)',
           padding: '14px 18px',
           borderRadius: '4px',
@@ -837,6 +993,87 @@ function Laws() {
           color: 'var(--text-secondary)'
         }}>
           <strong>Educational Notice:</strong> This index is compiled for public legal literacy and security awareness. It maps potentially relevant statutes to scenarios, but is <strong>not legal advice</strong>. Refer to official India Code publications for statutory filings.
+        </div>
+
+        {/* Statutory Transition & Operational Status Guide */}
+        <div style={{
+          backgroundColor: 'var(--bg-card, #ffffff)',
+          border: '1px solid var(--color-border)',
+          borderRadius: '6px',
+          padding: '16px 20px',
+          marginTop: '16px',
+          boxShadow: '0 1px 3px rgba(0,0,0,0.03)'
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', flexWrap: 'wrap', gap: '8px' }}>
+            <span style={{ fontSize: '0.75rem', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '0.8px', color: 'var(--accent-navy, #1e3a8a)' }}>
+              How Active Laws Apply Today
+            </span>
+            <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
+              Clear rules based on official Government notifications and Supreme Court rulings
+            </span>
+          </div>
+
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
+            gap: '14px',
+            fontSize: '0.82rem',
+            lineHeight: '1.5'
+          }}>
+            {/* IT Act 43A vs DPDP 44(2) */}
+            <div style={{
+              padding: '12px',
+              backgroundColor: 'var(--bg-secondary)',
+              borderRadius: '4px',
+              borderLeft: '3px solid #10b981'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px' }}>
+                <span style={{ fontWeight: '700', color: 'var(--text-primary)' }}>IT Act § 43A</span>
+                <span style={{ fontSize: '0.68rem', fontWeight: '800', backgroundColor: 'rgba(16, 185, 129, 0.12)', color: '#047857', padding: '2px 6px', borderRadius: '3px' }}>
+                  ACTIVE LAW
+                </span>
+              </div>
+              <p style={{ margin: 0, color: 'var(--text-secondary)' }}>
+                Governs compensation for corporate failure to protect sensitive data under <strong>SPDI Rules (2011)</strong>. While DPDP Act § 44(2) slates § 43A for omission, DPDP § 1(2) mandates separate Gazette commencement notifications. Until notified, <strong>Section 43A remains currently enforceable</strong>.
+              </p>
+            </div>
+
+            {/* BNS 2023 */}
+            <div style={{
+              padding: '12px',
+              backgroundColor: 'var(--bg-secondary)',
+              borderRadius: '4px',
+              borderLeft: '3px solid #3b82f6'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px' }}>
+                <span style={{ fontWeight: '700', color: 'var(--text-primary)' }}>BNS 2023</span>
+                <span style={{ fontSize: '0.68rem', fontWeight: '800', backgroundColor: 'rgba(59, 130, 246, 0.12)', color: '#1d4ed8', padding: '2px 6px', borderRadius: '3px' }}>
+                  ACTIVE LAW (FROM 1 JULY 2024)
+                </span>
+              </div>
+              <p style={{ margin: 0, color: 'var(--text-secondary)' }}>
+                Operationalized nationwide via Ministry of Home Affairs Notification <strong>S.O. 850(E)</strong> on 1 July 2024. Applies to offenses committed on or after this date (e.g. § 318 cheating, § 319 impersonation) concurrently with IT Act penal sections.
+              </p>
+            </div>
+
+            {/* IT Act 66A */}
+            <div style={{
+              padding: '12px',
+              backgroundColor: 'var(--bg-secondary)',
+              borderRadius: '4px',
+              borderLeft: '3px solid #ef4444'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px' }}>
+                <span style={{ fontWeight: '700', color: 'var(--text-primary)' }}>IT Act § 66A</span>
+                <span style={{ fontSize: '0.68rem', fontWeight: '800', backgroundColor: 'rgba(239, 68, 68, 0.12)', color: '#b91c1c', padding: '2px 6px', borderRadius: '3px' }}>
+                  STRUCK DOWN (INOPERATIVE)
+                </span>
+              </div>
+              <p style={{ margin: 0, color: 'var(--text-secondary)' }}>
+                Struck down completely by the Supreme Court in <em>Shreya Singhal (2015)</em> and reaffirmed in <em>PUCL (2022)</em>. This section has no legal power, and no police FIR, investigation, or prosecution under § 66A is lawful.
+              </p>
+            </div>
+          </div>
         </div>
       </EditorialPageHeader>
 
@@ -856,7 +1093,7 @@ function Laws() {
         filtersDrawerContent={
           <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', width: '100%' }}>
             <div style={{ minWidth: '220px' }}>
-              <span style={{ display: 'block', fontSize: '0.75rem', fontWeight: 'bold', color: 'var(--accent-navy)', textTransform: 'uppercase', marginBottom: '8px', letterSpacing: '0.5px' }}>
+              <span style={{ display: 'block', fontSize: '0.75rem', fontWeight: 'bold', color: 'var(--text-secondary)', textTransform: 'uppercase', marginBottom: '8px', letterSpacing: '0.5px' }}>
                 Filter by Status
               </span>
               <div style={{ display: 'flex', gap: '6px' }}>
@@ -867,8 +1104,8 @@ function Laws() {
                     style={{
                       padding: '8px 12px',
                       borderRadius: 'var(--radius-sm)',
-                      border: '1px solid var(--color-border-dark)',
-                      backgroundColor: activeStatus === stat ? 'var(--accent-navy)' : 'var(--bg-white)',
+                      border: activeStatus === stat ? '1px solid var(--color-primary)' : '1px solid var(--color-border)',
+                      backgroundColor: activeStatus === stat ? 'var(--color-primary)' : 'var(--bg-white)',
                       color: activeStatus === stat ? 'white' : 'var(--text-secondary)',
                       fontSize: '0.75rem',
                       fontWeight: 'bold',
@@ -895,7 +1132,7 @@ function Laws() {
                 style={{
                   backgroundColor: 'transparent',
                   border: 'none',
-                  color: 'var(--accent-navy)',
+                  color: 'var(--color-accent)',
                   textDecoration: 'underline',
                   cursor: 'pointer',
                   fontSize: '0.85rem',
@@ -909,6 +1146,12 @@ function Laws() {
           )
         }
       />
+
+      {error && (
+        <div className="alert alert-error" style={{ marginBottom: 'var(--space-md)' }}>
+          {error}
+        </div>
+      )}
 
       {/* DYNAMIC LAYOUT GRID */}
       <div style={{
@@ -931,7 +1174,7 @@ function Laws() {
             gap: '12px'
           }}>
             <div>
-              <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 'bold', color: 'var(--accent-navy)', textTransform: 'uppercase', marginBottom: '6px' }}>
+              <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 'bold', color: 'var(--text-secondary)', textTransform: 'uppercase', marginBottom: '6px' }}>
                 Jump to Law Family
               </label>
               <select
@@ -959,7 +1202,7 @@ function Laws() {
 
             {/* Quick Section jump dropdown */}
             <div>
-              <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 'bold', color: 'var(--accent-navy)', textTransform: 'uppercase', marginBottom: '6px' }}>
+              <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 'bold', color: 'var(--text-secondary)', textTransform: 'uppercase', marginBottom: '6px' }}>
                 Quick Jump to Section
               </label>
               <select
@@ -1018,9 +1261,9 @@ function Laws() {
                           textAlign: 'left',
                           padding: '10px 12px',
                           borderRadius: 'var(--radius-sm)',
-                          borderLeft: isFamActive ? '3px solid var(--accent-navy)' : '3px solid transparent',
-                          backgroundColor: isFamActive ? 'var(--accent-navy-light)' : 'transparent',
-                          color: isFamActive ? 'var(--accent-navy)' : 'var(--text-secondary)',
+                          borderLeft: isFamActive ? '3px solid var(--color-primary)' : '3px solid transparent',
+                          backgroundColor: isFamActive ? 'var(--color-primary-light)' : 'transparent',
+                          color: isFamActive ? 'var(--color-primary)' : 'var(--text-secondary)',
                           fontWeight: isFamActive ? 'bold' : '500',
                           fontSize: '0.85rem',
                           cursor: 'pointer',
@@ -1044,7 +1287,7 @@ function Laws() {
                           paddingLeft: '16px',
                           marginTop: '4px',
                           marginBottom: '8px',
-                          borderLeft: '1.5px solid var(--accent-navy)'
+                          borderLeft: '1.5px solid var(--color-primary)'
                         }}>
                           {sectionsList.map((sec) => {
                             const isSecActive = activeSectionId === sec.sectionNumber;
@@ -1059,8 +1302,8 @@ function Laws() {
                                   padding: '5px 8px',
                                   borderRadius: '2px',
                                   border: 'none',
-                                  backgroundColor: isSecActive ? 'rgba(15, 37, 55, 0.05)' : 'transparent',
-                                  color: isSecActive ? 'var(--accent-navy)' : 'var(--text-muted)',
+                                  backgroundColor: isSecActive ? 'var(--color-primary-light)' : 'transparent',
+                                  color: isSecActive ? 'var(--color-primary)' : 'var(--text-muted)',
                                   fontWeight: isSecActive ? 'bold' : 'normal',
                                   fontSize: '0.75rem',
                                   cursor: 'pointer',
@@ -1096,7 +1339,7 @@ function Laws() {
                     padding: '6px 10px',
                     borderRadius: '4px',
                     border: '1px solid var(--color-border)',
-                    backgroundColor: !selectedChapter ? 'var(--accent-navy-light)' : 'var(--bg-white)',
+                    backgroundColor: !selectedChapter ? 'var(--color-primary-light)' : 'var(--bg-white)',
                     color: 'var(--text-secondary)',
                     fontSize: '0.75rem',
                     fontWeight: !selectedChapter ? 'bold' : 'normal',
@@ -1118,13 +1361,13 @@ function Laws() {
                       padding: '8px 10px',
                       borderRadius: '4px',
                       border: '1px solid var(--color-border)',
-                      backgroundColor: selectedChapter === ch.id ? 'var(--accent-navy-light)' : 'var(--bg-white)',
+                      backgroundColor: selectedChapter === ch.id ? 'var(--color-primary-light)' : 'var(--bg-white)',
                       color: 'var(--text-secondary)',
                       fontSize: '0.75rem',
                       cursor: 'pointer'
                     }}
                   >
-                    <strong style={{ display: 'block', color: 'var(--accent-navy)', fontSize: '0.7rem' }}>{ch.id}</strong>
+                    <strong style={{ display: 'block', color: 'var(--color-primary)', fontSize: '0.7rem' }}>{ch.id}</strong>
                     <span style={{ fontSize: '0.65rem', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {ch.title.split(': ')[1]}
                     </span>
@@ -1152,15 +1395,16 @@ function Laws() {
           
           {/* SECTION A: LAW COMPASS GUIDED WIZARD */}
           <div style={{
-            backgroundColor: 'var(--accent-navy-light)',
-            borderLeft: '4px solid var(--accent-navy)',
+            backgroundColor: 'var(--bg-white)',
+            border: '1px solid var(--color-border)',
+            borderLeft: '4px solid var(--color-primary)',
             borderRadius: '4px',
             padding: '24px',
             boxShadow: '0 1px 3px rgba(0,0,0,0.02)'
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
               
-              <h2 style={{ fontSize: '1.25rem', fontWeight: 'bold', color: 'var(--accent-navy)', margin: 0, letterSpacing: '0.5px' }}>
+              <h2 style={{ fontSize: '1.25rem', fontWeight: 'bold', color: 'var(--text-primary)', margin: 0, letterSpacing: '0.5px' }}>
                 LAW COMPASS: SITUATION SEARCH WIZARD
               </h2>
             </div>
@@ -1197,7 +1441,7 @@ function Laws() {
                       }}
                     >
                       <span style={{ fontWeight: '500' }}>{sit.title}</span>
-                      <strong style={{ color: 'var(--accent-navy)', fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                      <strong style={{ color: 'var(--color-primary)', fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                         {sit.type} &rarr;
                       </strong>
                     </button>
@@ -1207,7 +1451,7 @@ function Laws() {
             ) : (
               selectedSituation && (
                 <div style={{ backgroundColor: 'var(--bg-white)', padding: '20px', borderRadius: '4px', border: '1px solid var(--color-border)' }}>
-                  <h4 style={{ color: 'var(--accent-navy)', fontWeight: 'bold', marginBottom: '14px', fontSize: '1.05rem', borderBottom: '1px solid var(--color-border)', paddingBottom: '8px' }}>
+                  <h4 style={{ color: 'var(--text-primary)', fontWeight: 'bold', marginBottom: '14px', fontSize: '1.05rem', borderBottom: '1px solid var(--color-border)', paddingBottom: '8px' }}>
                     Compass Audit: {selectedSituation.type}
                   </h4>
                   
@@ -1227,12 +1471,12 @@ function Laws() {
                             style={{
                               fontSize: '0.7rem',
                               fontWeight: 'bold',
-                              backgroundColor: 'var(--accent-navy-light)',
-                              color: 'var(--accent-navy)',
+                              backgroundColor: 'var(--color-primary-light)',
+                              color: 'var(--color-primary)',
                               padding: '3px 8px',
                               borderRadius: '4px',
                               cursor: 'pointer',
-                              border: '1px solid var(--accent-navy)',
+                              border: '1px solid var(--color-border)',
                               transition: 'all 0.1s ease'
                             }}
                           >
@@ -1249,7 +1493,7 @@ function Laws() {
                       <Link
                         to={getContextPath('/crimes')}
                         style={{
-                          color: 'var(--accent-navy)',
+                          color: 'var(--color-accent)',
                           fontWeight: 'bold',
                           textDecoration: 'underline'
                         }}
@@ -1288,7 +1532,7 @@ function Laws() {
                         style={{
                           padding: '8px 16px',
                           borderRadius: '4px',
-                          backgroundColor: 'var(--accent-navy)',
+                          backgroundColor: 'var(--color-primary)',
                           color: 'white',
                           textDecoration: 'none',
                           fontSize: '0.8rem',
@@ -1322,8 +1566,8 @@ function Laws() {
                 <h2 style={{
                   fontSize: '1.8rem',
                   fontWeight: '700',
-                  color: 'var(--accent-navy)',
-                  borderBottom: '2px solid var(--accent-navy)',
+                  color: 'var(--text-primary)',
+                  borderBottom: '2px solid var(--color-primary)',
                   paddingBottom: '12px',
                   marginBottom: '28px',
                   letterSpacing: '0.5px'

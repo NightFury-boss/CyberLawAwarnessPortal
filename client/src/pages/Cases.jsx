@@ -48,7 +48,7 @@ function Cases() {
       setSelectedCaseSlug(slugParam);
       window.scrollTo(0, 0);
     }
-  }, [location.search, location.hash]);
+  }, [location.search, location.hash, selectedCaseSlug]);
 
   useEffect(() => {
     if (selectedCaseSlug) {
@@ -64,7 +64,7 @@ function Cases() {
       const data = await api.getCases();
       setCases(data);
     } catch (err) {
-      setError('Failed to fetch cyber incident archive records.');
+      setError('Could not load case studies. Please try refreshing the page.');
     } finally {
       setLoading(false);
     }
@@ -86,8 +86,8 @@ function Cases() {
       } else {
         setNarrativeUnlocked(false);
       }
-    } catch (err) {
-      setError('Failed to retrieve case file details.');
+    } catch (_err) {
+      setError('Could not load this case study. Please try refreshing the page.');
     } finally {
       setCaseLoading(false);
     }
@@ -244,7 +244,7 @@ function Cases() {
               Reference Code
             </span>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '2px', flexWrap: 'wrap' }}>
-              <strong style={{ color: 'var(--accent-navy)', fontSize: '1rem' }}>{selectedCase.caseNumber}</strong>
+              <strong style={{ color: 'var(--color-primary)', fontSize: '1rem' }}>{selectedCase.caseNumber}</strong>
               <span className="marginalia-statute-stamp">
                 {selectedCase.legalContext?.[0] ? `§ ${selectedCase.legalContext[0]}` : 'STATUTORY ARCHIVE'}
               </span>
@@ -272,7 +272,7 @@ function Cases() {
           </div>
         </div>
 
-        <p style={{ fontSize: '1.15rem', color: 'var(--text-secondary)', lineHeight: '1.68', fontStyle: 'italic', borderLeft: '3px solid var(--accent-navy)', paddingLeft: '16px', marginBottom: '24px' }}>
+        <p style={{ fontSize: '1.15rem', color: 'var(--text-secondary)', lineHeight: '1.68', fontStyle: 'italic', borderLeft: '3px solid var(--color-primary)', paddingLeft: '16px', marginBottom: '24px' }}>
           {selectedCase.shortDescription}
         </p>
 
@@ -286,35 +286,35 @@ function Cases() {
           textAlign: 'center'
         }}>
           <span style={{ fontSize: '0.8rem', fontWeight: 'bold', color: 'var(--text-muted)', textTransform: 'uppercase', display: 'block', marginBottom: '16px', letterSpacing: '0.5px' }}>
-            Incident Audit Progression Path
+            How This Story Unfolds
           </span>
 
           <div style={{ display: 'flex', justifyContent: 'center', overflowX: 'auto' }}>
             <svg width="600" height="70" viewBox="0 0 600 70" style={{ minWidth: '500px' }}>
-              <line x1="80" y1="30" x2="200" y2="30" stroke={narrativeUnlocked ? 'var(--accent-navy)' : 'var(--color-border)'} strokeWidth="2" strokeDasharray={narrativeUnlocked ? 'none' : '4 3'} />
-              <line x1="200" y1="30" x2="320" y2="30" stroke={decisionSubmitted ? 'var(--accent-navy)' : 'var(--color-border)'} strokeWidth="2" strokeDasharray={decisionSubmitted ? 'none' : '4 3'} />
-              <line x1="320" y1="30" x2="440" y2="30" stroke={narrativeUnlocked ? 'var(--accent-navy)' : 'var(--color-border)'} strokeWidth="2" strokeDasharray={narrativeUnlocked ? 'none' : '4 3'} />
-              <line x1="440" y1="30" x2="560" y2="30" stroke={narrativeUnlocked ? 'var(--accent-navy)' : 'var(--color-border)'} strokeWidth="2" strokeDasharray={narrativeUnlocked ? 'none' : '4 3'} />
+              <line x1="80" y1="30" x2="200" y2="30" stroke={narrativeUnlocked ? 'var(--color-primary)' : 'var(--color-border)'} strokeWidth="2" strokeDasharray={narrativeUnlocked ? 'none' : '4 3'} />
+              <line x1="200" y1="30" x2="320" y2="30" stroke={decisionSubmitted ? 'var(--color-primary)' : 'var(--color-border)'} strokeWidth="2" strokeDasharray={decisionSubmitted ? 'none' : '4 3'} />
+              <line x1="320" y1="30" x2="440" y2="30" stroke={narrativeUnlocked ? 'var(--color-primary)' : 'var(--color-border)'} strokeWidth="2" strokeDasharray={narrativeUnlocked ? 'none' : '4 3'} />
+              <line x1="440" y1="30" x2="560" y2="30" stroke={narrativeUnlocked ? 'var(--color-primary)' : 'var(--color-border)'} strokeWidth="2" strokeDasharray={narrativeUnlocked ? 'none' : '4 3'} />
 
-              <circle cx="80" cy="30" r="8" fill="var(--accent-navy)" />
+              <circle cx="80" cy="30" r="8" fill="var(--color-primary)" />
               <circle cx="80" cy="30" r="4" fill="white" />
-              <text x="80" y="52" textAnchor="middle" fontSize="0.75rem" fontWeight="bold" fill="var(--accent-navy)">1. BAIT</text>
+              <text x="80" y="52" textAnchor="middle" fontSize="0.75rem" fontWeight="bold" fill="var(--text-primary)">1. THE TRAP</text>
 
-              <circle cx="200" cy="30" r="8" fill="var(--accent-navy)" />
+              <circle cx="200" cy="30" r="8" fill="var(--color-primary)" />
               <circle cx="200" cy="30" r="4" fill="white" />
-              <text x="200" y="52" textAnchor="middle" fontSize="0.75rem" fontWeight="bold" fill="var(--accent-navy)">2. LEVERAGE</text>
+              <text x="200" y="52" textAnchor="middle" fontSize="0.75rem" fontWeight="bold" fill="var(--text-primary)">2. PRESSURE</text>
 
               <circle cx="320" cy="30" r="10" fill={decisionSubmitted ? (selectedCase.decisionPoints?.[0]?.options[selectedChoiceIdx]?.isCorrect ? 'var(--color-success)' : 'var(--color-error)') : '#f59e0b'} />
               <text x="320" y="34" textAnchor="middle" fontSize="0.7rem" fontWeight="extrabold" fill="white">?</text>
-              <text x="320" y="52" textAnchor="middle" fontSize="0.75rem" fontWeight="bold" fill="#f59e0b">3. CHOICE</text>
+              <text x="320" y="52" textAnchor="middle" fontSize="0.75rem" fontWeight="bold" fill="#f59e0b">3. YOUR CHOICE</text>
 
-              <circle cx="440" cy="30" r="8" fill={narrativeUnlocked ? 'var(--accent-navy)' : 'var(--color-border)'} />
+              <circle cx="440" cy="30" r="8" fill={narrativeUnlocked ? 'var(--color-primary)' : 'var(--color-border)'} />
               {narrativeUnlocked && <circle cx="440" cy="30" r="4" fill="white" />}
-              <text x="440" y="52" textAnchor="middle" fontSize="0.75rem" fontWeight="bold" fill={narrativeUnlocked ? 'var(--accent-navy)' : 'var(--text-muted)'}>4. IMPACT</text>
+              <text x="440" y="52" textAnchor="middle" fontSize="0.75rem" fontWeight="bold" fill={narrativeUnlocked ? 'var(--text-primary)' : 'var(--text-muted)'}>4. WHAT HAPPENED</text>
 
               <circle cx="560" cy="30" r="8" fill={narrativeUnlocked ? 'var(--color-success)' : 'var(--color-border)'} />
               {narrativeUnlocked && <circle cx="560" cy="30" r="4" fill="white" />}
-              <text x="560" y="52" textAnchor="middle" fontSize="0.75rem" fontWeight="bold" fill={narrativeUnlocked ? 'var(--color-success)' : 'var(--text-muted)'}>5. LAW</text>
+              <text x="560" y="52" textAnchor="middle" fontSize="0.75rem" fontWeight="bold" fill={narrativeUnlocked ? 'var(--color-success)' : 'var(--text-muted)'}>5. WHAT THE LAW SAYS</text>
             </svg>
           </div>
         </div>
@@ -333,7 +333,7 @@ function Cases() {
       <div>
         {preDecisionSections.map((sec, idx) => (
           <div key={idx} style={{ marginBottom: 'var(--space-lg)' }}>
-            <h3 style={{ fontSize: '1.15rem', fontWeight: 'bold', color: 'var(--accent-navy)', marginBottom: '8px' }}>
+            <h3 style={{ fontSize: '1.15rem', fontWeight: 'bold', color: 'var(--text-primary)', marginBottom: '8px' }}>
               {sec.heading}
             </h3>
             <p style={{ fontSize: '1rem', lineHeight: '1.68', color: 'var(--text-primary)', textAlign: 'justify' }}>
@@ -348,11 +348,12 @@ function Cases() {
     const decisionPoint = selectedCase.decisionPoints && selectedCase.decisionPoints[0];
     const decisionContent = decisionPoint ? (
       <div style={{
-        backgroundColor: 'var(--bg-secondary)',
-        border: '2px solid var(--accent-navy)',
-        borderRadius: '6px',
+        backgroundColor: 'var(--bg-white)',
+        border: '1px solid var(--color-border)',
+        borderTop: '3px solid var(--color-primary)',
+        borderRadius: '8px',
         padding: 'var(--space-xl)',
-        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)'
+        boxShadow: '0 2px 4px rgba(0, 0, 0, 0.04)'
       }}>
         {/* Editorial State Transition Sequence: SITUATION → DECISION → OUTCOME */}
         <div className="portal-state-sequence-bar" aria-label="Investigation lifecycle progression">
@@ -374,7 +375,7 @@ function Cases() {
 
         <div style={{ display: 'flex', gap: '8px', alignItems: 'center', marginBottom: '12px' }}>
           <span style={{ fontSize: '1.25rem' }}>🛑</span>
-          <span style={{ fontSize: '0.85rem', fontWeight: 'bold', color: 'var(--accent-navy)', textTransform: 'uppercase', letterSpacing: '1px' }}>
+          <span style={{ fontSize: '0.85rem', fontWeight: 'bold', color: 'var(--color-primary)', textTransform: 'uppercase', letterSpacing: '1px' }}>
             PAUSE — CRITICAL DECISION POINT
           </span>
         </div>
@@ -465,7 +466,7 @@ function Cases() {
             type="button"
             onClick={handleUnlockRemainingStory}
             style={{
-              backgroundColor: 'var(--accent-navy)',
+              backgroundColor: 'var(--color-primary)',
               color: 'white',
               border: 'none',
               padding: '12px 24px',
@@ -498,7 +499,7 @@ function Cases() {
           if (!isPostDecisionSection) return null;
           return (
             <div key={idx} style={{ marginBottom: 'var(--space-lg)' }}>
-              <h3 style={{ fontSize: '1.15rem', fontWeight: 'bold', color: 'var(--accent-navy)', marginBottom: '8px' }}>
+              <h3 style={{ fontSize: '1.15rem', fontWeight: 'bold', color: 'var(--text-primary)', marginBottom: '8px' }}>
                 {sec.heading}
               </h3>
               <p style={{ fontSize: '1rem', lineHeight: '1.68', color: 'var(--text-primary)', textAlign: 'justify' }}>
@@ -510,7 +511,7 @@ function Cases() {
 
         {selectedCase.timeline && selectedCase.timeline.length > 0 && (
           <div style={{ marginBottom: 'var(--space-2xl)', marginTop: 'var(--space-xl)' }}>
-            <h3 style={{ fontSize: '1.25rem', borderBottom: '2px solid var(--accent-navy)', paddingBottom: '8px', color: 'var(--accent-navy)', fontWeight: 'bold', marginBottom: '20px' }}>
+            <h3 style={{ fontSize: '1.25rem', borderBottom: '2px solid var(--color-primary)', paddingBottom: '8px', color: 'var(--text-primary)', fontWeight: 'bold', marginBottom: '20px' }}>
               INCIDENT TIMELINE
             </h3>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0', paddingLeft: '12px' }}>
@@ -572,7 +573,7 @@ function Cases() {
                     </div>
                     <div style={{ paddingBottom: '24px', flex: 1 }}>
                       <div style={{ display: 'flex', gap: '8px', alignItems: 'center', marginBottom: '6px' }}>
-                        <span style={{ fontSize: '0.75rem', fontFamily: 'monospace', fontWeight: 'bold', color: 'var(--accent-navy)', backgroundColor: 'var(--bg-secondary)', padding: '2px 8px', borderRadius: '4px', border: '1px solid var(--color-border)' }}>
+                        <span style={{ fontSize: '0.75rem', fontFamily: 'monospace', fontWeight: 'bold', color: 'var(--color-primary)', backgroundColor: 'var(--bg-secondary)', padding: '2px 8px', borderRadius: '4px', border: '1px solid var(--color-border)' }}>
                           {step.time}
                         </span>
                         <strong style={{ fontSize: '1rem', color: 'var(--text-primary)' }}>{step.label}</strong>
@@ -590,12 +591,12 @@ function Cases() {
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 'var(--space-xl)', marginBottom: 'var(--space-xl)' }}>
           <div>
-            <h4 style={{ fontSize: '1.1rem', color: 'var(--accent-navy)', fontWeight: 'bold', borderBottom: '1px solid var(--color-border)', paddingBottom: '8px', marginBottom: '16px' }}>
+            <h4 style={{ fontSize: '1.1rem', color: 'var(--text-primary)', fontWeight: 'bold', borderBottom: '1px solid var(--color-border)', paddingBottom: '8px', marginBottom: '16px' }}>
               Why the Situation Was Convincing
             </h4>
-            <div style={{ backgroundColor: 'var(--bg-secondary)', border: '1px solid var(--color-border)', padding: '16px', borderRadius: '6px', marginBottom: '16px' }}>
+            <div style={{ paddingBottom: '16px', marginBottom: '16px', borderBottom: '1px solid var(--color-border)' }}>
               <span style={{ fontSize: '0.75rem', fontWeight: 'bold', color: 'var(--text-muted)', textTransform: 'uppercase', display: 'block', marginBottom: '12px', letterSpacing: '0.5px' }}>
-                Attacker Manipulation Vectors
+                Psychological Tricks Used
               </span>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                 <div>
@@ -629,13 +630,13 @@ function Cases() {
             </div>
 
             {selectedCase.attackerObjectives && (
-              <div style={{ backgroundColor: 'var(--bg-secondary)', padding: '12px', borderRadius: '4px', marginBottom: '12px' }}>
-                <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', display: 'block', textTransform: 'uppercase', fontWeight: 'bold' }}>
-                  Attacker Objectives
+              <div style={{ paddingTop: '4px', marginBottom: '12px' }}>
+                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block', textTransform: 'uppercase', fontWeight: 'bold', letterSpacing: '0.5px' }}>
+                  What the Scammer Was After
                 </span>
-                <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginTop: '6px' }}>
+                <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginTop: '8px' }}>
                   {selectedCase.attackerObjectives.map((obj, oIdx) => (
-                    <span key={oIdx} style={{ fontSize: '0.75rem', fontWeight: 'bold', backgroundColor: 'var(--bg-primary)', border: '1px solid var(--color-border)', padding: '2px 8px', borderRadius: '4px' }}>
+                    <span key={oIdx} style={{ fontSize: '0.75rem', fontWeight: 'bold', backgroundColor: 'var(--bg-secondary)', border: '1px solid var(--color-border)', padding: '3px 9px', borderRadius: '4px' }}>
                       {obj}
                     </span>
                   ))}
@@ -645,7 +646,7 @@ function Cases() {
           </div>
 
           <div>
-            <h4 style={{ fontSize: '1.1rem', color: 'var(--accent-navy)', fontWeight: 'bold', borderBottom: '1px solid var(--color-border)', paddingBottom: '8px', marginBottom: '16px' }}>
+            <h4 style={{ fontSize: '1.1rem', color: 'var(--text-primary)', fontWeight: 'bold', borderBottom: '1px solid var(--color-border)', paddingBottom: '8px', marginBottom: '16px' }}>
               Warning Signs Present
             </h4>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
@@ -669,7 +670,7 @@ function Cases() {
             borderRadius: '6px',
             padding: 'var(--space-lg)'
           }}>
-            <h4 style={{ fontSize: '1.1rem', color: 'var(--accent-navy)', fontWeight: 'bold', marginBottom: '16px' }}>
+            <h4 style={{ fontSize: '1.1rem', color: 'var(--text-primary)', fontWeight: 'bold', marginBottom: '16px' }}>
               Incident Impact Summary
             </h4>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '16px' }}>
@@ -694,7 +695,7 @@ function Cases() {
         )}
       </div>
     ) : (
-      <div style={{ padding: '24px', backgroundColor: 'var(--bg-secondary)', borderRadius: '6px', border: '1px dashed var(--color-border)', textAlign: 'center' }}>
+      <div style={{ padding: '24px', backgroundColor: 'var(--bg-secondary)', borderRadius: '6px', border: '1px solid var(--color-border)', textAlign: 'center' }}>
         <p style={{ color: 'var(--text-muted)', margin: 0, fontSize: '0.95rem' }}>
           Evaluate the critical decision point above to unlock the forensic timeline, deception breakdown, and impact analysis.
         </p>
@@ -706,7 +707,7 @@ function Cases() {
       <div>
         {selectedCase.preventionLessons && selectedCase.preventionLessons.length > 0 && (
           <div style={{ marginBottom: 'var(--space-xl)' }}>
-            <h4 style={{ fontSize: '1.1rem', color: 'var(--accent-navy)', fontWeight: 'bold', marginBottom: '12px' }}>
+            <h4 style={{ fontSize: '1.1rem', color: 'var(--text-primary)', fontWeight: 'bold', marginBottom: '12px' }}>
               Prevention Lessons
             </h4>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
@@ -729,7 +730,7 @@ function Cases() {
             borderRadius: '6px',
             padding: 'var(--space-lg)'
           }}>
-            <h4 style={{ fontSize: '0.95rem', fontWeight: 'bold', color: 'var(--accent-navy)', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+            <h4 style={{ fontSize: '0.95rem', fontWeight: 'bold', color: 'var(--text-primary)', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
               Applicable Legal Provisions (IT Act, 2000)
             </h4>
             <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', marginBottom: '12px', lineHeight: '1.5' }}>
@@ -741,7 +742,7 @@ function Cases() {
                   key={idx}
                   to={getContextPath('/laws')}
                   style={{
-                    backgroundColor: 'var(--accent-navy)',
+                    backgroundColor: 'var(--color-primary)',
                     color: 'white',
                     textDecoration: 'none',
                     padding: '6px 12px',
@@ -764,14 +765,14 @@ function Cases() {
       <div>
         {selectedCase.sources && selectedCase.sources.length > 0 && (
           <div style={{ marginBottom: 'var(--space-xl)', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-            <span style={{ fontWeight: 'bold', display: 'block', marginBottom: '8px', textTransform: 'uppercase', color: 'var(--accent-navy)' }}>
+            <span style={{ fontWeight: 'bold', display: 'block', marginBottom: '8px', textTransform: 'uppercase', color: 'var(--text-secondary)' }}>
               Official Incident Sources & Advisories
             </span>
             {selectedCase.sources.map((src, idx) => (
               <div key={idx} style={{ marginBottom: '6px', lineHeight: '1.5' }}>
                 • {src.title} — <strong>{src.authority}</strong> ({src.publicationDate || 'Undated'}) | {' '}
                 {src.url ? (
-                  <a href={src.url} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--accent-navy)', textDecoration: 'underline' }}>
+                  <a href={src.url} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--color-accent)', textDecoration: 'underline' }}>
                     View Advisory Source
                   </a>
                 ) : (
@@ -798,8 +799,8 @@ function Cases() {
                 <Link
                   to={getContextPath('/crimes')}
                   style={{
-                    color: 'var(--accent-navy)',
-                    fontWeight: 'bold',
+                    color: 'var(--color-accent)',
+                    fontWeight: '600',
                     fontSize: '0.95rem',
                     textDecoration: 'underline'
                   }}
@@ -889,7 +890,7 @@ function Cases() {
       {/* 1. LOADING STATE */}
       {loading && (
         <div style={{ textAlign: 'center', padding: '100px 0' }}>
-          <h3 style={{ color: 'var(--accent-navy)' }}>Opening Case Studies...</h3>
+          <h3 style={{ color: 'var(--text-primary)' }}>Opening Case Studies...</h3>
         </div>
       )}
 
@@ -905,10 +906,10 @@ function Cases() {
         <div>
           <WorkspaceBreadcrumb />
           <EditorialPageHeader
-            eyebrow="Case Archive"
-            title="Incident Case Studies"
+            eyebrow="Real Stories"
+            title="Real-Life Case Stories"
             subtitle='"Knowing what happened is useful. Recognizing the pattern before it happens is better."'
-            description="Explore documented attack methods, analyze visual timelines, make critical decisions in situational mockups, and extract security lessons from previous fraud files."
+            description="Read real stories of online scams and attacks, see step-by-step how people were tricked, try the decisions yourself, and learn how to stay protected."
           />
 
           <PortalSearch
@@ -917,28 +918,30 @@ function Cases() {
             onSearchChange={(val) => setSearchQuery(val)}
             onClear={() => setSearchQuery('')}
             results={filteredCases}
-            resultTypeLabel="incidents found"
-            emptyHeader="NO MATCHING CASE FILES"
-            emptyText="Try searching for a different attack method, warning sign, or category keyword (e.g. UPI, phishing, vishing)."
+            resultTypeLabel="case stories found"
+            emptyHeader="NO MATCHING STORIES"
+            emptyText="Try searching for a different topic, warning sign, or keyword (e.g. UPI, fake call, OTP)."
             suggestions={['UPI', 'phishing', 'vishing', 'OTP', 'support']}
           />
 
           {/* FEATURED INCIDENT FILE (If present and search/filters are empty) */}
           {!searchQuery && activeCategory === 'All' && !activePattern && featuredCase && (
             <div style={{
-              backgroundColor: 'var(--accent-navy-light)',
-              borderLeft: '4px solid var(--accent-navy)',
+              backgroundColor: 'var(--bg-white, #ffffff)',
+              border: '1px solid var(--color-border)',
+              borderTop: '3px solid var(--color-primary)',
               padding: 'var(--space-xl)',
               borderRadius: '6px',
               marginBottom: 'var(--space-xxl)',
               display: 'grid',
               gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
               gap: 'var(--space-xl)',
-              alignItems: 'center'
+              alignItems: 'center',
+              boxShadow: '0 1px 4px rgba(0, 0, 0, 0.03)'
             }}>
               <div>
                 <div style={{ display: 'flex', gap: '8px', alignItems: 'center', marginBottom: '12px' }}>
-                  <span style={{ fontSize: '0.8rem', fontWeight: 'bold', color: 'var(--accent-navy)' }}>
+                  <span style={{ fontSize: '0.8rem', fontWeight: 'bold', color: 'var(--text-muted)' }}>
                     {featuredCase.caseNumber}
                   </span>
                   <span style={{
@@ -952,46 +955,37 @@ function Cases() {
                     {getCaseTypeLabel(featuredCase.caseType).text}
                   </span>
                 </div>
-                <h2 style={{ fontSize: '2rem', color: 'var(--accent-navy)', fontWeight: 'bold', marginBottom: '12px' }}>
+                <h2 style={{ fontSize: '2rem', color: 'var(--text-primary)', fontWeight: 'bold', marginBottom: '12px' }}>
                   {featuredCase.title}
                 </h2>
                 <p style={{ fontSize: '1.05rem', color: 'var(--text-secondary)', marginBottom: '20px', lineHeight: '1.6' }}>
                   {featuredCase.shortDescription}
                 </p>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', alignItems: 'center', fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '24px' }}>
-                  <span>Method: <strong>{featuredCase.attackVector}</strong></span>
+                  <span>Method: <strong style={{ color: 'var(--text-primary)' }}>{featuredCase.attackVector}</strong></span>
                   <span>•</span>
-                  <span>Type: <strong>{featuredCase.incidentType}</strong></span>
+                  <span>Type: <strong style={{ color: 'var(--text-primary)' }}>{featuredCase.incidentType}</strong></span>
                   <span>•</span>
                   {getDifficultyBadge(featuredCase.difficulty)}
                 </div>
                 <button
                   onClick={() => handleSelectCase(featuredCase.slug)}
+                  className="btn btn-primary"
                   style={{
-                    backgroundColor: 'var(--accent-navy)',
-                    color: 'white',
-                    border: 'none',
                     padding: '12px 24px',
-                    borderRadius: '4px',
-                    cursor: 'pointer',
-                    fontWeight: '600',
                     fontSize: '0.95rem'
                   }}
                 >
-                  Examine Case File &rarr;
+                  Read Case Story &rarr;
                 </button>
               </div>
-              <div style={{
-                backgroundColor: 'var(--bg-secondary)',
-                border: '1px dashed var(--color-border)',
-                borderRadius: '6px',
-                padding: 'var(--space-lg)',
+              <div className="archival-review-note" style={{
                 fontStyle: 'italic',
                 fontSize: '0.95rem',
                 color: 'var(--text-muted)'
               }}>
-                <strong style={{ display: 'block', color: 'var(--accent-navy)', fontStyle: 'normal', marginBottom: '6px' }}>
-                  Investigator Review Note:
+                <strong style={{ display: 'block', color: 'var(--text-primary)', fontStyle: 'normal', marginBottom: '6px', fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                  Key Takeaway:
                 </strong>
                 "{featuredCase.sourceSummary || 'Reviewing key methods of credential harvesting traps.'}"
               </div>
@@ -1008,15 +1002,15 @@ function Cases() {
               fontSize: '0.75rem',
               textTransform: 'uppercase',
               letterSpacing: '1.5px',
-              color: 'var(--accent-navy)',
+              color: 'var(--color-accent, #2563eb)',
               fontWeight: '800',
               display: 'block',
               marginBottom: '8px'
             }}>
-              Tactics Directory
+              Common Scam Types
             </span>
-            <h2 style={{ fontSize: '1.6rem', fontWeight: 'bold', color: 'var(--accent-navy)', marginBottom: 'var(--space-xl)' }}>
-              Common Attack Patterns In Archive
+            <h2 style={{ fontSize: '1.6rem', fontWeight: 'bold', color: 'var(--text-primary)', marginBottom: 'var(--space-xl)' }}>
+              Common Scam Patterns &amp; Tricks
             </h2>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '24px 48px' }}>
               {patternsList.map((p, idx) => (
@@ -1037,12 +1031,12 @@ function Cases() {
                     <span style={{ fontSize: '0.8rem', fontWeight: '700', color: 'var(--text-muted)', fontFamily: 'monospace' }}>
                       0{idx + 1}
                     </span>
-                    <span style={{ display: 'flex', alignItems: 'center', color: 'var(--accent-navy)' }}>{p.icon}</span>
-                    <strong style={{ fontSize: '1rem', color: 'var(--accent-navy)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                    <span style={{ display: 'flex', alignItems: 'center', color: 'var(--text-secondary)' }}>{p.icon}</span>
+                    <strong style={{ fontSize: '1rem', color: 'var(--text-primary)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                       {p.name}
                     </strong>
                     {activePattern === p.name && (
-                      <span style={{ fontSize: '0.7rem', color: 'var(--accent-navy)', backgroundColor: 'var(--accent-navy-light)', padding: '2px 6px', borderRadius: '4px', marginLeft: 'auto', fontWeight: 'bold' }}>
+                      <span style={{ fontSize: '0.7rem', color: '#ffffff', backgroundColor: 'var(--color-primary)', padding: '2px 8px', borderRadius: '4px', marginLeft: 'auto', fontWeight: 'bold' }}>
                         Active Filter
                       </span>
                     )}
@@ -1082,7 +1076,7 @@ function Cases() {
                   }}>
                     Case Catalog
                   </span>
-                  <h2 style={{ fontSize: '1.6rem', fontWeight: 'bold', color: 'var(--accent-navy)', margin: 0 }}>
+                  <h2 style={{ fontSize: '1.6rem', fontWeight: 'bold', color: 'var(--text-primary)', margin: 0 }}>
                     DOCUMENTED CASE FILES
                   </h2>
                 </div>
@@ -1124,8 +1118,8 @@ function Cases() {
                       style={{
                         padding: '6px 12px',
                         borderRadius: '4px',
-                        border: activeCategory === cat ? '1px solid var(--accent-navy)' : '1px solid var(--color-border)',
-                        backgroundColor: activeCategory === cat ? 'var(--accent-navy)' : 'var(--bg-white)',
+                        border: activeCategory === cat ? '1px solid var(--color-primary)' : '1px solid var(--color-border)',
+                        backgroundColor: activeCategory === cat ? 'var(--color-primary)' : 'var(--bg-white)',
                         color: activeCategory === cat ? '#ffffff' : 'var(--text-secondary)',
                         fontSize: '0.75rem',
                         fontWeight: activeCategory === cat ? '600' : '500',
@@ -1142,9 +1136,9 @@ function Cases() {
                       style={{
                         padding: '6px 12px',
                         borderRadius: '4px',
-                        border: '1px solid var(--accent-navy)',
-                        backgroundColor: 'var(--accent-navy-light)',
-                        color: 'var(--accent-navy)',
+                        border: '1px solid var(--color-primary)',
+                        backgroundColor: 'var(--color-primary)',
+                        color: '#ffffff',
                         fontSize: '0.75rem',
                         fontWeight: '600',
                         cursor: 'pointer'
@@ -1159,7 +1153,7 @@ function Cases() {
 
             {filteredCases.length === 0 ? (
               <div style={{ textAlign: 'center', padding: '40px', backgroundColor: 'var(--bg-secondary)', border: '1px dashed var(--color-border)', borderRadius: '4px' }}>
-                <p style={{ color: 'var(--text-muted)' }}>No archived incident files matching filters found.</p>
+                <p style={{ color: 'var(--text-muted)' }}>No case stories match your search.</p>
               </div>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0' }}>
@@ -1186,7 +1180,7 @@ function Cases() {
                     >
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
                         <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
-                          <span style={{ fontFamily: 'monospace', fontSize: '0.8rem', color: 'var(--accent-navy)', fontWeight: 'bold' }}>
+                          <span style={{ fontFamily: 'monospace', fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 'bold' }}>
                             {cs.caseNumber?.startsWith('CASE FILE') ? cs.caseNumber : `CASE FILE ${cs.caseNumber?.replace('CASE-', '') || ''}`}
                           </span>
                           <span style={{
@@ -1215,7 +1209,7 @@ function Cases() {
                               padding: '2px 8px',
                               borderRadius: '3px'
                             }}>
-                              Audited
+                              Completed
                             </span>
                           )}
                         </div>
@@ -1228,7 +1222,7 @@ function Cases() {
                         </div>
                       </div>
 
-                      <h3 style={{ fontSize: '1.4rem', color: 'var(--accent-navy)', fontWeight: 'bold', margin: '4px 0 2px 0' }}>
+                      <h3 style={{ fontSize: '1.35rem', color: 'var(--text-primary)', fontWeight: 'bold', margin: '4px 0 2px 0' }}>
                         {cs.title}
                       </h3>
 
@@ -1236,11 +1230,11 @@ function Cases() {
                         {cs.shortDescription}
                       </p>
 
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.85rem', color: 'var(--accent-navy)', fontWeight: '600', marginTop: '4px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.85rem', color: 'var(--text-primary)', fontWeight: '600', marginTop: '4px' }}>
                         <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 'normal' }}>
                           Domain: <strong style={{ color: 'var(--text-secondary)' }}>{cs.incidentType}</strong>
                         </span>
-                        <span className="interactive-link">
+                        <span className="interactive-link" style={{ color: 'var(--color-primary)' }}>
                           Examine Case File <span className="arrow link-arrow">&rarr;</span>
                         </span>
                       </div>
@@ -1266,7 +1260,7 @@ function Cases() {
             style={{
               backgroundColor: 'transparent',
               border: 'none',
-              color: 'var(--accent-navy)',
+              color: 'var(--color-accent)',
               fontSize: '0.95rem',
               fontWeight: '600',
               cursor: 'pointer',
@@ -1282,7 +1276,7 @@ function Cases() {
 
           {caseLoading ? (
             <div style={{ textAlign: 'center', padding: '60px 0' }}>
-              <h3 style={{ color: 'var(--accent-navy)' }}>Loading Case File...</h3>
+              <h3 style={{ color: 'var(--text-primary)' }}>Loading Case File...</h3>
             </div>
           ) : (
             <EditorialScrollStory

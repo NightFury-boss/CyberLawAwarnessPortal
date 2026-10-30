@@ -89,7 +89,7 @@ function Sidebar({ user, isCollapsed, setIsCollapsed, isOpen, setIsOpen }) {
 
         {/* Scrollable Navigation Items */}
         <nav className="workspace-sidebar-nav">
-          <div className="workspace-nav-section-title">Learner Workspace</div>
+          <div className="workspace-nav-section-title">Your Learning</div>
 
           <Link
             to="/dashboard"
@@ -111,7 +111,7 @@ function Sidebar({ user, isCollapsed, setIsCollapsed, isOpen, setIsOpen }) {
           <Link
             to="/quizzes"
             className={`workspace-nav-link ${isActive('/quizzes') ? 'active' : ''}`}
-            data-tooltip="Knowledge Quizzes"
+            data-tooltip="Cyber Law Quizzes"
             onClick={handleLinkClick}
           >
             <span className="workspace-nav-icon">
@@ -127,7 +127,7 @@ function Sidebar({ user, isCollapsed, setIsCollapsed, isOpen, setIsOpen }) {
           <Link
             to="/assessment/baseline"
             className={`workspace-nav-link ${isActive('/assessment/baseline') ? 'active' : ''}`}
-            data-tooltip="Baseline Assessment"
+            data-tooltip="First Check"
             onClick={handleLinkClick}
           >
             <span className="workspace-nav-icon">
@@ -136,13 +136,13 @@ function Sidebar({ user, isCollapsed, setIsCollapsed, isOpen, setIsOpen }) {
                 <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"></polygon>
               </svg>
             </span>
-            <span className="workspace-nav-label">Baseline Assessment</span>
+            <span className="workspace-nav-label">First Check</span>
           </Link>
 
           <Link
             to="/assessment/final"
             className={`workspace-nav-link ${isActive('/assessment/final') ? 'active' : ''}`}
-            data-tooltip="Final Assessment"
+            data-tooltip="Final Check"
             onClick={handleLinkClick}
           >
             <span className="workspace-nav-icon">
@@ -151,7 +151,7 @@ function Sidebar({ user, isCollapsed, setIsCollapsed, isOpen, setIsOpen }) {
                 <polyline points="9 12 11 14 15 10"></polyline>
               </svg>
             </span>
-            <span className="workspace-nav-label">Final Assessment</span>
+            <span className="workspace-nav-label">Final Check</span>
           </Link>
 
           <div className="workspace-nav-divider" />

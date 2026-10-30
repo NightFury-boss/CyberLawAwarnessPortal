@@ -17,12 +17,12 @@ import React, { useState } from 'react';
  * - Honest states: A (No baseline), B (Baseline only), C (Baseline + Final), D (Baseline + Final + Reassessment), E/F.
  */
 const CANONICAL_DIMENSIONS = [
-  { key: 'TR', label: 'Threat Recognition', angle: -90 },
-  { key: 'SI', label: 'Signal Identification', angle: -30 },
-  { key: 'VB', label: 'Verification Behaviour', angle: 30 },
-  { key: 'DQ', label: 'Decision Quality', angle: 90 },
-  { key: 'FP', label: 'False Positive Control', angle: 150 },
-  { key: 'UA', label: 'Unreviewed Acceptance Control', angle: 210 }
+  { key: 'TR', label: 'Threat Recognition', plainDesc: 'Spotting Dangers', angle: -90 },
+  { key: 'SI', label: 'Signal Identification', plainDesc: 'Spotting Fake Senders', angle: -30 },
+  { key: 'VB', label: 'Verification Behaviour', plainDesc: 'Checking Before Trusting', angle: 30 },
+  { key: 'DQ', label: 'Decision Quality', plainDesc: 'Making Thoughtful Choices', angle: 90 },
+  { key: 'FP', label: 'False Positive Control', plainDesc: 'Staying Calm with Safe Messages', angle: 150 },
+  { key: 'UA', label: 'Unreviewed Acceptance Control', plainDesc: 'Not Clicking Without Checking', angle: 210 }
 ];
 
 const RADIUS = 100;
@@ -51,16 +51,16 @@ function buildPolygonPath(scores, defaultValue = 0) {
 
 function getRetentionLabel(state) {
   switch (state) {
-    case 'Retained': return 'Retained';
-    case 'Stable': return 'Stable';
-    case 'Partially Retained': return 'Partially Retained';
-    case 'Declined': return 'Declined';
-    case 'Delayed Improvement': return 'Delayed Improvement';
-    case 'Developing': return 'Developing';
-    case 'Unimproved': return 'Unimproved';
-    case 'pending_reassessment': return 'Pending Reassessment';
-    case 'pending_data': return 'Pending Data';
-    default: return state || 'Pending Data';
+    case 'Retained': return 'Still Strong';
+    case 'Stable': return 'Steady';
+    case 'Partially Retained': return 'Partially Strong';
+    case 'Declined': return 'Needs Practice';
+    case 'Delayed Improvement': return 'Improved Over Time';
+    case 'Developing': return 'In Progress';
+    case 'Unimproved': return 'Needs Practice';
+    case 'pending_reassessment': return 'Follow-Up Ready';
+    case 'pending_data': return 'Check Needed';
+    default: return state || 'Check Needed';
   }
 }
 
@@ -68,8 +68,8 @@ function getDirectionalIndicator(base, final) {
   if (base === null || final === null || base === undefined || final === undefined) return null;
   const delta = final - base;
   if (delta >= 5) return { symbol: '↑', text: 'Improved', delta: `+${delta}%`, className: 'dir-up' };
-  if (delta <= -5) return { symbol: '↓', text: 'Declined', delta: `${delta}%`, className: 'dir-down' };
-  return { symbol: '→', text: 'Stable', delta: `${delta >= 0 ? '+' : ''}${delta}%`, className: 'dir-steady' };
+  if (delta <= -5) return { symbol: '↓', text: 'Needs Practice', delta: `${delta}%`, className: 'dir-down' };
+  return { symbol: '→', text: 'Steady', delta: `${delta >= 0 ? '+' : ''}${delta}%`, className: 'dir-steady' };
 }
 
 function BehavioralEvolution({
@@ -97,10 +97,10 @@ function BehavioralEvolution({
   // Dynamic interpretation note strictly generated from backend trajectory state
   const generateInterpretation = () => {
     if (!hasBaseline) {
-      return "Your behavioral journey begins with the baseline assessment.";
+      return "Start with Your Digital Day to see how you respond to online situations.";
     }
     if (!hasFinal) {
-      return "Your baseline establishes the starting point. Complete your recommended learning pathways before taking the final assessment.";
+      return "Your first check established your starting point. Complete your recommended lessons before taking the final check.";
     }
 
     // Check for strongest positive change
@@ -122,18 +122,18 @@ function BehavioralEvolution({
     });
 
     if (hasTrajectoryReassessment) {
-      return "Longitudinal reassessment confirms durable habit retention across simulated digital situations.";
+      return "Follow-up checks show that your safe online habits remain steady over time.";
     }
 
     if (strongestDim && maxDelta >= 5) {
-      return `${strongestDim.label} has strengthened most significantly (+${maxDelta}%) since your baseline assessment.`;
+      return `${strongestDim.label} (${strongestDim.plainDesc}) improved the most (+${maxDelta}%) since your first check.`;
     }
 
     if (anyDeclined) {
-      return "Certain decision points showed increased caution or altered reflexes after practice. Targeted reinforcement is recommended.";
+      return "A few habits would benefit from extra practice. Short practice checks are recommended.";
     }
 
-    return "Your assessment results show steady behavioral consistency across all six decision dimensions.";
+    return "Your results show steady, consistent online habits across all six areas.";
   };
 
   /* ========================================================================= */
@@ -145,19 +145,19 @@ function BehavioralEvolution({
         <div className="desk-section-header">
           <div>
             <span className="editorial-eyebrow" style={{ color: 'var(--color-portal-blue, #2563eb)' }}>
-              BEHAVIORAL EVIDENCE
+              DECISION HABITS
             </span>
-            <h2 id="behavior-heading" className="desk-section-title">How you're changing</h2>
+            <h2 id="behavior-heading" className="desk-section-title">How Your Decisions Change</h2>
             <p className="desk-section-sub">
-              Your assessment results show how your digital decision-making is evolving across repeated practice.
+              See how your online decision habits evolve across your practice and assessments.
             </p>
           </div>
-          <span className="desk-section-counter">Awaiting Baseline</span>
+          <span className="desk-section-counter">First Check Needed</span>
         </div>
 
         <div className="desk-summary-block" style={{ marginBottom: '1.5rem' }}>
           <p className="desk-quiet-empty" style={{ margin: 0 }}>
-            {generateInterpretation()} Complete Your Digital Day to establish your first six-dimension behavioural profile.
+            {generateInterpretation()} Complete Your Digital Day to see your baseline across all six safety areas.
           </p>
         </div>
 
@@ -165,9 +165,9 @@ function BehavioralEvolution({
           <table className="desk-quiet-table" aria-label="Authoritative Dimensions Framework">
             <thead>
               <tr>
-                <th scope="col">Dimension</th>
-                <th scope="col">Baseline</th>
-                <th scope="col">Evaluation State</th>
+                <th scope="col">Habit Area</th>
+                <th scope="col">First Check</th>
+                <th scope="col">Status</th>
               </tr>
             </thead>
             <tbody>
@@ -175,11 +175,11 @@ function BehavioralEvolution({
                 <tr key={dim.key}>
                   <td>
                     <span className="desk-dim-name">{dim.label}</span>
-                    <span className="desk-dim-abbr">{dim.key}</span>
+                    <span className="desk-dim-subname" style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-muted)' }}>{dim.plainDesc}</span>
                   </td>
                   <td className="desk-table-num">—</td>
                   <td className="desk-table-note">
-                    <span className="retention-state-text state-pending-data">Pending Baseline</span>
+                    <span className="retention-state-text state-pending-data">Check Needed</span>
                   </td>
                 </tr>
               ))}
@@ -188,7 +188,7 @@ function BehavioralEvolution({
         </div>
 
         <p className="desk-evidence-note" style={{ marginTop: '1rem' }}>
-          Behavioral change is measured independently through simulated assessment decisions. Composite scores are strictly excluded to prevent masking vulnerabilities.
+          Your decision habits are measured through realistic online simulations. We evaluate each of the six areas separately instead of combining them into a single average, so that specific risks are never hidden.
         </p>
       </section>
     );
@@ -206,18 +206,18 @@ function BehavioralEvolution({
       <div className="desk-section-header">
         <div>
           <span className="editorial-eyebrow" style={{ color: 'var(--color-portal-blue, #2563eb)' }}>
-            BEHAVIORAL EVOLUTION
+            DECISION HABITS
           </span>
-          <h2 id="behavior-heading" className="desk-section-title">How you're changing</h2>
+          <h2 id="behavior-heading" className="desk-section-title">How Your Decisions Change</h2>
           <p className="desk-section-sub">
-            Your assessment results show how your digital decision-making is evolving across repeated practice.
+            See how your online decision habits evolve across your practice and assessments.
           </p>
         </div>
         <span className="desk-section-counter">
-          {!hasFinal ? 'Baseline Established' : (
+          {!hasFinal ? 'First Check Complete' : (
             hasTrajectoryReassessment 
-              ? `${trajectoryData?.comparableSessionsCount || 3} sessions compared`
-              : 'Baseline → Final Evaluation'
+              ? `${trajectoryData?.comparableSessionsCount || 3} checks compared`
+              : 'First Check → Final Check'
           )}
         </span>
       </div>
@@ -228,7 +228,7 @@ function BehavioralEvolution({
         style={{
           backgroundColor: 'var(--bg-secondary, #f4f3ee)',
           border: '1px solid var(--color-border, #dfe3e6)',
-          borderLeft: '4px solid var(--accent-navy, #0f2537)',
+          borderLeft: '4px solid var(--color-primary, #0f2537)',
           padding: '12px 18px',
           borderRadius: '4px',
           marginBottom: '24px',
@@ -237,7 +237,7 @@ function BehavioralEvolution({
           color: 'var(--text-secondary, #3d4b58)'
         }}
       >
-        <strong>Analytical Observation:</strong> {generateInterpretation()}
+        <strong>Key Observation:</strong> {generateInterpretation()}
       </div>
 
       {/* 3. VISUALIZATION & MATRIX CONTAINER */}
@@ -382,7 +382,7 @@ function BehavioralEvolution({
                       fontSize="11"
                       fontFamily="var(--font-sans, sans-serif)"
                       fontWeight={isHovered ? '700' : '600'}
-                      fill={isHovered ? 'var(--color-portal-blue, #2563eb)' : 'var(--accent-navy, #0f2537)'}
+                      fill={isHovered ? 'var(--color-accent, #2563eb)' : 'var(--text-primary, #1c1c1e)'}
                     >
                       {dim.key}
                     </text>
@@ -481,12 +481,12 @@ function BehavioralEvolution({
             <table className="desk-quiet-table" aria-label="Behavioral Evolution Matrix">
               <thead>
                 <tr>
-                  <th scope="col">Dimension</th>
-                  <th scope="col">Baseline</th>
-                  {hasFinal && <th scope="col">Final</th>}
-                  {hasTrajectoryReassessment && <th scope="col">Reassessment</th>}
-                  {hasFinal && <th scope="col">Direction</th>}
-                  <th scope="col">State</th>
+                  <th scope="col">Habit Area</th>
+                  <th scope="col">First Check</th>
+                  {hasFinal && <th scope="col">Final Check</th>}
+                  {hasTrajectoryReassessment && <th scope="col">Follow-Up</th>}
+                  {hasFinal && <th scope="col">Change</th>}
+                  <th scope="col">Status</th>
                 </tr>
               </thead>
               <tbody>
@@ -511,7 +511,7 @@ function BehavioralEvolution({
                     >
                       <td>
                         <span className="desk-dim-name">{dim.label}</span>
-                        <span className="desk-dim-abbr">{dim.key}</span>
+                        <span className="desk-dim-subname" style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-muted)' }}>{dim.plainDesc}</span>
                       </td>
                       <td className="desk-table-num">
                         {baseVal !== null ? `${baseVal}%` : '—'}
@@ -545,10 +545,10 @@ function BehavioralEvolution({
                       <td>
                         <span
                           role="status"
-                          aria-label={`Retention classification: ${getRetentionLabel(dimData.retentionState)}`}
+                          aria-label={`Status: ${getRetentionLabel(dimData.retentionState)}`}
                           className={`retention-state-text ${statusClass}`}
                         >
-                          {!hasFinal ? 'Baseline Reflex' : getRetentionLabel(dimData.retentionState)}
+                          {!hasFinal ? 'First Check Saved' : getRetentionLabel(dimData.retentionState)}
                         </span>
                       </td>
                     </tr>
@@ -562,15 +562,15 @@ function BehavioralEvolution({
           <div style={{ marginTop: '14px', fontSize: '0.82rem', color: 'var(--text-muted, #52606d)', lineHeight: '1.5' }}>
             {!hasFinal ? (
               <p style={{ margin: 0 }}>
-                Initial baseline reflex recorded. Complete your assigned learning pathways to unlock the adaptive final evaluation.
+                First check recorded. Complete your assigned lessons to unlock the final check.
               </p>
             ) : !hasTrajectoryReassessment ? (
               <p style={{ margin: 0 }}>
-                Baseline and final pair established. Voluntary reassessments are available in the assessment centre when you wish to verify habit retention over time.
+                First check and final check completed. You can retake the simulation anytime to check your habits over time.
               </p>
             ) : (
               <p style={{ margin: 0 }}>
-                Longitudinal trajectory tracks stability across spaced sessions. All measurements derive from simulated interaction decisions.
+                This record compares your choices across spaced checks. All scores come from simulated online situations.
               </p>
             )}
           </div>
@@ -580,7 +580,7 @@ function BehavioralEvolution({
 
       {/* 4. METHODOLOGY SAFEGUARD NOTICE */}
       <p className="desk-evidence-note" style={{ marginTop: '1.25rem' }}>
-        Behavioral change is measured independently through simulated assessment decisions. Composite scores and artificial averages are strictly excluded to prevent masking critical security vulnerabilities.
+        Your decision habits are measured through realistic online simulations. We evaluate each of the six areas separately instead of combining them into a single average, so that specific risks are never hidden.
       </p>
     </section>
   );

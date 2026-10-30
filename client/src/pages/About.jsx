@@ -178,12 +178,12 @@ function About() {
                 style={{
                   background: 'none',
                   border: 'none',
-                  color: activeSection === sec.id ? 'var(--accent-navy)' : 'var(--text-secondary)',
+                  color: activeSection === sec.id ? 'var(--color-primary)' : 'var(--text-secondary)',
                   fontWeight: activeSection === sec.id ? '600' : '500',
                   fontSize: '0.85rem',
                   cursor: 'pointer',
                   padding: '4px 8px',
-                  borderBottom: activeSection === sec.id ? '2px solid var(--accent-navy)' : '2px solid transparent',
+                  borderBottom: activeSection === sec.id ? '2px solid var(--color-primary)' : '2px solid transparent',
                   transition: 'all 0.2s ease'
                 }}
               >
@@ -202,10 +202,10 @@ function About() {
       <header style={{ padding: '60px 0 40px 0', borderBottom: '1px solid var(--color-border)' }}>
         <div className="container" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '40px', alignItems: 'center' }}>
           <div>
-            <span style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '1.5px', color: 'var(--accent-navy)', fontWeight: 'bold', display: 'block', marginBottom: '8px' }}>
+            <span style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '1.5px', color: 'var(--color-accent)', fontWeight: 'bold', display: 'block', marginBottom: '8px' }}>
               About the Project
             </span>
-            <h1 style={{ fontSize: '2.2rem', fontWeight: 'bold', color: 'var(--accent-navy)', margin: '0 0 16px 0', lineHeight: '1.3' }}>
+            <h1 style={{ fontSize: '2.2rem', fontWeight: 'bold', color: 'var(--text-primary)', margin: '0 0 16px 0', lineHeight: '1.3' }}>
               Cyber awareness is more than knowing the rules. It is knowing what to do when the situation feels real.
             </h1>
             <p style={{ fontSize: '1.05rem', color: 'var(--text-secondary)', marginBottom: '24px', lineHeight: '1.6' }}>
@@ -225,15 +225,15 @@ function About() {
           <div style={{ display: 'flex', justifyContent: 'center' }}>
             <svg width="240" height="200" viewBox="0 0 240 200">
               <path d="M 40 40 L 120 70 L 120 130 L 200 160" fill="none" stroke="var(--color-border)" strokeWidth="1.5" strokeDasharray="4 3" />
-              <path className="motion-draw" d="M 40 40 L 120 70 L 120 130 L 200 160" fill="none" stroke="var(--accent-navy)" strokeWidth="1.5" style={{ strokeDasharray: 300, strokeDashoffset: 300 }} />
+              <path className="motion-draw" d="M 40 40 L 120 70 L 120 130 L 200 160" fill="none" stroke="var(--color-primary)" strokeWidth="1.5" style={{ strokeDasharray: 300, strokeDashoffset: 300 }} />
               
-              <circle cx="40" cy="40" r="5" fill="var(--accent-navy)" />
+              <circle cx="40" cy="40" r="5" fill="var(--color-primary)" />
               <text x="50" y="44" fontSize="0.7rem" fontWeight="bold" fill="var(--text-secondary)">LAW</text>
 
-              <circle cx="120" cy="70" r="5" fill="var(--accent-navy)" />
+              <circle cx="120" cy="70" r="5" fill="var(--color-primary)" />
               <text x="130" y="74" fontSize="0.7rem" fontWeight="bold" fill="var(--text-secondary)">THREAT</text>
 
-              <circle cx="120" cy="130" r="5" fill="var(--accent-navy)" />
+              <circle cx="120" cy="130" r="5" fill="var(--color-primary)" />
               <text x="130" y="134" fontSize="0.7rem" fontWeight="bold" fill="var(--text-secondary)">DECISION</text>
 
               <circle cx="200" cy="160" r="5" fill="var(--color-success)" />
@@ -249,7 +249,7 @@ function About() {
           <span style={{ fontSize: '0.8rem', fontWeight: 'bold', color: 'var(--text-muted)', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>
             Core Mission
           </span>
-          <h2 style={{ fontSize: '1.6rem', fontWeight: 'bold', color: 'var(--accent-navy)', marginBottom: '16px' }}>
+          <h2 style={{ fontSize: '1.6rem', fontWeight: 'bold', color: 'var(--text-primary)', marginBottom: '16px' }}>
             Why This Portal Exists
           </h2>
           <div style={{ color: 'var(--text-secondary)', fontSize: '0.95rem', lineHeight: '1.6', display: 'flex', flexDirection: 'column', gap: '16px' }}>
@@ -262,14 +262,14 @@ function About() {
           </div>
 
           {/* THE IDEA BEHIND THE PROJECT */}
-          <div style={{ marginTop: '32px', padding: '24px', backgroundColor: 'var(--accent-navy-light)', borderLeft: '4px solid var(--accent-navy)', borderRadius: 'var(--radius-sm)' }}>
-            <h3 style={{ fontSize: '0.8rem', textTransform: 'uppercase', color: 'var(--accent-navy)', fontWeight: '800', letterSpacing: '1px', margin: '0 0 8px 0' }}>The Idea Behind the Project</h3>
-            <h4 style={{ fontSize: '1.25rem', color: 'var(--accent-navy)', fontWeight: 'bold', margin: '0 0 12px 0' }}>"Knowing the law is only the beginning."</h4>
+          <div style={{ marginTop: '32px', padding: '24px', backgroundColor: 'var(--bg-white)', border: '1px solid var(--color-border)', borderLeft: '4px solid var(--color-primary)', borderRadius: 'var(--radius-sm)' }}>
+            <h3 style={{ fontSize: '0.8rem', textTransform: 'uppercase', color: 'var(--color-accent)', fontWeight: '800', letterSpacing: '1px', margin: '0 0 8px 0' }}>The Idea Behind the Project</h3>
+            <h4 style={{ fontSize: '1.25rem', color: 'var(--text-primary)', fontWeight: 'bold', margin: '0 0 12px 0' }}>"Knowing the law is only the beginning."</h4>
             <p style={{ fontSize: '0.95rem', color: 'var(--text-secondary)', lineHeight: '1.6', margin: 0 }}>A useful understanding of cyber law goes beyond remembering provisions. It means recognizing warning signs, understanding how incidents unfold, knowing what practical steps to take, and making better decisions when situations become difficult.</p>
           </div>
 
           <div style={{ marginTop: '24px' }}>
-            <Link to="/crimes" style={{ color: 'var(--accent-navy)', fontWeight: 'bold', textDecoration: 'underline', fontSize: '0.9rem' }}>
+            <Link to="/crimes" style={{ color: 'var(--color-primary)', fontWeight: '600', textDecoration: 'none', fontSize: '0.9rem' }}>
               Explore Cybercrime Library &rarr;
             </Link>
           </div>
@@ -282,7 +282,7 @@ function About() {
           <span style={{ fontSize: '0.8rem', fontWeight: 'bold', color: 'var(--text-muted)', textTransform: 'uppercase', display: 'block', marginBottom: '8px', textAlign: 'center' }}>
             Methodology
           </span>
-          <h2 style={{ fontSize: '1.6rem', fontWeight: 'bold', color: 'var(--accent-navy)', marginBottom: '12px', textAlign: 'center' }}>
+          <h2 style={{ fontSize: '1.6rem', fontWeight: 'bold', color: 'var(--text-primary)', marginBottom: '12px', textAlign: 'center' }}>
             The Experiential Learning Loop
           </h2>
           <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', textAlign: 'center', marginBottom: '40px', maxWidth: '600px', margin: '0 auto 40px auto' }}>
@@ -310,7 +310,7 @@ function About() {
           <span style={{ fontSize: '0.8rem', fontWeight: 'bold', color: 'var(--text-muted)', textTransform: 'uppercase', display: 'block', marginBottom: '8px', textAlign: 'center' }}>
             Pedagogy Shift
           </span>
-          <h2 style={{ fontSize: '1.6rem', fontWeight: 'bold', color: 'var(--accent-navy)', marginBottom: '24px', textAlign: 'center' }}>
+          <h2 style={{ fontSize: '1.6rem', fontWeight: 'bold', color: 'var(--text-primary)', marginBottom: '24px', textAlign: 'center' }}>
             What Makes This Different
           </h2>
 
@@ -342,7 +342,7 @@ function About() {
               <span style={{ fontSize: '0.75rem', fontWeight: 'bold', color: 'var(--color-success)', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>
                 Portal Experience
               </span>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.85rem', fontWeight: '600', color: 'var(--accent-navy)', flexWrap: 'wrap' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.85rem', fontWeight: '600', color: 'var(--text-primary)', flexWrap: 'wrap' }}>
                 <span>Experience</span>
                 <span>→</span>
                 <span>Reflect</span>
@@ -358,7 +358,7 @@ function About() {
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '24px' }}>
             <div>
-              <strong style={{ fontSize: '0.95rem', color: 'var(--accent-navy)', display: 'block', marginBottom: '6px' }}>
+              <strong style={{ fontSize: '0.95rem', color: 'var(--text-primary)', display: 'block', marginBottom: '6px' }}>
                 Context Linkage
               </strong>
               <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: '1.5', margin: 0 }}>
@@ -366,7 +366,7 @@ function About() {
               </p>
             </div>
             <div>
-              <strong style={{ fontSize: '0.95rem', color: 'var(--accent-navy)', display: 'block', marginBottom: '6px' }}>
+              <strong style={{ fontSize: '0.95rem', color: 'var(--text-primary)', display: 'block', marginBottom: '6px' }}>
                 Active Sandbox
               </strong>
               <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: '1.5', margin: 0 }}>
@@ -374,7 +374,7 @@ function About() {
               </p>
             </div>
             <div>
-              <strong style={{ fontSize: '0.95rem', color: 'var(--accent-navy)', display: 'block', marginBottom: '6px' }}>
+              <strong style={{ fontSize: '0.95rem', color: 'var(--text-primary)', display: 'block', marginBottom: '6px' }}>
                 Quantified Growth
               </strong>
               <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: '1.5', margin: 0 }}>
@@ -391,7 +391,7 @@ function About() {
           <span style={{ fontSize: '0.8rem', fontWeight: 'bold', color: 'var(--text-muted)', textTransform: 'uppercase', display: 'block', marginBottom: '8px', textAlign: 'center' }}>
             Measurement Model
           </span>
-          <h2 style={{ fontSize: '1.6rem', fontWeight: 'bold', color: 'var(--accent-navy)', marginBottom: '12px', textAlign: 'center' }}>
+          <h2 style={{ fontSize: '1.6rem', fontWeight: 'bold', color: 'var(--text-primary)', marginBottom: '12px', textAlign: 'center' }}>
             Six-Dimensional Behavioral Assessment
           </h2>
           <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', textAlign: 'center', marginBottom: '32px', maxWidth: '640px', margin: '0 auto 32px auto', lineHeight: '1.6' }}>
@@ -406,7 +406,7 @@ function About() {
             marginBottom: '24px'
           }}>
             <div style={{ backgroundColor: 'var(--bg-primary)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-sm)', padding: '16px' }}>
-              <strong style={{ fontSize: '0.9rem', color: 'var(--accent-navy)', display: 'block', marginBottom: '4px' }}>
+              <strong style={{ fontSize: '0.9rem', color: 'var(--text-primary)', display: 'block', marginBottom: '4px' }}>
                 TR · Threat Recognition
               </strong>
               <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', margin: 0, lineHeight: '1.45' }}>
@@ -415,7 +415,7 @@ function About() {
             </div>
 
             <div style={{ backgroundColor: 'var(--bg-primary)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-sm)', padding: '16px' }}>
-              <strong style={{ fontSize: '0.9rem', color: 'var(--accent-navy)', display: 'block', marginBottom: '4px' }}>
+              <strong style={{ fontSize: '0.9rem', color: 'var(--text-primary)', display: 'block', marginBottom: '4px' }}>
                 SI · Signal Identification
               </strong>
               <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', margin: 0, lineHeight: '1.45' }}>
@@ -424,7 +424,7 @@ function About() {
             </div>
 
             <div style={{ backgroundColor: 'var(--bg-primary)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-sm)', padding: '16px' }}>
-              <strong style={{ fontSize: '0.9rem', color: 'var(--accent-navy)', display: 'block', marginBottom: '4px' }}>
+              <strong style={{ fontSize: '0.9rem', color: 'var(--text-primary)', display: 'block', marginBottom: '4px' }}>
                 VB · Verification Behaviour
               </strong>
               <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', margin: 0, lineHeight: '1.45' }}>
@@ -433,7 +433,7 @@ function About() {
             </div>
 
             <div style={{ backgroundColor: 'var(--bg-primary)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-sm)', padding: '16px' }}>
-              <strong style={{ fontSize: '0.9rem', color: 'var(--accent-navy)', display: 'block', marginBottom: '4px' }}>
+              <strong style={{ fontSize: '0.9rem', color: 'var(--text-primary)', display: 'block', marginBottom: '4px' }}>
                 DQ · Decision Quality
               </strong>
               <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', margin: 0, lineHeight: '1.45' }}>
@@ -442,7 +442,7 @@ function About() {
             </div>
 
             <div style={{ backgroundColor: 'var(--bg-primary)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-sm)', padding: '16px' }}>
-              <strong style={{ fontSize: '0.9rem', color: 'var(--accent-navy)', display: 'block', marginBottom: '4px' }}>
+              <strong style={{ fontSize: '0.9rem', color: 'var(--text-primary)', display: 'block', marginBottom: '4px' }}>
                 FP · False Positive Control
               </strong>
               <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', margin: 0, lineHeight: '1.45' }}>
@@ -451,7 +451,7 @@ function About() {
             </div>
 
             <div style={{ backgroundColor: 'var(--bg-primary)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-sm)', padding: '16px' }}>
-              <strong style={{ fontSize: '0.9rem', color: 'var(--accent-navy)', display: 'block', marginBottom: '4px' }}>
+              <strong style={{ fontSize: '0.9rem', color: 'var(--text-primary)', display: 'block', marginBottom: '4px' }}>
                 UA · Unreviewed Acceptance Control
               </strong>
               <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', margin: 0, lineHeight: '1.45' }}>
@@ -463,7 +463,7 @@ function About() {
           <div style={{
             backgroundColor: 'var(--bg-primary)',
             border: '1px solid var(--color-border)',
-            borderLeft: '4px solid var(--accent-navy)',
+            borderLeft: '4px solid var(--color-primary)',
             padding: '16px 20px',
             borderRadius: 'var(--radius-sm)'
           }}>
@@ -480,7 +480,7 @@ function About() {
           <span style={{ fontSize: '0.8rem', fontWeight: 'bold', color: 'var(--text-muted)', textTransform: 'uppercase', display: 'block', marginBottom: '8px', textAlign: 'center' }}>
             Data Boundaries
           </span>
-          <h2 style={{ fontSize: '1.6rem', fontWeight: 'bold', color: 'var(--accent-navy)', marginBottom: '12px', textAlign: 'center' }}>
+          <h2 style={{ fontSize: '1.6rem', fontWeight: 'bold', color: 'var(--text-primary)', marginBottom: '12px', textAlign: 'center' }}>
             Built to Teach, Not to Collect
           </h2>
           <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', textAlign: 'center', marginBottom: '32px', maxWidth: '600px', margin: '0 auto 32px auto' }}>
@@ -525,7 +525,7 @@ function About() {
             fontSize: '0.8rem',
             textAlign: 'center'
           }}>
-            <strong style={{ color: 'var(--accent-navy)', display: 'block', marginBottom: '6px' }}>Simulation Safety Pipeline</strong>
+            <strong style={{ color: 'var(--text-primary)', display: 'block', marginBottom: '6px' }}>Simulation Safety Pipeline</strong>
             <span style={{ fontFamily: 'monospace', color: 'var(--text-secondary)' }}>
               USER INPUT → [Filter: Action Score Only] → DB STORE (Choice Metrics) → (Credentials Discarded)
             </span>
@@ -539,7 +539,7 @@ function About() {
           <span style={{ fontSize: '0.8rem', fontWeight: 'bold', color: 'var(--text-muted)', textTransform: 'uppercase', display: 'block', marginBottom: '8px', textAlign: 'center' }}>
             Academic Profile
           </span>
-          <h2 style={{ fontSize: '1.6rem', fontWeight: 'bold', color: 'var(--accent-navy)', marginBottom: '12px', textAlign: 'center' }}>
+          <h2 style={{ fontSize: '1.6rem', fontWeight: 'bold', color: 'var(--text-primary)', marginBottom: '12px', textAlign: 'center' }}>
             Academic Project Infrastructure
           </h2>
           <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', textAlign: 'center', marginBottom: '32px' }}>
@@ -571,7 +571,7 @@ function About() {
 
             {/* Academic focus highlights */}
             <div>
-              <h4 style={{ fontSize: '0.95rem', fontWeight: 'bold', color: 'var(--accent-navy)', marginBottom: '10px' }}>
+              <h4 style={{ fontSize: '0.95rem', fontWeight: 'bold', color: 'var(--text-primary)', marginBottom: '10px' }}>
                 Core Focus Modules:
               </h4>
               <ul style={{ paddingLeft: '16px', margin: 0, fontSize: '0.85rem', color: 'var(--text-secondary)', display: 'flex', flexDirection: 'column', gap: '6px' }}>
@@ -601,15 +601,15 @@ function About() {
             flexWrap: 'wrap',
             marginBottom: '12px'
           }}>
-            <Link to="/laws" style={{ color: 'var(--accent-navy)', textDecoration: 'none', borderBottom: '1px solid var(--accent-navy)' }}>LAW</Link>
+            <Link to="/laws" style={{ color: 'var(--color-primary)', textDecoration: 'none', borderBottom: '1px solid var(--color-primary)' }}>LAW</Link>
             <span style={{ color: 'var(--text-muted)' }}>&rarr;</span>
-            <Link to="/crimes" style={{ color: 'var(--accent-navy)', textDecoration: 'none', borderBottom: '1px solid var(--accent-navy)' }}>CRIME</Link>
+            <Link to="/crimes" style={{ color: 'var(--color-primary)', textDecoration: 'none', borderBottom: '1px solid var(--color-primary)' }}>CRIME</Link>
             <span style={{ color: 'var(--text-muted)' }}>&rarr;</span>
-            <Link to="/cases" style={{ color: 'var(--accent-navy)', textDecoration: 'none', borderBottom: '1px solid var(--accent-navy)' }}>CASE</Link>
+            <Link to="/cases" style={{ color: 'var(--color-primary)', textDecoration: 'none', borderBottom: '1px solid var(--color-primary)' }}>CASE</Link>
             <span style={{ color: 'var(--text-muted)' }}>&rarr;</span>
-            <Link to="/prevention" style={{ color: 'var(--accent-navy)', textDecoration: 'none', borderBottom: '1px solid var(--accent-navy)' }}>PREVENTION</Link>
+            <Link to="/prevention" style={{ color: 'var(--color-primary)', textDecoration: 'none', borderBottom: '1px solid var(--color-primary)' }}>PREVENTION</Link>
             <span style={{ color: 'var(--text-muted)' }}>&rarr;</span>
-            <Link to="/dashboard" style={{ color: 'var(--accent-navy)', textDecoration: 'none', borderBottom: '1px solid var(--accent-navy)' }}>ASSESSMENT</Link>
+            <Link to="/dashboard" style={{ color: 'var(--color-primary)', textDecoration: 'none', borderBottom: '1px solid var(--color-primary)' }}>ASSESSMENT</Link>
           </div>
           <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', margin: 0 }}>
             The portal connects these modules so legal codes are not studied in isolation.
@@ -620,10 +620,10 @@ function About() {
       {/* SECTION 8: CLOSING STATEMENT & PHILOSOPHY */}
       <section style={{ padding: '60px 0 80px 0', marginTop: 'auto' }}>
         <div className="container" style={{ maxWidth: '650px', textAlign: 'center' }}>
-          <h3 style={{ fontSize: '1.3rem', color: 'var(--accent-navy)', fontWeight: 'bold', marginBottom: '12px' }}>
+          <h3 style={{ fontSize: '1.3rem', color: 'var(--text-primary)', fontWeight: 'bold', marginBottom: '12px' }}>
             Knowing the law is only the beginning.
           </h3>
-          <div style={{ fontWeight: 'bold', color: 'var(--accent-navy)', fontSize: '1.1rem', marginBottom: '24px', letterSpacing: '0.5px' }}>
+          <div style={{ fontWeight: '600', color: 'var(--text-secondary)', fontSize: '1.1rem', marginBottom: '24px', letterSpacing: '0.5px' }}>
             Learn. Recognize. Stay Safe.
           </div>
           

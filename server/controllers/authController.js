@@ -2,29 +2,50 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const User = require('../models/User');
 const UserProgress = require('../models/UserProgress');
-const { JWT_SECRET } = require('../middleware/authMiddleware');
+const { getJwtSecret } = require('../middleware/authMiddleware');
+const { escapeRegex } = require('../utils/regexUtils');
 
 exports.register = async (req, res) => {
   try {
     const { email, password, fullName } = req.body;
 
-    if (!email || !password || !fullName) {
+    if (typeof email !== 'string' || typeof password !== 'string' || typeof fullName !== 'string') {
+      return res.status(400).json({ message: 'Email, password, and full name must be valid text strings' });
+    }
+
+    const trimmedEmail = email.trim().toLowerCase();
+    const trimmedName = fullName.trim();
+
+    if (!trimmedEmail || !password || !trimmedName) {
       return res.status(400).json({ message: 'All fields are required' });
     }
 
-    // Check duplicate
-    const existingUser = await User.findOne({ email: email.toLowerCase() });
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) {
+      return res.status(400).json({ message: 'Please provide a valid email address' });
+    }
+
+    if (password.length < 8) {
+      return res.status(400).json({ message: 'Password must be at least 8 characters long' });
+    }
+
+    // Check duplicate (supporting case-insensitive match against legacy/raw records)
+    const existingUser = await User.findOne({
+      $or: [
+        { email: trimmedEmail },
+        { email: new RegExp(`^${escapeRegex(trimmedEmail)}$`, 'i') }
+      ]
+    });
     if (existingUser) {
       return res.status(400).json({ message: 'User with this email already exists' });
     }
 
-    // Hash password
-    const passwordHash = bcrypt.hashSync(password, 10);
+    // Non-blocking password hash
+    const passwordHash = await bcrypt.hash(password, 10);
 
     // Enforce role = user (prevent parameter injection of admin role)
     const newUser = await User.create({
-      fullName,
-      email: email.toLowerCase(),
+      fullName: trimmedName,
+      email: trimmedEmail,
       passwordHash,
       role: 'user'
     });
@@ -37,7 +58,7 @@ exports.register = async (req, res) => {
       currentStreak: 0
     });
 
-    const token = jwt.sign({ id: newUser._id }, JWT_SECRET, { expiresIn: '7d' });
+    const token = jwt.sign({ id: newUser._id }, getJwtSecret(), { expiresIn: '7d' });
 
     res.status(201).json({
       token,
@@ -57,21 +78,33 @@ exports.login = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    if (!email || !password) {
+    if (typeof email !== 'string' || typeof password !== 'string') {
+      return res.status(400).json({ message: 'Email and password must be valid text strings' });
+    }
+
+    const trimmedEmail = email.trim().toLowerCase();
+
+    if (!trimmedEmail || !password) {
       return res.status(400).json({ message: 'Email and password are required' });
     }
 
-    const user = await User.findOne({ email: email.toLowerCase() });
+    // Case-insensitive lookup ensuring legacy or mixed-case records can authenticate
+    const user = await User.findOne({
+      $or: [
+        { email: trimmedEmail },
+        { email: new RegExp(`^${escapeRegex(trimmedEmail)}$`, 'i') }
+      ]
+    });
     if (!user) {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
 
-    const isMatch = bcrypt.compareSync(password, user.passwordHash);
+    const isMatch = await bcrypt.compare(password, user.passwordHash);
     if (!isMatch) {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
 
-    const token = jwt.sign({ id: user._id }, JWT_SECRET, { expiresIn: '7d' });
+    const token = jwt.sign({ id: user._id }, getJwtSecret(), { expiresIn: '7d' });
 
     res.json({
       token,

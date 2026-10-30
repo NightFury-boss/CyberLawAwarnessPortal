@@ -4,9 +4,9 @@ import api from '../services/api';
 import RemediationCards from '../components/RemediationCards';
 import { performStateTransition } from '../utils/transitionUtils';
 
-function FinalAssessment({ user, updateProgressTrigger }) {
+function FinalAssessment({ _user, updateProgressTrigger }) {
   const [session, setSession] = useState(null); // active session ID
-  const [currentStage, setCurrentStage] = useState(null); // current Mongoose ScenarioStage
+  const [currentStage, setCurrentStage] = useState(null); // current ScenarioStage
   const [currentStep, setCurrentStep] = useState('start_screen'); // start_screen, active_simulation, reveal_view, completed_summary
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -16,7 +16,6 @@ function FinalAssessment({ user, updateProgressTrigger }) {
   // Custom mock inputs (instantly discarded)
   const [mockUserId, setMockUserId] = useState('');
   const [mockPassword, setMockPassword] = useState('');
-  const [mockOtp, setMockOtp] = useState('');
   const [mockZipPassword, setMockZipPassword] = useState('');
 
   const [result, setResult] = useState(null);
@@ -127,7 +126,7 @@ function FinalAssessment({ user, updateProgressTrigger }) {
   };
 
   const handleInlineClick = async () => {
-    // Find decision that involves clicking/opening links
+    if (submitting || !currentStage) return;
     const clickDecision = currentStage.decisions.find(d => 
       d.optionText.toLowerCase().includes('click') || 
       d.optionText.toLowerCase().includes('open link') ||
@@ -135,15 +134,14 @@ function FinalAssessment({ user, updateProgressTrigger }) {
     );
     if (clickDecision) {
       await handleSelectOption(clickDecision.id);
-    } else {
-      if (currentStage.decisions.length > 0) {
-        await handleSelectOption(currentStage.decisions[currentStage.decisions.length - 1].id);
-      }
+    } else if (currentStage.decisions.length > 0) {
+      await handleSelectOption(currentStage.decisions[currentStage.decisions.length - 1].id);
     }
   };
 
   const handleLoginSubmit = async (e) => {
     e.preventDefault();
+    if (submitting || !currentStage) return;
     const loginDecision = currentStage.decisions.find(d => 
       d.optionText.toLowerCase().includes('enter simulated login') || 
       d.optionText.toLowerCase().includes('credentials') ||
@@ -155,6 +153,7 @@ function FinalAssessment({ user, updateProgressTrigger }) {
 
   const handleZipSubmit = async (e) => {
     e.preventDefault();
+    if (submitting || !currentStage) return;
     const zipDecision = currentStage.decisions.find(d => 
       d.optionText.toLowerCase().includes('run') || 
       d.optionText.toLowerCase().includes('download') ||
@@ -165,6 +164,7 @@ function FinalAssessment({ user, updateProgressTrigger }) {
   };
 
   const handleSelectOption = async (decisionId) => {
+    if (submitting || !session || !currentStage) return;
     setSubmitting(true);
     setError('');
     try {
@@ -173,7 +173,6 @@ function FinalAssessment({ user, updateProgressTrigger }) {
       // Clear input fields
       setMockUserId('');
       setMockPassword('');
-      setMockOtp('');
       setMockZipPassword('');
 
       performStateTransition(() => {
@@ -198,188 +197,216 @@ function FinalAssessment({ user, updateProgressTrigger }) {
   };
 
   return (
-    <div className="container page-entry" style={{ padding: 'var(--space-xl) 0', maxWidth: '800px', fontFamily: 'var(--font-sans)' }}>
+    <div className="container page-entry" style={{ padding: 'var(--space-xl) 0', maxWidth: '860px', fontFamily: 'var(--font-sans)' }}>
       {/* Accessible Live Region */}
       <div aria-live="polite" className="sr-only" style={{ position: 'absolute', width: '1px', height: '1px', padding: 0, margin: '-1px', overflow: 'hidden', clip: 'rect(0,0,0,0)', border: 0 }}>
         {currentStage ? `Situation order ${currentStage.stageOrder}: ${currentStage.title}. ${currentStage.description}` : ''}
       </div>
 
-      {/* Completed Session Summary Screen */}
-      {currentStep === 'completed_summary' && completedHistory && (
-        <div style={{ maxWidth: '640px', margin: '40px auto', textAlign: 'center' }}>
-          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', marginBottom: 'var(--space-md)' }}>
-            <img src="/logo/cyber-law-logo-icon.svg" alt="" style={{ height: '32px', width: 'auto' }} />
-            <span style={{ fontSize: '0.85rem', fontWeight: 'bold', color: 'var(--accent-navy)', textTransform: 'uppercase', letterSpacing: '1px' }}>
+      {/* ========================================================================= */}
+      {/* 1. START SCREEN & BRIEFING                                                */}
+      {/* ========================================================================= */}
+      {currentStep === 'start_screen' && (
+        <div className="simulation-briefing-card">
+          <div className="simulation-briefing-logo">
+            <img src="/logo/cyber-law-logo-icon.svg" alt="" style={{ height: '36px', width: 'auto' }} />
+            <span style={{ fontSize: '0.85rem', fontWeight: '800', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
               Cyber Law Awareness Portal
             </span>
           </div>
-          <h1 style={{ fontSize: '2.2rem', marginTop: '10px', marginBottom: 'var(--space-sm)' }}>
-            Final Assessment Completed
-          </h1>
-          <p className="text-secondary" style={{ fontSize: '1.05rem', marginBottom: 'var(--space-lg)' }}>
-            You have completed the final assessment with recorded results.
+
+          <h1 className="simulation-briefing-title">Your Final Safety Check</h1>
+          <p className="simulation-briefing-lead">
+            Welcome back to <strong>&ldquo;A Day in Your Digital Life&rdquo;</strong>. Experience 5 realistic situations and make the decisions you would make in everyday life. See how much your digital safety habits have grown since your First Check.
+          </p>
+
+          <div className="simulation-briefing-points">
+            <div className="simulation-point-item">
+              <span className="simulation-point-icon">1</span>
+              <div>
+                <h4 className="simulation-point-title">Real-World Decisions</h4>
+                <p className="simulation-point-desc">Interact with authentic mock emails, SMS messages, phone calls, and checkout screens.</p>
+              </div>
+            </div>
+
+            <div className="simulation-point-item">
+              <span className="simulation-point-icon">2</span>
+              <div>
+                <h4 className="simulation-point-title">Safe &amp; Suspicious Mix</h4>
+                <p className="simulation-point-desc">Some notices are completely genuine; others contain deceptive psychological tricks.</p>
+              </div>
+            </div>
+
+            <div className="simulation-point-item">
+              <span className="simulation-point-icon">3</span>
+              <div>
+                <h4 className="simulation-point-title">Measuring Habit Growth</h4>
+                <p className="simulation-point-desc">Compare your instincts side-by-side with your First Check across 6 practical habits.</p>
+              </div>
+            </div>
+
+            <div className="simulation-point-item">
+              <span className="simulation-point-icon">4</span>
+              <div>
+                <h4 className="simulation-point-title">No Pressure</h4>
+                <p className="simulation-point-desc">There are no trick questions. Choose what you would genuinely do online today.</p>
+              </div>
+            </div>
+          </div>
+
+          <div style={{ margin: '0 auto 24px auto', maxWidth: '580px', borderLeft: '3px solid #0f2537', paddingLeft: '16px', textAlign: 'left' }}>
+            <p style={{ fontSize: '0.95rem', color: 'var(--text-secondary)', fontStyle: 'italic', margin: 0 }}>
+              &ldquo;Improvement is not about knowing every answer. It is about recognizing better decisions when they matter.&rdquo;
+            </p>
+          </div>
+
+          {error && <div className="alert alert-error" style={{ marginBottom: '18px', maxWidth: '580px', margin: '0 auto 18px auto' }}>{error}</div>}
+
+          <div>
+            <button 
+              onClick={handleStart} 
+              className="btn btn-primary" 
+              style={{ padding: '0.85rem 2.8rem', fontSize: '1.05rem', fontWeight: '700' }}
+              disabled={loading}
+            >
+              {loading ? 'Preparing Simulation...' : 'Start Final Check →'}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* 2. COMPLETED SESSION SUMMARY SCREEN                                       */}
+      {/* ========================================================================= */}
+      {currentStep === 'completed_summary' && completedHistory && (
+        <div className="simulation-briefing-card" style={{ textAlign: 'center' }}>
+          <div className="simulation-briefing-logo">
+            <img src="/logo/cyber-law-logo-icon.svg" alt="" style={{ height: '36px', width: 'auto' }} />
+            <span style={{ fontSize: '0.85rem', fontWeight: '800', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+              Cyber Law Awareness Portal
+            </span>
+          </div>
+
+          <h1 className="simulation-briefing-title">Final Check Completed</h1>
+          <p className="simulation-briefing-lead">
+            You have completed your final safety check. Here is how your online safety habits look now.
           </p>
 
           {completedHistory.behaviourScores ? (
-            <div style={{
-              border: '1px solid var(--color-border)',
-              padding: 'var(--space-lg)',
-              borderRadius: 'var(--radius-sm)',
-              backgroundColor: 'var(--bg-secondary)',
-              marginBottom: 'var(--space-xl)',
-              textAlign: 'left'
-            }}>
-              <div style={{ fontSize: '0.85rem', fontWeight: '700', color: 'var(--accent-navy)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 'var(--space-md)', textAlign: 'center' }}>
-                Recorded Final Behavioral Profile
+            <div style={{ marginBottom: '28px', textAlign: 'left' }}>
+              <div style={{ fontSize: '0.82rem', fontWeight: '800', color: '#0f2537', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '14px', textAlign: 'center' }}>
+                Your Final Habits Across 6 Safety Areas
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '12px' }}>
-                <div style={{ padding: '10px', backgroundColor: 'var(--bg-primary)', borderRadius: '4px', borderLeft: '3px solid var(--accent-navy)' }}>
-                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Threat Recognition</div>
-                  <div style={{ fontSize: '1.4rem', fontWeight: '700', color: 'var(--accent-navy)' }}>{completedHistory.behaviourScores?.recognition ?? 0}%</div>
-                </div>
-                <div style={{ padding: '10px', backgroundColor: 'var(--bg-primary)', borderRadius: '4px', borderLeft: '3px solid var(--accent-navy)' }}>
-                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Signal Identification</div>
-                  <div style={{ fontSize: '1.4rem', fontWeight: '700', color: 'var(--accent-navy)' }}>{completedHistory.behaviourScores?.signalIdentification ?? 0}%</div>
-                </div>
-                <div style={{ padding: '10px', backgroundColor: 'var(--bg-primary)', borderRadius: '4px', borderLeft: '3px solid var(--accent-navy)' }}>
-                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Verification Behaviour</div>
-                  <div style={{ fontSize: '1.4rem', fontWeight: '700', color: 'var(--accent-navy)' }}>{completedHistory.behaviourScores?.verification ?? 0}%</div>
-                </div>
-                <div style={{ padding: '10px', backgroundColor: 'var(--bg-primary)', borderRadius: '4px', borderLeft: '3px solid var(--accent-navy)' }}>
-                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Decision Quality</div>
-                  <div style={{ fontSize: '1.4rem', fontWeight: '700', color: 'var(--accent-navy)' }}>{completedHistory.behaviourScores?.decisionQuality ?? 0}%</div>
-                </div>
-                <div style={{ padding: '10px', backgroundColor: 'var(--bg-primary)', borderRadius: '4px', borderLeft: '3px solid var(--accent-navy)' }}>
-                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>False Positive Control</div>
-                  <div style={{ fontSize: '1.4rem', fontWeight: '700', color: 'var(--accent-navy)' }}>{completedHistory.behaviourScores?.falsePositive ?? 0}%</div>
-                </div>
-                <div style={{ padding: '10px', backgroundColor: 'var(--bg-primary)', borderRadius: '4px', borderLeft: '3px solid var(--accent-navy)' }}>
-                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Unreviewed Acceptance Control</div>
-                  <div style={{ fontSize: '1.4rem', fontWeight: '700', color: 'var(--accent-navy)' }}>{completedHistory.behaviourScores?.unreviewedAcceptance ?? 0}%</div>
-                </div>
+              <div className="habit-benchmark-grid">
+                {[
+                  { key: 'recognition', label: 'Spotting Dangers', desc: 'Detecting deceptive offers, threats, and urgency' },
+                  { key: 'signalIdentification', label: 'Spotting Fake Senders', desc: 'Noticing spoofed email addresses and URLs' },
+                  { key: 'verification', label: 'Checking Before Trusting', desc: 'Verifying claims via independent channels' },
+                  { key: 'decisionQuality', label: 'Making Thoughtful Choices', desc: 'Evaluating overall risk before acting' },
+                  { key: 'falsePositive', label: 'Staying Calm with Safe Messages', desc: 'Avoiding false panic on legitimate notices' },
+                  { key: 'unreviewedAcceptance', label: 'Not Clicking Without Checking', desc: 'Stopping automatic approval of permissions' }
+                ].map(habit => {
+                  const score = completedHistory.behaviourScores?.[habit.key] ?? 0;
+                  return (
+                    <div key={habit.key} className="habit-benchmark-card">
+                      <div className="habit-benchmark-top">
+                        <span className="habit-benchmark-label">{habit.label}</span>
+                        <span className="habit-benchmark-score">{score}%</span>
+                      </div>
+                      <div className="habit-benchmark-bar">
+                        <div className="habit-benchmark-bar-fill" style={{ width: `${score}%` }} />
+                      </div>
+                      <p className="habit-benchmark-desc">{habit.desc}</p>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           ) : (
-            <div style={{
-              borderLeft: '4px solid var(--accent-navy)',
-              padding: 'var(--space-lg)',
-              borderRadius: 'var(--radius-sm)',
-              textAlign: 'center',
-              backgroundColor: 'var(--bg-secondary)',
-              marginBottom: 'var(--space-xl)'
-            }}>
-              <span style={{ fontSize: '0.85rem', fontWeight: '600', color: 'var(--text-muted)' }}>RECORDED FINAL EVALUATION</span>
-              <p style={{ fontSize: '0.92rem', color: 'var(--text-primary)', margin: '8px 0 0 0' }}>
-                Your post-learning evaluation has been recorded across six discrete behavioral dimensions.
+            <div className="alert alert-secondary" style={{ marginBottom: '28px', textAlign: 'center' }}>
+              <strong style={{ fontSize: '0.9rem', color: '#0f2537' }}>FINAL CHECK RECORDED</strong>
+              <p style={{ margin: '6px 0 0 0', fontSize: '0.88rem', color: 'var(--text-secondary)' }}>
+                Your final check has been securely recorded across your 6 online safety habits.
               </p>
             </div>
           )}
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-sm)', maxWidth: '380px', margin: '0 auto' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', maxWidth: '380px', margin: '0 auto' }}>
             <button 
               onClick={() => { setResult(completedHistory); setCurrentStep('reveal_view'); }}
               className="btn btn-primary"
-              style={{ padding: '0.8rem 1.5rem', fontWeight: '600' }}
+              style={{ padding: '0.85rem 1.6rem', fontWeight: '700' }}
             >
-              View Full Behavioral Habits Breakdown
+              See What Changed &amp; Why →
             </button>
             <button 
               onClick={() => navigate('/dashboard')}
               className="btn btn-secondary"
-              style={{ padding: '0.8rem 1.5rem' }}
+              style={{ padding: '0.85rem 1.6rem' }}
             >
-              Continue to Dashboard
+              Go to Dashboard
             </button>
-            <div style={{ marginTop: 'var(--space-md)', paddingTop: 'var(--space-md)', borderTop: '1px solid var(--color-border)' }}>
+            <div style={{ marginTop: '12px', paddingTop: '16px', borderTop: '1px solid var(--color-border)' }}>
               <button 
-                onClick={handleStart}
+                onClick={handleStart} 
                 className="btn btn-outline"
                 style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}
                 disabled={loading}
               >
-                {loading ? 'Starting...' : 'Retake Assessment (New Attempt)'}
+                {loading ? 'Starting...' : 'Take Final Check Again'}
               </button>
               <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '4px' }}>
-                Starting a new attempt will not overwrite your historical completed records.
+                Starting again will not erase your past scores.
               </p>
             </div>
           </div>
         </div>
       )}
 
-      {/* Start Screen */}
-      {currentStep === 'start_screen' && (
-        <div style={{ maxWidth: '600px', margin: '40px auto', textAlign: 'center' }}>
-          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', marginBottom: 'var(--space-md)' }}>
-            <img src="/logo/cyber-law-logo-icon.svg" alt="" style={{ height: '32px', width: 'auto' }} />
-            <span style={{ fontSize: '0.85rem', fontWeight: 'bold', color: 'var(--accent-navy)', textTransform: 'uppercase', letterSpacing: '1px' }}>
-              Cyber Law Awareness Portal
-            </span>
-          </div>
-          <h1 style={{ fontSize: '2.5rem', marginTop: '10px', marginBottom: 'var(--space-md)' }}>
-            Cyber Awareness Final Assessment
-          </h1>
-          <p className="text-muted" style={{ fontSize: '1.05rem', marginBottom: 'var(--space-xl)' }}>
-            Welcome to <strong>&ldquo;A Day in Your Digital Life&rdquo;</strong>. You will navigate multiple sequential situations (some legitimate system processes, others malicious threat indicators). Make choices to verify your judgment.
-          </p>
-          <div style={{ marginBottom: 'var(--space-xl)', borderLeft: '3px solid var(--accent-navy)', paddingLeft: '16px', display: 'inline-block', textAlign: 'left' }}>
-            <p style={{ fontSize: '0.95rem', color: 'var(--accent-navy)', fontStyle: 'italic', margin: 0 }}>
-              "What changed between knowing and recognizing?"
-            </p>
-          </div>
-          <p style={{ display: 'none' }} />
-          {error && <div className="alert alert-error" style={{ marginBottom: 'var(--space-md)' }}>{error}</div>}
-          <button 
-            onClick={handleStart} 
-            className="btn btn-primary" 
-            style={{ padding: '0.8rem 2.5rem', fontSize: '1rem', fontWeight: '600' }}
-            disabled={loading}
-          >
-            {loading ? 'Starting...' : 'Begin Final Assessment'}
-          </button>
-        </div>
-      )}
-
-      {/* Active Simulation */}
+      {/* ========================================================================= */}
+      {/* 3. ACTIVE SIMULATION                                                      */}
+      {/* ========================================================================= */}
       {currentStep === 'active_simulation' && currentStage && (
-        <div key={currentStage.id} className="portal-state-progression" style={{ maxWidth: '800px', margin: '0 auto' }}>
-          {/* Header */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: 'var(--space-sm)' }}>
-            <div className="portal-assessment-stage-pill">
-              <span className="stage-pill-dot" aria-hidden="true" />
-              <span>FINAL ASSESSMENT: A DAY IN YOUR DIGITAL LIFE</span>
+        <div key={currentStage.id} className="portal-state-progression">
+          {/* Situation Stepper Bar */}
+          <div className="situation-stepper-bar">
+            <div className="situation-badge">
+              <span className="situation-badge-dot" aria-hidden="true" />
+              <span>FINAL CHECK: A DAY IN YOUR DIGITAL LIFE</span>
             </div>
-            <div style={{ fontFamily: 'monospace', fontWeight: '600' }}>
+            <div style={{ fontFamily: 'monospace', fontWeight: '700', fontSize: '0.85rem' }}>
               Situation {currentStage.stageOrder} of 5
             </div>
           </div>
 
-          {/* Thin-line progression track */}
-          <div className="portal-progression-track" style={{ marginBottom: '18px' }} aria-hidden="true">
+          {/* Thin Progress Bar */}
+          <div className="quiz-progress-track" style={{ marginBottom: '22px' }} aria-hidden="true">
             <div 
-              className="portal-progression-indicator" 
+              className="quiz-progress-fill" 
               style={{ width: `${(currentStage.stageOrder / 5) * 100}%` }}
             />
           </div>
 
-          <h2 ref={stageHeadingRef} tabIndex="-1" style={{ fontSize: '1.8rem', color: 'var(--accent-navy)', marginBottom: 'var(--space-md)', outline: 'none' }}>
+          <h2 ref={stageHeadingRef} tabIndex="-1" style={{ fontSize: '1.75rem', fontWeight: '800', color: '#0f2537', marginBottom: '8px', outline: 'none' }}>
             {currentStage.title}
           </h2>
-          <p className="text-muted" style={{ marginBottom: 'var(--space-lg)', fontSize: '0.95rem' }}>
+          <p className="text-secondary" style={{ marginBottom: '22px', fontSize: '0.96rem', lineHeight: '1.5' }}>
             {currentStage.description}
           </p>
 
-          {error && <div className="alert alert-error" style={{ marginBottom: 'var(--space-md)' }}>{error}</div>}
+          {error && <div className="alert alert-error" style={{ marginBottom: '18px' }}>{error}</div>}
 
-          {/* Interactive Interface Frame */}
-          <div className="mock-browser-frame" style={{ marginBottom: '24px' }}>
+          {/* ===================================================================== */}
+          {/* Mock Browser & Device Frames                                          */}
+          {/* ===================================================================== */}
+          <div className="mock-browser-frame">
             <div className="mock-browser-header">
-              <div className="browser-dots">
-                <span className="dot-red"></span>
-                <span className="dot-yellow"></span>
-                <span className="dot-green"></span>
+              <div className="mock-browser-dots">
+                <span className="dot-red" />
+                <span className="dot-yellow" />
+                <span className="dot-green" />
               </div>
-              <div className="mock-browser-url">
+              <div className="mock-browser-address">
                 {currentStage.mockInterfaceType === 'email' && (currentStage.mockInterfaceData.senderEmail ? 'https://mail.google.com/mail/u/0/#inbox' : 'https://mail.personal-inbox.com')}
                 {currentStage.mockInterfaceType === 'browser' && (currentStage.mockInterfaceData.url || 'browser://app-permissions')}
                 {currentStage.mockInterfaceType === 'website' && (currentStage.mockInterfaceData.url || 'https://web-portal.in')}
@@ -396,7 +423,7 @@ function FinalAssessment({ user, updateProgressTrigger }) {
             {currentStage.mockInterfaceType === 'email' && (
               <div className="mock-email-container">
                 <div className="mock-email-sidebar">
-                  <strong style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Folders</strong>
+                  <span style={{ fontSize: '0.72rem', fontWeight: '800', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Folders</span>
                   <ul className="mock-email-folders" style={{ padding: 0, margin: '8px 0 0 0', display: 'flex', flexDirection: 'column', gap: '4px' }}>
                     <li className="active">Inbox (1)</li>
                     <li>Sent</li>
@@ -404,18 +431,18 @@ function FinalAssessment({ user, updateProgressTrigger }) {
                   </ul>
                 </div>
                 <div className="mock-email-body">
-                  <div className="email-header-info">
-                    <h3 style={{ fontSize: '1.2rem', color: 'var(--accent-navy)', margin: '0 0 8px 0' }}>{currentStage.mockInterfaceData.subject}</h3>
-                    <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '4px' }}>
-                      <strong>From:</strong> {currentStage.mockInterfaceData.senderName || currentStage.mockInterfaceData.from} &lt;<span style={{ color: 'var(--accent-navy)', fontWeight: '600' }}>{currentStage.mockInterfaceData.senderEmail || currentStage.mockInterfaceData.sender || currentStage.mockInterfaceData.from}</span>&gt;
+                  <div className="mock-email-header">
+                    <h3 className="mock-email-subject">{currentStage.mockInterfaceData.subject}</h3>
+                    <div className="mock-email-meta">
+                      <strong>From:</strong> {currentStage.mockInterfaceData.senderName || currentStage.mockInterfaceData.from} &lt;<span style={{ color: '#0f2537', fontWeight: '700' }}>{currentStage.mockInterfaceData.senderEmail || currentStage.mockInterfaceData.sender || currentStage.mockInterfaceData.from}</span>&gt;
                     </div>
                     {(currentStage.mockInterfaceData.dateString || currentStage.mockInterfaceData.timestamp) && (
-                      <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                      <div className="mock-email-meta">
                         <strong>Date:</strong> {currentStage.mockInterfaceData.dateString || currentStage.mockInterfaceData.timestamp}
                       </div>
                     )}
                   </div>
-                  <div style={{ whiteSpace: 'pre-line', fontSize: '0.95rem', color: 'var(--text-primary)', lineHeight: '1.5', wordBreak: 'break-word', overflowWrap: 'break-word' }}>
+                  <div style={{ whiteSpace: 'pre-line', fontSize: '0.94rem', color: 'var(--text-primary)', lineHeight: '1.55', wordBreak: 'break-word', overflowWrap: 'break-word' }}>
                     {currentStage.mockInterfaceData.body || currentStage.mockInterfaceData.message || currentStage.mockInterfaceData.bodyText}
                   </div>
                   
@@ -434,7 +461,7 @@ function FinalAssessment({ user, updateProgressTrigger }) {
                       <button 
                         onClick={handleInlineClick} 
                         className="btn btn-danger" 
-                        style={{ fontWeight: '600' }}
+                        style={{ fontWeight: '700' }}
                       >
                         {currentStage.mockInterfaceData.ctaText}
                       </button>
@@ -446,21 +473,20 @@ function FinalAssessment({ user, updateProgressTrigger }) {
 
             {/* Legitimate browser patch / Browser UI */}
             {currentStage.mockInterfaceType === 'browser' && (
-              <div className="mock-browser-content" style={{ padding: '24px' }}>
-                <h3 style={{ fontSize: '1.5rem', color: 'var(--accent-navy)', marginBottom: 'var(--space-xs)' }}>
+              <div style={{ padding: '24px' }}>
+                <h3 style={{ fontSize: '1.4rem', color: '#0f2537', marginBottom: '6px' }}>
                   {currentStage.mockInterfaceData.title}
                 </h3>
-                <p className="text-muted" style={{ fontFamily: 'monospace', fontSize: '0.8rem', marginBottom: 'var(--space-md)' }}>
-                  Active Address: {currentStage.mockInterfaceData.url}
+                <p className="text-muted" style={{ fontFamily: 'monospace', fontSize: '0.8rem', marginBottom: '16px' }}>
+                  Address: {currentStage.mockInterfaceData.url}
                 </p>
                 
-                {/* Check if zip file input is needed */}
                 {currentStage.mockInterfaceData.url && currentStage.mockInterfaceData.url.endsWith('.zip') ? (
-                  <div style={{ maxWidth: '400px', margin: '20px auto', border: '1px solid var(--color-border)', padding: '20px', borderRadius: '8px', backgroundColor: '#f8fafc' }}>
-                    <strong style={{ display: 'block', marginBottom: '12px', fontSize: '0.9rem' }}>Extract ZIP contents:</strong>
+                  <div style={{ maxWidth: '420px', margin: '20px auto', border: '1px solid var(--color-border)', padding: '20px', borderRadius: '8px', backgroundColor: 'var(--bg-secondary)' }}>
+                    <strong style={{ display: 'block', marginBottom: '12px', fontSize: '0.9rem' }}>Extract ZIP archive contents:</strong>
                     <form onSubmit={handleZipSubmit}>
                       <div className="form-group" style={{ marginBottom: '12px' }}>
-                        <label style={{ fontSize: '0.8rem' }}>Enter Decryption Password (if required)</label>
+                        <label style={{ fontSize: '0.8rem', fontWeight: '600' }}>Decryption Password (if prompted)</label>
                         <input
                           type="password"
                           className="form-control"
@@ -469,53 +495,52 @@ function FinalAssessment({ user, updateProgressTrigger }) {
                           onChange={(e) => setMockZipPassword(e.target.value)}
                         />
                       </div>
-                      <button type="submit" className="btn btn-danger" style={{ width: '100%', fontSize: '0.85rem' }} disabled={submitting}>
+                      <button type="submit" className="btn btn-danger" style={{ width: '100%', fontSize: '0.88rem', fontWeight: '700' }} disabled={submitting}>
                         Run setup.exe
                       </button>
                     </form>
                   </div>
                 ) : (
-                  <div className="alert alert-success" style={{ fontSize: '0.9rem', borderLeft: '4px solid var(--color-success)', margin: 0 }}>
+                  <div className="alert alert-success" style={{ fontSize: '0.92rem', borderLeft: '4px solid #16a34a', margin: 0 }}>
                     {currentStage.mockInterfaceData.bodyText || currentStage.mockInterfaceData.body}
                   </div>
                 )}
               </div>
             )}
 
-            {/* website (Normal or Cloned Web Page) */}
+            {/* Website (Normal or Cloned Web Page) */}
             {currentStage.mockInterfaceType === 'website' && (
-              <div className="mock-browser-content" style={{ padding: '24px' }}>
-                <div style={{ borderBottom: '1px solid var(--color-border)', paddingBottom: '8px', marginBottom: '16px' }}>
-                  <h3 style={{ fontSize: '1.3rem', color: 'var(--accent-navy)', margin: '0 0 4px 0' }}>{currentStage.mockInterfaceData.title}</h3>
-                  <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Active Address: {currentStage.mockInterfaceData.url}</span>
+              <div style={{ padding: '24px' }}>
+                <div style={{ borderBottom: '1px solid var(--color-border)', paddingBottom: '10px', marginBottom: '18px' }}>
+                  <h3 style={{ fontSize: '1.35rem', color: '#0f2537', margin: '0 0 4px 0' }}>{currentStage.mockInterfaceData.title}</h3>
+                  <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', fontFamily: 'monospace' }}>Address: {currentStage.mockInterfaceData.url}</span>
                 </div>
 
                 {currentStage.mockInterfaceData.warningText && (
-                  <div className="mock-scenario-note" style={{ marginBottom: '16px' }}>
+                  <div className="mock-scenario-note" style={{ marginBottom: '18px' }}>
                     <strong>Observation:</strong> {currentStage.mockInterfaceData.warningText}
                   </div>
                 )}
 
-                {/* If it requires credentials form input */}
                 {currentStage.mockInterfaceData.requiresCredentials ? (
-                  <div style={{ maxWidth: '400px', margin: '20px auto', border: '1px solid var(--color-border)', padding: '20px', borderRadius: '8px', backgroundColor: '#fff' }}>
+                  <div style={{ maxWidth: '420px', margin: '20px auto', border: '1px solid var(--color-border)', padding: '22px', borderRadius: '8px', backgroundColor: '#fff', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
                     <form onSubmit={handleLoginSubmit}>
-                      <div className="form-group" style={{ marginBottom: '12px' }}>
-                        <label style={{ fontSize: '0.8rem', fontWeight: 'bold' }}>Netbanking User ID</label>
-                        <input type="text" className="form-control" placeholder="UserID" required value={mockUserId} onChange={e => setMockUserId(e.target.value)} />
+                      <div className="form-group" style={{ marginBottom: '14px' }}>
+                        <label style={{ fontSize: '0.82rem', fontWeight: '700' }}>Netbanking Customer ID</label>
+                        <input type="text" className="form-control" placeholder="Customer ID" required value={mockUserId} onChange={e => setMockUserId(e.target.value)} />
                       </div>
                       <div className="form-group" style={{ marginBottom: '20px' }}>
-                        <label style={{ fontSize: '0.8rem', fontWeight: 'bold' }}>Netbanking Password</label>
+                        <label style={{ fontSize: '0.82rem', fontWeight: '700' }}>Password / IPIN</label>
                         <input type="password" className="form-control" placeholder="Password" required value={mockPassword} onChange={e => setMockPassword(e.target.value)} />
                       </div>
-                      <button type="submit" className="btn btn-danger" style={{ width: '100%', fontWeight: '600' }} disabled={submitting}>
+                      <button type="submit" className="btn btn-danger" style={{ width: '100%', fontWeight: '700' }} disabled={submitting}>
                         Submit Secure Payment
                       </button>
                     </form>
                   </div>
                 ) : (
                   currentStage.mockInterfaceData.bodyText && (
-                    <p style={{ fontSize: '0.95rem', color: 'var(--text-secondary)', lineHeight: '1.5' }}>
+                    <p style={{ fontSize: '0.95rem', color: 'var(--text-secondary)', lineHeight: '1.55' }}>
                       {currentStage.mockInterfaceData.bodyText}
                     </p>
                   )
@@ -525,20 +550,19 @@ function FinalAssessment({ user, updateProgressTrigger }) {
 
             {/* QR Code Scan Mockup */}
             {currentStage.mockInterfaceType === 'qr_code' && (
-              <div className="mock-browser-content" style={{ textAlign: 'center', padding: '24px' }}>
-                <h3 style={{ fontSize: '1.4rem', color: 'var(--accent-navy)', marginBottom: 'var(--space-xs)' }}>
+              <div style={{ textAlign: 'center', padding: '26px' }}>
+                <h3 style={{ fontSize: '1.4rem', color: '#0f2537', marginBottom: '4px' }}>
                   {currentStage.mockInterfaceData.title}
                 </h3>
-                <p style={{ fontSize: '1.25rem', fontWeight: '700', color: 'var(--color-error)', marginBottom: 'var(--space-md)' }}>
+                <p style={{ fontSize: '1.35rem', fontWeight: '800', color: '#b91c1c', marginBottom: '18px' }}>
                   Amount due: {currentStage.mockInterfaceData.amount}
                 </p>
 
-                {/* QR Symbol */}
                 <div style={{
                   width: '180px',
                   height: '180px',
-                  border: '3px solid black',
-                  margin: '0 auto var(--space-md) auto',
+                  border: '3px solid #0f2537',
+                  margin: '0 auto 16px auto',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -546,12 +570,12 @@ function FinalAssessment({ user, updateProgressTrigger }) {
                 }}>
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '4px', width: '140px', height: '140px' }}>
                     {[...Array(25)].map((_, i) => (
-                      <div key={i} style={{ backgroundColor: (i % 2 === 0 || i % 5 === 0) ? 'black' : 'transparent' }} />
+                      <div key={i} style={{ backgroundColor: (i % 2 === 0 || i % 5 === 0) ? '#0f2537' : 'transparent' }} />
                     ))}
                   </div>
                 </div>
 
-                <p className="text-muted" style={{ fontSize: '0.85rem', maxWidth: '400px', margin: '0 auto' }}>
+                <p className="text-muted" style={{ fontSize: '0.88rem', maxWidth: '420px', margin: '0 auto' }}>
                   {currentStage.mockInterfaceData.instructions}
                 </p>
               </div>
@@ -559,45 +583,43 @@ function FinalAssessment({ user, updateProgressTrigger }) {
 
             {/* SMS Message Mockup */}
             {currentStage.mockInterfaceType === 'sms' && (
-              <div style={{ maxWidth: '340px', width: '100%', margin: '30px auto', backgroundColor: '#f1f5f9', border: '1px solid var(--color-border)', borderRadius: '24px', padding: '16px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)', boxSizing: 'border-box' }}>
-                <div style={{ textAlign: 'center', fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '12px', fontWeight: 'bold' }}>
+              <div className="mock-sms-phone">
+                <div className="sms-header">
                   SMS from: {currentStage.mockInterfaceData.senderNumber || currentStage.mockInterfaceData.sender}
                 </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  <div style={{ alignSelf: 'flex-start', backgroundColor: '#fff', border: '1px solid var(--color-border)', padding: '12px 16px', borderRadius: '16px 16px 16px 4px', maxWidth: '88%', fontSize: '0.9rem', lineHeight: '1.45', color: 'var(--accent-navy)', wordBreak: 'break-word', overflowWrap: 'break-word', whiteSpace: 'pre-wrap', boxShadow: '0 1px 2px rgba(0,0,0,0.02)', boxSizing: 'border-box' }}>
-                    {currentStage.mockInterfaceData.body || currentStage.mockInterfaceData.message || currentStage.mockInterfaceData.bodyText}
-                    {(currentStage.mockInterfaceData.dateString || currentStage.mockInterfaceData.timestamp) && (
-                      <span style={{ display: 'block', fontSize: '0.7rem', color: 'var(--text-muted)', textAlign: 'right', marginTop: '6px' }}>
-                        {currentStage.mockInterfaceData.dateString || currentStage.mockInterfaceData.timestamp}
-                      </span>
-                    )}
-                  </div>
+                <div className="sms-bubble">
+                  {currentStage.mockInterfaceData.body || currentStage.mockInterfaceData.message || currentStage.mockInterfaceData.bodyText}
+                  {(currentStage.mockInterfaceData.dateString || currentStage.mockInterfaceData.timestamp) && (
+                    <span className="sms-timestamp">
+                      {currentStage.mockInterfaceData.dateString || currentStage.mockInterfaceData.timestamp}
+                    </span>
+                  )}
                 </div>
               </div>
             )}
 
             {/* Phone Call Simulator */}
             {currentStage.mockInterfaceType === 'phone_call' && (
-              <div style={{ maxWidth: '320px', margin: '30px auto', backgroundColor: '#0f172a', color: '#fff', borderRadius: '24px', padding: '24px', textAlign: 'center', boxShadow: '0 10px 25px rgba(0,0,0,0.15)' }}>
-                <div style={{ width: '64px', height: '64px', borderRadius: '50%', backgroundColor: '#334155', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px auto' }}>
-                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ color: '#94a3b8' }}>
+              <div className="mock-phone-container">
+                <div className="phone-avatar">
+                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
                   </svg>
                 </div>
-                <h3 style={{ fontSize: '1.25rem', margin: '0 0 4px 0', color: '#fff' }}>{currentStage.mockInterfaceData.callerName || currentStage.mockInterfaceData.callerLabel || 'Incoming Call'}</h3>
-                <span style={{ fontSize: '0.85rem', color: '#94a3b8', display: 'block', marginBottom: '20px' }}>{currentStage.mockInterfaceData.callerNumber}</span>
+                <h3 className="phone-caller-name">{currentStage.mockInterfaceData.callerName || currentStage.mockInterfaceData.callerLabel || 'Incoming Call'}</h3>
+                <span className="phone-caller-number">{currentStage.mockInterfaceData.callerNumber}</span>
                 
-                <div style={{ border: '1px solid #334155', borderRadius: '8px', padding: '12px', backgroundColor: '#1e293b', fontSize: '0.85rem', lineHeight: '1.4', fontStyle: 'italic', color: '#cbd5e1', marginBottom: '24px', textAlign: 'left', wordBreak: 'break-word', overflowWrap: 'break-word' }}>
+                <div className="phone-audio-prompt">
                   {currentStage.mockInterfaceData.bodyText || currentStage.mockInterfaceData.body || currentStage.mockInterfaceData.audioPrompt || currentStage.mockInterfaceData.message}
                 </div>
 
-                <div style={{ display: 'flex', justifyContent: 'center', gap: '32px' }}>
+                <div className="phone-actions-row">
                   <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                     <button
                       type="button"
                       onClick={() => handlePhoneAction('decline')}
                       disabled={submitting}
-                      style={{ width: '48px', height: '48px', borderRadius: '50%', backgroundColor: '#ef4444', display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none', cursor: 'pointer', transition: 'transform 0.15s ease' }}
+                      className="phone-btn decline"
                       aria-label="Decline Call"
                       title="Decline Call"
                     >
@@ -612,7 +634,7 @@ function FinalAssessment({ user, updateProgressTrigger }) {
                       type="button"
                       onClick={() => handlePhoneAction('accept')}
                       disabled={submitting}
-                      style={{ width: '48px', height: '48px', borderRadius: '50%', backgroundColor: '#22c55e', display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none', cursor: 'pointer', transition: 'transform 0.15s ease' }}
+                      className="phone-btn accept"
                       aria-label="Accept Call"
                       title="Accept Call"
                     >
@@ -628,17 +650,17 @@ function FinalAssessment({ user, updateProgressTrigger }) {
 
             {/* UPI Checkout Payment Simulation */}
             {currentStage.mockInterfaceType === 'checkout' && (
-              <div style={{ maxWidth: '340px', margin: '30px auto', border: '1px solid var(--color-border)', borderRadius: '12px', overflow: 'hidden', backgroundColor: '#fff', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}>
-                <div style={{ backgroundColor: 'var(--accent-navy)', color: '#fff', padding: '12px 16px', fontSize: '0.9rem', fontWeight: 'bold' }}>
+              <div className="mock-upi-card">
+                <div className="upi-header">
                   Secure UPI Gateway Request
                 </div>
-                <div style={{ padding: '20px', textAlign: 'center' }}>
+                <div className="upi-body">
                   <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', display: 'block', marginBottom: '4px' }}>Requested by</span>
-                  <strong style={{ fontSize: '1.1rem', color: 'var(--accent-navy)', display: 'block', marginBottom: '16px' }}>{currentStage.mockInterfaceData.merchantName}</strong>
+                  <strong style={{ fontSize: '1.15rem', color: '#0f2537', display: 'block', marginBottom: '16px' }}>{currentStage.mockInterfaceData.merchantName}</strong>
                   
-                  <div style={{ backgroundColor: 'var(--bg-secondary)', padding: '12px', borderRadius: '8px', marginBottom: '16px' }}>
+                  <div className="upi-amount-box">
                     <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Amount Request</span>
-                    <div style={{ fontSize: '1.8rem', fontWeight: 'bold', color: 'var(--color-error)' }}>₹{currentStage.mockInterfaceData.amount}</div>
+                    <div className="upi-amount">₹{currentStage.mockInterfaceData.amount}</div>
                   </div>
 
                   {currentStage.mockInterfaceData.warningText && (
@@ -652,13 +674,13 @@ function FinalAssessment({ user, updateProgressTrigger }) {
 
             {/* Chat Sandbox Messenger Simulation */}
             {(currentStage.mockInterfaceType === 'chat' || currentStage.mockInterfaceType === 'messaging') && (
-              <div style={{ maxWidth: '400px', width: '100%', margin: '30px auto', border: '1px solid var(--color-border)', borderRadius: '8px', overflow: 'hidden', backgroundColor: '#efeae2', boxShadow: '0 4px 12px rgba(0,0,0,0.05)', boxSizing: 'border-box' }}>
-                <div style={{ backgroundColor: 'var(--accent-navy)', color: '#fff', padding: '10px 16px', fontSize: '0.9rem', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <div className="mock-chat-window">
+                <div className="chat-window-header">
                   <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#22c55e' }} />
                   <span>{currentStage.mockInterfaceData.sender || currentStage.mockInterfaceData.callerID || currentStage.mockInterfaceData.platform || 'Direct Message'}</span>
                 </div>
-                <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  <div style={{ alignSelf: 'flex-start', backgroundColor: '#fff', padding: '10px 12px', borderRadius: '0 8px 8px 8px', maxWidth: '88%', fontSize: '0.85rem', lineHeight: '1.45', color: 'var(--accent-navy)', wordBreak: 'break-word', overflowWrap: 'break-word', whiteSpace: 'pre-wrap', boxShadow: '0 1px 2px rgba(0,0,0,0.05)', boxSizing: 'border-box' }}>
+                <div className="chat-window-body">
+                  <div className="chat-bubble">
                     {currentStage.mockInterfaceData.body || currentStage.mockInterfaceData.message || currentStage.mockInterfaceData.transcript || currentStage.mockInterfaceData.bodyText}
                     {(currentStage.mockInterfaceData.dateString || currentStage.mockInterfaceData.timestamp) && (
                       <span style={{ display: 'block', fontSize: '0.7rem', color: 'var(--text-muted)', textAlign: 'right', marginTop: '4px' }}>
@@ -672,42 +694,43 @@ function FinalAssessment({ user, updateProgressTrigger }) {
 
             {/* Notification / Browser Dialog */}
             {currentStage.mockInterfaceType === 'notification' && (
-              <div style={{ maxWidth: '440px', margin: '30px auto', backgroundColor: '#fff', border: '1px solid var(--color-border)', borderRadius: '8px', padding: '16px', borderLeft: '4px solid var(--accent-navy)', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}>
-                <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
-                  <div style={{ width: '36px', height: '36px', borderRadius: '50%', backgroundColor: 'var(--accent-navy-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ color: 'var(--accent-navy)' }}>
-                      <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
-                      <line x1="12" y1="9" x2="12" y2="13" />
-                      <line x1="12" y1="17" x2="12.01" y2="17" />
-                    </svg>
+              <div className="mock-system-alert">
+                <div className="alert-icon-wrap">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ color: '#0f2537' }}>
+                    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+                    <line x1="12" y1="9" x2="12" y2="13" />
+                    <line x1="12" y1="17" x2="12.01" y2="17" />
+                  </svg>
+                </div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                    <strong style={{ fontSize: '0.95rem', color: '#0f2537' }}>{currentStage.mockInterfaceData.title}</strong>
+                    <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>{currentStage.mockInterfaceData.dateString || currentStage.mockInterfaceData.timestamp || 'System Alert'}</span>
                   </div>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
-                      <strong style={{ fontSize: '0.95rem', color: 'var(--accent-navy)' }}>{currentStage.mockInterfaceData.title}</strong>
-                      <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>{currentStage.mockInterfaceData.dateString || currentStage.mockInterfaceData.timestamp || 'System Alert'}</span>
-                    </div>
-                    <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: '0 0 12px 0', lineHeight: '1.4', wordBreak: 'break-word', overflowWrap: 'break-word' }}>
-                      {currentStage.mockInterfaceData.body || currentStage.mockInterfaceData.message || currentStage.mockInterfaceData.bodyText}
-                    </p>
-                  </div>
+                  <p style={{ fontSize: '0.88rem', color: 'var(--text-secondary)', margin: '0 0 12px 0', lineHeight: '1.45', wordBreak: 'break-word', overflowWrap: 'break-word' }}>
+                    {currentStage.mockInterfaceData.body || currentStage.mockInterfaceData.message || currentStage.mockInterfaceData.bodyText}
+                  </p>
                 </div>
               </div>
             )}
           </div>
 
-          {/* Action Panels */}
-          <div className="editorial-card" style={{ borderTop: '2px solid var(--accent-navy)', marginTop: 'var(--space-md)' }}>
-            <h3 style={{ fontSize: '1.25rem', marginBottom: 'var(--space-md)' }}>Select Your Move:</h3>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-sm)' }}>
-              {currentStage.decisions.map((opt) => (
+          {/* ===================================================================== */}
+          {/* Decision Station Console                                              */}
+          {/* ===================================================================== */}
+          <div className="decision-station">
+            <h3 className="decision-station-title">What would you do?</h3>
+            <div className="decision-cards-list">
+              {currentStage.decisions.map((opt, idx) => (
                 <button
                   key={opt.id}
                   onClick={() => handleSelectOption(opt.id)}
-                  className="btn btn-secondary"
-                  style={{ textAlign: 'left', justifyContent: 'flex-start', padding: '12px 16px', lineHeight: '1.4' }}
+                  className="decision-action-card"
                   disabled={submitting}
+                  aria-label={`Action ${idx + 1}: ${opt.optionText}`}
                 >
-                  {opt.optionText}
+                  <span className="decision-number-badge">{idx + 1}</span>
+                  <span className="decision-action-text">{opt.optionText}</span>
                 </button>
               ))}
             </div>
@@ -715,59 +738,64 @@ function FinalAssessment({ user, updateProgressTrigger }) {
         </div>
       )}
 
-      {/* Comparison Report View */}
+      {/* ========================================================================= */}
+      {/* 4. COMPARISON & REVEAL VIEW                                               */}
+      {/* ========================================================================= */}
       {currentStep === 'reveal_view' && result && (
-        <div className="reveal-pane portal-state-reveal-down" style={{ border: '2px solid var(--accent-navy)' }}>
-          <h2 style={{ fontSize: '2.2rem', color: 'var(--accent-navy)', marginBottom: 'var(--space-md)' }}>
-            Final Assessment Report
+        <div className="reveal-pane portal-state-reveal-down" style={{ border: '1px solid var(--color-border)', borderTop: '3px solid #0f2537' }}>
+          <h2 style={{ fontSize: '2.2rem', fontWeight: '800', color: '#0f2537', marginBottom: '10px' }}>
+            Your Final Check Results
           </h2>
-          <p className="text-muted" style={{ marginBottom: 'var(--space-lg)', fontSize: '1.05rem' }}>
-            Congratulations on completing the <strong>&ldquo;A Day in Your Digital Life&rdquo;</strong> branching assessment. We have compiled your decisions and compared them with your baseline score.
+          <p className="text-secondary" style={{ marginBottom: '22px', fontSize: '1.05rem', lineHeight: '1.55' }}>
+            Here is what your choices show about your online safety habits, and how they compare with your starting check.
           </p>
 
-          <div style={{ marginBottom: 'var(--space-lg)', borderLeft: '3px solid var(--accent-navy)', paddingLeft: '16px' }}>
-            <p style={{ fontSize: '1.05rem', color: 'var(--accent-navy)', fontStyle: 'italic', margin: '0 0 8px 0', fontWeight: 'bold' }}>
-              "You weren’t being tested on whether you could guess what was a scam."
+          <div style={{ marginBottom: '26px', borderLeft: '3px solid #0f2537', paddingLeft: '16px' }}>
+            <p style={{ fontSize: '1.05rem', color: '#0f2537', fontStyle: 'italic', margin: '0 0 6px 0', fontWeight: '700' }}>
+              &ldquo;You weren’t being tested on whether you could guess what was a scam.&rdquo;
             </p>
-            <p style={{ fontSize: '1rem', color: 'var(--text-secondary)', margin: 0 }}>
-              "You were being observed on how you make everyday digital decisions."
+            <p style={{ fontSize: '0.95rem', color: 'var(--text-secondary)', margin: 0 }}>
+              &ldquo;You were being observed on how you make everyday digital decisions under realistic conditions.&rdquo;
             </p>
           </div>
 
           {/* Scores grid split */}
-          <div className="reveal-layout-grid">
+          <div className="reveal-layout-grid" style={{ marginBottom: '32px' }}>
             {/* Left side: Observed Digital Habits breakdown */}
             <div>
-              <h3 style={{ fontSize: '1.2rem', marginBottom: 'var(--space-md)' }}>Observed Digital Habits Breakdown</h3>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', fontSize: '0.88rem' }}>
-                <div style={{ padding: '8px 12px', backgroundColor: 'var(--bg-secondary)', borderRadius: '4px', borderLeft: '3px solid var(--accent-navy)' }}>
-                  <strong>What You Recognized (Threat Recognition):</strong> {result.behaviourScores?.recognition || 0}%
-                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '2px' }}>Recognition of deceptive prompts and urgency cues across situations.</div>
-                </div>
-                <div style={{ padding: '8px 12px', backgroundColor: 'var(--bg-secondary)', borderRadius: '4px', borderLeft: '3px solid var(--accent-navy)' }}>
-                  <strong>Where You Verified (Verification Behaviour):</strong> {result.behaviourScores?.verification || 0}%
-                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '2px' }}>Independent verification through official channels before acting.</div>
-                </div>
-                <div style={{ padding: '8px 12px', backgroundColor: 'var(--bg-secondary)', borderRadius: '4px', borderLeft: '3px solid var(--accent-navy)' }}>
-                  <strong>Decision Quality (Choice Soundness):</strong> {result.behaviourScores?.decisionQuality || 0}%
-                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '2px' }}>Overall quality and soundness of choices across all everyday stages.</div>
-                </div>
-                <div style={{ padding: '8px 12px', backgroundColor: 'var(--bg-secondary)', borderRadius: '4px', borderLeft: '3px solid var(--accent-navy)' }}>
-                  <strong>Signal Identification (Deception Clues):</strong> {result.behaviourScores?.signalIdentification || 0}%
-                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '2px' }}>Detection of specific indicators such as domain mismatches and payment traps.</div>
-                </div>
-                <div style={{ padding: '8px 12px', backgroundColor: 'var(--bg-secondary)', borderRadius: '4px', borderLeft: '3px solid var(--color-warning)' }}>
-                  <strong>Unreviewed Acceptance Control:</strong> {result.behaviourScores?.unreviewedAcceptance ?? 0}%
-                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '2px' }}>
-                    Occasions where permissions or requests were approved without checking ({result.unreviewedAcceptancePenaltyPoints || 0} penalty point(s)).
-                  </div>
-                </div>
-                <div style={{ padding: '8px 12px', backgroundColor: 'var(--bg-secondary)', borderRadius: '4px', borderLeft: '3px solid var(--color-warning)' }}>
-                  <strong>False Positive Behaviour (Over-Reporting Control):</strong> {result.behaviourScores?.falsePositive ?? 0}%
-                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '2px' }}>
-                    Occasions where authentic notices or system patches were treated as threats ({result.falsePositivePenaltyPoints || 0} penalty point(s)).
-                  </div>
-                </div>
+              <h3 style={{ fontSize: '1.18rem', fontWeight: '800', color: '#0f2537', marginBottom: '14px' }}>
+                Your Safety Habits
+              </h3>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                {[
+                  { key: 'recognition', label: 'Spotting Dangers', desc: 'How well you caught sneaky tricks, fake alerts, and pressure tactics.' },
+                  { key: 'signalIdentification', label: 'Spotting Fake Senders', desc: 'Noticing suspicious sender emails, fake domains, and payment links.' },
+                  { key: 'verification', label: 'Checking Before Trusting', desc: 'Double-checking through official websites, apps, or real phone numbers.' },
+                  { key: 'decisionQuality', label: 'Making Thoughtful Choices', desc: 'How sound and safe your overall reactions were across situations.' },
+                  { 
+                    key: 'falsePositive', 
+                    label: 'Staying Calm with Safe Messages', 
+                    desc: `Recognizing real system updates or authentic notices without panicking (${result.falsePositivePenaltyPoints || 0} penalty point(s)).` 
+                  },
+                  { 
+                    key: 'unreviewedAcceptance', 
+                    label: 'Not Clicking Without Checking', 
+                    desc: `Avoiding approving requests or permissions without reading first (${result.unreviewedAcceptancePenaltyPoints || 0} penalty point(s)).` 
+                  }
+                ].map(item => {
+                  const val = result.behaviourScores?.[item.key] ?? 0;
+                  return (
+                    <div key={item.key} style={{ padding: '10px 14px', backgroundColor: 'var(--bg-secondary)', borderRadius: '6px', borderLeft: '3px solid #0f2537' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <strong style={{ fontSize: '0.88rem', color: '#0f2537' }}>{item.label}</strong>
+                        <span style={{ fontSize: '0.95rem', fontWeight: '800', color: '#0f2537' }}>{val}%</span>
+                      </div>
+                      <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', marginTop: '3px', lineHeight: '1.4' }}>
+                        {item.desc}
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </div>
 
@@ -775,26 +803,26 @@ function FinalAssessment({ user, updateProgressTrigger }) {
             <div>
               <div style={{
                 border: '1px solid var(--color-border)',
-                borderRadius: 'var(--radius-sm)',
-                padding: 'var(--space-md)',
-                backgroundColor: 'var(--accent-navy-light)',
-                marginBottom: 'var(--space-md)'
+                borderRadius: '8px',
+                padding: '18px 20px',
+                backgroundColor: 'var(--bg-white)',
+                marginBottom: '16px'
               }}>
-                <span style={{ fontSize: '0.8rem', fontWeight: '700', color: 'var(--accent-navy)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                  Behavioral Habit Shift (Baseline &rarr; Final)
+                <span style={{ fontSize: '0.82rem', fontWeight: '800', color: '#0f2537', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                  How Your Habits Changed
                 </span>
-                <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: '4px 0 12px 0' }}>
-                  Authoritative dimensional comparison of observed habits.
+                <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', margin: '4px 0 14px 0' }}>
+                  Comparing your choices from your first check to your final check.
                 </p>
 
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <div className="habit-shift-grid" style={{ gridTemplateColumns: '1fr', gap: '8px', marginTop: 0 }}>
                   {[
-                    { key: 'recognition', label: 'Threat Recognition' },
-                    { key: 'signalIdentification', label: 'Signal Identification' },
-                    { key: 'verification', label: 'Verification Behaviour' },
-                    { key: 'decisionQuality', label: 'Decision Quality' },
-                    { key: 'falsePositive', label: 'False Positive Control' },
-                    { key: 'unreviewedAcceptance', label: 'Unreviewed Acceptance Control' }
+                    { key: 'recognition', label: 'Spotting Dangers' },
+                    { key: 'signalIdentification', label: 'Spotting Fake Senders' },
+                    { key: 'verification', label: 'Checking Before Trusting' },
+                    { key: 'decisionQuality', label: 'Making Thoughtful Choices' },
+                    { key: 'falsePositive', label: 'Staying Calm with Safe Messages' },
+                    { key: 'unreviewedAcceptance', label: 'Not Clicking Without Checking' }
                   ].map((m) => {
                     const deltaObj = result.behaviourDelta?.[m.key];
                     const finalVal = result.behaviourScores?.[m.key] ?? 0;
@@ -802,33 +830,19 @@ function FinalAssessment({ user, updateProgressTrigger }) {
                     const diff = deltaObj?.delta ?? (baseVal !== null ? finalVal - baseVal : null);
 
                     return (
-                      <div key={m.key} style={{
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                        padding: '8px 12px',
-                        backgroundColor: 'var(--bg-primary)',
-                        borderRadius: '4px'
-                      }}>
+                      <div key={m.key} className="habit-shift-card">
                         <div>
-                          <div style={{ fontSize: '0.82rem', fontWeight: '600', color: 'var(--text-primary)' }}>{m.label}</div>
-                          <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                          <div className="habit-shift-name">{m.label}</div>
+                          <div className="habit-shift-numbers">
                             {baseVal !== null ? `${baseVal}% → ${finalVal}%` : `Final: ${finalVal}%`}
                           </div>
                         </div>
                         {diff !== null ? (
-                          <div style={{
-                            fontSize: '0.85rem',
-                            fontWeight: '700',
-                            padding: '2px 8px',
-                            borderRadius: '4px',
-                            backgroundColor: diff > 0 ? 'rgba(40, 167, 69, 0.1)' : diff < 0 ? 'rgba(220, 53, 69, 0.1)' : 'var(--bg-secondary)',
-                            color: diff > 0 ? 'var(--color-success)' : diff < 0 ? 'var(--color-error)' : 'var(--text-muted)'
-                          }}>
+                          <div className={`habit-delta-pill ${diff > 0 ? 'positive' : diff < 0 ? 'negative' : 'neutral'}`}>
                             {diff > 0 ? `+${diff}%` : `${diff}%`}
                           </div>
                         ) : (
-                          <div style={{ fontSize: '0.85rem', fontWeight: '700', color: 'var(--accent-navy)' }}>
+                          <div style={{ fontSize: '0.88rem', fontWeight: '800', color: '#0f2537' }}>
                             {finalVal}%
                           </div>
                         )}
@@ -839,8 +853,8 @@ function FinalAssessment({ user, updateProgressTrigger }) {
               </div>
 
               {result.deltaMessage && (
-                <div className="alert alert-secondary" style={{ fontSize: '0.85rem', lineHeight: '1.4', borderLeft: '4px solid var(--accent-navy)' }}>
-                  <strong>Observed Shift Summary:</strong> {result.deltaMessage}
+                <div className="alert alert-secondary" style={{ fontSize: '0.88rem', lineHeight: '1.45', borderLeft: '4px solid #0f2537' }}>
+                  <strong style={{ color: '#0f2537' }}>What This Means:</strong> {result.deltaMessage}
                 </div>
               )}
             </div>
@@ -848,11 +862,11 @@ function FinalAssessment({ user, updateProgressTrigger }) {
 
           {/* Critical Mistakes list */}
           {result.criticalMistakes && result.criticalMistakes.length > 0 && (
-            <div className="alert alert-error" style={{ marginBottom: 'var(--space-lg)' }}>
-              <h4>Critical Mistakes:</h4>
-              <ul style={{ paddingLeft: 'var(--space-md)', fontSize: '0.85rem' }}>
+            <div className="alert alert-error" style={{ marginBottom: '24px' }}>
+              <h4 style={{ margin: '0 0 8px 0', fontSize: '0.95rem' }}>Decisions That Needed Extra Care:</h4>
+              <ul style={{ paddingLeft: '18px', margin: 0, fontSize: '0.88rem' }}>
                 {result.criticalMistakes.map((m, idx) => (
-                  <li key={idx}>{m}</li>
+                  <li key={idx} style={{ marginBottom: '4px' }}>{m}</li>
                 ))}
               </ul>
             </div>
@@ -862,29 +876,29 @@ function FinalAssessment({ user, updateProgressTrigger }) {
           <RemediationCards sessionId={result?.sessionId || session || completedHistory?._id} />
 
           {/* Thematic narrative thread lockup */}
-          <div style={{ textAlign: 'center', margin: 'var(--space-lg) 0', paddingTop: '16px', borderTop: '1px dashed var(--color-border)' }}>
-            <span style={{ fontSize: '0.9rem', color: 'var(--accent-navy)', fontWeight: 'bold', textTransform: 'uppercase', display: 'block', letterSpacing: '0.5px' }}>
+          <div style={{ textAlign: 'center', margin: '32px 0 24px 0', paddingTop: '20px', borderTop: '1px dashed var(--color-border)' }}>
+            <span style={{ fontSize: '0.85rem', color: '#0f2537', fontWeight: '800', textTransform: 'uppercase', display: 'block', letterSpacing: '0.08em' }}>
               Knowing the law is only the beginning.
             </span>
-            <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', margin: '4px 0 12px 0' }}>
-              Baseline &rarr; Learning &rarr; Practice &rarr; Final
+            <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', margin: '4px 0 12px 0' }}>
+              First Check &rarr; Learning Pathways &rarr; Practice Quizzes &rarr; Final Check
             </p>
-            <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', fontStyle: 'italic', margin: '0 0 4px 0' }}>
-              "Improvement is not about knowing every answer. It is about recognizing better decisions when they matter."
+            <p style={{ fontSize: '0.92rem', color: 'var(--text-secondary)', fontStyle: 'italic', margin: '0 0 6px 0' }}>
+              &ldquo;Improvement is not about knowing every answer. It is about recognizing better decisions when they matter.&rdquo;
             </p>
-            <span style={{ fontSize: '0.85rem', fontWeight: 'bold', color: 'var(--accent-navy)', letterSpacing: '0.5px' }}>
+            <span style={{ fontSize: '0.85rem', fontWeight: '700', color: '#1e3a8a', letterSpacing: '0.05em' }}>
               Learn. Recognize. Stay Safe.
             </span>
           </div>
 
           {/* CTA footer */}
-          <div style={{ textAlign: 'center', marginTop: 'var(--space-xl)' }}>
+          <div style={{ textAlign: 'center', marginTop: '28px' }}>
             <button
               onClick={() => navigate('/dashboard')}
               className="btn btn-primary"
-              style={{ padding: '0.8rem 2.5rem', fontWeight: '600' }}
+              style={{ padding: '0.85rem 2.8rem', fontWeight: '700', fontSize: '1rem' }}
             >
-              Finish & Return to Dashboard
+              Finish &amp; Go to Dashboard →
             </button>
           </div>
         </div>

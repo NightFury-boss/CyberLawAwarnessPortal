@@ -22,28 +22,28 @@ function DashboardHistory({
     <section className="desk-section desk-section-borderless" aria-labelledby="history-heading">
       <details className="desk-disclosure">
         <summary className="desk-disclosure-summary">
-          <span id="history-heading">Session history & methodology</span>
+          <span id="history-heading">Past checks & how we measure habits</span>
         </summary>
         <div className="desk-disclosure-body">
           <p className="desk-history-lead">
-            The portal maintains strict version isolation between historical v1 and active v2 assessments. Longitudinal trajectory pairings require identical scenario models to guarantee measurement integrity.
+            Each check is saved separately to ensure your history remains accurate. We compare checks using matching scenario models so your progress is always measured fairly.
           </p>
 
           {/* Session History List */}
           {sessions.length > 0 && (
             <div className="desk-history-sessions">
-              <h4 className="desk-history-subheading">Recorded Assessment Sessions</h4>
+              <h4 className="desk-history-subheading">Completed Checks</h4>
               <ul className="desk-history-list">
                 {sessions.map((sess, idx) => {
                   const stageName = sess.scenarioCode === 'baseline' 
-                    ? 'Baseline Diagnostic' 
+                    ? 'First Check (Baseline)' 
                     : sess.scenarioCode === 'final' 
-                      ? 'Final Adaptive Assessment' 
-                      : 'Retention Reassessment';
+                      ? 'Final Check' 
+                      : 'Follow-Up Check';
                   return (
                     <li key={idx} className="desk-history-item">
                       <span className="desk-history-stage">{stageName}</span>
-                      <span className="desk-history-version">Model v{sess.scenarioVersion}</span>
+                      <span className="desk-history-version">Version {sess.scenarioVersion}</span>
                       <time className="desk-history-date" dateTime={new Date(sess.completedAt).toISOString()}>
                         {new Date(sess.completedAt).toLocaleDateString()}
                       </time>
@@ -55,16 +55,16 @@ function DashboardHistory({
           )}
 
           <div className="desk-methodology-notes">
-            <h4 className="desk-history-subheading">Evaluation Methodology</h4>
+            <h4 className="desk-history-subheading">How We Measure Your Habits</h4>
             <ul className="desk-notes-list">
               <li>
-                <strong>Discrete Dimensions:</strong> All six behavioral dimensions are evaluated independently without composite averages, preventing strong habits from masking critical security vulnerabilities.
+                <strong>Six Independent Habits:</strong> Each safety habit is measured on its own rather than averaged together, so a strong area never hides a habit that needs attention.
               </li>
               <li>
-                <strong>Evidence Standard:</strong> Quiz practice tests statutory and conceptual recall; simulation decisions observe behavioral habit reflexes under realistic pressure.
+                <strong>Knowledge vs. Habits:</strong> Quizzes test your understanding of Indian cyber laws, while scenario stories show how you react to realistic online situations.
               </li>
               <li>
-                <strong>Authoritative Classifications:</strong> Longitudinal states (<em>Retained, Stable, Partially Retained, Developing, Delayed Improvement, Declined</em>) are determined by mathematical delta bounds between paired simulation sessions.
+                <strong>Habit Changes Over Time:</strong> Statuses like <em>Still Strong, Steady, Needs Practice, or In Progress</em> are calculated directly by comparing your choices across completed checks.
               </li>
             </ul>
           </div>

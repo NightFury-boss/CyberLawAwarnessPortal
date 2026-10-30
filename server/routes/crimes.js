@@ -3,7 +3,7 @@ const router = express.Router();
 const crimeController = require('../controllers/crimeController');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
-const { JWT_SECRET } = require('../middleware/authMiddleware');
+const { getJwtSecret } = require('../middleware/authMiddleware');
 
 // Optional authentication middleware: Populates req.user if a token exists, but doesn't block unauthenticated requests.
 async function optionalProtect(req, res, next) {
@@ -13,7 +13,7 @@ async function optionalProtect(req, res, next) {
   }
   if (token) {
     try {
-      const decoded = jwt.verify(token, JWT_SECRET);
+      const decoded = jwt.verify(token, getJwtSecret());
       const user = await User.findById(decoded.id).select('-passwordHash');
       if (user) {
         req.user = user;

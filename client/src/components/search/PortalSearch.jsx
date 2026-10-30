@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
+import React, { useRef, useEffect } from 'react';
 
 /**
  * PortalSearch component standardizes the search input experience:
  * - standard control height, typography, border, and focus states.
  * - left functional SVG search icon.
- * - right keyboard-accessible SVG clear button (X).
+ * - right keyboard-accessible SVG clear button (X) and Ctrl+K shortcut.
  * - collapsible filter panels toggled via an outlined button.
  * - result count display and suggestion-rich empty states.
  */
@@ -25,10 +25,53 @@ function PortalSearch({
   filtersDrawerContent = null,
   activeFiltersContent = null
 }) {
+  const inputRef = useRef(null);
+
+  useEffect(() => {
+    const handleGlobalKeyDown = (e) => {
+      // Ctrl+K or Cmd+K (case-insensitive)
+      if ((e.ctrlKey || e.metaKey) && e.key?.toLowerCase() === 'k') {
+        e.preventDefault();
+        inputRef.current?.focus();
+
+        return;
+      }
+
+      // '/' when not in another input/textarea/select or content-editable element,
+      // ignoring events with modifier keys held or while IME composition is active
+      if (
+        e.key === '/' &&
+        !e.ctrlKey &&
+        !e.metaKey &&
+        !e.altKey &&
+        !e.isComposing &&
+        document.activeElement !== inputRef.current
+      ) {
+        const activeEl = document.activeElement;
+        const tag = activeEl?.tagName?.toLowerCase();
+
+        if (
+          tag !== 'input' &&
+          tag !== 'textarea' &&
+          tag !== 'select' &&
+          !activeEl?.isContentEditable
+        ) {
+          e.preventDefault();
+          inputRef.current?.focus();
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleGlobalKeyDown);
+
+    return () => window.removeEventListener('keydown', handleGlobalKeyDown);
+  }, []);
+
   const handleKeyDown = (e) => {
-    if (e.key === 'Escape' && onClear) {
+    if (e.key === 'Escape') {
       e.preventDefault();
-      onClear();
+      if (onClear) onClear();
+      inputRef.current?.blur();
     }
   };
 
@@ -47,6 +90,7 @@ function PortalSearch({
 
           {/* Search Input Control */}
           <input
+            ref={inputRef}
             type="text"
             placeholder={placeholder}
             value={searchQuery}
@@ -65,6 +109,24 @@ function PortalSearch({
             }}
             aria-label={placeholder}
           />
+
+          {/* Keyboard shortcut hint badge when empty */}
+          {!searchQuery && (
+            <span style={{
+              position: 'absolute',
+              right: '14px',
+              fontSize: '0.72rem',
+              fontWeight: '600',
+              padding: '2px 6px',
+              borderRadius: '4px',
+              border: '1px solid var(--color-border)',
+              color: 'var(--text-muted)',
+              backgroundColor: 'var(--bg-secondary)',
+              pointerEvents: 'none'
+            }}>
+              Ctrl + K
+            </span>
+          )}
 
           {/* Clear Button */}
           {searchQuery && (
@@ -87,7 +149,7 @@ function PortalSearch({
                 display: 'flex',
                 alignItems: 'center'
               }}
-              title="Clear Search"
+              title="Clear Search (Esc)"
               tabIndex={0}
             >
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -128,8 +190,8 @@ function PortalSearch({
           <div className="spinner-mini" style={{
             width: '12px',
             height: '12px',
-            border: '2px solid var(--accent-navy-light)',
-            borderTop: '2px solid var(--accent-navy)',
+            border: '2px solid var(--color-primary-light)',
+            borderTop: '2px solid var(--color-primary)',
             borderRadius: '50%',
             animation: 'spin 0.8s linear infinite'
           }} />
@@ -172,7 +234,7 @@ function PortalSearch({
           borderRadius: 'var(--radius-md)',
           marginTop: 'var(--space-md)'
         }}>
-          <h4 style={{ fontSize: '1.25rem', fontWeight: 'bold', color: 'var(--accent-navy)', marginBottom: '8px' }}>
+          <h4 style={{ fontSize: '1.25rem', fontWeight: 'bold', color: 'var(--text-primary)', marginBottom: '8px' }}>
             {emptyHeader}
           </h4>
           <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem', marginBottom: '16px' }}>
@@ -189,7 +251,7 @@ function PortalSearch({
                     style={{
                       background: 'none',
                       border: 'none',
-                      color: 'var(--accent-navy)',
+                      color: 'var(--color-accent)',
                       textDecoration: 'underline',
                       cursor: 'pointer',
                       padding: 0,

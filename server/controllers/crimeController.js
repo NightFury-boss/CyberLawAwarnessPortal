@@ -1,7 +1,9 @@
+const mongoose = require('mongoose');
 const CyberCrime = require('../models/CyberCrime');
 const CaseStudy = require('../models/CaseStudy');
 const Resource = require('../models/Resource');
 const AssessmentSession = require('../models/AssessmentSession');
+const { escapeRegex } = require('../utils/regexUtils');
 
 exports.getAllCrimes = async (req, res) => {
   try {
@@ -17,6 +19,12 @@ exports.getAllCrimes = async (req, res) => {
 
 exports.getCrimeById = async (req, res) => {
   try {
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      return res.status(400).json({
+        success: false,
+        error: { code: 'INVALID_ID_FORMAT', message: 'Invalid cybercrime ID format' }
+      });
+    }
     const crime = await CyberCrime.findById(req.params.id);
     if (!crime) {
       return res.status(404).json({
@@ -66,6 +74,12 @@ exports.getAllCases = async (req, res) => {
 
 exports.getCaseById = async (req, res) => {
   try {
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      return res.status(400).json({
+        success: false,
+        error: { code: 'INVALID_ID_FORMAT', message: 'Invalid case study ID format' }
+      });
+    }
     const item = await CaseStudy.findById(req.params.id);
     if (!item) {
       return res.status(404).json({
@@ -104,12 +118,13 @@ exports.getCaseBySlug = async (req, res) => {
 exports.searchCases = async (req, res) => {
   try {
     const { q } = req.query;
-    if (!q) {
+    if (!q || typeof q !== 'string' || !q.trim()) {
       const cases = await CaseStudy.find({ published: { $ne: false } });
       return res.json(cases);
     }
 
-    const regex = new RegExp(q, 'i');
+    const safePattern = escapeRegex(q.trim());
+    const regex = new RegExp(safePattern, 'i');
     const filtered = await CaseStudy.find({
       published: { $ne: false },
       $or: [
@@ -148,12 +163,13 @@ exports.getAllResources = async (req, res) => {
 exports.searchCrimes = async (req, res) => {
   try {
     const { q } = req.query;
-    if (!q) {
+    if (!q || typeof q !== 'string' || !q.trim()) {
       const crimes = await CyberCrime.find({ published: { $ne: false } });
       return res.json(crimes);
     }
 
-    const regex = new RegExp(q, 'i');
+    const safePattern = escapeRegex(q.trim());
+    const regex = new RegExp(safePattern, 'i');
     const filtered = await CyberCrime.find({
       published: { $ne: false },
       $or: [
