@@ -1,0 +1,35 @@
+{
+  "version": 2,
+  "name": "drive-learning-modules-modules-sb39123b",
+  "projectId": "client-a541be49",
+  "startPath": "/modules",
+  "createdAt": 1793342602882,
+  "steps": [
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "role",
+        "role": "link",
+        "name": "Lessons"
+      },
+      "source": {
+        "file": "src/components/Sidebar.jsx",
+        "line": 91
+      },
+      "action": "click",
+      "args": {},
+      "expect": {
+        "kind": "text",
+        "contains": "Learning Modules"
+      }
+    }
+  ],
+  "learned": [
+    {
+      "kind": "request-never-settled",
+      "step": 0,
+      "state": "open",
+      "cleanRuns": 0
+    }
+  ]
+}

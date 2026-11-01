@@ -1,6 +1,7 @@
 const UserProgress = require('../models/UserProgress');
 const AssessmentSession = require('../models/AssessmentSession');
 const QuizAttempt = require('../models/QuizAttempt');
+const LearningModule = require('../models/LearningModule');
 const spacedRetrievalService = require('../services/spacedRetrievalService');
 const catalog = require('../config/remediationCatalog');
 
@@ -39,12 +40,41 @@ exports.getProgress = async (req, res) => {
       ? (finalVal.behaviourScores instanceof Map ? Object.fromEntries(finalVal.behaviourScores) : finalVal.behaviourScores) 
       : null;
 
+    // Fetch lesson curriculum progress
+    const totalPublishedModules = await LearningModule.countDocuments({ published: true });
+    const moduleProgressList = progress.lessonProgress || [];
+    const completedModuleSlugs = progress.completedModules || [];
+
+    const sortedAccess = [...moduleProgressList].sort((a, b) => new Date(b.lastAccessedAt || 0) - new Date(a.lastAccessedAt || 0));
+    let recentlyAccessedLesson = null;
+    if (sortedAccess.length > 0) {
+      const recentModDoc = await LearningModule.findOne({ slug: sortedAccess[0].slug }).select('title slug category difficulty estimatedMinutes');
+      if (recentModDoc) {
+        recentlyAccessedLesson = {
+          ...recentModDoc.toObject(),
+          status: sortedAccess[0].status,
+          readCompleted: sortedAccess[0].readCompleted,
+          knowledgeCheckStatus: sortedAccess[0].knowledgeCheckStatus,
+          lastAccessedAt: sortedAccess[0].lastAccessedAt
+        };
+      }
+    }
+
+    const inProgressCount = moduleProgressList.filter(m => m.status === 'in_progress' || m.status === 'knowledge_check_attempted').length;
+
     res.json({
       userId,
       fullName: req.user.fullName,
       email: req.user.email,
       badges: progress.badgesEarned || [],
       completedModules: progress.completedModules || [],
+      lessons: {
+        completedCount: completedModuleSlugs.length,
+        inProgressCount,
+        totalPublished: totalPublishedModules,
+        recentlyAccessed: recentlyAccessedLesson,
+        lessonProgress: moduleProgressList
+      },
       quizzesTaken: distinctQuizzes,
       baselineScore: baseline ? baseline.score : null,
       baselineLevel: baseline ? getAwarenessLevel(baseline.score) : null,

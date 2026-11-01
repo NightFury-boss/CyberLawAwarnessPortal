@@ -95,6 +95,12 @@ const AssessmentSessionSchema = new mongoose.Schema({
     type: Date,
     required: true
   },
+  maxLifetimeExpiresAt: {
+    type: Date
+  },
+  abandonedAt: {
+    type: Date
+  },
   completedAt: {
     type: Date
   }

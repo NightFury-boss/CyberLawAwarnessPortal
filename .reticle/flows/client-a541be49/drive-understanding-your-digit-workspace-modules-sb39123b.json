@@ -1,0 +1,23 @@
+{
+  "version": 2,
+  "name": "drive-understanding-your-digit-workspace-modules-sb39123b",
+  "projectId": "client-a541be49",
+  "createdAt": 1793353938772,
+  "steps": [
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "role",
+        "role": "link",
+        "name": "Start Lesson"
+      },
+      "args": {},
+      "action": "click",
+      "expect": {
+        "kind": "text",
+        "contains": "Understanding Your Digital Identity"
+      }
+    }
+  ],
+  "startPath": "/workspace/modules"
+}

@@ -254,7 +254,7 @@ function FinalAssessment({ _user, updateProgressTrigger }) {
             </div>
           </div>
 
-          <div style={{ margin: '0 auto 24px auto', maxWidth: '580px', borderLeft: '3px solid #0f2537', paddingLeft: '16px', textAlign: 'left' }}>
+          <div style={{ margin: '0 auto 24px auto', maxWidth: '580px', borderLeft: '3px solid var(--color-text-primary, #302B27)', paddingLeft: '16px', textAlign: 'left' }}>
             <p style={{ fontSize: '0.95rem', color: 'var(--text-secondary)', fontStyle: 'italic', margin: 0 }}>
               &ldquo;Improvement is not about knowing every answer. It is about recognizing better decisions when they matter.&rdquo;
             </p>
@@ -294,7 +294,7 @@ function FinalAssessment({ _user, updateProgressTrigger }) {
 
           {completedHistory.behaviourScores ? (
             <div style={{ marginBottom: '28px', textAlign: 'left' }}>
-              <div style={{ fontSize: '0.82rem', fontWeight: '800', color: '#0f2537', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '14px', textAlign: 'center' }}>
+              <div style={{ fontSize: '0.82rem', fontWeight: '800', color: 'var(--color-text-primary, #302B27)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '14px', textAlign: 'center' }}>
                 Your Final Habits Across 6 Safety Areas
               </div>
               <div className="habit-benchmark-grid">
@@ -324,7 +324,7 @@ function FinalAssessment({ _user, updateProgressTrigger }) {
             </div>
           ) : (
             <div className="alert alert-secondary" style={{ marginBottom: '28px', textAlign: 'center' }}>
-              <strong style={{ fontSize: '0.9rem', color: '#0f2537' }}>FINAL CHECK RECORDED</strong>
+              <strong style={{ fontSize: '0.9rem', color: 'var(--color-text-primary, #302B27)' }}>FINAL CHECK RECORDED</strong>
               <p style={{ margin: '6px 0 0 0', fontSize: '0.88rem', color: 'var(--text-secondary)' }}>
                 Your final check has been securely recorded across your 6 online safety habits.
               </p>
@@ -387,7 +387,7 @@ function FinalAssessment({ _user, updateProgressTrigger }) {
             />
           </div>
 
-          <h2 ref={stageHeadingRef} tabIndex="-1" style={{ fontSize: '1.75rem', fontWeight: '800', color: '#0f2537', marginBottom: '8px', outline: 'none' }}>
+          <h2 ref={stageHeadingRef} tabIndex="-1" style={{ fontSize: '1.75rem', fontWeight: '800', color: 'var(--color-text-primary, #302B27)', marginBottom: '8px', outline: 'none' }}>
             {currentStage.title}
           </h2>
           <p className="text-secondary" style={{ marginBottom: '22px', fontSize: '0.96rem', lineHeight: '1.5' }}>
@@ -434,7 +434,7 @@ function FinalAssessment({ _user, updateProgressTrigger }) {
                   <div className="mock-email-header">
                     <h3 className="mock-email-subject">{currentStage.mockInterfaceData.subject}</h3>
                     <div className="mock-email-meta">
-                      <strong>From:</strong> {currentStage.mockInterfaceData.senderName || currentStage.mockInterfaceData.from} &lt;<span style={{ color: '#0f2537', fontWeight: '700' }}>{currentStage.mockInterfaceData.senderEmail || currentStage.mockInterfaceData.sender || currentStage.mockInterfaceData.from}</span>&gt;
+                      <strong>From:</strong> {currentStage.mockInterfaceData.senderName || currentStage.mockInterfaceData.from} &lt;<span style={{ color: 'var(--color-text-primary, #302B27)', fontWeight: '700' }}>{currentStage.mockInterfaceData.senderEmail || currentStage.mockInterfaceData.sender || currentStage.mockInterfaceData.from}</span>&gt;
                     </div>
                     {(currentStage.mockInterfaceData.dateString || currentStage.mockInterfaceData.timestamp) && (
                       <div className="mock-email-meta">
@@ -474,7 +474,7 @@ function FinalAssessment({ _user, updateProgressTrigger }) {
             {/* Legitimate browser patch / Browser UI */}
             {currentStage.mockInterfaceType === 'browser' && (
               <div style={{ padding: '24px' }}>
-                <h3 style={{ fontSize: '1.4rem', color: '#0f2537', marginBottom: '6px' }}>
+                <h3 style={{ fontSize: '1.4rem', color: 'var(--color-text-primary, #302B27)', marginBottom: '6px' }}>
                   {currentStage.mockInterfaceData.title}
                 </h3>
                 <p className="text-muted" style={{ fontFamily: 'monospace', fontSize: '0.8rem', marginBottom: '16px' }}>
@@ -501,7 +501,7 @@ function FinalAssessment({ _user, updateProgressTrigger }) {
                     </form>
                   </div>
                 ) : (
-                  <div className="alert alert-success" style={{ fontSize: '0.92rem', borderLeft: '4px solid #16a34a', margin: 0 }}>
+                  <div className="alert alert-success" style={{ fontSize: '0.92rem', borderLeft: '4px solid var(--color-success, #536F61)', margin: 0 }}>
                     {currentStage.mockInterfaceData.bodyText || currentStage.mockInterfaceData.body}
                   </div>
                 )}
@@ -512,7 +512,7 @@ function FinalAssessment({ _user, updateProgressTrigger }) {
             {currentStage.mockInterfaceType === 'website' && (
               <div style={{ padding: '24px' }}>
                 <div style={{ borderBottom: '1px solid var(--color-border)', paddingBottom: '10px', marginBottom: '18px' }}>
-                  <h3 style={{ fontSize: '1.35rem', color: '#0f2537', margin: '0 0 4px 0' }}>{currentStage.mockInterfaceData.title}</h3>
+                  <h3 style={{ fontSize: '1.35rem', color: 'var(--color-text-primary, #302B27)', margin: '0 0 4px 0' }}>{currentStage.mockInterfaceData.title}</h3>
                   <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', fontFamily: 'monospace' }}>Address: {currentStage.mockInterfaceData.url}</span>
                 </div>
 
@@ -523,7 +523,7 @@ function FinalAssessment({ _user, updateProgressTrigger }) {
                 )}
 
                 {currentStage.mockInterfaceData.requiresCredentials ? (
-                  <div style={{ maxWidth: '420px', margin: '20px auto', border: '1px solid var(--color-border)', padding: '22px', borderRadius: '8px', backgroundColor: '#fff', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
+                  <div style={{ maxWidth: '420px', margin: '20px auto', border: '1px solid var(--color-border)', padding: '22px', borderRadius: '8px', backgroundColor: 'var(--color-surface-card, #FCFAF5)', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
                     <form onSubmit={handleLoginSubmit}>
                       <div className="form-group" style={{ marginBottom: '14px' }}>
                         <label style={{ fontSize: '0.82rem', fontWeight: '700' }}>Netbanking Customer ID</label>
@@ -551,7 +551,7 @@ function FinalAssessment({ _user, updateProgressTrigger }) {
             {/* QR Code Scan Mockup */}
             {currentStage.mockInterfaceType === 'qr_code' && (
               <div style={{ textAlign: 'center', padding: '26px' }}>
-                <h3 style={{ fontSize: '1.4rem', color: '#0f2537', marginBottom: '4px' }}>
+                <h3 style={{ fontSize: '1.4rem', color: 'var(--color-text-primary, #302B27)', marginBottom: '4px' }}>
                   {currentStage.mockInterfaceData.title}
                 </h3>
                 <p style={{ fontSize: '1.35rem', fontWeight: '800', color: '#b91c1c', marginBottom: '18px' }}>
@@ -561,16 +561,16 @@ function FinalAssessment({ _user, updateProgressTrigger }) {
                 <div style={{
                   width: '180px',
                   height: '180px',
-                  border: '3px solid #0f2537',
+                  border: '3px solid var(--color-text-primary, #302B27)',
                   margin: '0 auto 16px auto',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  backgroundColor: '#f8fafc'
+                  backgroundColor: 'var(--color-surface-secondary, #EFE8DC)'
                 }}>
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '4px', width: '140px', height: '140px' }}>
                     {[...Array(25)].map((_, i) => (
-                      <div key={i} style={{ backgroundColor: (i % 2 === 0 || i % 5 === 0) ? '#0f2537' : 'transparent' }} />
+                      <div key={i} style={{ backgroundColor: (i % 2 === 0 || i % 5 === 0) ? 'var(--color-text-primary, #302B27)' : 'transparent' }} />
                     ))}
                   </div>
                 </div>
@@ -656,7 +656,7 @@ function FinalAssessment({ _user, updateProgressTrigger }) {
                 </div>
                 <div className="upi-body">
                   <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', display: 'block', marginBottom: '4px' }}>Requested by</span>
-                  <strong style={{ fontSize: '1.15rem', color: '#0f2537', display: 'block', marginBottom: '16px' }}>{currentStage.mockInterfaceData.merchantName}</strong>
+                  <strong style={{ fontSize: '1.15rem', color: 'var(--color-text-primary, #302B27)', display: 'block', marginBottom: '16px' }}>{currentStage.mockInterfaceData.merchantName}</strong>
                   
                   <div className="upi-amount-box">
                     <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Amount Request</span>
@@ -676,7 +676,7 @@ function FinalAssessment({ _user, updateProgressTrigger }) {
             {(currentStage.mockInterfaceType === 'chat' || currentStage.mockInterfaceType === 'messaging') && (
               <div className="mock-chat-window">
                 <div className="chat-window-header">
-                  <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#22c55e' }} />
+                  <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: 'var(--color-success, #536F61)' }} />
                   <span>{currentStage.mockInterfaceData.sender || currentStage.mockInterfaceData.callerID || currentStage.mockInterfaceData.platform || 'Direct Message'}</span>
                 </div>
                 <div className="chat-window-body">
@@ -696,7 +696,7 @@ function FinalAssessment({ _user, updateProgressTrigger }) {
             {currentStage.mockInterfaceType === 'notification' && (
               <div className="mock-system-alert">
                 <div className="alert-icon-wrap">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ color: '#0f2537' }}>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ color: 'var(--color-text-primary, #302B27)' }}>
                     <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
                     <line x1="12" y1="9" x2="12" y2="13" />
                     <line x1="12" y1="17" x2="12.01" y2="17" />
@@ -704,7 +704,7 @@ function FinalAssessment({ _user, updateProgressTrigger }) {
                 </div>
                 <div style={{ flex: 1 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
-                    <strong style={{ fontSize: '0.95rem', color: '#0f2537' }}>{currentStage.mockInterfaceData.title}</strong>
+                    <strong style={{ fontSize: '0.95rem', color: 'var(--color-text-primary, #302B27)' }}>{currentStage.mockInterfaceData.title}</strong>
                     <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>{currentStage.mockInterfaceData.dateString || currentStage.mockInterfaceData.timestamp || 'System Alert'}</span>
                   </div>
                   <p style={{ fontSize: '0.88rem', color: 'var(--text-secondary)', margin: '0 0 12px 0', lineHeight: '1.45', wordBreak: 'break-word', overflowWrap: 'break-word' }}>
@@ -742,16 +742,16 @@ function FinalAssessment({ _user, updateProgressTrigger }) {
       {/* 4. COMPARISON & REVEAL VIEW                                               */}
       {/* ========================================================================= */}
       {currentStep === 'reveal_view' && result && (
-        <div className="reveal-pane portal-state-reveal-down" style={{ border: '1px solid var(--color-border)', borderTop: '3px solid #0f2537' }}>
-          <h2 style={{ fontSize: '2.2rem', fontWeight: '800', color: '#0f2537', marginBottom: '10px' }}>
+        <div className="reveal-pane portal-state-reveal-down" style={{ border: '1px solid var(--color-border)', borderTop: '3px solid var(--color-text-primary, #302B27)' }}>
+          <h2 style={{ fontSize: '2.2rem', fontWeight: '800', color: 'var(--color-text-primary, #302B27)', marginBottom: '10px' }}>
             Your Final Check Results
           </h2>
           <p className="text-secondary" style={{ marginBottom: '22px', fontSize: '1.05rem', lineHeight: '1.55' }}>
             Here is what your choices show about your online safety habits, and how they compare with your starting check.
           </p>
 
-          <div style={{ marginBottom: '26px', borderLeft: '3px solid #0f2537', paddingLeft: '16px' }}>
-            <p style={{ fontSize: '1.05rem', color: '#0f2537', fontStyle: 'italic', margin: '0 0 6px 0', fontWeight: '700' }}>
+          <div style={{ marginBottom: '26px', borderLeft: '3px solid var(--color-text-primary, #302B27)', paddingLeft: '16px' }}>
+            <p style={{ fontSize: '1.05rem', color: 'var(--color-text-primary, #302B27)', fontStyle: 'italic', margin: '0 0 6px 0', fontWeight: '700' }}>
               &ldquo;You weren’t being tested on whether you could guess what was a scam.&rdquo;
             </p>
             <p style={{ fontSize: '0.95rem', color: 'var(--text-secondary)', margin: 0 }}>
@@ -763,7 +763,7 @@ function FinalAssessment({ _user, updateProgressTrigger }) {
           <div className="reveal-layout-grid" style={{ marginBottom: '32px' }}>
             {/* Left side: Observed Digital Habits breakdown */}
             <div>
-              <h3 style={{ fontSize: '1.18rem', fontWeight: '800', color: '#0f2537', marginBottom: '14px' }}>
+              <h3 style={{ fontSize: '1.18rem', fontWeight: '800', color: 'var(--color-text-primary, #302B27)', marginBottom: '14px' }}>
                 Your Safety Habits
               </h3>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
@@ -785,10 +785,10 @@ function FinalAssessment({ _user, updateProgressTrigger }) {
                 ].map(item => {
                   const val = result.behaviourScores?.[item.key] ?? 0;
                   return (
-                    <div key={item.key} style={{ padding: '10px 14px', backgroundColor: 'var(--bg-secondary)', borderRadius: '6px', borderLeft: '3px solid #0f2537' }}>
+                    <div key={item.key} style={{ padding: '10px 14px', backgroundColor: 'var(--bg-secondary)', borderRadius: '6px', borderLeft: '3px solid var(--color-text-primary, #302B27)' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <strong style={{ fontSize: '0.88rem', color: '#0f2537' }}>{item.label}</strong>
-                        <span style={{ fontSize: '0.95rem', fontWeight: '800', color: '#0f2537' }}>{val}%</span>
+                        <strong style={{ fontSize: '0.88rem', color: 'var(--color-text-primary, #302B27)' }}>{item.label}</strong>
+                        <span style={{ fontSize: '0.95rem', fontWeight: '800', color: 'var(--color-text-primary, #302B27)' }}>{val}%</span>
                       </div>
                       <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', marginTop: '3px', lineHeight: '1.4' }}>
                         {item.desc}
@@ -808,7 +808,7 @@ function FinalAssessment({ _user, updateProgressTrigger }) {
                 backgroundColor: 'var(--bg-white)',
                 marginBottom: '16px'
               }}>
-                <span style={{ fontSize: '0.82rem', fontWeight: '800', color: '#0f2537', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                <span style={{ fontSize: '0.82rem', fontWeight: '800', color: 'var(--color-text-primary, #302B27)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                   How Your Habits Changed
                 </span>
                 <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', margin: '4px 0 14px 0' }}>
@@ -842,7 +842,7 @@ function FinalAssessment({ _user, updateProgressTrigger }) {
                             {diff > 0 ? `+${diff}%` : `${diff}%`}
                           </div>
                         ) : (
-                          <div style={{ fontSize: '0.88rem', fontWeight: '800', color: '#0f2537' }}>
+                          <div style={{ fontSize: '0.88rem', fontWeight: '800', color: 'var(--color-text-primary, #302B27)' }}>
                             {finalVal}%
                           </div>
                         )}
@@ -853,8 +853,8 @@ function FinalAssessment({ _user, updateProgressTrigger }) {
               </div>
 
               {result.deltaMessage && (
-                <div className="alert alert-secondary" style={{ fontSize: '0.88rem', lineHeight: '1.45', borderLeft: '4px solid #0f2537' }}>
-                  <strong style={{ color: '#0f2537' }}>What This Means:</strong> {result.deltaMessage}
+                <div className="alert alert-secondary" style={{ fontSize: '0.88rem', lineHeight: '1.45', borderLeft: '4px solid var(--color-text-primary, #302B27)' }}>
+                  <strong style={{ color: 'var(--color-text-primary, #302B27)' }}>What This Means:</strong> {result.deltaMessage}
                 </div>
               )}
             </div>
@@ -877,7 +877,7 @@ function FinalAssessment({ _user, updateProgressTrigger }) {
 
           {/* Thematic narrative thread lockup */}
           <div style={{ textAlign: 'center', margin: '32px 0 24px 0', paddingTop: '20px', borderTop: '1px dashed var(--color-border)' }}>
-            <span style={{ fontSize: '0.85rem', color: '#0f2537', fontWeight: '800', textTransform: 'uppercase', display: 'block', letterSpacing: '0.08em' }}>
+            <span style={{ fontSize: '0.85rem', color: 'var(--color-text-primary, #302B27)', fontWeight: '800', textTransform: 'uppercase', display: 'block', letterSpacing: '0.08em' }}>
               Knowing the law is only the beginning.
             </span>
             <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', margin: '4px 0 12px 0' }}>
@@ -886,7 +886,7 @@ function FinalAssessment({ _user, updateProgressTrigger }) {
             <p style={{ fontSize: '0.92rem', color: 'var(--text-secondary)', fontStyle: 'italic', margin: '0 0 6px 0' }}>
               &ldquo;Improvement is not about knowing every answer. It is about recognizing better decisions when they matter.&rdquo;
             </p>
-            <span style={{ fontSize: '0.85rem', fontWeight: '700', color: '#1e3a8a', letterSpacing: '0.05em' }}>
+            <span style={{ fontSize: '0.85rem', fontWeight: '700', color: 'var(--color-text-primary, #302B27)', letterSpacing: '0.05em' }}>
               Learn. Recognize. Stay Safe.
             </span>
           </div>

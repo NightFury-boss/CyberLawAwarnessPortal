@@ -1,0 +1,29 @@
+{
+  "entries": [
+    {
+      "id": "inline:closing-the-defensive-portfolio-modal-3dbb8e61",
+      "statement": "Closing the Defensive Portfolio modal",
+      "status": "proved",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:opening-the-defensive-portfolio-modal-from-the-r-7f1f5004",
+      "statement": "Opening the Defensive Portfolio modal from the redesigned masthead butt…",
+      "status": "proposed",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:verify-that-dashboard-renders-the-5-quiz-modes-i-194e558e",
+      "statement": "Verify that Dashboard renders the 5 Quiz modes in DashboardQuizPractice…",
+      "status": "proved",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:verify-that-the-redesigned-dashboard-renders-the-b2ea714b",
+      "statement": "Verify that the redesigned Dashboard renders the Verified Learning Reco…",
+      "status": "proved",
+      "subject": "unsorted"
+    }
+  ],
+  "version": 1
+}

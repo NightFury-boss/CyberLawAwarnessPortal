@@ -1,0 +1,41 @@
+{
+  "version": 2,
+  "name": "drive-verified-learning-record-dashboard-sb39123b",
+  "projectId": "client-a541be49",
+  "createdAt": 1793384402921,
+  "steps": [
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "role",
+        "role": "button",
+        "name": "View and print your verified learning record"
+      },
+      "args": {},
+      "action": "click",
+      "expect": {
+        "kind": "text",
+        "contains": "Verified Learning Record"
+      }
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "role",
+        "role": "button",
+        "name": "Close Learning Record"
+      },
+      "args": {},
+      "action": "click",
+      "expect": {
+        "kind": "element",
+        "query": {
+          "role": "button",
+          "name": "Close Learning Record"
+        },
+        "absent": true
+      }
+    }
+  ],
+  "startPath": "/dashboard"
+}

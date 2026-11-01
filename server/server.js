@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
 const path = require('path');
+const mongoose = require('mongoose');
 
 // Load environment variables
 dotenv.config({ path: path.join(__dirname, '.env') });
@@ -26,6 +27,7 @@ const simulationRoutes = require('./routes/simulations');
 const progressRoutes = require('./routes/progress');
 const adminRoutes = require('./routes/admin');
 const assistantRoutes = require('./routes/assistant');
+const moduleRoutes = require('./routes/modules');
 
 const app = express();
 
@@ -79,6 +81,7 @@ app.use('/api/assessments', simulationRoutes);
 app.use('/api/progress', progressRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/assistant', assistantRoutes);
+app.use('/api/modules', moduleRoutes);
 
 // Root informational route
 app.get('/', (req, res) => {
@@ -90,9 +93,18 @@ app.get('/', (req, res) => {
   });
 });
 
-// Root test route
+// Health and readiness probe route
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'healthy', timestamp: new Date().toISOString() });
+  const isDbConnected = mongoose.connection.readyState === 1;
+  const status = isDbConnected ? 'healthy' : 'degraded';
+  const statusCode = isDbConnected ? 200 : 503;
+
+  res.status(statusCode).json({
+    status,
+    database: isDbConnected ? 'connected' : 'disconnected',
+    uptime: Math.floor(process.uptime()),
+    timestamp: new Date().toISOString()
+  });
 });
 
 // Error handling middleware to prevent raw stack trace exposure

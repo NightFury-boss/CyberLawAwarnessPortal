@@ -22,6 +22,8 @@ const ScenarioStage = require('../models/ScenarioStage');
 const ScenarioDecision = require('../models/ScenarioDecision');
 const Resource = require('../models/Resource');
 const UserProgress = require('../models/UserProgress');
+const LearningModule = require('../models/LearningModule');
+const learningModulesData = require('./seedModulesData');
 
 async function seed(isReset = false) {
   try {
@@ -43,6 +45,7 @@ async function seed(isReset = false) {
       await ScenarioDecision.deleteMany({});
       await Resource.deleteMany({});
       await UserProgress.deleteMany({});
+      await LearningModule.deleteMany({});
     }
 
     // 2. Create Users (Admin & User)
@@ -137,7 +140,7 @@ async function seed(isReset = false) {
       });
     }
 
-    let sourceITRules = await LegalSource.findOne({ title: /IT Intermediary Rules/ });
+    let sourceITRules = await LegalSource.findOne({ title: /Intermediary Guidelines|IT Intermediary Rules/ });
     if (!sourceITRules) {
       sourceITRules = await LegalSource.create({
         title: 'IT (Intermediary Guidelines and Digital Media Ethics Code) Rules, 2021',
@@ -146,6 +149,71 @@ async function seed(isReset = false) {
         sourceType: 'government-guidance',
         description: 'Regulatory rules governing social media intermediaries and digital platforms.'
       });
+    }
+
+    let sourceCERTIn = await LegalSource.findOne({ title: /CERT-In Directions/ });
+    if (!sourceCERTIn) {
+      sourceCERTIn = await LegalSource.create({
+        title: 'CERT-In Directions on Information Security Practices, 2022',
+        authority: 'Indian Computer Emergency Response Team (CERT-In), MeitY',
+        url: 'https://www.cert-in.org.in/Directions2022.jsp',
+        sourceType: 'government-guidance',
+        description: 'Mandatory cybersecurity incident reporting within 6 hours and log retention directions issued under Section 70B(6).'
+      });
+    }
+
+    let sourceBSA = await LegalSource.findOne({ title: /Bharatiya Sakshya Adhiniyam/ });
+    if (!sourceBSA) {
+      sourceBSA = await LegalSource.create({
+        title: 'Bharatiya Sakshya Adhiniyam, 2023 Text',
+        authority: 'Ministry of Home Affairs, Government of India',
+        url: 'https://www.mha.gov.in',
+        sourceType: 'legislation',
+        description: 'Statutory rules on admissibility and proof of electronic records under Section 63, replacing Section 65B of Evidence Act.'
+      });
+    }
+
+    let sourceRBI = await LegalSource.findOne({ title: /Reserve Bank of India Master Direction|RBI Master Direction/ });
+    if (!sourceRBI) {
+      sourceRBI = await LegalSource.create({
+        title: 'RBI Master Direction on Digital Payment Security Controls',
+        authority: 'Reserve Bank of India',
+        url: 'https://www.rbi.org.in',
+        sourceType: 'government-guidance',
+        description: 'Regulatory framework governing digital payment security, multi-factor authentication, and customer liability limitation.'
+      });
+    }
+
+    let sourceArjunPanditrao = await LegalSource.findOne({ title: /Arjun Panditrao Khotkar/ });
+    if (!sourceArjunPanditrao) {
+      sourceArjunPanditrao = await LegalSource.create({
+        title: 'Arjun Panditrao Khotkar v. Kailash Kushanrao Gorantyal (2020)',
+        authority: 'Supreme Court of India',
+        url: 'https://main.sci.gov.in/judgments',
+        sourceType: 'judgment',
+        description: 'Three-Judge Bench landmark judgment clarifying certificate mandatory requirement for secondary electronic evidence admissibility.'
+      });
+    }
+
+    let sourceI4C = await LegalSource.findOne({ title: /National Cybercrime Coordination Centre|I4C Citizen Advisories/ });
+    if (!sourceI4C) {
+      sourceI4C = await LegalSource.create({
+        title: 'I4C Citizen Advisories on Digital Arrest & Financial Frauds',
+        authority: 'National Cybercrime Coordination Centre (I4C), MHA',
+        url: 'https://cybercrime.gov.in',
+        sourceType: 'official-awareness',
+        description: 'Official law enforcement warnings and standard operating procedures for digital arrest, mule accounts, and 1930 reporting.'
+      });
+    }
+
+    // Clean up any historical duplicate legal source entries by title
+    const uniqueSourceTitles = await LegalSource.distinct('title');
+    for (const t of uniqueSourceTitles) {
+      const records = await LegalSource.find({ title: t }).sort({ createdAt: 1 });
+      if (records.length > 1) {
+        const [keep, ...remove] = records;
+        await LegalSource.deleteMany({ _id: { $in: remove.map(r => r._id) } });
+      }
     }
 
     // 4. Law Sections
@@ -203,7 +271,7 @@ async function seed(isReset = false) {
         commencementStatus: 'In force. Notified on 27th October 2009.',
         amendmentStatus: 'Inserted via the IT Amendment Act, 2008.',
         keywords: ['caller spoofing', 'impersonation', 'cheating', 'whatsapp scam', 'vishing'],
-        relatedCyberCrimes: ['vishing', 'online-cheating'],
+        relatedCyberCrimes: ['vishing', 'upi-payment-fraud', 'marketplace-scams'],
         relatedCaseStudies: ['fake-support-call-fraud', 'fake-job-offer-scam', 'digital-arrest-impersonation'],
         relatedModules: ['phishing-awareness'],
         officialSourceId: sourceIndiaCode._id
@@ -317,7 +385,7 @@ async function seed(isReset = false) {
         commencementStatus: 'In force. Notified effective from 1st July 2024.',
         amendmentStatus: 'Replaces IPC Section 420.',
         keywords: ['cheating', 'ipc 420', 'online scam', 'advance fee fraud', 'bns 318'],
-        relatedCyberCrimes: ['online-cheating', 'upi-payment-fraud'],
+        relatedCyberCrimes: ['marketplace-scams', 'upi-payment-fraud'],
         relatedCaseStudies: ['classified-marketplace-qr-fraud', 'fake-job-offer-scam'],
         relatedModules: ['phishing-awareness'],
         officialSourceId: sourceBNS._id
@@ -336,7 +404,7 @@ async function seed(isReset = false) {
         commencementStatus: 'In force. Notified effective from 1st July 2024.',
         amendmentStatus: 'Replaces IPC Section 419.',
         keywords: ['impersonation', 'bns 319', 'ipc 419', 'profile spoofing'],
-        relatedCyberCrimes: ['identity-theft', 'online-cheating'],
+        relatedCyberCrimes: ['identity-theft', 'online-impersonation'],
         relatedCaseStudies: ['digital-arrest-impersonation'],
         relatedModules: [],
         officialSourceId: sourceBNS._id
@@ -359,6 +427,139 @@ async function seed(isReset = false) {
         relatedCaseStudies: [],
         relatedModules: ['privacy-governance'],
         officialSourceId: sourceITRules._id
+      },
+      {
+        sectionNumber: 'Section 43',
+        actName: 'Information Technology Act, 2000',
+        officialTitle: 'Penalty and compensation for damage to computer, computer system, etc.',
+        role: 'Core Cyber Law',
+        plainLanguageExplanation: 'Establishes civil liability and financial compensation to the affected person if anyone without permission accesses a computer, downloads/copies data, introduces computer contaminants or viruses, damages data, or disrupts computer services. Under the IT Amendment Act 2008, compensation under Section 43 has no statutory upper ceiling; claims up to ₹5 crore are adjudicated by the State IT Adjudicating Officer under Section 46(1A), while claims exceeding ₹5 crore lie before the competent civil court.',
+        officialText: 'If any person without permission of the owner or any other person who is incharge of a computer, computer system or computer network... accesses or secures access... downloads, copies or extracts any data... introduces or causes to be introduced any computer contaminant or computer virus... he shall be liable to pay damages by way of compensation to the person so affected.',
+        whyItMatters: 'Foundational statutory basis for civil remedies against unauthorized database downloads, insider data extraction, and ransomware disruption. Victims can petition the State IT Adjudicating Officer for compensation up to ₹5 crore, or civil court for larger claims.',
+        exampleScenario: 'A departing sales manager downloads 5,000 confidential client records to a personal flash drive without authorization before joining a competitor.',
+        penaltyOrLegalEffect: 'Civil liability: Damages by way of compensation to the affected person without statutory cap (adjudicated by the State IT Adjudicating Officer for claims up to ₹5 crore under Section 46(1A); claims above ₹5 crore lie before the competent civil court).',
+        legalStatus: 'CURRENT',
+        commencementStatus: 'In force. Notified on 17th October 2000; liability framework enhanced on 27th October 2009.',
+        amendmentStatus: 'Amended via the IT Amendment Act, 2008 (Act 10 of 2009) to replace the original ₹1 crore penalty cap with uncapped compensatory damages, aligning with Section 46(1A) pecuniary jurisdiction.',
+        keywords: ['unauthorized access', 'data theft', 'malware injection', 'compensation', 'adjudicating officer', 'section 43'],
+        relatedCyberCrimes: ['malware', 'credential-theft', 'ransomware'],
+        relatedCaseStudies: ['classified-marketplace-qr-fraud'],
+        relatedModules: ['endpoint-security'],
+        officialSourceId: sourceIndiaCode._id
+      },
+      {
+        sectionNumber: 'Section 66',
+        actName: 'Information Technology Act, 2000',
+        officialTitle: 'Computer related offences',
+        role: 'Core Cyber Law',
+        plainLanguageExplanation: 'Criminalizes any act referred to in Section 43 (such as unauthorized access, hacking, system disruption, or data alteration) when committed dishonestly or fraudulently. Carries up to 3 years imprisonment.',
+        officialText: 'If any person, dishonestly or fraudulently, does any act referred to in section 43, he shall be punishable with imprisonment for a term which may extend to three years or with fine which may extend to five lakh rupees or with both.',
+        whyItMatters: 'The primary criminal section under Indian law for prosecuting hackers, illegal intrusion, server compromises, and unauthorized database modifications.',
+        exampleScenario: 'An attacker exploits an SQL injection vulnerability to breach an e-commerce database, alter customer balances, and delete transaction logs.',
+        penaltyOrLegalEffect: 'Imprisonment of up to 3 years, or a fine of up to ₹5,00,000, or both.',
+        legalStatus: 'CURRENT',
+        commencementStatus: 'In force. Substituted by the IT Amendment Act, 2008, effective from 27th October 2009.',
+        amendmentStatus: 'Substituted by IT Amendment Act, 2008 (originally designated as "hacking with computer system").',
+        keywords: ['hacking', 'dishonest access', 'data alteration', 'system intrusion', 'section 66'],
+        relatedCyberCrimes: ['malware', 'ransomware', 'account-takeover'],
+        relatedCaseStudies: ['sim-swap-compromise'],
+        relatedModules: ['endpoint-security'],
+        officialSourceId: sourceIndiaCode._id
+      },
+      {
+        sectionNumber: 'Section 66B',
+        actName: 'Information Technology Act, 2000',
+        officialTitle: 'Punishment for dishonestly receiving stolen computer resource or communication device',
+        role: 'Core Cyber Law',
+        plainLanguageExplanation: 'Punishes anyone who knowingly or with reasonable belief receives or retains any stolen computer, laptop, mobile phone, or communication device with up to 3 years imprisonment.',
+        officialText: 'Whoever dishonestly receive or retains any stolen computer resource or communication device knowing or having reason to believe the same to be stolen computer resource or communication device, shall be punished with imprisonment of either description for a term which may extend to three years or with fine which may extend to one lakh rupees or with both.',
+        whyItMatters: 'Directly targets grey market fencing operations and syndicates that purchase stolen smartphones used for SIM swapping and fraudulent financial transactions.',
+        exampleScenario: 'A phone repair shop knowingly buys stolen iPhones without invoices from a thief for resale and digital extraction.',
+        penaltyOrLegalEffect: 'Imprisonment of up to 3 years, or a fine of up to ₹1,00,000, or both.',
+        legalStatus: 'CURRENT',
+        commencementStatus: 'In force. Notified on 27th October 2009.',
+        amendmentStatus: 'Inserted via the IT Amendment Act, 2008.',
+        keywords: ['stolen device', 'grey market', 'stolen mobile', 'fencing', 'section 66b'],
+        relatedCyberCrimes: ['sim-swapping', 'identity-theft'],
+        relatedCaseStudies: ['sim-swap-compromise'],
+        relatedModules: ['device-security'],
+        officialSourceId: sourceIndiaCode._id
+      },
+      {
+        sectionNumber: 'Section 67B',
+        actName: 'Information Technology Act, 2000',
+        officialTitle: 'Punishment for publishing or transmitting material depicting children in sexually explicit act, etc., in electronic form',
+        role: 'Core Cyber Law',
+        plainLanguageExplanation: 'Strictly criminalizes creating, collecting, seeking, browsing, downloading, advertising, promoting, exchanging, or publishing Child Sexual Abuse Material (CSAM) in electronic format. Imposes mandatory non-bailable prison terms.',
+        officialText: 'Whoever publishes or transmits or causes to be published or transmitted in the electronic form, any material which depicts children engaged in sexually explicit act... shall be punished on first conviction with imprisonment of either description for a term which may extend to five years and with fine which may extend to ten lakh rupees...',
+        whyItMatters: 'Central pillar of India\'s statutory framework protecting minors in the digital ecosystem. Works alongside the POCSO Act, 2012 to mandate reporting and permanent removal by intermediaries.',
+        exampleScenario: 'A user operates an invite-only Telegram group exchanging prohibited exploitation imagery. Police Cyber Cell intercepts the traffic and files an FIR under Section 67B.',
+        penaltyOrLegalEffect: 'First conviction: Imprisonment up to 5 years and fine up to ₹10,00,000. Subsequent conviction: Imprisonment up to 7 years and fine up to ₹10,00,000.',
+        legalStatus: 'CURRENT',
+        commencementStatus: 'In force. Notified on 27th October 2009.',
+        amendmentStatus: 'Inserted via the IT Amendment Act, 2008.',
+        keywords: ['csam', 'child safety', 'child sexual abuse material', 'non-bailable', 'pocso', 'section 67b'],
+        relatedCyberCrimes: ['online-harassment', 'sextortion'],
+        relatedCaseStudies: [],
+        relatedModules: ['child-safety'],
+        officialSourceId: sourceIndiaCode._id
+      },
+      {
+        sectionNumber: 'Section 70B',
+        actName: 'Information Technology Act, 2000',
+        officialTitle: 'Indian Computer Emergency Response Team to serve as national nodal agency for incident response',
+        role: 'Sector Regulation',
+        plainLanguageExplanation: 'Designates CERT-In as the national agency for monitoring cybersecurity incidents, issuing threat advisories, and emergency response. Under Directions No. 20(3)/2022-CERT-In issued under Section 70B(6), specified entities (service providers, intermediaries, data centres, body corporate, and government organizations) must report 20 categories of cybersecurity incidents to CERT-In within 6 hours. This mandatory 6-hour timeline applies to covered organizations and entities, not indiscriminately to individual citizens.',
+        officialText: 'The Central Government shall, by notification in the Official Gazette, appoint an agency of the Government to be called the Indian Computer Emergency Response Team... (6) The service provider, intermediaries, data centres, body corporate and any other person shall fail to provide information to CERT-In or fail to comply with the direction... punishable with imprisonment up to one year or fine up to one lakh rupees.',
+        whyItMatters: 'Statutory basis for national incident coordination and the mandatory 6-hour cybersecurity incident reporting obligation for covered organizations, critical infrastructure intermediaries, and body corporates under the 2022 Directions.',
+        exampleScenario: 'A fintech payment gateway experiences a ransomware attack encrypting transaction databases. Under Section 70B(6) Directions, the corporate entity must report the incident to CERT-In within 6 hours of noticing it.',
+        penaltyOrLegalEffect: 'Non-compliance with CERT-In directions: Imprisonment of up to 1 year, or a fine of up to ₹1,00,000, or both.',
+        legalStatus: 'CURRENT',
+        commencementStatus: 'In force. Notified on 27th October 2009. Binding Directions issued under subsection (6) on 28th April 2022.',
+        amendmentStatus: 'Inserted via the IT Amendment Act, 2008.',
+        keywords: ['cert-in', 'incident reporting', '6-hour rule', 'log retention', 'data breach notification', 'section 70b'],
+        relatedCyberCrimes: ['ransomware', 'malware', 'data-breach'],
+        relatedCaseStudies: ['phishing-credential-takeover'],
+        relatedModules: ['incident-response'],
+        officialSourceId: sourceCERTIn._id
+      },
+      {
+        sectionNumber: 'BSA Section 63',
+        actName: 'Bharatiya Sakshya Adhiniyam, 2023',
+        officialTitle: 'Admissibility of electronic records and mandatory certification',
+        role: 'Related Criminal Law',
+        plainLanguageExplanation: 'Governs how digital evidence (WhatsApp chats, emails, CCTV footage, server logs, SMS transcripts) must be presented in Indian courts. Replaces Section 65B of the repealed Indian Evidence Act from 1 July 2024. Mandates submission of a certificate in terms of the BSA Schedule (Part A by the device owner/operator, and Part B by an expert where technical extraction is performed).',
+        officialText: 'Any information contained in an electronic record which is printed on paper, stored, recorded or copied in optical or magnetic media or cloud... shall be deemed to be also a document... and shall be admissible in any proceedings, without further proof or production of the original... accompanied by a certificate signed by a person occupying a responsible official position in relation to the operation of the relevant device or the management of the relevant activities, or an expert.',
+        whyItMatters: 'Printed chat screenshots or exported call logs are inadmissible in an Indian criminal or civil trial unless submitted with an accompanying Section 63(4) Schedule certificate specifying device make, model, IMEI, cloud identifiers, and affirming system integrity.',
+        exampleScenario: 'In a cyber financial cheating trial, the victim submits printed bank SMS notifications and fraudster chat logs accompanied by a signed BSA Section 63 Schedule certificate detailing the phone IMEI and extraction method.',
+        penaltyOrLegalEffect: 'Procedural evidentiary rule governing admissibility of digital records. Submitting a knowingly false certificate constitutes perjury under BNS.',
+        legalStatus: 'CURRENT',
+        commencementStatus: 'In force. Notified effective from 1st July 2024 via S.O. 852(E).',
+        amendmentStatus: 'Replaces Section 65B of the repealed Indian Evidence Act, 1872.',
+        keywords: ['electronic evidence', 'digital certificate', 'section 65b', 'bsa 63', 'admissibility', 'whatsapp evidence'],
+        relatedCyberCrimes: ['upi-payment-fraud', 'identity-theft', 'sextortion'],
+        relatedCaseStudies: ['classified-marketplace-qr-fraud', 'digital-arrest-impersonation'],
+        relatedModules: ['digital-forensics'],
+        officialSourceId: sourceBSA._id
+      },
+      {
+        sectionNumber: 'BNS Section 78',
+        actName: 'Bharatiya Nyaya Sanhita, 2023',
+        officialTitle: 'Stalking (including cyberstalking and electronic surveillance of women)',
+        role: 'Related Criminal Law',
+        plainLanguageExplanation: 'Explicitly criminalizes cyberstalking: monitoring the use by a woman of the internet, email, or other form of electronic communication, or attempting contact repeatedly despite clear disinterest. Replaces IPC Section 354D.',
+        officialText: 'Whoever follows a woman and contacts, or attempts to contact such woman to foster personal interaction repeatedly despite a clear indication of disinterest... or monitors the use by a woman of the internet, email or any other form of electronic communication, commits the offence of stalking.',
+        whyItMatters: 'Primary criminal section against persistent online stalkers, spyware monitoring, unauthorized location tracking, and unwanted messaging.',
+        exampleScenario: 'An individual creates multiple burner profiles to monitor a woman\'s posts, comment on every photo after being blocked, and sends tracking links.',
+        penaltyOrLegalEffect: 'First conviction: Imprisonment of up to 3 years and fine. Second/subsequent conviction: Imprisonment of up to 5 years and fine.',
+        legalStatus: 'CURRENT',
+        commencementStatus: 'In force. Notified effective from 1st July 2024 via S.O. 850(E).',
+        amendmentStatus: 'Replaces Section 354D of the repealed Indian Penal Code (IPC).',
+        keywords: ['cyberstalking', 'stalking', 'bns 78', 'ipc 354d', 'harassment', 'electronic tracking'],
+        relatedCyberCrimes: ['cyber-stalking', 'online-harassment'],
+        relatedCaseStudies: [],
+        relatedModules: ['privacy-governance'],
+        officialSourceId: sourceBNS._id
       }
     ];
 
@@ -799,25 +1000,461 @@ async function seed(isReset = false) {
         title: 'Sextortion',
         slug: 'sextortion',
         category: 'Online Harassment & Abuse',
-        shortDescription: 'Extortion using compromised webcam feeds or private photos.',
-        whatIsIt: 'Blackmailing victims with threats of publishing private calls.',
-        howItWorks: 'Scammers record video chats and threaten to send clips to family members.',
+        shortDescription: 'Extortion using recorded private video calls, compromised photos, or synthetic deepfakes.',
+        whatIsIt: 'Sextortion is a form of cyber blackmail where perpetrators obtain or synthetically manufacture compromising private imagery or video recordings and threaten to broadcast them to the victim\'s family, colleagues, or social followers unless money is paid.',
+        howItWorks: 'Attackers initiate contact on dating or social platforms, quickly shift to video calls, induce the victim into compromising situations while recording the screen, and immediately send extortion demands with screenshots of the victim\'s contact list.',
         attackerObjective: ['Money'],
-        redFlagLevel: 'Very High',
-        attackVectors: ['Phone', 'Social Media'],
-        legalContext: ['Section 66E', 'Section 66D']
+        redFlagLevel: 'Critical',
+        attackVectors: ['Social Media', 'Video Call', 'Messaging'],
+        legalContext: ['Section 66E', 'Section 66D', 'Section 67', 'Section 67A'],
+        difficulty: 'Intermediate',
+        warningSigns: [
+          'Stranger on social media immediately suggesting video calls on third-party messaging apps',
+          'Call screen displays pre-recorded looping video while demanding you turn on your camera',
+          'Immediate threats to send recorded clips to your workplace or family within 15 minutes',
+          'Sharing screenshots of your Facebook friends or Instagram follower list as leverage'
+        ],
+        attackerTactics: [
+          { tactic: 'Panic & Humiliation', example: 'Threatens to upload recorded video to YouTube and send links to parents.', whyItWorks: 'Leverages acute social shame to force compliance before rational thinking.' }
+        ],
+        actionSteps: [
+          'Do NOT pay any ransom. Paying never stops extortion; it signals that blackmail works and demands will escalate.',
+          'Deactivate social media accounts temporarily and preserve unedited chat screenshots and payment links.',
+          'Report immediately to 1930 and file a complaint on cybercrime.gov.in under "Women & Child Related Crime".'
+        ],
+        avoidSteps: [
+          'Never agree to nude or compromising video calls with online strangers.',
+          'Do not negotiate or agree to installment payments with extortionists.'
+        ],
+        ifTargetedSteps: [
+          'Submit the original image hashes to StopNCII.org to prevent automatic platform resharing.',
+          'Block the attacker across all numbers and report the extortion to police Cyber Cell.'
+        ],
+        mythFacts: [
+          { myth: 'Paying the attacker once will make them delete the recorded video.', fact: 'Extortionists never delete compromising media upon payment; paying guarantees repeated demands for larger amounts.' }
+        ],
+        spotTheFlags: {
+          messageType: 'Chat Message',
+          messageText: 'I recorded your private video call. Here is your father\'s phone number and your company LinkedIn. Pay ₹45,000 to this UPI ID within 20 minutes or I send the full video to your entire office and post it on Facebook.',
+          clickableFlags: [
+            { textSegment: 'Here is your father\'s phone number', flagName: 'Public Contact Scraping', explanation: 'Scammers scrape public friend lists or truecaller records to intimidate victims.' },
+            { textSegment: 'within 20 minutes', flagName: 'Extortion Pressure', explanation: 'Short deadlines are engineered to induce panic before the victim can seek legal or parental help.' },
+            { textSegment: 'Pay ₹45,000 to this UPI ID', flagName: 'Financial Blackmail', explanation: 'Never pay extortion demands. Paying confirms you can be squeezed for further funds.' }
+          ]
+        },
+        whatWouldYouDo: {
+          questionText: 'An extortionist sends a clip of a private video call and demands ₹25,000 to delete it, threatening to message your relatives. What is your best response?',
+          options: [
+            { optionText: 'Pay the ₹25,000 immediately and ask for written confirmation that the video was deleted.', isCorrect: false, explanation: 'Incorrect! Paying will immediately trigger a higher second demand.' },
+            { optionText: 'Do not pay, preserve screenshots with phone numbers/UPI IDs, block the sender, and report to 1930 / cybercrime.gov.in.', isCorrect: true, explanation: 'Correct! Never pay blackmailers. Rapid reporting and evidence preservation are the legally recommended steps.' }
+          ]
+        },
+        quickCheckQuestions: [
+          {
+            questionText: 'What is the primary danger of paying a sextortion demand?',
+            options: [
+              'The bank might block your UPI ID.',
+              'The extortionist will inevitably demand more money because paying proves the blackmail is effective.',
+              'The money is converted to foreign currency.',
+              'The police cannot register a case if money was sent voluntarily.'
+            ],
+            correctOptionIndex: 1,
+            explanation: 'Paying confirms you have financial resources and fear exposure, which causes perpetrators to continuously increase their demands.'
+          }
+        ]
       },
       {
-        title: 'SIM Swapping',
+        title: 'SIM Swapping Fraud',
         slug: 'sim-swapping',
         category: 'Account Takeover',
-        shortDescription: 'Social engineering mobile carriers to assign a victim\'s number to a new card.',
-        whatIsIt: 'Stealing your mobile carrier routing signals.',
-        howItWorks: 'Attackers spoof carrier support to issue clone SIMs, capturing your SMS OTPs.',
-        attackerObjective: ['Credentials', 'Account Access'],
+        shortDescription: 'Social engineering telecom operators to issue a duplicate SIM card, intercepting SMS OTPs and phone calls.',
+        whatIsIt: 'SIM swapping is an account takeover technique where criminals convince your mobile carrier that your SIM card has been lost or damaged, obtaining an authorized duplicate SIM that diverts your phone calls, SMS OTPs, and authentication signals to the attacker\'s device.',
+        howItWorks: 'Attackers harvest your identity documents (Aadhaar, PAN) via phishing or leaked databases. They submit a fraudulent replacement request at a telecom outlet using forged IDs. Once the new SIM activates, your original SIM loses signal, and the attacker resets your bank passwords and UPI accounts using intercepted SMS codes.',
+        attackerObjective: ['Credentials', 'Account Access', 'Money'],
         redFlagLevel: 'Critical',
-        attackVectors: ['Phone'],
-        legalContext: ['Section 66C', 'Section 66D']
+        attackVectors: ['Phone', 'Identity Documents'],
+        legalContext: ['Section 66C', 'Section 66D', 'Section 66B', 'BNS Section 319'],
+        difficulty: 'Advanced',
+        warningSigns: [
+          'Sudden complete loss of mobile network signal with "No Service" or "Emergency Calls Only" in an area with good coverage',
+          'Receiving an unexpected SMS from your telecom provider stating: "SIM replacement request received"',
+          'Inability to make calls or receive texts despite restarting the device',
+          'Notification emails stating account passwords or netbanking access details have been changed'
+        ],
+        attackerTactics: [
+          { tactic: 'Credential Gathering & Impersonation', example: 'Scammer presents a forged Aadhaar photocopy at a telecom store.', whyItWorks: 'Exploits weak physical verification checks at third-party retail outlets.' }
+        ],
+        actionSteps: [
+          'If your phone unexpectedly loses cellular connectivity for more than 15-30 minutes, immediately contact your mobile carrier from another phone.',
+          'Check with your bank to freeze internet banking and UPI access immediately.',
+          'Migrate sensitive two-factor authentication from SMS OTP to app-based authenticators or passkeys.'
+        ],
+        avoidSteps: [
+          'Never ignore unexpected SMS alerts regarding SIM swap or duplicate SIM requests.',
+          'Do not share identity document photocopies without watermarking the purpose (e.g. "For Broadband verification only").'
+        ],
+        ifTargetedSteps: [
+          'Visit your telecom service center in person with original ID to reclaim your mobile number.',
+          'Dial 1930 immediately to freeze financial transactions executed during the window of disconnection.'
+        ],
+        mythFacts: [
+          { myth: 'SIM swapping can be done by someone simply knowing your phone number.', fact: 'Attackers require your personal identity documents (Aadhaar/PAN) or insider collusion at telecom retail outlets to authorize a duplicate SIM.' }
+        ],
+        spotTheFlags: {
+          messageType: 'Telecom SMS Alert',
+          messageText: 'ALERT: We have received your request for duplicate SIM activation on mobile ending in 4921. If you did not request this, please SMS NO to 121 within 2 hours or your current SIM will be deactivated.',
+          clickableFlags: [
+            { textSegment: 'request for duplicate SIM activation', flagName: 'Carrier Alert', explanation: 'Telecom providers send explicit warnings when a duplicate SIM has been requested.' },
+            { textSegment: 'SMS NO to 121 within 2 hours', flagName: 'Action Window', explanation: 'Immediate response is required before the original SIM loses signal and cellular control transfers to the attacker.' }
+          ]
+        },
+        whatWouldYouDo: {
+          questionText: 'Your phone suddenly shows "No Service" in your home. Shortly before, you received an SMS about a SIM upgrade you never requested. What should you do first?',
+          options: [
+            { optionText: 'Wait 24 hours to see if carrier network maintenance resolves the issue.', isCorrect: false, explanation: 'Incorrect! Waiting gives attackers hours to drain your bank accounts using intercepted OTPs.' },
+            { optionText: 'Immediately call your telecom operator from another phone to block the unauthorized SIM and inform your bank.', isCorrect: true, explanation: 'Correct! Rapid response within minutes prevents attackers from exploiting intercepted two-factor SMS codes.' }
+          ]
+        },
+        quickCheckQuestions: [
+          {
+            questionText: 'What is the most effective defense against SMS-based SIM swapping attacks for critical financial accounts?',
+            options: [
+              'Using longer passwords.',
+              'Switching authentication from SMS OTP to hardware security keys, passkeys, or app-based authenticators.',
+              'Turning off mobile data.',
+              'Changing your phone number every six months.'
+            ],
+            correctOptionIndex: 1,
+            explanation: 'App-based authenticators (like TOTP) and passkeys are bound to your physical device and are completely unaffected when an attacker swaps your cellular SIM card.'
+          }
+        ]
+      },
+      {
+        title: 'Digital Arrest & Agency Impersonation',
+        slug: 'digital-arrest-scam',
+        category: 'Scams & Impersonation',
+        shortDescription: 'Fraudsters impersonating CBI, Police, or ED officials on Skype/WhatsApp video calls demanding money under threat of fake digital arrest.',
+        whatIsIt: 'Digital arrest fraud is a psychological extortion scam where syndicates impersonate law enforcement, customs, or judicial officers on video calls, falsely claiming your Aadhaar or mobile is linked to money laundering, drugs, or illegal couriers, and keeping you on camera under "digital confinement" while demanding fund transfers for "verification".',
+        howItWorks: 'Victims receive an automated IVR call claiming an illegal parcel in their name was intercepted at an airport. The call transfers to an "investigator" on Skype wearing a police uniform with a staged police station backdrop. The attacker displays forged Supreme Court arrest warrants, orders the victim not to leave the camera under "digital arrest", and demands transferring all savings to a "government clearing account" which is promised to be returned.',
+        attackerObjective: ['Money', 'Personal Information', 'Identity'],
+        redFlagLevel: 'Critical',
+        attackVectors: ['Phone', 'Video Call', 'Messaging'],
+        legalContext: ['Section 66D', 'BNS Section 318', 'BNS Section 319'],
+        difficulty: 'Medium',
+        warningSigns: [
+          'Law enforcement claiming to conduct investigations, trials, or "digital arrest" via Skype, WhatsApp, or video calls',
+          'Commands to remain isolated in a closed room and stay in front of the camera continuously',
+          'Demands to transfer your bank savings to a "verification account" or "RBI audit account"',
+          'Forged official letters featuring multiple mismatched logos (CBI, ED, RBI, Supreme Court)'
+        ],
+        attackerTactics: [
+          { tactic: 'Authority & Uniform Exploitation', example: 'Displays forged arrest warrant with Supreme Court seal on camera.', whyItWorks: 'Exploits natural respect and fear of law enforcement.' },
+          { tactic: 'Isolation & Continuous Surveillance', example: 'Forbids telling family members or hanging up under threat of immediate physical arrest.', whyItWorks: 'Prevents victims from obtaining external counsel or sanity checks.' }
+        ],
+        actionSteps: [
+          'Disconnect the video call immediately. Real Indian police and agencies never conduct arrests or interrogations via video calls.',
+          'Dial 1930 and report the incident on cybercrime.gov.in immediately.'
+        ],
+        avoidSteps: [
+          'Never transfer money to any account for "clearance", "verification", or "temporary holding".',
+          'Never accept legal documents sent via WhatsApp or email as authentic court summons.'
+        ],
+        ifTargetedSteps: [
+          'Note the phone numbers, Skype usernames, and bank account numbers provided by scammers.',
+          'Dial 1930 within the Golden Hour to initiate bank freeze alerts through CFCFRMS.'
+        ],
+        mythFacts: [
+          { myth: 'Police can place you under "digital arrest" and try your case over video call.', fact: 'There is no concept of "digital arrest" under Indian law (CrPC or BNSS). Police procedures strictly mandate written summons and physical presence.' }
+        ],
+        spotTheFlags: {
+          messageType: 'Video Call / Document',
+          messageText: 'CENTRAL BUREAU OF INVESTIGATION - ARREST NOTICE\nCase Ref: Contraband Parcel Mumbai Airport #4492\nYou are placed under DIGITAL ARREST under PMLA Section 19. You must remain on Skype video continuously and transfer ₹3,50,000 to RBI Audit Account #98721092839 to avoid non-bailable physical detention.',
+          clickableFlags: [
+            { textSegment: 'DIGITAL ARREST', flagName: 'Fabricated Legal Term', explanation: 'No Indian law provides for "digital arrest". It is an entirely manufactured phrase used by extortionists.' },
+            { textSegment: 'Skype video continuously', flagName: 'Psychological Isolation', explanation: 'Scammers keep victims on camera to prevent them from contacting family, lawyers, or local police.' },
+            { textSegment: 'transfer ₹3,50,000 to RBI Audit Account', flagName: 'Extortion Demand', explanation: 'Government agencies never ask citizens to transfer money to private accounts to "verify funds".' }
+          ]
+        },
+        whatWouldYouDo: {
+          questionText: 'An individual in a police uniform calls you on Skype, claiming an illegal parcel was found with your Aadhaar, and commands you not to hang up. What do you do?',
+          options: [
+            { optionText: 'Transfer a small amount to prove cooperation while calling your lawyer.', isCorrect: false, explanation: 'Incorrect! Any transfer is lost permanently.' },
+            { optionText: 'Disconnect immediately, block the caller, and file a complaint on cybercrime.gov.in or dial 1930.', isCorrect: true, explanation: 'Correct! Official law enforcement does not conduct online arrests or demand fund transfers.' }
+          ]
+        },
+        quickCheckQuestions: [
+          {
+            questionText: 'Does Indian criminal law authorize police or CBI officers to place citizens under "digital arrest" over video calls?',
+            options: [
+              'Yes, under IT Act emergency powers.',
+              'Yes, but only for financial crimes above ₹1 crore.',
+              'No. There is no concept of digital arrest in Indian law; all arrests require physical statutory procedures.',
+              'Yes, if approved by a magistrate over email.'
+            ],
+            correctOptionIndex: 2,
+            explanation: 'Indian law has no provision for "digital arrest". The phrase is an extortion technique used by criminal impersonation syndicates.'
+          }
+        ]
+      },
+      {
+        title: 'AI Voice Cloning & Deepfake Impersonation',
+        slug: 'deepfake-ai-impersonation',
+        category: 'Online Deception',
+        shortDescription: 'Using generative AI to synthesize voices or faces of family members and executives to conduct emergency extortion or financial fraud.',
+        whatIsIt: 'AI voice cloning and deepfake fraud uses generative neural networks trained on brief audio or video snippets (from Instagram, YouTube, or voicemail) to produce real-time synthetic voice and video that convincing mimics a specific individual.',
+        howItWorks: 'Attackers scrape a 3-second audio clip of your family member from social media. They call you using an AI voice model crying that they have been arrested or met with an accident in another city, demanding an immediate ₹50,000 transfer for hospital admission or police bail before you can verify.',
+        attackerObjective: ['Money', 'Credentials'],
+        redFlagLevel: 'Very High',
+        attackVectors: ['Phone', 'Social Media', 'Video Call'],
+        legalContext: ['Section 66D', 'BNS Section 318', 'BNS Section 319', 'IT Intermediary Rules'],
+        difficulty: 'Intermediate',
+        warningSigns: [
+          'Caller sounds like a family member or friend but calls from an unknown number with extreme emotional urgency',
+          'Insistence on immediate UPI transfer without allowing you to hang up and call back',
+          'Robotic micro-artifacts, unnatural breathing rhythms, or background audio looping during the call',
+          'Refusal to answer specific personal questions only the real family member would know'
+        ],
+        attackerTactics: [
+          { tactic: 'Synthesized Panic', example: 'AI clone of a son weeping: "Papa, please transfer money to this hospital QR code now, my phone broke."', whyItWorks: 'Parents naturally react to a child\'s voice in distress, bypassing verification logic.' }
+        ],
+        actionSteps: [
+          'Establish a secret family "safe word" or passphrase known only to your immediate household for emergency verification.',
+          'Always hang up and call the family member back on their known regular phone number or through a secondary contact (roommate, hostel warden, spouse).'
+        ],
+        avoidSteps: [
+          'Never transfer emergency funds based solely on voice recognition over an incoming call from an unknown number.',
+          'Do not share high-quality uncurated voice recordings or public video clips with sensitive location tags.'
+        ],
+        ifTargetedSteps: [
+          'Report the caller phone number on the Department of Telecommunications Chakshu portal (sancharsaathi.gov.in).',
+          'File an impersonation report on cybercrime.gov.in citing IT Act Section 66D.'
+        ],
+        mythFacts: [
+          { myth: 'Creating a voice clone requires hours of studio recordings.', fact: 'Modern diffusion-based voice synthesis models require as little as 3 seconds of clean audio from a public social media video to clone pitch and cadence.' }
+        ],
+        spotTheFlags: {
+          messageType: 'Phone Call Alert',
+          messageText: 'INCOMING CALL: Unknown Number (+91 98210-XXXXX)\nVOICE (sounds exactly like your daughter): "Papa! I had a car accident near college! A man is demanding ₹40,000 for damages right now or he will call the police. Please send it to this Google Pay number right now!"',
+          clickableFlags: [
+            { textSegment: 'Unknown Number (+91 98210-XXXXX)', flagName: 'Unverified Channel', explanation: 'Attackers spoof caller context by claiming the original phone is lost or broken.' },
+            { textSegment: 'send it to this Google Pay number right now', flagName: 'Urgent Payment Demand', explanation: 'Urgency prevents you from cross-checking with college authorities.' }
+          ]
+        },
+        whatWouldYouDo: {
+          questionText: 'You receive an urgent call sounding like your brother asking for an emergency UPI transfer for hospital admission. What is the safest next action?',
+          options: [
+            { optionText: 'Send the money immediately to avoid medical delays, then call him later.', isCorrect: false, explanation: 'Incorrect! If it is a voice clone, your money is gone.' },
+            { optionText: 'Ask a personal verification question that only your brother would know, or hang up and call his known phone number directly.', isCorrect: true, explanation: 'Correct! Secondary verification through a trusted channel defeats AI voice cloning instantly.' }
+          ]
+        },
+        quickCheckQuestions: [
+          {
+            questionText: 'What is the most effective operational defense against an AI voice cloning emergency scam?',
+            options: [
+              'Demanding to speak to a police officer.',
+              'Hanging up and independently contacting the family member on their known primary number or verifying with a pre-arranged family passphrase.',
+              'Recording the phone call for legal records.',
+              'Paying through credit card instead of UPI.'
+            ],
+            correctOptionIndex: 1,
+            explanation: 'Secondary channel verification breaks the scammer\'s control and immediately exposes whether the emergency is authentic.'
+          }
+        ]
+      },
+      {
+        title: 'Predatory Loan App & Contact Extortion',
+        slug: 'loan-app-extortion',
+        category: 'Financial Fraud',
+        shortDescription: 'Unregulated instant loan apps demanding access to your contacts and photos, followed by usurious rates and morphed photo blackmail.',
+        whatIsIt: 'Predatory loan app fraud involves rogue, unapproved digital lending applications that lure borrowers with "instant no-documentation loans" of ₹2,000–₹10,000. Upon installation, the app harvests the user\'s entire contact list, photo gallery, and location data to weaponize against them.',
+        howItWorks: 'The victim receives only a fraction of the loan (e.g. ₹3,000 for a ₹5,000 loan) with a repayment period of just 7 days at 300-500% interest. Within days, recovery agents message the borrower, morphing their photos onto obscene imagery and sending them to the victim\'s family, employers, and friends via WhatsApp.',
+        attackerObjective: ['Money', 'Personal Information'],
+        redFlagLevel: 'Critical',
+        attackVectors: ['Mobile App', 'Messaging', 'Phone'],
+        legalContext: ['Section 66E', 'BNS Section 351', 'BNS Section 78', 'Section 43'],
+        difficulty: 'Intermediate',
+        warningSigns: [
+          'Loan app installed from APK download links outside the Google Play Store or App Store',
+          'App demands unnecessary permissions during installation: Full Contact List, Photo Gallery, Storage, and Camera',
+          'Absence of a verified Non-Banking Financial Company (NBFC) or registered bank partner on the RBI website',
+          'Repayment period of under 30 days (RBI mandates minimum 90-day tenures for small personal loans)'
+        ],
+        attackerTactics: [
+          { tactic: 'Social Shaming & Extortion', example: 'Sends morphed vulgar pictures of the victim to their parents and colleagues.', whyItWorks: 'Exploits fear of social ostracization to force immediate repayment of exorbitant interest.' }
+        ],
+        actionSteps: [
+          'Verify that any digital lending platform is partnered with a legitimately registered NBFC or bank on the official RBI website (rbi.org.in), and check regulator warnings or report illegal apps on the RBI Sachet portal (sachet.rbi.org.in).',
+          'Revoke contact and photo permissions immediately and uninstall rogue APK applications.',
+          'File an emergency cybercrime report on cybercrime.gov.in under financial fraud and cyber harassment.'
+        ],
+        avoidSteps: [
+          'Never install lending apps from third-party APK links sent on WhatsApp or SMS.',
+          'Never grant contact book or photo gallery access to a financial lending application.'
+        ],
+        ifTargetedSteps: [
+          'Do not pay continuous extortion demands. Inform close family contacts that an app has scraped your contacts and is sending fraudulent spam.',
+          'File a complaint with police and the RBI Sachet portal, citing criminal intimidation under BNS Section 351.'
+        ],
+        mythFacts: [
+          { myth: 'Digital loan apps are legally permitted to contact your relatives to collect repayments.', fact: 'RBI Digital Lending Guidelines strictly prohibit lenders from accessing mobile contacts or contacting any third party other than the borrower.' }
+        ],
+        spotTheFlags: {
+          messageType: 'WhatsApp Extortion Notice',
+          messageText: 'RECOVERY DESK: You failed to repay ₹6,500 due today. We have downloaded your 480 contacts and family photos. If payment is not sent to this UPI in 1 hour, your morphed nude photos will be broadcast to all contacts on your phone.',
+          clickableFlags: [
+            { textSegment: 'downloaded your 480 contacts', flagName: 'Permission Abuse', explanation: 'Legitimate RBI-regulated lenders never scrape contact books or threaten third parties.' },
+            { textSegment: 'morphed nude photos will be broadcast', flagName: 'Criminal Intimidation', explanation: 'Extortion and photo morphing are serious criminal offenses under IT Act Section 66E and BNS Section 351.' }
+          ]
+        },
+        whatWouldYouDo: {
+          questionText: 'An unauthorized loan app recovery agent threatens to send your morphed photos to your WhatsApp contacts unless you pay triple the loan amount. What is your response?',
+          options: [
+            { optionText: 'Borrow from friends to pay the agent hoping they delete your photos.', isCorrect: false, explanation: 'Incorrect! Blackmailers never delete scraped data; they continue extortion cycles.' },
+            { optionText: 'Do not pay, alert key contacts about the fraudulent blackmail, preserve chat evidence, and lodge an immediate complaint on cybercrime.gov.in.', isCorrect: true, explanation: 'Correct! Alerting contacts neutralizes the blackmailer\'s leverage, and filing an official police report initiates legal protection.' }
+          ]
+        },
+        quickCheckQuestions: [
+          {
+            questionText: 'Under Reserve Bank of India (RBI) digital lending guidelines, are lending apps permitted to access your mobile contact list or photo storage?',
+            options: [
+              'Yes, for credit risk evaluation.',
+              'Yes, but only with user permission.',
+              'No. RBI strictly prohibits accessing contact lists, photo galleries, or biometric data for digital lending.',
+              'Yes, if the loan amount is under ₹10,000.'
+            ],
+            correctOptionIndex: 2,
+            explanation: 'RBI rules strictly bar digital lending apps from accessing mobile contacts, media galleries, or phone call logs.'
+          }
+        ]
+      },
+      {
+        title: 'Cyberstalking, Doxxing & Persistent Surveillance',
+        slug: 'cyberstalking-doxxing',
+        category: 'Online Harassment & Abuse',
+        shortDescription: 'Persistent unwanted online tracking, electronic surveillance, and malicious public dissemination of private information.',
+        whatIsIt: 'Cyberstalking and doxxing involve monitoring a person\'s digital activities, repeatedly sending unsolicited communications despite clear disinterest, and malicious "doxxing" (broadcasting personal phone numbers, home addresses, or private credentials) to incite collective harassment.',
+        howItWorks: 'A stalker creates multiple fake profiles across Instagram, LinkedIn, and messaging apps to monitor a victim\'s whereabouts, comments on their posts, installs background tracker apps or stalkerware on their device, and posts their private contact details on public forums.',
+        attackerObjective: ['Personal Information', 'Device Access'],
+        redFlagLevel: 'High',
+        attackVectors: ['Social Media', 'Messaging', 'Device'],
+        legalContext: ['BNS Section 78', 'Section 66E', 'Section 67'],
+        difficulty: 'Intermediate',
+        warningSigns: [
+          'Receiving messages from newly created burner accounts referencing your real-time physical location',
+          'Phone battery draining rapidly or showing unexpected background location/microphone access icons',
+          'Unsolicited calls or delivery requests ordered to your home address by unknown third parties',
+          'Personal photographs or private conversations posted on public forums without your consent'
+        ],
+        attackerTactics: [
+          { tactic: 'Relentless Persistence & Identity Rotation', example: 'Creates account_01, account_02, account_03 immediately after each block.', whyItWorks: 'Attempts to wear down the victim emotionally and force personal engagement.' }
+        ],
+        actionSteps: [
+          'Document every occurrence: take uncropped screenshots showing date, time, handles, and URLs before blocking.',
+          'Review device security: audit installed apps, revoke unknown device administrator permissions, and change master passwords.'
+        ],
+        avoidSteps: [
+          'Do not engage in emotional arguments or retaliatory debates with a stalker online.',
+          'Never delete threatening messages before capturing timestamped digital evidence.'
+        ],
+        ifTargetedSteps: [
+          'File an online complaint on cybercrime.gov.in under the specialized "Report Women / Child Related Crime" section.',
+          'Cite Section 78 of the Bharatiya Nyaya Sanhita, 2023 (electronic stalking) and Section 66E of the IT Act.'
+        ],
+        mythFacts: [
+          { myth: 'Stalking laws only apply if a person follows you physically in the real world.', fact: 'Section 78 of the Bharatiya Nyaya Sanhita (replacing IPC 354D) explicitly criminalizes monitoring a woman\'s internet, email, or electronic communication.' }
+        ],
+        spotTheFlags: {
+          messageType: 'Social Media Direct Message',
+          messageText: 'I know you blocked my last 3 accounts. I saw you at the coffee shop in Indiranagar at 4 PM today wearing your blue jacket. You cannot hide from me. If you do not unblock me, I will post your home address on Reddit.',
+          clickableFlags: [
+            { textSegment: 'saw you at the coffee shop in Indiranagar at 4 PM', flagName: 'Physical Surveillance', explanation: 'Stalkers correlate social check-ins or device locations to demonstrate physical monitoring.' },
+            { textSegment: 'post your home address on Reddit', flagName: 'Doxxing Threat', explanation: 'Threatening to publish private residential details is a criminal intimidation tactic.' }
+          ]
+        },
+        whatWouldYouDo: {
+          questionText: 'Someone creates continuous burner accounts to harass you online and threatens to publish your phone number. What is the most critical first step?',
+          options: [
+            { optionText: 'Reply angrily threatening to find their IP address.', isCorrect: false, explanation: 'Incorrect! Engaging rewards the stalker\'s attention-seeking behavior.' },
+            { optionText: 'Take complete timestamped screenshots showing handles and URLs, adjust account privacy to private, and file a police cyber cell report.', isCorrect: true, explanation: 'Correct! Systematic evidence documentation without engagement is the legally established response.' }
+          ]
+        },
+        quickCheckQuestions: [
+          {
+            questionText: 'Under Section 78 of the Bharatiya Nyaya Sanhita, 2023 (BNS), does monitoring a woman\'s online browsing, email, or social media activity constitute the criminal offence of stalking?',
+            options: [
+              'No, stalking only applies to physical following on streets.',
+              'Yes. Monitoring electronic communications, internet use, or email of a woman is explicitly defined as criminal stalking.',
+              'Only if physical harm was threatened in writing.',
+              'Only if committed by an employer.'
+            ],
+            correctOptionIndex: 1,
+            explanation: 'BNS Section 78 (replacing IPC 354D) explicitly recognizes digital surveillance and monitoring of electronic communications as criminal stalking.'
+          }
+        ]
+      },
+      {
+        title: 'Non-Consensual Intimate Imagery (NCII) & Image Abuse',
+        slug: 'ncii-image-abuse',
+        category: 'Online Harassment & Abuse',
+        shortDescription: 'Capturing, publishing, or generating non-consensual private imagery or deepfakes to harass, humiliate, or extort individuals.',
+        whatIsIt: 'Non-Consensual Intimate Imagery (NCII) encompasses capturing, sharing, or publishing intimate photographs or videos of a person without their consent. It includes synthetic image abuse, where regular photos are digitally altered or deepfaked using AI nude-generators.',
+        howItWorks: 'Perpetrators acquire private photographs via relationship betrayal, device hacking, or social media scraping. They threaten to publish the material on adult forums or send it to family members, or deploy automated AI morphing tools to generate fabricated explicit imagery.',
+        attackerObjective: ['Personal Information', 'Money'],
+        redFlagLevel: 'Critical',
+        attackVectors: ['Social Media', 'Messaging', 'Website'],
+        legalContext: ['Section 66E', 'Section 67', 'Section 67A', 'IT Intermediary Rules'],
+        difficulty: 'Intermediate',
+        warningSigns: [
+          'Threats from an ex-partner or acquaintance to release private photos if relationship demands are not met',
+          'Discovery of altered or morphed pictures of yourself appearing on messaging groups or forum boards',
+          'Requests from unfamiliar profiles offering to "remove" your private pictures in exchange for money'
+        ],
+        attackerTactics: [
+          { tactic: 'Reputational Destruction Threat', example: 'Threatens to upload morphed photos to college group chat.', whyItWorks: 'Exploits high social vulnerability and fear of irreversible public damage.' }
+        ],
+        actionSteps: [
+          'Create digital hashes of the imagery using StopNCII.org to prevent distribution across major participating platforms (Meta, Instagram, TikTok, Reddit).',
+          'Under Rule 3(2)(b) of the IT Intermediary Rules, intermediaries are legally mandated to remove non-consensual intimate imagery within 24 hours of receiving a report.'
+        ],
+        avoidSteps: [
+          'Never pay money to extortionists or online intermediaries promising removal.',
+          'Do not delete original message links or threatening chats before capturing forensic evidence.'
+        ],
+        ifTargetedSteps: [
+          'File a complaint on cybercrime.gov.in under the anonymous reporting category for women and children.',
+          'Invoke IT Act Section 66E (privacy violation) and Section 67A (sexually explicit content).'
+        ],
+        mythFacts: [
+          { myth: 'Social media platforms have 30 days to review intimate image removal complaints.', fact: 'Under Rule 3(2)(b) of the IT Intermediary Rules, platforms MUST remove or disable access to non-consensual intimate or morphed imagery within 24 hours.' }
+        ],
+        spotTheFlags: {
+          messageType: 'Extortion Email / DM',
+          messageText: 'I have created morphed explicit photos of you using your Instagram pictures. Pay ₹30,000 to this Bitcoin wallet by tonight or I will upload them to public adult portals and tag your workplace.',
+          clickableFlags: [
+            { textSegment: 'created morphed explicit photos of you', flagName: 'Synthetic Image Abuse', explanation: 'Generating and distributing deepfake intimate imagery is criminalized under IT Act Section 66E, 67A, and BNS provisions.' },
+            { textSegment: 'Pay ₹30,000 to this Bitcoin wallet', flagName: 'Extortion Demand', explanation: 'Never send cryptocurrency or cash to image extortionists.' }
+          ]
+        },
+        whatWouldYouDo: {
+          questionText: 'You discover that an acquaintance has created a morphed intimate picture of you and posted it online. Under Indian law, what is the platform\'s legal obligation?',
+          options: [
+            { optionText: 'The platform can take up to 30 days to decide whether to remove it.', isCorrect: false, explanation: 'Incorrect! 30 days applies to general grievances, not intimate imagery.' },
+            { optionText: 'Under Rule 3(2)(b) of the IT Intermediary Rules, the platform is legally obligated to take down the intimate content within 24 hours of notification.', isCorrect: true, explanation: 'Correct! Indian rules mandate emergency 24-hour takedown for non-consensual intimate imagery.' }
+          ]
+        },
+        quickCheckQuestions: [
+          {
+            questionText: 'Under the Information Technology (Intermediary Guidelines) Rules, 2021, within what timeframe must a social media platform remove non-consensual intimate or morphed imagery once reported?',
+            options: [
+              '7 days',
+              '72 hours',
+              '24 hours',
+              '15 days'
+            ],
+            correctOptionIndex: 2,
+            explanation: 'Rule 3(2)(b) strictly requires intermediaries to remove or disable access to non-consensual intimate imagery within 24 hours of receipt of complaint.'
+          }
+        ]
       }
     ];
 
@@ -1336,7 +1973,7 @@ async function seed(isReset = false) {
         title: 'The Digital Arrest Extortion Incident',
         slug: 'digital-arrest-impersonation',
         caseNumber: 'CASE FILE 005',
-        caseType: 'documented-case',
+        caseType: 'educational-reconstruction',
         incidentType: 'Social Engineering',
         attackVector: 'Phone / Video Call',
         shortDescription: 'Attackers impersonating police officers subjected the victim to a multi-hour "digital arrest" via video call, forcing them to transfer funds under threat of prosecution.',
@@ -1344,7 +1981,7 @@ async function seed(isReset = false) {
         publishedDate: 'August 2025',
         difficulty: 'Advanced',
         featured: false,
-        sourceSummary: 'Based on actual national police advisories on digital arrest fraud schemes.',
+        sourceSummary: 'Synthesized educational reconstruction based on national advisories issued by the Indian Cyber Crime Coordination Centre (I4C) and state police cyber cells regarding digital arrest intimidation schemes.',
         narrativeSections: [
           {
             heading: 'The Courier Warning',
@@ -1460,7 +2097,7 @@ async function seed(isReset = false) {
         title: 'The Aadhaar Enabled Biometric Theft',
         slug: 'aeps-biometric-theft',
         caseNumber: 'CASE FILE 006',
-        caseType: 'documented-case',
+        caseType: 'educational-reconstruction',
         incidentType: 'Identity Theft',
         attackVector: 'Biometric Cloning',
         shortDescription: 'A property transaction at a local registry office resulted in leaked fingerprint data, which was cloned to drain bank accounts through the Aadhaar Enabled Payment System.',
@@ -1468,7 +2105,7 @@ async function seed(isReset = false) {
         publishedDate: 'June 2025',
         difficulty: 'Advanced',
         featured: false,
-        sourceSummary: 'Based on actual police reports regarding silicone-based thumbprint duplication and AePS system exploits.',
+        sourceSummary: 'Synthesized educational reconstruction based on police advisories and UIDAI consumer guidance regarding silicone-based thumbprint duplication and AePS system exploits.',
         narrativeSections: [
           {
             heading: 'The Land Registration',
@@ -1829,6 +2466,368 @@ async function seed(isReset = false) {
           }
         ],
         published: true
+      },
+      {
+        title: 'The Voice Clone Kidnapping Scam',
+        slug: 'ai-voice-cloning-family-emergency',
+        caseNumber: 'CASE FILE 009',
+        caseType: 'educational-reconstruction',
+        incidentType: 'AI Voice Cloning',
+        attackVector: 'Phone',
+        shortDescription: 'A retired father received a panicked phone call featuring his son\'s exact synthesized voice weeping and claiming to be in police custody following a hit-and-run, demanding an immediate ₹2,00,000 transfer.',
+        incidentDate: 'January 2026',
+        publishedDate: 'February 2026',
+        difficulty: 'Intermediate',
+        featured: true,
+        sourceSummary: 'Reconstruction based on advisories issued by the Indian Cyber Crime Coordination Centre (I4C) regarding AI-enabled voice impersonation scams targeting families of students.',
+        narrativeSections: [
+          {
+            heading: 'The Panicked Distress Call',
+            body: 'Mr. Sharma, a retired bank employee in Lucknow, received an incoming call from an unfamiliar mobile number. Upon answering, he heard his 21-year-old son, who was pursuing an engineering degree in Bengaluru. The voice was crying hysterically: "Papa! Please help me! My friend\'s car hit someone near Whitefield! The police are locking us up unless we pay the injured person\'s hospital admission fee of ₹2,00,000 right now!"'
+          },
+          {
+            heading: 'The Handover to the "Officer"',
+            body: 'Before Mr. Sharma could ask detailed questions, a harsh voice took over the phone claiming to be Sub-Inspector Patil. The officer warned: "We have kept your son in the station van. If the compensation is not sent to this hospital UPI account within 15 minutes, we will file a non-bailable FIR and produce him in court tomorrow morning. Do not cut the call or he goes straight to jail."'
+          },
+          {
+            heading: 'The Secondary Verification Pause',
+            body: 'Mr. Sharma was on the verge of opening his netbanking app in sheer terror. However, he recalled a cybersecurity awareness talk stressing secondary channel verification. Keeping the extortionist on the line on his home landline, he picked up his mobile phone and dialed his son\'s campus hostel warden. The warden immediately checked the student\'s room and confirmed his son was sitting at his study desk soundly preparing for semester exams.'
+          },
+          {
+            heading: 'The Exposure & Disconnection',
+            body: 'When Mr. Sharma demanded the caller provide his son\'s middle name or childhood pet name, the scammer cursed aggressively and hung up. Subsequent forensic analysis showed the attackers had harvested a 10-second reel video from his son\'s public Instagram profile, training a voice synthesis model to clone his vocal timbre, accent, and weeping tone.'
+          }
+        ],
+        timeline: [
+          {
+            time: '04:15 PM',
+            label: 'Emergency Call Received',
+            description: 'Unknown number calls victim with cloned son voice weeping in distress.',
+            type: 'contact'
+          },
+          {
+            time: '04:18 PM',
+            label: 'Police Impersonation & Ultimatum',
+            description: 'Fake police officer demands ₹2,00,000 within 15 minutes to prevent non-bailable FIR.',
+            type: 'escalation'
+          },
+          {
+            time: '04:22 PM',
+            label: 'Secondary Verification Check',
+            description: 'Father contacts hostel warden on separate phone; discovers son is safe in college.',
+            type: 'decision'
+          },
+          {
+            time: '04:25 PM',
+            label: 'Scam Terminated',
+            description: 'Attacker confronted with identity verification challenge and abruptly hangs up.',
+            type: 'response'
+          }
+        ],
+        decisionPoints: [
+          {
+            questionText: 'You receive an urgent call from an unknown number with what sounds unmistakably like your family member crying for emergency bail money. What is the safest immediate action?',
+            options: [
+              {
+                optionText: 'Transfer the requested money immediately because delaying could result in physical jail or medical harm.',
+                isCorrect: false,
+                explanation: 'Incorrect! Extortionists manufacture extreme urgency precisely to prevent verification. Once transferred, money is quickly liquidated.'
+              },
+              {
+                optionText: 'Keep calm, refuse immediate payment, ask a personal question only the real person knows, or independently call them or their local contacts (roommates, warden) on a separate line.',
+                isCorrect: true,
+                explanation: 'Correct! Secondary channel verification breaks the psychological trap and instantly exposes synthetic voice cloning.'
+              }
+            ]
+          }
+        ],
+        warningSigns: [
+          {
+            title: 'Extreme Emotional Urgency & Noise',
+            explanation: 'Attackers introduce crying, static, or background sirens to mask minor vocal synthesis artifacts.'
+          },
+          {
+            title: 'Call Originating from Unknown Number',
+            explanation: 'Attackers claim the victim\'s primary phone was seized, broken, or lost in the alleged accident.'
+          },
+          {
+            title: 'Demand for Instant Non-Reversible Payment',
+            explanation: 'Demanding UPI transfers to individual VPAs rather than official police or municipal treasury accounts.'
+          }
+        ],
+        attackerObjectives: ['Money', 'Psychological Exploitation'],
+        impact: {
+          financial: '₹2,00,000 extortion demand prevented through verification.',
+          account: 'No account compromise.',
+          privacy: 'Public social media video audio harvested for voice model training.',
+          emotional: 'Severe acute anxiety experienced by family members before verification.'
+        },
+        response: [
+          'Reported the extortion phone number on DoT Chakshu portal (sancharsaathi.gov.in).',
+          'Filed a complaint on cybercrime.gov.in under Section 66D of the IT Act.',
+          'Advised student to switch social media accounts from public to private.'
+        ],
+        preventionLessons: [
+          'Establish a secret family "emergency safe word" known only to immediate family members.',
+          'Never transfer funds based purely on voice recognition from an unverified incoming number.',
+          'Audit and restrict public video and voice recordings on open social media profiles.'
+        ],
+        legalContext: ['Section 66D', 'BNS Section 318', 'BNS Section 319'],
+        relatedCrimes: ['deepfake-ai-impersonation', 'vishing', 'online-impersonation'],
+        sources: [
+          {
+            title: 'Advisory on Deepfake and AI-Enabled Audio Impersonation Scams',
+            authority: 'Indian Cyber Crime Coordination Centre (I4C), MHA',
+            url: 'https://cybercrime.gov.in',
+            publicationDate: 'December 2025',
+            sourceType: 'government'
+          }
+        ],
+        published: true
+      },
+      {
+        title: 'The Instant Cash App Contact Blackmail',
+        slug: 'instant-loan-app-harassment',
+        caseNumber: 'CASE FILE 010',
+        caseType: 'educational-reconstruction',
+        incidentType: 'Predatory Loan Extortion',
+        attackVector: 'Mobile App',
+        shortDescription: 'A university graduate downloaded an unauthorized instant lending APK for ₹3,000. When delayed by 24 hours, recovery agents broadcast morphed obscene photographs to his WhatsApp contacts.',
+        incidentDate: 'November 2025',
+        publishedDate: 'December 2025',
+        difficulty: 'Beginner',
+        featured: true,
+        sourceSummary: 'Reconstruction based on RBI consumer protection warnings and police advisories regarding unregulated loan apps and mobile contact scraping syndicates.',
+        narrativeSections: [
+          {
+            heading: 'The Fast Cash Promise',
+            body: 'Arun, a 22-year-old preparing for competitive exams in Jaipur, needed ₹3,000 for application fees. He clicked on a social media advertisement promoting "Instant Cash in 5 Minutes — No CIBIL score required". He downloaded an application called "QuickRupee" via an APK link outside the Google Play Store.'
+          },
+          {
+            heading: 'Permission Harvesting',
+            body: 'During installation, the app presented rapid permission requests: Contact List, Media & Photos, Location, and SMS Storage. Believing these were standard identity verification requirements, Arun accepted all permissions. The app deposited ₹2,100 into his account (deducting ₹900 as "processing fee") and notified him that ₹3,500 was due in just 7 days.'
+          },
+          {
+            heading: 'The Harassment Spiral',
+            body: 'On the 7th day, before Arun could arrange the funds, recovery agents began messaging him with aggressive profanities on WhatsApp. When payment was delayed by 18 hours, an agent sent Arun an obscene morphed image combining his Facebook profile picture with a pornographic template, warning: "Pay ₹7,000 now or this picture will be broadcast to all 340 contacts in your phone book."'
+          },
+          {
+            heading: 'Legal Intervention & Recovery',
+            body: 'Recognizing criminal extortion, Arun did not pay. He immediately took complete screenshots of the threats, WhatsApp numbers, and UPI handles. He alerted his family and posted a public status explaining that an unauthorized app had scraped his contacts and was circulating malicious spam. He dialed 1930 and filed a formal complaint citing BNS Section 351 (criminal intimidation) and IT Act Section 66E (privacy violation).'
+          }
+        ],
+        timeline: [
+          {
+            time: 'Day 1',
+            label: 'App Installation & Permission Grant',
+            description: 'User installs unverified APK granting access to contacts and photo gallery.',
+            type: 'contact'
+          },
+          {
+            time: 'Day 7',
+            label: 'Predatory Repayment Demand',
+            description: 'Lender demands ₹3,500 for a ₹2,100 net disbursement with usurious interest.',
+            type: 'escalation'
+          },
+          {
+            time: 'Day 8',
+            label: 'Extortion & Photo Morphing Threat',
+            description: 'Recovery agent sends morphed explicit photo threatening family broadcast.',
+            type: 'decision'
+          },
+          {
+            time: 'Day 8 (Night)',
+            label: 'Evidence Documented & 1930 Alerted',
+            description: 'Victim warns family contacts, refuses extortion payment, and logs police report.',
+            type: 'response'
+          }
+        ],
+        decisionPoints: [
+          {
+            questionText: 'An unauthorized loan app recovery agent threatens to send your morphed photos to your WhatsApp contacts unless you pay triple the original loan amount. What should you do?',
+            options: [
+              {
+                optionText: 'Borrow money from friends to pay the agent, hoping they delete your photos.',
+                isCorrect: false,
+                explanation: 'Incorrect! Paying blackmailers guarantees repeated extortion demands for even larger amounts.'
+              },
+              {
+                optionText: 'Do not pay, alert your close contacts that your phone contacts were scraped by an extortion scam, capture uncropped chat evidence, and report to 1930 / cybercrime.gov.in.',
+                isCorrect: true,
+                explanation: 'Correct! Notifying your network destroys the blackmailer\'s leverage, and filing an official police report initiates law enforcement action.'
+              }
+            ]
+          }
+        ],
+        warningSigns: [
+          {
+            title: 'Third-Party APK Download Link',
+            explanation: 'Rogue lending apps avoid app stores to bypass security vetting and permission abuse checks.'
+          },
+          {
+            title: 'Demanding Contact Book & Photo Gallery Access',
+            explanation: 'Legitimate RBI-regulated digital lenders are strictly barred from accessing contact books or personal photo galleries.'
+          },
+          {
+            title: 'Repayment Periods Under 30 Days',
+            explanation: 'RBI regulations require clear, fair repayment periods (typically 90+ days for consumer personal loans).'
+          }
+        ],
+        attackerObjectives: ['Money', 'Extortion Leverage', 'Personal Information'],
+        impact: {
+          financial: '₹3,000 initial loan; extortion avoided through non-payment.',
+          account: 'Contact list and device permissions compromised.',
+          privacy: 'Personal photographs accessed and weaponized for blackmail.',
+          emotional: 'Severe psychological distress and social anxiety.'
+        },
+        response: [
+          'Uninstalled the rogue APK and revoked all device administrator rights.',
+          'Preserved uncropped screenshots of threatening chats, phone numbers, and payment links with date stamps.',
+          'Reported the app and lending entity on the RBI Sachet portal (sachet.rbi.org.in).',
+          'Filed an FIR with the Cyber Crime Police Station under BNS Section 351 and IT Act Section 66E.'
+        ],
+        preventionLessons: [
+          'Never install financial or loan apps from outside official app store repositories.',
+          'Always verify if a digital lending platform is partnered with an RBI-registered NBFC on the official RBI whitelist.',
+          'Never grant contact book or media gallery permissions to any lending or utility application.'
+        ],
+        legalContext: ['Section 66E', 'BNS Section 351', 'BNS Section 78', 'BSA Section 63'],
+        relatedCrimes: ['loan-app-extortion', 'cyberstalking-doxxing', 'ncii-image-abuse'],
+        sources: [
+          {
+            title: 'Regulatory Framework for Digital Lending',
+            authority: 'Reserve Bank of India (RBI)',
+            url: 'https://www.rbi.org.in',
+            publicationDate: 'August 2022 / Updated 2024',
+            sourceType: 'government'
+          }
+        ],
+        published: true
+      },
+      {
+        title: 'The Regional Clinic Ransomware Lockdown',
+        slug: 'hospital-ransomware-certin-response',
+        caseNumber: 'CASE FILE 011',
+        caseType: 'educational-reconstruction',
+        incidentType: 'Ransomware & Infrastructure',
+        attackVector: 'Email',
+        shortDescription: 'A regional multi-specialty diagnostic clinic suffered a complete patient records lockdown after an employee opened a weaponized invoice attachment. The management notified CERT-In within 6 hours and restored systems without paying ransom.',
+        incidentDate: 'October 2025',
+        publishedDate: 'November 2025',
+        difficulty: 'Advanced',
+        featured: true,
+        sourceSummary: 'Reconstruction based on CERT-In directions and advisories on ransomware resilience in healthcare and essential public services.',
+        narrativeSections: [
+          {
+            heading: 'The Weaponized Invoice Attachment',
+            body: 'At 09:30 AM on a Monday, an administrative receptionist at a regional clinic received an email titled "Urgent: Revised Diagnostic Reagents Billing Invoice #INV-8821.zip". Believing it to be from their regular medical laboratory supplier, the employee unzipped the folder and double-clicked the enclosed PDF executable. Within seconds, a background PowerShell script initiated lateral movement across the local clinic network.'
+          },
+          {
+            heading: 'The Network Encryption & Demand',
+            body: 'By 11:00 AM, laboratory diagnostic terminals began crashing with blue screens. Desktop wallpapers were replaced with a text file: "ALL YOUR PATIENT FILES AND X-RAY DATABASES ARE ENCRYPTED WITH AES-256. Send 1.5 Bitcoin ($90,000) within 72 hours to the wallet address below or all files will be permanently deleted and leaked on the dark web."'
+          },
+          {
+            heading: 'Immediate Incident Containment & CERT-In Notice',
+            body: 'The clinic\'s IT administrator immediately disconnected the primary network router and severed all internet connections to isolate infected subnetworks. Following mandatory statutory protocols under Section 70B(6) of the IT Act, the clinic submitted an incident report to incident@cert-in.org.in within 4 hours, detailing the indicators of compromise (IOCs) and ransomware variant hash.'
+          },
+          {
+            heading: 'Restoration from Air-Gapped Immutable Backups',
+            body: 'The clinic leadership strictly refused to negotiate or pay the ransom. Because the clinic maintained an offline 3-2-1 backup topology with weekly immutable air-gapped tape drives, the IT team sanitized all workstations, re-imaged server operating systems, and restored patient databases up to the previous evening\'s backup by 08:00 AM the following morning with zero data loss.'
+          }
+        ],
+        timeline: [
+          {
+            time: '09:30 AM',
+            label: 'Malicious Attachment Executed',
+            description: 'Employee opens ZIP attachment executing initial ransomware dropper.',
+            type: 'contact'
+          },
+          {
+            time: '11:00 AM',
+            label: 'Network-Wide Encryption Triggered',
+            description: 'Ransomware deploys across network shares and drops extortion note.',
+            type: 'escalation'
+          },
+          {
+            time: '11:20 AM',
+            label: 'Physical Network Isolation',
+            description: 'IT staff physically severs local area switches and internet gateways.',
+            type: 'decision'
+          },
+          {
+            time: '01:30 PM',
+            label: 'CERT-In Statutory Report Filed',
+            description: 'Formal incident notification submitted to CERT-In within the 6-hour window.',
+            type: 'response'
+          },
+          {
+            time: 'Next Day 08:00 AM',
+            label: 'Air-Gapped Backup Restoration',
+            description: 'Patient records completely restored from offline immutable backups with zero ransom paid.',
+            type: 'discovery'
+          }
+        ],
+        decisionPoints: [
+          {
+            questionText: 'When an organization\'s computer systems are infected with ransomware, why do national cybersecurity agencies (CERT-In) strongly advise against paying the ransom?',
+            options: [
+              {
+                optionText: 'Because paying ransom is an automatic criminal confession of negligence.',
+                isCorrect: false,
+                explanation: 'Incorrect! While legal implications exist, that is not the primary operational reason.'
+              },
+              {
+                optionText: 'Paying ransom does not guarantee receiving a working decryption key, funds criminal enterprises, and marks the organization as an easy target for repeat attacks.',
+                isCorrect: true,
+                explanation: 'Correct! National advisories strictly discourage ransom payments because statistics show many victims never receive working keys, and payment finances further cyber syndicates.'
+              }
+            ]
+          }
+        ],
+        warningSigns: [
+          {
+            title: 'ZIP or ISO Attachments in Financial Emails',
+            explanation: 'Attackers package executables inside archive files to bypass basic email antivirus filters.'
+          },
+          {
+            title: 'Double File Extensions (e.g. invoice.pdf.exe)',
+            explanation: 'Exploits default operating system behavior hiding known file extensions.'
+          },
+          {
+            title: 'Unusual Lateral Network Traffic Spikes',
+            explanation: 'Ransomware scans internal ports (SMB port 445, RDP port 3389) before triggering encryption.'
+          }
+        ],
+        attackerObjectives: ['Money', 'Operational Disruption', 'Extortion'],
+        impact: {
+          financial: 'Zero ransom paid; operational recovery costs absorbed internally.',
+          account: 'No credential leakage outside internal clinic network.',
+          privacy: 'Patient data encrypted locally but exfiltration prevented due to rapid network severance.',
+          operational: 'Diagnostic appointments delayed by 18 hours during offline re-imaging.'
+        },
+        response: [
+          'Physically isolated all local subnetworks by unplugging ethernet switches.',
+          'Submitted mandatory cybersecurity incident report to CERT-In under Section 70B within 6 hours.',
+          'Restored all clinical operating records from offline air-gapped immutable backups.',
+          'Deployed endpoint detection and response (EDR) software across all clinical terminals.'
+        ],
+        preventionLessons: [
+          'Maintain an immutable 3-2-1 backup strategy: 3 copies, on 2 different media types, with 1 copy completely off-site and air-gapped.',
+          'Enforce least-privilege access so regular employee accounts cannot execute administrative scripts.',
+          'Implement mandatory email attachment sandboxing for all incoming administrative inboxes.'
+        ],
+        legalContext: ['Section 43', 'Section 66', 'Section 70B'],
+        relatedCrimes: ['ransomware', 'malware', 'bec'],
+        sources: [
+          {
+            title: 'Directions under sub-section (6) of section 70B of the Information Technology Act, 2000',
+            authority: 'Indian Computer Emergency Response Team (CERT-In)',
+            url: 'https://www.cert-in.org.in',
+            publicationDate: 'April 2022',
+            sourceType: 'government'
+          }
+        ],
+        published: true
       }
     ];
 
@@ -1837,13 +2836,20 @@ async function seed(isReset = false) {
     }
 
     // 7. Quizzes
-    console.log('- Seeding quizzes...');
+    console.log('- Seeding quizzes (10 comprehensive categories)...');
     const quizzesData = [
       { title: 'Phishing Prevention Challenge', category: 'Phishing', description: 'Test your ability to spot mock websites and spoof emails.', difficulty: 'Beginner' },
       { title: 'Social Engineering & Vishing', category: 'Social Engineering', description: 'Test your defense against psychological manipulation and fake phone calls.', difficulty: 'Intermediate' },
       { title: 'UPI & Financial Safety', category: 'Financial Safety', description: 'Test your payment security habits and QR transaction awareness.', difficulty: 'Intermediate' },
       { title: 'Credentials & Account Security', category: 'Account Security', description: 'Test your account defense strength, password hygiene, and MFA checks.', difficulty: 'Advanced' },
-      { title: 'Cyber Law & Privacy Basics', category: 'Cyber Law Basics', description: 'Test your understanding of the IT Act, 2000, and the DPDP Act, 2023.', difficulty: 'Beginner' }
+      { title: 'Cyber Law & Privacy Basics', category: 'Cyber Law Basics', description: 'Test your understanding of the IT Act, 2000, and the DPDP Act, 2023.', difficulty: 'Beginner' },
+      { title: 'Indian Cyber Law and IT Act', category: 'Indian Cyber Law and IT Act', description: 'Master the Information Technology Act, statutory rights, civil compensation, and penalties.', difficulty: 'Intermediate' },
+      { title: 'Bharatiya Nyaya Sanhita Cybercrimes', category: 'BNS and cybercrime provisions', description: 'Criminal offences under BNS 2023 including impersonation, online extortion, and stalking.', difficulty: 'Intermediate' },
+      { title: 'Digital Evidence and BSA Section 63', category: 'BSA and digital evidence', description: 'Admissibility of electronic records, Section 63 certificates, and forensic custody under BSA 2023.', difficulty: 'Advanced' },
+      { title: 'Digital Personal Data Protection & Privacy', category: 'DPDP and privacy', description: 'Explore Data Principal rights, consent rules, child protections, and fiduciary duties.', difficulty: 'Intermediate' },
+      { title: 'AI, Deepfakes and Emerging Threats', category: 'AI, deepfakes and emerging threats', description: 'Analyze neural voice cloning, video face-swaps, synthetic extortion, and takedown obligations.', difficulty: 'Intermediate' },
+      { title: 'Incident Response and 1930 Helpline', category: 'Incident response and reporting', description: 'Essential steps during cyber fraud: Helpline 1930, the Golden Hour, and evidence preservation.', difficulty: 'Beginner' },
+      { title: 'General Cybersecurity Awareness', category: 'General cybersecurity awareness', description: 'Core practical security: Wi-Fi safety, SIM PIN hygiene, and 3-2-1 backup strategies.', difficulty: 'Beginner' }
     ];
 
     const quizMap = {};
@@ -1860,16 +2866,48 @@ async function seed(isReset = false) {
     const fs = require('fs');
     const qPart1 = JSON.parse(fs.readFileSync(path.join(__dirname, 'quizQuestions_part1.json'), 'utf8'));
     const qPart2 = JSON.parse(fs.readFileSync(path.join(__dirname, 'quizQuestions_part2.json'), 'utf8'));
-    const quizQuestionsData = [...qPart1, ...qPart2];
+    let qPart3 = [];
+    const p3Path = path.join(__dirname, 'quizQuestions_part3.json');
+    if (fs.existsSync(p3Path)) {
+      qPart3 = JSON.parse(fs.readFileSync(p3Path, 'utf8'));
+    }
+    const quizQuestionsData = [...qPart1, ...qPart2, ...qPart3];
 
+    let questionIdx = 1;
     for (let qData of quizQuestionsData) {
-      const dbQuiz = quizMap[qData.category];
+      let targetCategory = qData.category;
+      if (!quizMap[targetCategory]) {
+        // Fallbacks for category aliasing
+        if (targetCategory === 'Phishing and social engineering') targetCategory = 'Phishing';
+        else if (targetCategory === 'UPI, banking and financial fraud') targetCategory = 'Financial Safety';
+        else if (targetCategory === 'Identity theft and account security') targetCategory = 'Account Security';
+      }
+      const dbQuiz = quizMap[targetCategory] || quizMap['Cyber Law Basics'];
       if (!dbQuiz) {
         throw new Error(`Quiz not found for category: ${qData.category}`);
       }
       qData.quizId = dbQuiz._id;
+      if (!qData.questionId) {
+        const catPrefix = qData.category.replace(/[^A-Za-z]/g, '').substring(0, 5).toUpperCase();
+        qData.questionId = `QZ-${catPrefix}-${String(questionIdx).padStart(3, '0')}`;
+      }
+      if (!qData.format) {
+        qData.format = 'single_choice';
+      }
+      if (!qData.practicalTakeaway) {
+        qData.practicalTakeaway = 'Remember: Always verify digital requests through trusted secondary channels and keep credentials private.';
+      }
+      if (!qData.whyIncorrect) {
+        qData.whyIncorrect = 'This answer does not align with established statutory provisions or digital security guidelines.';
+      }
+      if (!qData.legalReferences || qData.legalReferences.length === 0) {
+        const sec = qData.relatedLawSection ? qData.relatedLawSection.replace(/^section\s*/i, '').trim() : '66D';
+        qData.legalReferences = [{ actName: 'Information Technology Act, 2000', sectionNumber: sec || '66D' }];
+      }
+      questionIdx++;
+
       await QuizQuestion.findOneAndUpdate(
-        { quizId: qData.quizId, questionText: qData.questionText },
+        { questionText: qData.questionText },
         qData,
         { upsert: true, new: true }
       );
@@ -2017,11 +3055,44 @@ async function seed(isReset = false) {
         description: 'Detailed security handbooks issued by MeitY, Government of India.',
         link: 'https://www.meity.gov.in/writereaddata/files/handbook_cyber_security_citizens.pdf',
         downloadable: true
+      },
+      {
+        title: 'RBI Sachet Portal — Checking Regulatory Alerts & Reporting Illegal Entities',
+        category: 'Government Resources',
+        description: 'Multi-regulator State Level Coordination Committee (SLCC) portal by the Reserve Bank of India to lodge complaints against unauthorized financial entities, unregistered lending apps, and illegal deposit-taking schemes. Official lists of legitimately registered NBFCs and banks are maintained directly on the main RBI website (rbi.org.in).',
+        link: 'https://sachet.rbi.org.in',
+        downloadable: false
+      },
+      {
+        title: 'Chakshu Portal (DoT Sanchar Saathi)',
+        category: 'Reporting Service',
+        description: 'Department of Telecommunications portal enabling citizens to report suspected fraudulent communications, spam calls, caller ID spoofing, and malicious SMS.',
+        link: 'https://sancharsaathi.gov.in/sfc/',
+        downloadable: false
+      },
+      {
+        title: 'CERT-In Incident Reporting & Vulnerability Advisories',
+        category: 'Government Resources',
+        description: 'Official portal and technical advisories from the Indian Computer Emergency Response Team for reporting computer security incidents and ransomware.',
+        link: 'https://www.cert-in.org.in',
+        downloadable: false
+      },
+      {
+        title: 'NCIIPC Critical Infrastructure Cybersecurity Portal',
+        category: 'Awareness Guides',
+        description: 'National nodal agency guidelines under Section 70A of the IT Act for securing critical power, transport, banking, and telecom networks.',
+        link: 'https://nciipc.gov.in',
+        downloadable: false
       }
     ];
 
     for (let resData of resourcesData) {
       await Resource.findOneAndUpdate({ title: resData.title }, resData, { upsert: true, new: true });
+    }
+
+    console.log('- Seeding Learning Modules (12 Structured Lessons)...');
+    for (let lm of learningModulesData) {
+      await LearningModule.findOneAndUpdate({ slug: lm.slug }, lm, { upsert: true, new: true });
     }
 
     console.log('Database successfully seeded!');

@@ -27,6 +27,11 @@ async function runReleaseReadinessAudit() {
       });
     });
 
+    // Ensure database connection is ready before running readiness checks
+    if (mongoose.connection.readyState !== 1) {
+      await new Promise(resolve => mongoose.connection.once('connected', resolve));
+    }
+
     // -------------------------------------------------------------
     // TEST 1: Security Response Headers
     // -------------------------------------------------------------
@@ -218,6 +223,9 @@ async function runReleaseReadinessAudit() {
   } finally {
     if (server) {
       server.close();
+    }
+    if (mongoose.connection.readyState !== 0) {
+      await mongoose.disconnect();
     }
   }
 }

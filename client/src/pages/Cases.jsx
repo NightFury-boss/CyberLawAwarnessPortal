@@ -180,13 +180,13 @@ function Cases() {
     let color = 'var(--text-muted)';
     let border = '1px solid var(--color-border)';
     if (diff === 'Beginner') {
-      color = '#10b981';
+      color = 'var(--color-success, #536F61)';
       border = '1px solid rgba(16, 185, 129, 0.2)';
     } else if (diff === 'Intermediate') {
       color = '#f59e0b';
       border = '1px solid rgba(245, 158, 11, 0.2)';
     } else if (diff === 'Advanced') {
-      color = '#ef4444';
+      color = 'var(--color-danger, #A34D43)';
       border = '1px solid rgba(239, 68, 68, 0.2)';
     }
     return (
@@ -208,9 +208,9 @@ function Cases() {
   const getCaseTypeLabel = (type) => {
     switch (type) {
       case 'documented-case':
-        return { text: 'DOCUMENTED INCIDENT', color: '#3b82f6', bg: 'rgba(59, 130, 246, 0.1)' };
+        return { text: 'DOCUMENTED INCIDENT', color: 'var(--color-accent-gold, #B18A55)', bg: 'rgba(59, 130, 246, 0.1)' };
       case 'educational-reconstruction':
-        return { text: 'EDUCATIONAL RECONSTRUCTION', color: '#10b981', bg: 'rgba(16, 185, 129, 0.1)' };
+        return { text: 'EDUCATIONAL RECONSTRUCTION', color: 'var(--color-success, #536F61)', bg: 'rgba(16, 185, 129, 0.1)' };
       case 'anonymized-incident':
         return { text: 'ANONYMIZED INCIDENT', color: '#8b5cf6', bg: 'rgba(139, 92, 246, 0.1)' };
       case 'fictional-training-scenario':
@@ -520,7 +520,7 @@ function Cases() {
                 let circleIcon = '●';
                 let nodeShadow = 'none';
                 if (step.type === 'contact') {
-                  circleColor = '#3b82f6';
+                  circleColor = 'var(--color-accent-gold, #B18A55)';
                   circleIcon = '✉';
                   nodeShadow = '0 0 0 3px rgba(59, 130, 246, 0.15)';
                 } else if (step.type === 'deception') {
@@ -532,11 +532,11 @@ function Cases() {
                   circleIcon = '⌥';
                   nodeShadow = '0 0 0 3px rgba(245, 158, 11, 0.15)';
                 } else if (step.type === 'escalation') {
-                  circleColor = '#ef4444';
+                  circleColor = 'var(--color-danger, #A34D43)';
                   circleIcon = '🚨';
                   nodeShadow = '0 0 0 3px rgba(239, 68, 68, 0.15)';
                 } else if (step.type === 'discovery') {
-                  circleColor = '#10b981';
+                  circleColor = 'var(--color-success, #536F61)';
                   circleIcon = '✓';
                   nodeShadow = '0 0 0 3px rgba(16, 185, 129, 0.15)';
                 }
@@ -927,7 +927,7 @@ function Cases() {
           {/* FEATURED INCIDENT FILE (If present and search/filters are empty) */}
           {!searchQuery && activeCategory === 'All' && !activePattern && featuredCase && (
             <div style={{
-              backgroundColor: 'var(--bg-white, #ffffff)',
+              backgroundColor: 'var(--color-surface-card, #FCFAF5)',
               border: '1px solid var(--color-border)',
               borderTop: '3px solid var(--color-primary)',
               padding: 'var(--space-xl)',
@@ -1002,7 +1002,7 @@ function Cases() {
               fontSize: '0.75rem',
               textTransform: 'uppercase',
               letterSpacing: '1.5px',
-              color: 'var(--color-accent, #2563eb)',
+              color: 'var(--color-accent, var(--color-accent-terracotta, #A65F45))',
               fontWeight: '800',
               display: 'block',
               marginBottom: '8px'

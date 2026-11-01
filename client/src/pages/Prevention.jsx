@@ -380,15 +380,15 @@ function Prevention() {
                   Proactive security eliminates vulnerabilities before an attacker makes contact. Do not wait for an alert to test whether your accounts and devices are secure.
                 </p>
                 <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)', gap: '14px' }}>
-                  <div style={{ backgroundColor: 'var(--bg-white, #ffffff)', padding: '16px', borderRadius: '6px', border: '1px solid var(--color-border)', boxShadow: '0 1px 3px rgba(15, 37, 55, 0.04)' }}>
+                  <div style={{ backgroundColor: 'var(--color-surface-card, #FCFAF5)', padding: '16px', borderRadius: '6px', border: '1px solid var(--color-border)', boxShadow: '0 1px 3px rgba(48, 43, 39, 0.04)' }}>
                     <strong style={{ fontSize: '0.85rem', color: 'var(--text-primary)', display: 'block', marginBottom: '4px' }}>Credential Separation</strong>
                     <span style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', lineHeight: '1.5' }}>Use distinct, unshared passwords and dedicated passkeys across financial and personal accounts.</span>
                   </div>
-                  <div style={{ backgroundColor: 'var(--bg-white, #ffffff)', padding: '16px', borderRadius: '6px', border: '1px solid var(--color-border)', boxShadow: '0 1px 3px rgba(15, 37, 55, 0.04)' }}>
+                  <div style={{ backgroundColor: 'var(--color-surface-card, #FCFAF5)', padding: '16px', borderRadius: '6px', border: '1px solid var(--color-border)', boxShadow: '0 1px 3px rgba(48, 43, 39, 0.04)' }}>
                     <strong style={{ fontSize: '0.85rem', color: 'var(--text-primary)', display: 'block', marginBottom: '4px' }}>Direct Bookmarking</strong>
                     <span style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', lineHeight: '1.5' }}>Bookmark trusted bank portals and utilities directly to avoid sponsored deceptive search ads.</span>
                   </div>
-                  <div style={{ backgroundColor: 'var(--bg-white, #ffffff)', padding: '16px', borderRadius: '6px', border: '1px solid var(--color-border)', boxShadow: '0 1px 3px rgba(15, 37, 55, 0.04)' }}>
+                  <div style={{ backgroundColor: 'var(--color-surface-card, #FCFAF5)', padding: '16px', borderRadius: '6px', border: '1px solid var(--color-border)', boxShadow: '0 1px 3px rgba(48, 43, 39, 0.04)' }}>
                     <strong style={{ fontSize: '0.85rem', color: 'var(--text-primary)', display: 'block', marginBottom: '4px' }}>Multi-Factor Authentication</strong>
                     <span style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', lineHeight: '1.5' }}>Enable app-based authenticator codes or hardware tokens instead of plaintext SMS fallback.</span>
                   </div>
@@ -426,15 +426,15 @@ function Prevention() {
                   When confronted with urgent demands, threats of disconnection, or arrest claims: pause. Urgency is the primary psychological exploit used by cyber criminals.
                 </p>
                 <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)', gap: '14px' }}>
-                  <div style={{ backgroundColor: 'var(--bg-white, #ffffff)', padding: '16px', borderRadius: '6px', border: '1px solid var(--color-border)', boxShadow: '0 1px 3px rgba(15, 37, 55, 0.04)' }}>
+                  <div style={{ backgroundColor: 'var(--color-surface-card, #FCFAF5)', padding: '16px', borderRadius: '6px', border: '1px solid var(--color-border)', boxShadow: '0 1px 3px rgba(48, 43, 39, 0.04)' }}>
                     <strong style={{ fontSize: '0.85rem', color: 'var(--text-primary)', display: 'block', marginBottom: '4px' }}>Refuse One-Time Codes</strong>
                     <span style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', lineHeight: '1.5' }}>No legitimate agency or bank ever asks for your OTP over phone, chat, or email.</span>
                   </div>
-                  <div style={{ backgroundColor: 'var(--bg-white, #ffffff)', padding: '16px', borderRadius: '6px', border: '1px solid var(--color-border)', boxShadow: '0 1px 3px rgba(15, 37, 55, 0.04)' }}>
+                  <div style={{ backgroundColor: 'var(--color-surface-card, #FCFAF5)', padding: '16px', borderRadius: '6px', border: '1px solid var(--color-border)', boxShadow: '0 1px 3px rgba(48, 43, 39, 0.04)' }}>
                     <strong style={{ fontSize: '0.85rem', color: 'var(--text-primary)', display: 'block', marginBottom: '4px' }}>Reject Screen-Sharing</strong>
                     <span style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', lineHeight: '1.5' }}>Never install remote desktop apps (AnyDesk, TeamViewer) at the request of an incoming caller.</span>
                   </div>
-                  <div style={{ backgroundColor: 'var(--bg-white, #ffffff)', padding: '16px', borderRadius: '6px', border: '1px solid var(--color-border)', boxShadow: '0 1px 3px rgba(15, 37, 55, 0.04)' }}>
+                  <div style={{ backgroundColor: 'var(--color-surface-card, #FCFAF5)', padding: '16px', borderRadius: '6px', border: '1px solid var(--color-border)', boxShadow: '0 1px 3px rgba(48, 43, 39, 0.04)' }}>
                     <strong style={{ fontSize: '0.85rem', color: 'var(--text-primary)', display: 'block', marginBottom: '4px' }}>Break Contact Channel</strong>
                     <span style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', lineHeight: '1.5' }}>Hang up the incoming call and redial the organization's verified public number independently.</span>
                   </div>
@@ -463,15 +463,15 @@ function Prevention() {
                   If you suspect an incident has occurred or credentials were compromised, the first 2 hours are critical to freezing unauthorized transactions and preserving legal evidence.
                 </p>
                 <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)', gap: '14px' }}>
-                  <div style={{ backgroundColor: 'var(--bg-white, #ffffff)', padding: '16px', borderRadius: '6px', border: '1px solid var(--color-border)', boxShadow: '0 1px 3px rgba(15, 37, 55, 0.04)' }}>
+                  <div style={{ backgroundColor: 'var(--color-surface-card, #FCFAF5)', padding: '16px', borderRadius: '6px', border: '1px solid var(--color-border)', boxShadow: '0 1px 3px rgba(48, 43, 39, 0.04)' }}>
                     <strong style={{ fontSize: '0.85rem', color: 'var(--text-primary)', display: 'block', marginBottom: '4px' }}>National Helpline 1930</strong>
                     <span style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', lineHeight: '1.5' }}>Dial 1930 immediately to trigger the Citizen Financial Cyber Fraud Reporting System.</span>
                   </div>
-                  <div style={{ backgroundColor: 'var(--bg-white, #ffffff)', padding: '16px', borderRadius: '6px', border: '1px solid var(--color-border)', boxShadow: '0 1px 3px rgba(15, 37, 55, 0.04)' }}>
+                  <div style={{ backgroundColor: 'var(--color-surface-card, #FCFAF5)', padding: '16px', borderRadius: '6px', border: '1px solid var(--color-border)', boxShadow: '0 1px 3px rgba(48, 43, 39, 0.04)' }}>
                     <strong style={{ fontSize: '0.85rem', color: 'var(--text-primary)', display: 'block', marginBottom: '4px' }}>Bank Account Freeze</strong>
                     <span style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', lineHeight: '1.5' }}>Contact your bank's fraud desk to block cards, freeze internet banking, and revoke active UPI handles.</span>
                   </div>
-                  <div style={{ backgroundColor: 'var(--bg-white, #ffffff)', padding: '16px', borderRadius: '6px', border: '1px solid var(--color-border)', boxShadow: '0 1px 3px rgba(15, 37, 55, 0.04)' }}>
+                  <div style={{ backgroundColor: 'var(--color-surface-card, #FCFAF5)', padding: '16px', borderRadius: '6px', border: '1px solid var(--color-border)', boxShadow: '0 1px 3px rgba(48, 43, 39, 0.04)' }}>
                     <strong style={{ fontSize: '0.85rem', color: 'var(--text-primary)', display: 'block', marginBottom: '4px' }}>Preserve Digital Evidence</strong>
                     <span style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', lineHeight: '1.5' }}>Capture screenshots of payment messages, transaction UTR numbers, caller logs, and chat histories.</span>
                   </div>
@@ -607,7 +607,7 @@ function Prevention() {
             <h4 style={{ fontSize: '0.75rem', fontWeight: 'bold', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '12px' }}>
               Key Rule
             </h4>
-            <div style={{ padding: '16px 20px', backgroundColor: 'var(--color-danger-light)', color: '#7b1c12', borderRadius: 'var(--radius-sm)', marginBottom: '24px', borderLeft: '3px solid var(--color-danger)' }}>
+            <div style={{ padding: '16px 20px', backgroundColor: 'var(--color-danger-light)', color: 'var(--color-danger, #A34D43)', borderRadius: 'var(--radius-sm)', marginBottom: '24px', borderLeft: '3px solid var(--color-danger)' }}>
               <strong>UPI PIN is for sending money only:</strong> You never need to enter your PIN or scan a QR code to receive money, deposits, or refunds.
             </div>
 
@@ -765,7 +765,7 @@ function Prevention() {
                 padding: '20px 24px',
                 backgroundColor: 'var(--bg-secondary)',
                 borderRadius: 'var(--radius-sm)',
-                borderLeft: '4px solid var(--color-danger, #dc2626)',
+                borderLeft: '4px solid var(--color-danger, var(--color-danger, #A34D43))',
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'flex-start',
@@ -774,7 +774,7 @@ function Prevention() {
               }}>
                 <div style={{ flex: '1 1 360px' }}>
                   <div style={{ display: 'flex', gap: '8px', alignItems: 'center', marginBottom: '6px' }}>
-                    <span style={{ fontSize: '0.65rem', fontWeight: 'bold', color: 'var(--color-danger, #dc2626)', border: '1px solid var(--color-danger, #dc2626)', padding: '2px 6px', borderRadius: '3px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                    <span style={{ fontSize: '0.65rem', fontWeight: 'bold', color: 'var(--color-danger, var(--color-danger, #A34D43))', border: '1px solid var(--color-danger, var(--color-danger, #A34D43))', padding: '2px 6px', borderRadius: '3px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                       Emergency Service • Golden Hour Window
                     </span>
                     <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>CFCFRMS / MHA</span>
@@ -794,7 +794,7 @@ function Prevention() {
                     href="tel:1930"
                     aria-label="Dial Helpline 1930"
                     style={{
-                      backgroundColor: 'var(--color-danger, #dc2626)',
+                      backgroundColor: 'var(--color-danger, var(--color-danger, #A34D43))',
                       color: 'white',
                       padding: '8px 16px',
                       borderRadius: '4px',
@@ -819,8 +819,8 @@ function Prevention() {
                     }
                     style={{
                       backgroundColor: 'var(--bg-white)',
-                      color: copyFailed ? 'var(--color-danger, #b91c1c)' : 'var(--text-primary)',
-                      border: copyFailed ? '1px solid var(--color-danger, #b91c1c)' : '1px solid var(--color-border-dark)',
+                      color: copyFailed ? 'var(--color-danger, var(--color-danger, #A34D43))' : 'var(--text-primary)',
+                      border: copyFailed ? '1px solid var(--color-danger, var(--color-danger, #A34D43))' : '1px solid var(--color-border-dark)',
                       padding: '7px 14px',
                       borderRadius: '4px',
                       fontWeight: '600',

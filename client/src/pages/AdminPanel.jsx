@@ -22,6 +22,7 @@ function AdminPanel({ user }) {
   const [cases, setCases] = useState([]);
   const [quizzes, setQuizzes] = useState([]);
   const [resources, setResources] = useState([]);
+  const [learningModules, setLearningModules] = useState([]);
   const [auditLogs, setAuditLogs] = useState([]);
 
   // Dedicated Audit States (Server-backed pagination & filtering)
@@ -43,6 +44,7 @@ function AdminPanel({ user }) {
   const [questionDifficultyFilter, setQuestionDifficultyFilter] = useState('all');
   const [questionCognitiveFilter, setQuestionCognitiveFilter] = useState('all');
   const [questionStatusFilter, setQuestionStatusFilter] = useState('all');
+  const [questionFormatFilter, setQuestionFormatFilter] = useState('all');
 
   // Scenario Engine Management & Integrity Audit States
   const [scenariosList, setScenariosList] = useState([]);
@@ -151,6 +153,9 @@ function AdminPanel({ user }) {
       } else if (activeTab === 'resources') {
         const data = await api.getResources();
         setResources(data);
+      } else if (activeTab === 'modules') {
+        const data = await api.adminGetModules();
+        setLearningModules(data.modules || []);
       }
     } catch (err) {
       setError(err.message || 'Error loading administrator data.');
@@ -379,6 +384,9 @@ function AdminPanel({ user }) {
       if (questionCognitiveFilter !== 'all' && q.cognitiveLevel !== questionCognitiveFilter) {
         return false;
       }
+      if (questionFormatFilter !== 'all' && (q.format || 'single_choice') !== questionFormatFilter) {
+        return false;
+      }
       if (questionStatusFilter === 'published' && q.published === false) return false;
       if (questionStatusFilter === 'draft' && q.published !== false) return false;
 
@@ -423,6 +431,7 @@ function AdminPanel({ user }) {
       else if (activeTab === 'cases') await api.adminDeleteCase(id);
       else if (activeTab === 'quizzes') await api.adminDeleteQuiz(id);
       else if (activeTab === 'resources') await api.adminDeleteResource(id);
+      else if (activeTab === 'modules') await api.adminDeleteModule(id);
 
       setSuccess('Item deleted successfully!');
       fetchAdminData();
@@ -560,6 +569,9 @@ function AdminPanel({ user }) {
       } else if (activeTab === 'resources') {
         if (editItem) await api.adminUpdateResource(editItem.id, formData);
         else await api.adminCreateResource(formData);
+      } else if (activeTab === 'modules') {
+        if (editItem) await api.adminUpdateModule(editItem._id || editItem.id, formData);
+        else await api.adminCreateModule(formData);
       }
 
       setSuccess('Saved successfully!');
@@ -609,17 +621,17 @@ function AdminPanel({ user }) {
   const getActionBadgeStyle = (actionType) => {
     switch (actionType) {
       case 'CREATE':
-        return { color: '#065f46', bg: '#d1fae5', border: '#a7f3d0' };
+        return { color: 'var(--color-success, #536F61)', bg: 'var(--color-success-light, #EEF4F0)', border: 'var(--color-border, #DED6C9)' };
       case 'UPDATE':
-        return { color: '#1e40af', bg: '#dbeafe', border: '#bfdbfe' };
+        return { color: 'var(--color-accent-terracotta, #A65F45)', bg: 'var(--color-terracotta-light, #FAF1ED)', border: 'var(--color-border, #DED6C9)' };
       case 'DELETE':
-        return { color: '#991b1b', bg: '#fee2e2', border: '#fecaca' };
+        return { color: 'var(--color-danger, #A34D43)', bg: 'var(--color-danger-light, #F9ECEB)', border: 'var(--color-border, #DED6C9)' };
       case 'PUBLISH':
-        return { color: '#0f766e', bg: '#ccfbf1', border: '#99f6e4' };
+        return { color: 'var(--color-success, #536F61)', bg: 'var(--color-success-light, #EEF4F0)', border: 'var(--color-border, #DED6C9)' };
       case 'UNPUBLISH':
-        return { color: '#92400e', bg: '#fef3c7', border: '#fde68a' };
+        return { color: 'var(--color-warning, #B17A38)', bg: 'var(--color-warning-light, #FAF3E8)', border: 'var(--color-border, #DED6C9)' };
       default:
-        return { color: '#374151', bg: '#f3f4f6', border: '#e5e7eb' };
+        return { color: 'var(--color-text-secondary, #635B53)', bg: 'var(--color-surface-secondary, #EEE7DB)', border: 'var(--color-border, #DED6C9)' };
     }
   };
 
@@ -634,9 +646,9 @@ function AdminPanel({ user }) {
           fontWeight: '700',
           padding: '2px 8px',
           borderRadius: '4px',
-          color: '#991b1b',
-          backgroundColor: '#fee2e2',
-          border: '1px solid #fecaca'
+          color: 'var(--color-danger, #A34D43)',
+          backgroundColor: 'var(--color-danger-light, #F9ECEB)',
+          border: '1px solid var(--color-border, #DED6C9)'
         }}>
           ✕ FAILURE
         </span>
@@ -651,9 +663,9 @@ function AdminPanel({ user }) {
         fontWeight: '700',
         padding: '2px 8px',
         borderRadius: '4px',
-        color: '#166534',
-        backgroundColor: '#dcfce7',
-        border: '1px solid #bbf7d0'
+        color: 'var(--color-success, #536F61)',
+        backgroundColor: 'var(--color-success-light, #EEF4F0)',
+        border: '1px solid var(--color-border, #DED6C9)'
       }}>
         ✓ SUCCESS
       </span>
@@ -668,6 +680,7 @@ function AdminPanel({ user }) {
     else if (activeTab === 'cases') list = cases;
     else if (activeTab === 'quizzes') list = quizzes;
     else if (activeTab === 'resources') list = resources;
+    else if (activeTab === 'modules') list = learningModules;
     else if (activeTab === 'audit') list = auditLogs;
     else if (activeTab === 'users') list = usersList;
 
@@ -696,6 +709,11 @@ function AdminPanel({ user }) {
       if (activeTab === 'resources') {
         return (item.title?.toLowerCase().includes(query) ||
                 item.category?.toLowerCase().includes(query));
+      }
+      if (activeTab === 'modules') {
+        return (item.title?.toLowerCase().includes(query) ||
+                item.category?.toLowerCase().includes(query) ||
+                item.slug?.toLowerCase().includes(query));
       }
       if (activeTab === 'users') {
         return (item.fullName?.toLowerCase().includes(query) ||
@@ -733,8 +751,8 @@ function AdminPanel({ user }) {
         justifyContent: 'space-between',
         alignItems: 'center',
         padding: '12px 28px',
-        backgroundColor: '#0a192f',
-        borderBottom: '1px solid #1e293b',
+        backgroundColor: 'var(--color-text-primary, #302B27)',
+        borderBottom: '1px solid var(--color-surface-secondary, #EFE8DC)',
         position: 'sticky',
         top: 0,
         zIndex: 100
@@ -742,9 +760,9 @@ function AdminPanel({ user }) {
         <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
           <img src="/logo/cyber-law-logo-horizontal.svg" alt="Logo" style={{ height: '32px', width: 'auto', filter: 'brightness(0) invert(1)' }} />
           <div style={{ borderLeft: '1px solid rgba(255,255,255,0.2)', paddingLeft: '14px' }}>
-            <span style={{ fontSize: '0.85rem', fontWeight: '700', color: '#f8fafc', letterSpacing: '0.5px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span style={{ fontSize: '0.85rem', fontWeight: '700', color: 'var(--color-surface-secondary, #EFE8DC)', letterSpacing: '0.5px', display: 'flex', alignItems: 'center', gap: '8px' }}>
               ADMINISTRATION CONSOLE
-              <span style={{ fontSize: '0.65rem', padding: '2px 6px', borderRadius: '4px', backgroundColor: '#1e3a8a', color: '#93c5fd', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+              <span style={{ fontSize: '0.65rem', padding: '2px 6px', borderRadius: '4px', backgroundColor: 'var(--color-text-primary, #302B27)', color: 'var(--color-accent-gold, #B18A55)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                 Secure Admin Mode
               </span>
             </span>
@@ -753,13 +771,13 @@ function AdminPanel({ user }) {
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
           <div style={{ textAlign: 'right', fontSize: '0.85rem' }}>
-            <strong style={{ display: 'block', color: '#f8fafc' }}>{user?.fullName}</strong>
-            <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>{user?.email} • {user?.role?.toUpperCase()}</span>
+            <strong style={{ display: 'block', color: 'var(--color-surface-secondary, #EFE8DC)' }}>{user?.fullName}</strong>
+            <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted, #797066)' }}>{user?.email} • {user?.role?.toUpperCase()}</span>
           </div>
           <button 
             onClick={() => navigate('/')} 
             className="btn btn-secondary" 
-            style={{ padding: '6px 14px', fontSize: '0.8rem', fontWeight: '600', backgroundColor: 'transparent', color: '#f8fafc', borderColor: 'rgba(255,255,255,0.25)' }}
+            style={{ padding: '6px 14px', fontSize: '0.8rem', fontWeight: '600', backgroundColor: 'transparent', color: 'var(--color-surface-secondary, #EFE8DC)', borderColor: 'rgba(255,255,255,0.25)' }}
           >
             Public Portal →
           </button>
@@ -844,6 +862,15 @@ function AdminPanel({ user }) {
                   <span>Quizzes &amp; Bank</span>
                 </button>
               </li>
+              <li>
+                <button 
+                  onClick={() => handleTabChange('modules')} 
+                  className={activeTab === 'modules' ? 'active' : ''}
+                  aria-current={activeTab === 'modules' ? 'page' : undefined}
+                >
+                  <span>Learning Modules</span>
+                </button>
+              </li>
             </ul>
           </div>
 
@@ -857,7 +884,7 @@ function AdminPanel({ user }) {
                   aria-current={activeTab === 'scenarios' ? 'page' : undefined}
                 >
                   <span>Scenarios</span>
-                  <span style={{ fontSize: '0.65rem', backgroundColor: '#dcfce7', color: '#166534', padding: '2px 6px', borderRadius: '4px', border: '1px solid #bbf7d0', fontWeight: '600' }}>v1/v2 Sound</span>
+                  <span style={{ fontSize: '0.65rem', backgroundColor: 'var(--color-success-light, #EEF4F0)', color: 'var(--color-success, #536F61)', padding: '2px 6px', borderRadius: '4px', border: '1px solid var(--color-border, #DED6C9)', fontWeight: '600' }}>v1/v2 Sound</span>
                 </button>
               </li>
               <li>
@@ -867,7 +894,7 @@ function AdminPanel({ user }) {
                   aria-current={activeTab === 'stages' ? 'page' : undefined}
                 >
                   <span>Scenario Stages</span>
-                  <span style={{ fontSize: '0.65rem', backgroundColor: '#f1f5f9', color: '#475569', padding: '2px 6px', borderRadius: '4px', border: '1px solid #e2e8f0', fontWeight: '600' }}>Topology</span>
+                  <span style={{ fontSize: '0.65rem', backgroundColor: 'var(--color-surface-secondary, #EFE8DC)', color: 'var(--color-text-secondary, #635B53)', padding: '2px 6px', borderRadius: '4px', border: '1px solid var(--color-border, #DED6C9)', fontWeight: '600' }}>Topology</span>
                 </button>
               </li>
               <li>
@@ -877,7 +904,7 @@ function AdminPanel({ user }) {
                   aria-current={activeTab === 'decisions' ? 'page' : undefined}
                 >
                   <span>Decisions</span>
-                  <span style={{ fontSize: '0.65rem', backgroundColor: '#f1f5f9', color: '#475569', padding: '2px 6px', borderRadius: '4px', border: '1px solid #e2e8f0', fontWeight: '600' }}>Branches</span>
+                  <span style={{ fontSize: '0.65rem', backgroundColor: 'var(--color-surface-secondary, #EFE8DC)', color: 'var(--color-text-secondary, #635B53)', padding: '2px 6px', borderRadius: '4px', border: '1px solid var(--color-border, #DED6C9)', fontWeight: '600' }}>Branches</span>
                 </button>
               </li>
             </ul>
@@ -902,7 +929,7 @@ function AdminPanel({ user }) {
                   aria-current={activeTab === 'audit' ? 'page' : undefined}
                 >
                   <span>Audit History Logs</span>
-                  <span style={{ fontSize: '0.65rem', backgroundColor: '#eff6ff', color: '#1e40af', padding: '2px 6px', borderRadius: '4px', border: '1px solid #bfdbfe', fontWeight: '600' }}>Append-Only</span>
+                  <span style={{ fontSize: '0.65rem', backgroundColor: 'var(--color-gold-light, #FAF4EA)', color: 'var(--color-accent-terracotta, #A65F45)', padding: '2px 6px', borderRadius: '4px', border: '1px solid var(--color-border, #DED6C9)', fontWeight: '600' }}>Append-Only</span>
                 </button>
               </li>
             </ul>
@@ -922,17 +949,17 @@ function AdminPanel({ user }) {
               <div style={{ marginBottom: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '16px' }}>
                 <div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-                    <span style={{ fontSize: '0.75rem', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '1px', color: '#1e3a8a' }}>
+                    <span style={{ fontSize: '0.75rem', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '1px', color: 'var(--color-text-primary, #302B27)' }}>
                       Operational Overview
                     </span>
-                    <span style={{ fontSize: '0.75rem', padding: '2px 8px', borderRadius: '12px', backgroundColor: '#dcfce7', color: '#15803d', fontWeight: '600' }}>
+                    <span style={{ fontSize: '0.75rem', padding: '2px 8px', borderRadius: '12px', backgroundColor: 'var(--color-success-light, #EEF4F0)', color: 'var(--color-success, #536F61)', fontWeight: '600' }}>
                       ● Systems Normal
                     </span>
                   </div>
-                  <h1 style={{ fontSize: '1.9rem', color: '#0f172a', fontWeight: '800', margin: 0, fontFamily: 'var(--font-sans)', letterSpacing: '-0.5px' }}>
+                  <h1 style={{ fontSize: '1.9rem', color: 'var(--color-text-primary, #302B27)', fontWeight: '800', margin: 0, fontFamily: 'var(--font-sans)', letterSpacing: '-0.5px' }}>
                     Administration Console
                   </h1>
-                  <p style={{ color: '#475569', fontSize: '0.95rem', margin: '6px 0 0 0', maxWidth: '780px' }}>
+                  <p style={{ color: 'var(--color-text-secondary, #635B53)', fontSize: '0.95rem', margin: '6px 0 0 0', maxWidth: '780px' }}>
                     Authoritative portal operations, content management, assessment graph integrity verification, and administrative audit streams.
                   </p>
                 </div>
@@ -947,7 +974,7 @@ function AdminPanel({ user }) {
                   <button 
                     onClick={() => handleTabChange('scenarios')} 
                     className="btn btn-primary"
-                    style={{ fontSize: '0.85rem', padding: '8px 16px', fontWeight: '600', backgroundColor: '#1e3a8a' }}
+                    style={{ fontSize: '0.85rem', padding: '8px 16px', fontWeight: '600', backgroundColor: 'var(--color-text-primary, #302B27)' }}
                   >
                     Inspect Scenarios
                   </button>
@@ -961,50 +988,50 @@ function AdminPanel({ user }) {
                 gap: '16px',
                 marginBottom: '28px',
                 padding: '16px 20px',
-                backgroundColor: '#ffffff',
-                border: '1px solid #e2e8f0',
+                backgroundColor: 'var(--color-surface-card, #FCFAF5)',
+                border: '1px solid var(--color-border, #DED6C9)',
                 borderRadius: '8px',
                 boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
               }}>
                 <div>
-                  <span style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: '600', textTransform: 'uppercase' }}>Database &amp; API</span>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted, #797066)', fontWeight: '600', textTransform: 'uppercase' }}>Database &amp; API</span>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '4px' }}>
-                    <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#22c55e' }}></span>
-                    <strong style={{ fontSize: '0.95rem', color: '#0f172a' }}>Connected &amp; Healthy</strong>
+                    <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: 'var(--color-success, #536F61)' }}></span>
+                    <strong style={{ fontSize: '0.95rem', color: 'var(--color-text-primary, #302B27)' }}>Connected &amp; Healthy</strong>
                   </div>
-                  <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>MongoDB Replica State Active</span>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted, #797066)' }}>MongoDB Replica State Active</span>
                 </div>
                 <div>
-                  <span style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: '600', textTransform: 'uppercase' }}>Assessment Topology</span>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted, #797066)', fontWeight: '600', textTransform: 'uppercase' }}>Assessment Topology</span>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '4px' }}>
-                    <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#22c55e' }}></span>
-                    <strong style={{ fontSize: '0.95rem', color: '#0f172a' }}>4/4 Versioned Graphs Sound</strong>
+                    <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: 'var(--color-success, #536F61)' }}></span>
+                    <strong style={{ fontSize: '0.95rem', color: 'var(--color-text-primary, #302B27)' }}>4/4 Versioned Graphs Sound</strong>
                   </div>
-                  <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>Zero orphan nodes detected</span>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted, #797066)' }}>Zero orphan nodes detected</span>
                 </div>
                 <div>
-                  <span style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: '600', textTransform: 'uppercase' }}>Audit Security</span>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted, #797066)', fontWeight: '600', textTransform: 'uppercase' }}>Audit Security</span>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '4px' }}>
-                    <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#22c55e' }}></span>
-                    <strong style={{ fontSize: '0.95rem', color: '#0f172a' }}>Append-Only Stream</strong>
+                    <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: 'var(--color-success, #536F61)' }}></span>
+                    <strong style={{ fontSize: '0.95rem', color: 'var(--color-text-primary, #302B27)' }}>Append-Only Stream</strong>
                   </div>
-                  <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>Tamper-Resilient Logging</span>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted, #797066)' }}>Tamper-Resilient Logging</span>
                 </div>
                 <div>
-                  <span style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: '600', textTransform: 'uppercase' }}>Server Time</span>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted, #797066)', fontWeight: '600', textTransform: 'uppercase' }}>Server Time</span>
                   <div style={{ marginTop: '4px' }}>
-                    <strong style={{ fontSize: '0.95rem', color: '#0f172a' }}>
+                    <strong style={{ fontSize: '0.95rem', color: 'var(--color-text-primary, #302B27)' }}>
                       {dashboardSummary?.systemStatus?.timestamp ? new Date(dashboardSummary.systemStatus.timestamp).toLocaleTimeString() : new Date().toLocaleTimeString()}
                     </strong>
                   </div>
-                  <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>Authorized Admin Session</span>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted, #797066)' }}>Authorized Admin Session</span>
                 </div>
               </div>
 
               {/* Attention Items (if any exist) */}
               {dashboardSummary?.attentionItems && dashboardSummary.attentionItems.length > 0 && (
                 <div style={{ marginBottom: '28px' }}>
-                  <h2 style={{ fontSize: '1.1rem', fontWeight: '700', color: '#0f172a', marginBottom: '12px' }}>
+                  <h2 style={{ fontSize: '1.1rem', fontWeight: '700', color: 'var(--color-text-primary, #302B27)', marginBottom: '12px' }}>
                     Operational Attention Items
                   </h2>
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '16px' }}>
@@ -1014,8 +1041,8 @@ function AdminPanel({ user }) {
                         style={{
                           padding: '16px',
                           borderRadius: '8px',
-                          border: item.type === 'warning' ? '1px solid #fed7aa' : item.type === 'info' ? '1px solid #bfdbfe' : '1px solid #bbf7d0',
-                          backgroundColor: item.type === 'warning' ? '#fffbeb' : item.type === 'info' ? '#eff6ff' : '#f0fdf4',
+                          border: item.type === 'warning' ? '1px solid #fed7aa' : item.type === 'info' ? '1px solid var(--color-border, #DED6C9)' : '1px solid #bbf7d0',
+                          backgroundColor: item.type === 'warning' ? '#fffbeb' : item.type === 'info' ? 'var(--color-gold-light, #FAF4EA)' : '#f0fdf4',
                           display: 'flex',
                           justifyContent: 'space-between',
                           alignItems: 'center',
@@ -1026,12 +1053,12 @@ function AdminPanel({ user }) {
                           <strong style={{
                             display: 'block',
                             fontSize: '0.9rem',
-                            color: item.type === 'warning' ? '#9a3412' : item.type === 'info' ? '#1e40af' : '#166534',
+                            color: item.type === 'warning' ? '#9a3412' : item.type === 'info' ? 'var(--color-accent-terracotta, #A65F45)' : 'var(--color-success, #536F61)',
                             marginBottom: '4px'
                           }}>
                             {item.title}
                           </strong>
-                          <span style={{ fontSize: '0.85rem', color: '#475569' }}>
+                          <span style={{ fontSize: '0.85rem', color: 'var(--color-text-secondary, #635B53)' }}>
                             {item.message}
                           </span>
                         </div>
@@ -1044,7 +1071,7 @@ function AdminPanel({ user }) {
                               fontSize: '0.8rem',
                               fontWeight: '600',
                               whiteSpace: 'nowrap',
-                              backgroundColor: '#ffffff'
+                              backgroundColor: 'var(--color-surface-card, #FCFAF5)'
                             }}
                           >
                             {item.actionLabel || 'View'} →
@@ -1059,107 +1086,107 @@ function AdminPanel({ user }) {
               {/* Content Operations Grid */}
               <div style={{ marginBottom: '28px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
-                  <h2 style={{ fontSize: '1.15rem', fontWeight: '700', color: '#0f172a', margin: 0 }}>
+                  <h2 style={{ fontSize: '1.15rem', fontWeight: '700', color: 'var(--color-text-primary, #302B27)', margin: 0 }}>
                     Content Operations
                   </h2>
-                  <span style={{ fontSize: '0.8rem', color: '#64748b' }}>Authoritative database counts</span>
+                  <span style={{ fontSize: '0.8rem', color: 'var(--color-text-muted, #797066)' }}>Authoritative database counts</span>
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))', gap: '16px' }}>
                   {/* Cyber Laws Card */}
-                  <div style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '18px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                  <div style={{ backgroundColor: 'var(--color-surface-card, #FCFAF5)', border: '1px solid var(--color-border, #DED6C9)', borderRadius: '8px', padding: '18px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
                     <div>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                        <span style={{ fontSize: '0.75rem', fontWeight: '700', textTransform: 'uppercase', color: '#64748b' }}>Cyber Laws</span>
-                        <span style={{ fontSize: '0.75rem', padding: '2px 8px', borderRadius: '4px', backgroundColor: '#eff6ff', color: '#1e40af', fontWeight: '600' }}>Legislation</span>
+                        <span style={{ fontSize: '0.75rem', fontWeight: '700', textTransform: 'uppercase', color: 'var(--color-text-muted, #797066)' }}>Cyber Laws</span>
+                        <span style={{ fontSize: '0.75rem', padding: '2px 8px', borderRadius: '4px', backgroundColor: 'var(--color-gold-light, #FAF4EA)', color: 'var(--color-accent-terracotta, #A65F45)', fontWeight: '600' }}>Legislation</span>
                       </div>
-                      <div style={{ fontSize: '2rem', fontWeight: '800', color: '#0f172a', lineHeight: 1.1 }}>
+                      <div style={{ fontSize: '2rem', fontWeight: '800', color: 'var(--color-text-primary, #302B27)', lineHeight: 1.1 }}>
                         {dashboardSummary?.contentSummaries?.laws?.total ?? laws.length}
                       </div>
-                      <p style={{ fontSize: '0.8rem', color: '#64748b', margin: '6px 0 16px 0' }}>
+                      <p style={{ fontSize: '0.8rem', color: 'var(--color-text-muted, #797066)', margin: '6px 0 16px 0' }}>
                         Statutory sections, penalties &amp; definitions.
                       </p>
                     </div>
-                    <div style={{ display: 'flex', gap: '8px', paddingTop: '12px', borderTop: '1px solid #f1f5f9' }}>
+                    <div style={{ display: 'flex', gap: '8px', paddingTop: '12px', borderTop: '1px solid var(--color-surface-secondary, #EFE8DC)' }}>
                       <button onClick={() => handleTabChange('laws')} className="btn btn-secondary" style={{ flex: 1, padding: '6px', fontSize: '0.8rem' }}>Manage</button>
                       <button onClick={() => { handleTabChange('laws'); handleAddInit(); }} className="btn btn-primary" style={{ padding: '6px 10px', fontSize: '0.8rem' }}>+ Add</button>
                     </div>
                   </div>
 
                   {/* Crimes Library Card */}
-                  <div style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '18px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                  <div style={{ backgroundColor: 'var(--color-surface-card, #FCFAF5)', border: '1px solid var(--color-border, #DED6C9)', borderRadius: '8px', padding: '18px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
                     <div>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                        <span style={{ fontSize: '0.75rem', fontWeight: '700', textTransform: 'uppercase', color: '#64748b' }}>Crimes Library</span>
-                        <span style={{ fontSize: '0.75rem', padding: '2px 8px', borderRadius: '4px', backgroundColor: '#fef3c7', color: '#92400e', fontWeight: '600' }}>Threat Catalog</span>
+                        <span style={{ fontSize: '0.75rem', fontWeight: '700', textTransform: 'uppercase', color: 'var(--color-text-muted, #797066)' }}>Crimes Library</span>
+                        <span style={{ fontSize: '0.75rem', padding: '2px 8px', borderRadius: '4px', backgroundColor: 'var(--color-warning-light, #FAF3E8)', color: 'var(--color-warning, #B17A38)', fontWeight: '600' }}>Threat Catalog</span>
                       </div>
-                      <div style={{ fontSize: '2rem', fontWeight: '800', color: '#0f172a', lineHeight: 1.1 }}>
+                      <div style={{ fontSize: '2rem', fontWeight: '800', color: 'var(--color-text-primary, #302B27)', lineHeight: 1.1 }}>
                         {dashboardSummary?.contentSummaries?.crimes?.total ?? crimes.length}
                       </div>
-                      <p style={{ fontSize: '0.8rem', color: '#64748b', margin: '6px 0 16px 0' }}>
+                      <p style={{ fontSize: '0.8rem', color: 'var(--color-text-muted, #797066)', margin: '6px 0 16px 0' }}>
                         Attack lifecycles, warning flags &amp; advice.
                       </p>
                     </div>
-                    <div style={{ display: 'flex', gap: '8px', paddingTop: '12px', borderTop: '1px solid #f1f5f9' }}>
+                    <div style={{ display: 'flex', gap: '8px', paddingTop: '12px', borderTop: '1px solid var(--color-surface-secondary, #EFE8DC)' }}>
                       <button onClick={() => handleTabChange('crimes')} className="btn btn-secondary" style={{ flex: 1, padding: '6px', fontSize: '0.8rem' }}>Manage</button>
                       <button onClick={() => { handleTabChange('crimes'); handleAddInit(); }} className="btn btn-primary" style={{ padding: '6px 10px', fontSize: '0.8rem' }}>+ Add</button>
                     </div>
                   </div>
 
                   {/* Case Studies Card */}
-                  <div style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '18px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                  <div style={{ backgroundColor: 'var(--color-surface-card, #FCFAF5)', border: '1px solid var(--color-border, #DED6C9)', borderRadius: '8px', padding: '18px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
                     <div>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                        <span style={{ fontSize: '0.75rem', fontWeight: '700', textTransform: 'uppercase', color: '#64748b' }}>Case Studies</span>
+                        <span style={{ fontSize: '0.75rem', fontWeight: '700', textTransform: 'uppercase', color: 'var(--color-text-muted, #797066)' }}>Case Studies</span>
                         <span style={{ fontSize: '0.75rem', padding: '2px 8px', borderRadius: '4px', backgroundColor: '#f3e8ff', color: '#6b21a8', fontWeight: '600' }}>Legal Precedents</span>
                       </div>
-                      <div style={{ fontSize: '2rem', fontWeight: '800', color: '#0f172a', lineHeight: 1.1 }}>
+                      <div style={{ fontSize: '2rem', fontWeight: '800', color: 'var(--color-text-primary, #302B27)', lineHeight: 1.1 }}>
                         {dashboardSummary?.contentSummaries?.cases?.total ?? cases.length}
                       </div>
-                      <p style={{ fontSize: '0.8rem', color: '#64748b', margin: '6px 0 16px 0' }}>
+                      <p style={{ fontSize: '0.8rem', color: 'var(--color-text-muted, #797066)', margin: '6px 0 16px 0' }}>
                         Real judicial incidents, timelines &amp; impact.
                       </p>
                     </div>
-                    <div style={{ display: 'flex', gap: '8px', paddingTop: '12px', borderTop: '1px solid #f1f5f9' }}>
+                    <div style={{ display: 'flex', gap: '8px', paddingTop: '12px', borderTop: '1px solid var(--color-surface-secondary, #EFE8DC)' }}>
                       <button onClick={() => handleTabChange('cases')} className="btn btn-secondary" style={{ flex: 1, padding: '6px', fontSize: '0.8rem' }}>Manage</button>
                       <button onClick={() => { handleTabChange('cases'); handleAddInit(); }} className="btn btn-primary" style={{ padding: '6px 10px', fontSize: '0.8rem' }}>+ Add</button>
                     </div>
                   </div>
 
                   {/* Portal Resources Card */}
-                  <div style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '18px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                  <div style={{ backgroundColor: 'var(--color-surface-card, #FCFAF5)', border: '1px solid var(--color-border, #DED6C9)', borderRadius: '8px', padding: '18px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
                     <div>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                        <span style={{ fontSize: '0.75rem', fontWeight: '700', textTransform: 'uppercase', color: '#64748b' }}>Portal Resources</span>
-                        <span style={{ fontSize: '0.75rem', padding: '2px 8px', borderRadius: '4px', backgroundColor: '#e0e7ff', color: '#3730a3', fontWeight: '600' }}>Reference</span>
+                        <span style={{ fontSize: '0.75rem', fontWeight: '700', textTransform: 'uppercase', color: 'var(--color-text-muted, #797066)' }}>Portal Resources</span>
+                        <span style={{ fontSize: '0.75rem', padding: '2px 8px', borderRadius: '4px', backgroundColor: 'var(--color-gold-light, #FAF4EA)', color: 'var(--color-accent-terracotta, #A65F45)', fontWeight: '600' }}>Reference</span>
                       </div>
-                      <div style={{ fontSize: '2rem', fontWeight: '800', color: '#0f172a', lineHeight: 1.1 }}>
+                      <div style={{ fontSize: '2rem', fontWeight: '800', color: 'var(--color-text-primary, #302B27)', lineHeight: 1.1 }}>
                         {dashboardSummary?.contentSummaries?.resources?.total ?? resources.length}
                       </div>
-                      <p style={{ fontSize: '0.8rem', color: '#64748b', margin: '6px 0 16px 0' }}>
+                      <p style={{ fontSize: '0.8rem', color: 'var(--color-text-muted, #797066)', margin: '6px 0 16px 0' }}>
                         Helplines, official portals &amp; guides.
                       </p>
                     </div>
-                    <div style={{ display: 'flex', gap: '8px', paddingTop: '12px', borderTop: '1px solid #f1f5f9' }}>
+                    <div style={{ display: 'flex', gap: '8px', paddingTop: '12px', borderTop: '1px solid var(--color-surface-secondary, #EFE8DC)' }}>
                       <button onClick={() => handleTabChange('resources')} className="btn btn-secondary" style={{ flex: 1, padding: '6px', fontSize: '0.8rem' }}>Manage</button>
                       <button onClick={() => { handleTabChange('resources'); handleAddInit(); }} className="btn btn-primary" style={{ padding: '6px 10px', fontSize: '0.8rem' }}>+ Add</button>
                     </div>
                   </div>
 
                   {/* Quizzes & Question Bank Card */}
-                  <div style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '18px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                  <div style={{ backgroundColor: 'var(--color-surface-card, #FCFAF5)', border: '1px solid var(--color-border, #DED6C9)', borderRadius: '8px', padding: '18px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
                     <div>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                        <span style={{ fontSize: '0.75rem', fontWeight: '700', textTransform: 'uppercase', color: '#64748b' }}>Quizzes &amp; Bank</span>
-                        <span style={{ fontSize: '0.75rem', padding: '2px 8px', borderRadius: '4px', backgroundColor: '#dcfce7', color: '#166534', fontWeight: '600' }}>Assessment</span>
+                        <span style={{ fontSize: '0.75rem', fontWeight: '700', textTransform: 'uppercase', color: 'var(--color-text-muted, #797066)' }}>Quizzes &amp; Bank</span>
+                        <span style={{ fontSize: '0.75rem', padding: '2px 8px', borderRadius: '4px', backgroundColor: 'var(--color-success-light, #EEF4F0)', color: 'var(--color-success, #536F61)', fontWeight: '600' }}>Assessment</span>
                       </div>
-                      <div style={{ fontSize: '2rem', fontWeight: '800', color: '#0f172a', lineHeight: 1.1 }}>
+                      <div style={{ fontSize: '2rem', fontWeight: '800', color: 'var(--color-text-primary, #302B27)', lineHeight: 1.1 }}>
                         {dashboardSummary?.contentSummaries?.quizzes?.total ?? quizzes.length}
                       </div>
-                      <p style={{ fontSize: '0.8rem', color: '#64748b', margin: '6px 0 16px 0' }}>
+                      <p style={{ fontSize: '0.8rem', color: 'var(--color-text-muted, #797066)', margin: '6px 0 16px 0' }}>
                         <strong>{dashboardSummary?.contentSummaries?.quizzes?.totalQuestions ?? 175}</strong> questions in bank ({dashboardSummary?.contentSummaries?.quizzes?.published ?? quizzes.length} published modules).
                       </p>
                     </div>
-                    <div style={{ display: 'flex', gap: '8px', paddingTop: '12px', borderTop: '1px solid #f1f5f9' }}>
+                    <div style={{ display: 'flex', gap: '8px', paddingTop: '12px', borderTop: '1px solid var(--color-surface-secondary, #EFE8DC)' }}>
                       <button onClick={() => handleTabChange('quizzes')} className="btn btn-secondary" style={{ flex: 1, padding: '6px', fontSize: '0.8rem' }}>Manage Quizzes</button>
                       <button onClick={() => { handleTabChange('quizzes'); handleAddInit(); }} className="btn btn-primary" style={{ padding: '6px 10px', fontSize: '0.8rem' }}>+ Add</button>
                     </div>
@@ -1171,10 +1198,10 @@ function AdminPanel({ user }) {
               <div style={{ marginBottom: '28px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
                   <div>
-                    <h2 style={{ fontSize: '1.15rem', fontWeight: '700', color: '#0f172a', margin: 0 }}>
+                    <h2 style={{ fontSize: '1.15rem', fontWeight: '700', color: 'var(--color-text-primary, #302B27)', margin: 0 }}>
                       Assessment Engine Integrity &amp; Scenarios
                     </h2>
-                    <span style={{ fontSize: '0.8rem', color: '#64748b' }}>
+                    <span style={{ fontSize: '0.8rem', color: 'var(--color-text-muted, #797066)' }}>
                       Live graph topology validation for versioned &quot;Your Digital Day&quot; evaluations
                     </span>
                   </div>
@@ -1184,19 +1211,19 @@ function AdminPanel({ user }) {
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '16px' }}>
                   {dashboardSummary?.scenarios?.map(sc => (
-                    <div key={sc._id} style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '16px' }}>
+                    <div key={sc._id} style={{ backgroundColor: 'var(--color-surface-card, #FCFAF5)', border: '1px solid var(--color-border, #DED6C9)', borderRadius: '8px', padding: '16px' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
-                        <strong style={{ fontSize: '0.95rem', color: '#0f172a' }}>{sc.title}</strong>
-                        <span style={{ fontSize: '0.7rem', padding: '2px 6px', borderRadius: '4px', backgroundColor: '#f1f5f9', fontWeight: '600' }}>
+                        <strong style={{ fontSize: '0.95rem', color: 'var(--color-text-primary, #302B27)' }}>{sc.title}</strong>
+                        <span style={{ fontSize: '0.7rem', padding: '2px 6px', borderRadius: '4px', backgroundColor: 'var(--color-surface-secondary, #EFE8DC)', fontWeight: '600' }}>
                           v{sc.version}
                         </span>
                       </div>
-                      <div style={{ fontSize: '0.8rem', color: '#64748b', marginBottom: '12px' }}>
+                      <div style={{ fontSize: '0.8rem', color: 'var(--color-text-muted, #797066)', marginBottom: '12px' }}>
                         {sc.stageCount} Stages • {sc.published ? 'Published' : 'Draft'}
                       </div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '12px' }}>
-                        <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: sc.isSound ? '#22c55e' : '#ef4444' }}></span>
-                        <span style={{ fontSize: '0.8rem', fontWeight: '600', color: sc.isSound ? '#166534' : '#991b1b' }}>
+                        <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: sc.isSound ? 'var(--color-success, #536F61)' : '#ef4444' }}></span>
+                        <span style={{ fontSize: '0.8rem', fontWeight: '600', color: sc.isSound ? 'var(--color-success, #536F61)' : 'var(--color-danger, #A34D43)' }}>
                           {sc.isSound ? 'Graph Sound & Closed' : 'Integrity Warning'}
                         </span>
                       </div>
@@ -1219,7 +1246,7 @@ function AdminPanel({ user }) {
               {analytics && (
                 <div style={{ marginBottom: '28px' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
-                    <h2 style={{ fontSize: '1.15rem', fontWeight: '700', color: '#0f172a', margin: 0 }}>
+                    <h2 style={{ fontSize: '1.15rem', fontWeight: '700', color: 'var(--color-text-primary, #302B27)', margin: 0 }}>
                       Learner Cohort Analytics
                     </h2>
                     <button onClick={() => handleTabChange('users')} className="btn btn-secondary" style={{ fontSize: '0.8rem', padding: '6px 12px' }}>
@@ -1227,65 +1254,65 @@ function AdminPanel({ user }) {
                     </button>
                   </div>
                   <div className="dashboard-grid" style={{ marginBottom: '16px' }}>
-                    <div className="stat-card" style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '18px', textAlign: 'center' }}>
-                      <span className="label" style={{ fontSize: '0.75rem', color: '#64748b', textTransform: 'uppercase', fontWeight: '600' }}>Registered Students</span>
-                      <div className="value" style={{ fontSize: '2rem', fontWeight: 'bold', color: '#0f172a', marginTop: '6px' }}>{analytics.totalUsers}</div>
+                    <div className="stat-card" style={{ backgroundColor: 'var(--color-surface-card, #FCFAF5)', border: '1px solid var(--color-border, #DED6C9)', borderRadius: '8px', padding: '18px', textAlign: 'center' }}>
+                      <span className="label" style={{ fontSize: '0.75rem', color: 'var(--color-text-muted, #797066)', textTransform: 'uppercase', fontWeight: '600' }}>Registered Students</span>
+                      <div className="value" style={{ fontSize: '2rem', fontWeight: 'bold', color: 'var(--color-text-primary, #302B27)', marginTop: '6px' }}>{analytics.totalUsers}</div>
                     </div>
-                    <div className="stat-card" style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '18px', textAlign: 'center' }}>
-                      <span className="label" style={{ fontSize: '0.75rem', color: '#64748b', textTransform: 'uppercase', fontWeight: '600' }}>Avg Baseline Score</span>
-                      <div className="value" style={{ fontSize: '2rem', fontWeight: 'bold', color: '#0f172a', marginTop: '6px' }}>{analytics.avgBaselineScore}%</div>
+                    <div className="stat-card" style={{ backgroundColor: 'var(--color-surface-card, #FCFAF5)', border: '1px solid var(--color-border, #DED6C9)', borderRadius: '8px', padding: '18px', textAlign: 'center' }}>
+                      <span className="label" style={{ fontSize: '0.75rem', color: 'var(--color-text-muted, #797066)', textTransform: 'uppercase', fontWeight: '600' }}>Avg Baseline Score</span>
+                      <div className="value" style={{ fontSize: '2rem', fontWeight: 'bold', color: 'var(--color-text-primary, #302B27)', marginTop: '6px' }}>{analytics.avgBaselineScore}%</div>
                     </div>
-                    <div className="stat-card" style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '18px', textAlign: 'center' }}>
-                      <span className="label" style={{ fontSize: '0.75rem', color: '#64748b', textTransform: 'uppercase', fontWeight: '600' }}>Avg Final Score</span>
-                      <div className="value" style={{ fontSize: '2rem', fontWeight: 'bold', color: '#0f172a', marginTop: '6px' }}>{analytics.avgFinalScore}%</div>
+                    <div className="stat-card" style={{ backgroundColor: 'var(--color-surface-card, #FCFAF5)', border: '1px solid var(--color-border, #DED6C9)', borderRadius: '8px', padding: '18px', textAlign: 'center' }}>
+                      <span className="label" style={{ fontSize: '0.75rem', color: 'var(--color-text-muted, #797066)', textTransform: 'uppercase', fontWeight: '600' }}>Avg Final Score</span>
+                      <div className="value" style={{ fontSize: '2rem', fontWeight: 'bold', color: 'var(--color-text-primary, #302B27)', marginTop: '6px' }}>{analytics.avgFinalScore}%</div>
                     </div>
-                    <div className="stat-card" style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '18px', textAlign: 'center' }}>
-                      <span className="label" style={{ fontSize: '0.75rem', color: '#64748b', textTransform: 'uppercase', fontWeight: '600' }}>Avg Improvement</span>
+                    <div className="stat-card" style={{ backgroundColor: 'var(--color-surface-card, #FCFAF5)', border: '1px solid var(--color-border, #DED6C9)', borderRadius: '8px', padding: '18px', textAlign: 'center' }}>
+                      <span className="label" style={{ fontSize: '0.75rem', color: 'var(--color-text-muted, #797066)', textTransform: 'uppercase', fontWeight: '600' }}>Avg Improvement</span>
                       <div className="value" style={{ fontSize: '2rem', fontWeight: 'bold', color: '#16a34a', marginTop: '6px' }}>+{analytics.avgImprovement} pts</div>
                     </div>
                   </div>
 
-                  <div style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '18px' }}>
+                  <div style={{ backgroundColor: 'var(--color-surface-card, #FCFAF5)', border: '1px solid var(--color-border, #DED6C9)', borderRadius: '8px', padding: '18px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
-                      <span style={{ fontSize: '0.75rem', fontWeight: '700', textTransform: 'uppercase', color: '#b91c1c', backgroundColor: '#fee2e2', padding: '2px 8px', borderRadius: '4px' }}>
+                      <span style={{ fontSize: '0.75rem', fontWeight: '700', textTransform: 'uppercase', color: '#b91c1c', backgroundColor: 'var(--color-danger-light, #F9ECEB)', padding: '2px 8px', borderRadius: '4px' }}>
                         Educational Focus Area Identified
                       </span>
                     </div>
-                    <h3 style={{ fontSize: '1rem', color: '#0f172a', fontWeight: '700', margin: '4px 0 6px 0' }}>
+                    <h3 style={{ fontSize: '1rem', color: 'var(--color-text-primary, #302B27)', fontWeight: '700', margin: '4px 0 6px 0' }}>
                       Primary Cohort Focus: {analytics.weakestArea}
                     </h3>
-                    <p style={{ color: '#475569', margin: 0, fontSize: '0.85rem' }}>
+                    <p style={{ color: 'var(--color-text-secondary, #635B53)', margin: 0, fontSize: '0.85rem' }}>
                       {analytics.weakestAreaCount} assessment evaluations scored below the provisional 70% educational baseline heuristic in this topic. Consider updating related practice quizzes and review guides.
                     </p>
                   </div>
 
                   {/* Cohort Defensive Profile or Privacy Suppression Notice */}
                   {analytics.cohortStatus && !analytics.cohortStatus.sufficientSample ? (
-                    <div style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '18px', marginTop: '16px' }}>
+                    <div style={{ backgroundColor: 'var(--color-surface-card, #FCFAF5)', border: '1px solid var(--color-border, #DED6C9)', borderRadius: '8px', padding: '18px', marginTop: '16px' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
                         <span style={{ fontSize: '0.75rem', fontWeight: '700', textTransform: 'uppercase', color: '#0369a1', backgroundColor: '#e0f2fe', padding: '2px 8px', borderRadius: '4px' }}>
                           Cohort Privacy Protection (k-Anonymity)
                         </span>
                       </div>
-                      <h3 style={{ fontSize: '1rem', color: '#0f172a', fontWeight: '700', margin: '4px 0 6px 0' }}>
+                      <h3 style={{ fontSize: '1rem', color: 'var(--color-text-primary, #302B27)', fontWeight: '700', margin: '4px 0 6px 0' }}>
                         Indicator Aggregation Suppressed
                       </h3>
-                      <p style={{ color: '#475569', margin: 0, fontSize: '0.85rem' }}>
+                      <p style={{ color: 'var(--color-text-secondary, #635B53)', margin: 0, fontSize: '0.85rem' }}>
                         {analytics.cohortStatus.message}
                       </p>
                     </div>
                   ) : analytics.behavioralAverages ? (
-                    <div style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '18px', marginTop: '16px' }}>
+                    <div style={{ backgroundColor: 'var(--color-surface-card, #FCFAF5)', border: '1px solid var(--color-border, #DED6C9)', borderRadius: '8px', padding: '18px', marginTop: '16px' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', flexWrap: 'wrap', gap: '8px' }}>
                         <div>
-                          <span style={{ fontSize: '0.75rem', fontWeight: '700', textTransform: 'uppercase', color: '#1e3a8a', letterSpacing: '0.5px' }}>
+                          <span style={{ fontSize: '0.75rem', fontWeight: '700', textTransform: 'uppercase', color: 'var(--color-text-primary, #302B27)', letterSpacing: '0.5px' }}>
                             Cohort Defensive Indicators (6 Educational Behavioral Dimensions)
                           </span>
-                          <h3 style={{ fontSize: '1rem', color: '#0f172a', fontWeight: '700', margin: '4px 0 0 0' }}>
+                          <h3 style={{ fontSize: '1rem', color: 'var(--color-text-primary, #302B27)', fontWeight: '700', margin: '4px 0 0 0' }}>
                             Collective Cyber Defense Profile
                           </h3>
                         </div>
-                        <span style={{ fontSize: '0.75rem', color: '#64748b' }}>Provisional baseline heuristic: 70% (Non-clinical indicator)</span>
+                        <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted, #797066)' }}>Provisional baseline heuristic: 70% (Non-clinical indicator)</span>
                       </div>
 
                       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '14px' }}>
@@ -1300,18 +1327,18 @@ function AdminPanel({ user }) {
                           const hasScore = dim.score !== null && dim.score !== undefined;
                           const isWarning = hasScore && dim.score < 70;
                           return (
-                            <div key={dim.key} style={{ padding: '10px 14px', borderRadius: '6px', border: '1px solid #f1f5f9', backgroundColor: '#f8fafc' }}>
+                            <div key={dim.key} style={{ padding: '10px 14px', borderRadius: '6px', border: '1px solid var(--color-surface-secondary, #EFE8DC)', backgroundColor: 'var(--color-surface-secondary, #EFE8DC)' }}>
                               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
                                 <span style={{ fontSize: '0.8rem', fontWeight: '600', color: '#334155' }}>{dim.label}</span>
-                                <span style={{ fontSize: '0.85rem', fontWeight: 'bold', color: !hasScore ? '#64748b' : isWarning ? '#b91c1c' : '#15803d' }}>
+                                <span style={{ fontSize: '0.85rem', fontWeight: 'bold', color: !hasScore ? '#64748b' : isWarning ? '#b91c1c' : 'var(--color-success, #536F61)' }}>
                                   {hasScore ? `${dim.score}% ${isWarning ? '⚠️' : '✓'}` : 'No Evaluated Data'}
                                 </span>
                               </div>
-                              <div style={{ width: '100%', height: '6px', backgroundColor: '#e2e8f0', borderRadius: '3px', overflow: 'hidden' }}>
+                              <div style={{ width: '100%', height: '6px', backgroundColor: 'var(--color-border, #DED6C9)', borderRadius: '3px', overflow: 'hidden' }}>
                                 <div style={{
                                   width: `${hasScore ? Math.min(100, Math.max(0, dim.score)) : 0}%`,
                                   height: '100%',
-                                  backgroundColor: isWarning ? '#ef4444' : '#22c55e',
+                                  backgroundColor: isWarning ? '#ef4444' : 'var(--color-success, #536F61)',
                                   borderRadius: '3px'
                                 }} />
                               </div>
@@ -1319,7 +1346,7 @@ function AdminPanel({ user }) {
                           );
                         })}
                       </div>
-                      <p style={{ fontSize: '0.72rem', color: '#94a3b8', margin: '12px 0 0 0', lineHeight: '1.4' }}>
+                      <p style={{ fontSize: '0.72rem', color: 'var(--color-text-muted, #797066)', margin: '12px 0 0 0', lineHeight: '1.4' }}>
                         * Note: These 6 dimensions reflect observed decision choices in simulated branch scenarios and serve as pedagogical indicators. They are not validated clinical or standardized psychometric instruments.
                       </p>
                     </div>
@@ -1331,10 +1358,10 @@ function AdminPanel({ user }) {
               <div style={{ marginBottom: '28px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
                   <div>
-                    <h2 style={{ fontSize: '1.15rem', fontWeight: '700', color: '#0f172a', margin: 0 }}>
+                    <h2 style={{ fontSize: '1.15rem', fontWeight: '700', color: 'var(--color-text-primary, #302B27)', margin: 0 }}>
                       Recent Administrative Activity
                     </h2>
-                    <span style={{ fontSize: '0.8rem', color: '#64748b' }}>
+                    <span style={{ fontSize: '0.8rem', color: 'var(--color-text-muted, #797066)' }}>
                       Real persisted audit trail for accountability &amp; regulatory compliance
                     </span>
                   </div>
@@ -1344,7 +1371,7 @@ function AdminPanel({ user }) {
                 </div>
 
                 {dashboardSummary?.recentActivity?.length > 0 ? (
-                  <div className="table-wrapper" style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '8px' }}>
+                  <div className="table-wrapper" style={{ backgroundColor: 'var(--color-surface-card, #FCFAF5)', border: '1px solid var(--color-border, #DED6C9)', borderRadius: '8px' }}>
                     <table className="admin-table">
                       <thead>
                         <tr>
@@ -1358,7 +1385,7 @@ function AdminPanel({ user }) {
                       <tbody>
                         {dashboardSummary.recentActivity.map((act, actIdx) => (
                           <tr key={act._id || act.id || `${act.timestamp || 'act'}-${actIdx}`}>
-                            <td style={{ fontSize: '0.8rem', color: '#64748b', whiteSpace: 'nowrap' }}>
+                            <td style={{ fontSize: '0.8rem', color: 'var(--color-text-muted, #797066)', whiteSpace: 'nowrap' }}>
                               {new Date(act.timestamp).toLocaleString()}
                             </td>
                             <td>
@@ -1367,13 +1394,13 @@ function AdminPanel({ user }) {
                                 fontWeight: '700',
                                 padding: '2px 8px',
                                 borderRadius: '4px',
-                                backgroundColor: act.actionType === 'CREATE' ? '#dcfce7' : act.actionType === 'UPDATE' ? '#eff6ff' : act.actionType === 'DELETE' ? '#fee2e2' : '#f1f5f9',
-                                color: act.actionType === 'CREATE' ? '#166534' : act.actionType === 'UPDATE' ? '#1e40af' : act.actionType === 'DELETE' ? '#991b1b' : '#334155'
+                                backgroundColor: act.actionType === 'CREATE' ? 'var(--color-success-light, #EEF4F0)' : act.actionType === 'UPDATE' ? 'var(--color-gold-light, #FAF4EA)' : act.actionType === 'DELETE' ? 'var(--color-danger-light, #F9ECEB)' : 'var(--color-surface-secondary, #EFE8DC)',
+                                color: act.actionType === 'CREATE' ? 'var(--color-success, #536F61)' : act.actionType === 'UPDATE' ? 'var(--color-accent-terracotta, #A65F45)' : act.actionType === 'DELETE' ? 'var(--color-danger, #A34D43)' : '#334155'
                               }}>
                                 {act.actionType}
                               </span>
                             </td>
-                            <td style={{ fontWeight: '600', color: '#0f172a' }}>{act.entityType}</td>
+                            <td style={{ fontWeight: '600', color: 'var(--color-text-primary, #302B27)' }}>{act.entityType}</td>
                             <td style={{ fontSize: '0.85rem' }}>{act.adminEmail}</td>
                             <td>
                               <span style={{ fontSize: '0.75rem', fontWeight: '600', color: act.status === 'SUCCESS' ? '#16a34a' : '#dc2626' }}>
@@ -1386,7 +1413,7 @@ function AdminPanel({ user }) {
                     </table>
                   </div>
                 ) : (
-                  <div style={{ padding: '24px', textAlign: 'center', backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '8px', color: '#64748b', fontSize: '0.85rem' }}>
+                  <div style={{ padding: '24px', textAlign: 'center', backgroundColor: 'var(--color-surface-card, #FCFAF5)', border: '1px solid var(--color-border, #DED6C9)', borderRadius: '8px', color: 'var(--color-text-muted, #797066)', fontSize: '0.85rem' }}>
                     No recent administrative mutations recorded yet.
                   </div>
                 )}
@@ -1412,7 +1439,7 @@ function AdminPanel({ user }) {
                   </span>
                 </div>
 
-                <div style={{ backgroundColor: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: '4px', padding: '12px 16px', marginTop: '14px', fontSize: '0.85rem', color: '#1e3a8a', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <div style={{ backgroundColor: 'var(--color-gold-light, #FAF4EA)', border: '1px solid var(--color-border, #DED6C9)', borderRadius: '4px', padding: '12px 16px', marginTop: '14px', fontSize: '0.85rem', color: 'var(--color-text-primary, #302B27)', display: 'flex', alignItems: 'center', gap: '10px' }}>
                   <span style={{ fontSize: '1.1rem' }}>🛡️</span>
                   <span>
                     <strong>Production Version Isolation:</strong> Published scenario versions are immutable in production to ensure deterministic scoring and historical reproducibility across completed learner sessions. Phase 2 visual graph authoring will branch into draft revisions before publication.
@@ -1431,9 +1458,9 @@ function AdminPanel({ user }) {
                       style={{
                         padding: '10px 16px',
                         borderRadius: '4px',
-                        border: isSelected ? '2px solid var(--accent-navy, #1e3a8a)' : '1px solid var(--color-border)',
+                        border: isSelected ? '2px solid var(--accent-navy, var(--color-text-primary, #302B27))' : '1px solid var(--color-border)',
                         backgroundColor: isSelected ? 'var(--bg-white)' : 'var(--bg-secondary)',
-                        color: isSelected ? 'var(--accent-navy, #1e3a8a)' : 'var(--text-primary)',
+                        color: isSelected ? 'var(--accent-navy, var(--color-text-primary, #302B27))' : 'var(--text-primary)',
                         cursor: 'pointer',
                         fontWeight: isSelected ? '700' : '500',
                         textAlign: 'left',
@@ -1447,7 +1474,7 @@ function AdminPanel({ user }) {
                         <span style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: 'var(--text-muted)' }}>
                           {s.slug} • v{s.version}
                         </span>
-                        <span style={{ fontSize: '0.65rem', padding: '1px 6px', borderRadius: '3px', backgroundColor: s.status === 'published' ? '#d1fae5' : '#fef3c7', color: s.status === 'published' ? '#065f46' : '#92400e', fontWeight: 'bold' }}>
+                        <span style={{ fontSize: '0.65rem', padding: '1px 6px', borderRadius: '3px', backgroundColor: s.status === 'published' ? 'var(--color-success-light, #EEF4F0)' : 'var(--color-warning-light, #FAF3E8)', color: s.status === 'published' ? 'var(--color-success, #536F61)' : 'var(--color-warning, #B17A38)', fontWeight: 'bold' }}>
                           {s.status.toUpperCase()}
                         </span>
                       </div>
@@ -1491,7 +1518,7 @@ function AdminPanel({ user }) {
                     </div>
                     <div className="stat-card" style={{ backgroundColor: 'var(--bg-white)', border: '1px solid var(--color-border)', borderRadius: '4px', padding: '16px', textAlign: 'center' }}>
                       <span className="label" style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: '600' }}>Branching Decisions</span>
-                      <div className="value" style={{ fontSize: '1.4rem', fontWeight: 'bold', color: 'var(--accent-navy, #1e3a8a)', marginTop: '4px' }}>
+                      <div className="value" style={{ fontSize: '1.4rem', fontWeight: 'bold', color: 'var(--accent-navy, var(--color-text-primary, #302B27))', marginTop: '4px' }}>
                         {selectedScenarioData.scenario.decisionCount || 0}
                       </div>
                     </div>
@@ -1499,7 +1526,7 @@ function AdminPanel({ user }) {
 
                   {/* Live Graph Integrity Audit Panel */}
                   {scenarioAudit && (
-                    <div style={{ backgroundColor: 'var(--bg-white)', border: '1px solid ' + (scenarioAudit.valid ? '#a7f3d0' : '#fecaca'), borderRadius: '4px', padding: '18px 20px', marginBottom: '24px' }}>
+                    <div style={{ backgroundColor: 'var(--bg-white)', border: '1px solid ' + (scenarioAudit.valid ? 'var(--color-border, #DED6C9)' : 'var(--color-border, #DED6C9)'), borderRadius: '4px', padding: '18px 20px', marginBottom: '24px' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', flexWrap: 'wrap', gap: '8px' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                           <span style={{ fontSize: '1.2rem' }}>{scenarioAudit.valid ? '✅' : '⚠️'}</span>
@@ -1507,7 +1534,7 @@ function AdminPanel({ user }) {
                             Graph Integrity Audit (scenarioIntegrityService)
                           </h3>
                         </div>
-                        <span style={{ fontSize: '0.75rem', fontWeight: 'bold', padding: '3px 8px', borderRadius: '4px', backgroundColor: scenarioAudit.valid ? '#d1fae5' : '#fee2e2', color: scenarioAudit.valid ? '#065f46' : '#991b1b' }}>
+                        <span style={{ fontSize: '0.75rem', fontWeight: 'bold', padding: '3px 8px', borderRadius: '4px', backgroundColor: scenarioAudit.valid ? 'var(--color-success-light, #EEF4F0)' : 'var(--color-danger-light, #F9ECEB)', color: scenarioAudit.valid ? 'var(--color-success, #536F61)' : 'var(--color-danger, #A34D43)' }}>
                           {scenarioAudit.valid ? 'PASSED — STRUCTURALLY SOUND' : 'INTEGRITY DEFECTS DETECTED'}
                         </span>
                       </div>
@@ -1522,7 +1549,7 @@ function AdminPanel({ user }) {
                       </div>
 
                       {scenarioAudit.warnings?.length > 0 && (
-                        <div style={{ marginTop: '12px', padding: '10px 12px', backgroundColor: '#fef3c7', borderRadius: '4px', fontSize: '0.8rem', color: '#92400e' }}>
+                        <div style={{ marginTop: '12px', padding: '10px 12px', backgroundColor: 'var(--color-warning-light, #FAF3E8)', borderRadius: '4px', fontSize: '0.8rem', color: 'var(--color-warning, #B17A38)' }}>
                           <strong>Topology Notes ({scenarioAudit.warnings.length}):</strong>
                           <ul style={{ margin: '4px 0 0 16px', padding: 0 }}>
                             {scenarioAudit.warnings.map((w, idx) => <li key={idx}>{w}</li>)}
@@ -1531,7 +1558,7 @@ function AdminPanel({ user }) {
                       )}
 
                       {scenarioAudit.errors?.length > 0 && (
-                        <div style={{ marginTop: '12px', padding: '10px 12px', backgroundColor: '#fee2e2', borderRadius: '4px', fontSize: '0.8rem', color: '#991b1b' }}>
+                        <div style={{ marginTop: '12px', padding: '10px 12px', backgroundColor: 'var(--color-danger-light, #F9ECEB)', borderRadius: '4px', fontSize: '0.8rem', color: 'var(--color-danger, #A34D43)' }}>
                           <strong>Critical Graph Errors ({scenarioAudit.errors.length}):</strong>
                           <ul style={{ margin: '4px 0 0 16px', padding: 0 }}>
                             {scenarioAudit.errors.map((e, idx) => <li key={idx}>{e}</li>)}
@@ -1576,8 +1603,8 @@ function AdminPanel({ user }) {
                                       fontWeight: 'bold',
                                       padding: '2px 6px',
                                       borderRadius: '4px',
-                                      backgroundColor: dec.riskLevel === 'safe' ? '#d1fae5' : (dec.riskLevel === 'critical' ? '#fee2e2' : '#fef3c7'),
-                                      color: dec.riskLevel === 'safe' ? '#065f46' : (dec.riskLevel === 'critical' ? '#991b1b' : '#92400e')
+                                      backgroundColor: dec.riskLevel === 'safe' ? 'var(--color-success-light, #EEF4F0)' : (dec.riskLevel === 'critical' ? 'var(--color-danger-light, #F9ECEB)' : 'var(--color-warning-light, #FAF3E8)'),
+                                      color: dec.riskLevel === 'safe' ? 'var(--color-success, #536F61)' : (dec.riskLevel === 'critical' ? 'var(--color-danger, #A34D43)' : 'var(--color-warning, #B17A38)')
                                     }}>
                                       {dec.riskLevel.toUpperCase()}
                                     </span>
@@ -1614,7 +1641,7 @@ function AdminPanel({ user }) {
                         <div key={st._id} style={{ backgroundColor: 'var(--bg-white)', border: '1px solid var(--color-border)', borderRadius: '4px', padding: '16px 20px' }}>
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '8px', marginBottom: '8px' }}>
                             <div>
-                              <span style={{ fontSize: '0.75rem', fontWeight: 'bold', color: 'var(--accent-navy, #1e3a8a)', textTransform: 'uppercase' }}>
+                              <span style={{ fontSize: '0.75rem', fontWeight: 'bold', color: 'var(--accent-navy, var(--color-text-primary, #302B27))', textTransform: 'uppercase' }}>
                                 Stage Order #{st.stageOrder}
                               </span>
                               <h4 style={{ fontSize: '1.05rem', fontWeight: 'bold', margin: '2px 0 0 0', color: 'var(--text-primary)' }}>
@@ -1629,14 +1656,14 @@ function AdminPanel({ user }) {
                                 fontSize: '0.7rem',
                                 padding: '2px 8px',
                                 borderRadius: '4px',
-                                backgroundColor: st.eventClassification === 'legitimate' ? '#d1fae5' : (st.eventClassification === 'malicious' ? '#fee2e2' : '#fef3c7'),
-                                color: st.eventClassification === 'legitimate' ? '#065f46' : (st.eventClassification === 'malicious' ? '#991b1b' : '#92400e'),
+                                backgroundColor: st.eventClassification === 'legitimate' ? 'var(--color-success-light, #EEF4F0)' : (st.eventClassification === 'malicious' ? 'var(--color-danger-light, #F9ECEB)' : 'var(--color-warning-light, #FAF3E8)'),
+                                color: st.eventClassification === 'legitimate' ? 'var(--color-success, #536F61)' : (st.eventClassification === 'malicious' ? 'var(--color-danger, #A34D43)' : 'var(--color-warning, #B17A38)'),
                                 fontWeight: 'bold'
                               }}>
                                 {st.eventClassification.toUpperCase()}
                               </span>
                               {st.terminal && (
-                                <span style={{ fontSize: '0.7rem', padding: '2px 8px', borderRadius: '4px', backgroundColor: '#e0e7ff', color: '#3730a3', fontWeight: 'bold' }}>
+                                <span style={{ fontSize: '0.7rem', padding: '2px 8px', borderRadius: '4px', backgroundColor: 'var(--color-gold-light, #FAF4EA)', color: 'var(--color-accent-terracotta, #A65F45)', fontWeight: 'bold' }}>
                                   TERMINAL
                                 </span>
                               )}
@@ -1670,8 +1697,8 @@ function AdminPanel({ user }) {
                                         fontWeight: 'bold',
                                         padding: '1px 6px',
                                         borderRadius: '3px',
-                                        backgroundColor: d.riskLevel === 'safe' ? '#d1fae5' : '#fef3c7',
-                                        color: d.riskLevel === 'safe' ? '#065f46' : '#92400e'
+                                        backgroundColor: d.riskLevel === 'safe' ? 'var(--color-success-light, #EEF4F0)' : 'var(--color-warning-light, #FAF3E8)',
+                                        color: d.riskLevel === 'safe' ? 'var(--color-success, #536F61)' : 'var(--color-warning, #B17A38)'
                                       }}>
                                         {d.riskLevel}
                                       </span>
@@ -1780,12 +1807,12 @@ function AdminPanel({ user }) {
           {activeTab === 'quizzes' && selectedQuizDetails && !isAdding && !editItem && (
             <div>
               {/* Breadcrumb Navigation */}
-              <nav aria-label="Breadcrumb" style={{ marginBottom: '14px', fontSize: '0.8rem', color: '#64748b' }}>
-                <span style={{ cursor: 'pointer', color: '#1e3a8a', textDecoration: 'underline' }} onClick={() => handleTabChange('analytics')}>Administration</span>
+              <nav aria-label="Breadcrumb" style={{ marginBottom: '14px', fontSize: '0.8rem', color: 'var(--color-text-muted, #797066)' }}>
+                <span style={{ cursor: 'pointer', color: 'var(--color-text-primary, #302B27)', textDecoration: 'underline' }} onClick={() => handleTabChange('analytics')}>Administration</span>
                 <span style={{ margin: '0 6px' }}>/</span>
-                <span style={{ cursor: 'pointer', color: '#1e3a8a', textDecoration: 'underline' }} onClick={handleCloseQuizQuestions}>Quizzes &amp; Bank</span>
+                <span style={{ cursor: 'pointer', color: 'var(--color-text-primary, #302B27)', textDecoration: 'underline' }} onClick={handleCloseQuizQuestions}>Quizzes &amp; Bank</span>
                 <span style={{ margin: '0 6px' }}>/</span>
-                <strong style={{ color: '#0f172a' }}>{selectedQuizDetails.quiz?.title}</strong>
+                <strong style={{ color: 'var(--color-text-primary, #302B27)' }}>{selectedQuizDetails.quiz?.title}</strong>
               </nav>
 
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap', gap: '10px' }}>
@@ -1821,8 +1848,8 @@ function AdminPanel({ user }) {
                 gap: '12px',
                 flexWrap: 'wrap',
                 alignItems: 'center',
-                backgroundColor: '#ffffff',
-                border: '1px solid #e2e8f0',
+                backgroundColor: 'var(--color-surface-card, #FCFAF5)',
+                border: '1px solid var(--color-border, #DED6C9)',
                 borderRadius: '8px',
                 padding: '12px 16px',
                 marginBottom: '16px'
@@ -1837,7 +1864,7 @@ function AdminPanel({ user }) {
                       width: '100%',
                       padding: '8px 12px',
                       borderRadius: '6px',
-                      border: '1px solid #cbd5e1',
+                      border: '1px solid var(--color-border, #DED6C9)',
                       fontSize: '0.85rem'
                     }}
                   />
@@ -1846,7 +1873,7 @@ function AdminPanel({ user }) {
                   <select
                     value={questionDifficultyFilter}
                     onChange={(e) => setQuestionDifficultyFilter(e.target.value)}
-                    style={{ padding: '8px 12px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '0.85rem', backgroundColor: '#fff' }}
+                    style={{ padding: '8px 12px', borderRadius: '6px', border: '1px solid var(--color-border, #DED6C9)', fontSize: '0.85rem', backgroundColor: 'var(--color-surface-card, #FFFDFA)' }}
                   >
                     <option value="all">All Difficulties</option>
                     <option value="Beginner">Beginner</option>
@@ -1858,7 +1885,7 @@ function AdminPanel({ user }) {
                   <select
                     value={questionCognitiveFilter}
                     onChange={(e) => setQuestionCognitiveFilter(e.target.value)}
-                    style={{ padding: '8px 12px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '0.85rem', backgroundColor: '#fff' }}
+                    style={{ padding: '8px 12px', borderRadius: '6px', border: '1px solid var(--color-border, #DED6C9)', fontSize: '0.85rem', backgroundColor: 'var(--color-surface-card, #FFFDFA)' }}
                   >
                     <option value="all">All Cognitive Levels</option>
                     <option value="Level 1">Level 1 (Remember)</option>
@@ -1871,21 +1898,39 @@ function AdminPanel({ user }) {
                 </div>
                 <div>
                   <select
+                    value={questionFormatFilter}
+                    onChange={(e) => setQuestionFormatFilter(e.target.value)}
+                    style={{ padding: '8px 12px', borderRadius: '6px', border: '1px solid var(--color-border, #DED6C9)', fontSize: '0.85rem', backgroundColor: 'var(--color-surface-card, #FFFDFA)' }}
+                  >
+                    <option value="all">All Formats</option>
+                    <option value="single_choice">Single Choice</option>
+                    <option value="multiple_choice">Multiple Choice</option>
+                    <option value="true_false">True / False</option>
+                    <option value="matching">Matching</option>
+                    <option value="ordering">Ordering Sequence</option>
+                    <option value="scenario_decision">Scenario Decision</option>
+                    <option value="indicator_identification">Indicator Identification</option>
+                    <option value="legal_application">Legal Application</option>
+                  </select>
+                </div>
+                <div>
+                  <select
                     value={questionStatusFilter}
                     onChange={(e) => setQuestionStatusFilter(e.target.value)}
-                    style={{ padding: '8px 12px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '0.85rem', backgroundColor: '#fff' }}
+                    style={{ padding: '8px 12px', borderRadius: '6px', border: '1px solid var(--color-border, #DED6C9)', fontSize: '0.85rem', backgroundColor: 'var(--color-surface-card, #FFFDFA)' }}
                   >
                     <option value="all">All Statuses</option>
                     <option value="published">Published Only</option>
                     <option value="draft">Draft Only</option>
                   </select>
                 </div>
-                {(questionSearchQuery || questionDifficultyFilter !== 'all' || questionCognitiveFilter !== 'all' || questionStatusFilter !== 'all') && (
+                {(questionSearchQuery || questionDifficultyFilter !== 'all' || questionCognitiveFilter !== 'all' || questionFormatFilter !== 'all' || questionStatusFilter !== 'all') && (
                   <button
                     onClick={() => {
                       setQuestionSearchQuery('');
                       setQuestionDifficultyFilter('all');
                       setQuestionCognitiveFilter('all');
+                      setQuestionFormatFilter('all');
                       setQuestionStatusFilter('all');
                     }}
                     className="btn btn-secondary"
@@ -1894,7 +1939,7 @@ function AdminPanel({ user }) {
                     Reset Filters
                   </button>
                 )}
-                <div style={{ marginLeft: 'auto', fontSize: '0.8rem', color: '#64748b' }}>
+                <div style={{ marginLeft: 'auto', fontSize: '0.8rem', color: 'var(--color-text-muted, #797066)' }}>
                   Showing <strong>{getFilteredQuestions().length}</strong> of {selectedQuizDetails.questions?.length || 0}
                 </div>
               </div>
@@ -1910,9 +1955,9 @@ function AdminPanel({ user }) {
                   </button>
                 </div>
               ) : getFilteredQuestions().length === 0 ? (
-                <div style={{ padding: '36px', textAlign: 'center', border: '1px dashed #cbd5e1', borderRadius: '8px', backgroundColor: '#ffffff' }}>
-                  <h3 style={{ fontSize: '1rem', color: '#0f172a', marginBottom: '6px' }}>No questions match active filters</h3>
-                  <p style={{ fontSize: '0.85rem', color: '#64748b', marginBottom: '12px' }}>
+                <div style={{ padding: '36px', textAlign: 'center', border: '1px dashed var(--color-border, #DED6C9)', borderRadius: '8px', backgroundColor: 'var(--color-surface-card, #FCFAF5)' }}>
+                  <h3 style={{ fontSize: '1rem', color: 'var(--color-text-primary, #302B27)', marginBottom: '6px' }}>No questions match active filters</h3>
+                  <p style={{ fontSize: '0.85rem', color: 'var(--color-text-muted, #797066)', marginBottom: '12px' }}>
                     Try clearing or adjusting search query, difficulty, cognitive level, or publish status.
                   </p>
                   <button
@@ -1948,7 +1993,7 @@ function AdminPanel({ user }) {
                           <td style={{ fontWeight: '500', maxWidth: '300px' }}>
                             <div>{q.questionText}</div>
                             {q.relatedLawSection && (
-                              <span style={{ fontSize: '0.75rem', color: 'var(--accent-navy, #1e3a8a)', display: 'block', marginTop: '2px' }}>
+                              <span style={{ fontSize: '0.75rem', color: 'var(--accent-navy, var(--color-text-primary, #302B27))', display: 'block', marginTop: '2px' }}>
                                 Ref: {q.relatedLawSection}
                               </span>
                             )}
@@ -1963,10 +2008,10 @@ function AdminPanel({ user }) {
                                     style={{
                                       padding: '2px 6px',
                                       borderRadius: '3px',
-                                      backgroundColor: isCorrect ? '#d1fae5' : 'transparent',
-                                      color: isCorrect ? '#065f46' : 'var(--text-secondary)',
+                                      backgroundColor: isCorrect ? 'var(--color-success-light, #EEF4F0)' : 'transparent',
+                                      color: isCorrect ? 'var(--color-success, #536F61)' : 'var(--text-secondary)',
                                       fontWeight: isCorrect ? 'bold' : 'normal',
-                                      border: isCorrect ? '1px solid #a7f3d0' : 'none'
+                                      border: isCorrect ? '1px solid var(--color-border, #DED6C9)' : 'none'
                                     }}
                                   >
                                     {isCorrect ? '✓ ' : `${oIdx + 1}. `}{opt}
@@ -1976,7 +2021,8 @@ function AdminPanel({ user }) {
                             </div>
                           </td>
                           <td style={{ fontSize: '0.8rem', whiteSpace: 'nowrap' }}>
-                            <div>{q.cognitiveLevel || 'Level 1'}</div>
+                            <div style={{ fontWeight: '600', color: 'var(--color-text-primary, #302B27)', fontSize: '0.78rem' }}>{q.format || 'single_choice'}</div>
+                            <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted, #797066)' }}>{q.cognitiveLevel || 'Level 1'}</div>
                             <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>{q.questionType}</span>
                           </td>
                           <td>
@@ -2023,7 +2069,7 @@ function AdminPanel({ user }) {
           )}
 
           {/* CRUD Lists View */}
-          {['laws', 'crimes', 'cases', 'quizzes', 'resources'].includes(activeTab) && !isAdding && !editItem && (!selectedQuizDetails || activeTab !== 'quizzes') && (
+          {['laws', 'crimes', 'cases', 'quizzes', 'resources', 'modules'].includes(activeTab) && !isAdding && !editItem && (!selectedQuizDetails || activeTab !== 'quizzes') && (
             <div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-md)' }}>
                 <h1 style={{ fontSize: '1.8rem', color: 'var(--text-primary)', fontWeight: 'bold', fontFamily: 'var(--font-sans)', textTransform: 'capitalize', margin: 0 }}>
@@ -2091,6 +2137,17 @@ function AdminPanel({ user }) {
                         <tr>
                           <th>Category</th>
                           <th>Title</th>
+                          <th style={{ textAlign: 'right' }}>Actions</th>
+                        </tr>
+                      )}
+                      {activeTab === 'modules' && (
+                        <tr>
+                          <th>Order</th>
+                          <th>Track / Category</th>
+                          <th>Title</th>
+                          <th>Difficulty</th>
+                          <th>Read Time</th>
+                          <th>Status</th>
                           <th style={{ textAlign: 'right' }}>Actions</th>
                         </tr>
                       )}
@@ -2184,7 +2241,7 @@ function AdminPanel({ user }) {
                             <button
                               onClick={() => handleOpenQuizQuestions(item._id || item.id)}
                               className="table-action-btn"
-                              style={{ marginRight: '8px', backgroundColor: 'var(--accent-navy, #1e3a8a)', color: '#fff' }}
+                              style={{ marginRight: '8px', backgroundColor: 'var(--accent-navy, var(--color-text-primary, #302B27))', color: '#fff' }}
                             >
                               Questions ({item.questionCount || 0})
                             </button>
@@ -2200,6 +2257,35 @@ function AdminPanel({ user }) {
                           <td style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
                             <button onClick={() => handleEditInit(item)} className="table-action-btn" style={{ marginRight: '8px' }}>Edit</button>
                             <button onClick={() => handleDelete(item.id)} className="table-action-btn danger">Delete</button>
+                          </td>
+                        </tr>
+                      ))}
+                      {activeTab === 'modules' && paginatedItems.map(item => (
+                        <tr key={item._id || item.slug}>
+                          <td style={{ fontWeight: '600' }}>#{item.order || 1}</td>
+                          <td>
+                            <span style={{ fontSize: '0.75rem', fontWeight: 'bold', padding: '2px 8px', borderRadius: '4px', backgroundColor: 'rgba(15,23,42,0.06)' }}>
+                              {item.category}
+                            </span>
+                          </td>
+                          <td style={{ fontWeight: '600' }}>{item.title}</td>
+                          <td>{item.difficulty}</td>
+                          <td>{item.estimatedMinutes} min</td>
+                          <td>
+                            <span style={{
+                              fontSize: '0.75rem',
+                              fontWeight: 'bold',
+                              padding: '2px 8px',
+                              borderRadius: '4px',
+                              backgroundColor: item.published ? 'var(--color-success-light)' : 'var(--color-warning-light)',
+                              color: item.published ? 'var(--color-success)' : 'var(--color-warning)'
+                            }}>
+                              {item.published ? 'PUBLISHED' : 'DRAFT'}
+                            </span>
+                          </td>
+                          <td style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
+                            <button onClick={() => handleEditInit(item)} className="table-action-btn" style={{ marginRight: '8px' }}>Edit</button>
+                            <button onClick={() => handleDelete(item._id)} className="table-action-btn danger">Delete</button>
                           </td>
                         </tr>
                       ))}
@@ -2673,6 +2759,52 @@ function AdminPanel({ user }) {
                   </div>
                 )}
 
+                {/* MODULES FORM */}
+                {activeTab === 'modules' && (
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                    <div className="form-group">
+                      <label>Lesson Title</label>
+                      <input type="text" name="title" className="form-control" value={formData.title || ''} onChange={handleFormChange} placeholder="e.g. UPI, QR Code and Digital Payment Fraud" required />
+                    </div>
+                    <div className="form-group">
+                      <label>Slug</label>
+                      <input type="text" name="slug" className="form-control" value={formData.slug || ''} onChange={handleFormChange} placeholder="e.g. upi-qr-payment-fraud" />
+                    </div>
+                    <div className="form-group">
+                      <label>Track / Category</label>
+                      <input type="text" name="category" className="form-control" value={formData.category || ''} onChange={handleFormChange} placeholder="e.g. Recognizing Threats" required />
+                    </div>
+                    <div className="form-group">
+                      <label>Difficulty</label>
+                      <select name="difficulty" className="form-control" value={formData.difficulty || 'Beginner'} onChange={handleFormChange}>
+                        <option value="Beginner">Beginner</option>
+                        <option value="Intermediate">Intermediate</option>
+                        <option value="Advanced">Advanced</option>
+                      </select>
+                    </div>
+                    <div className="form-group">
+                      <label>Estimated Read Time (Minutes)</label>
+                      <input type="number" name="estimatedMinutes" className="form-control" value={formData.estimatedMinutes || 6} onChange={handleFormChange} />
+                    </div>
+                    <div className="form-group">
+                      <label>Sequence Order</label>
+                      <input type="number" name="order" className="form-control" value={formData.order || 1} onChange={handleFormChange} />
+                    </div>
+                    <div className="form-group" style={{ gridColumn: '1 / span 2' }}>
+                      <label>Summary</label>
+                      <textarea name="summary" className="form-control" style={{ minHeight: '70px' }} value={formData.summary || ''} onChange={handleFormChange} required />
+                    </div>
+                    <div className="form-group" style={{ gridColumn: '1 / span 2' }}>
+                      <label>Overview Content</label>
+                      <textarea name="content" className="form-control" style={{ minHeight: '90px' }} value={formData.content || ''} onChange={handleFormChange} required />
+                    </div>
+                    <div className="form-group" style={{ display: 'flex', alignItems: 'center', gap: '8px', gridColumn: '1 / span 2' }}>
+                      <input type="checkbox" name="published" id="published-module" checked={formData.published !== false} onChange={(e) => setFormData(prev => ({ ...prev, published: e.target.checked }))} />
+                      <label htmlFor="published-module" style={{ margin: 0, fontWeight: '600' }}>Published (Visible to Learners)</label>
+                    </div>
+                  </div>
+                )}
+
                 <div style={{ marginTop: '24px', display: 'flex', gap: '8px' }}>
                   <button type="submit" className="btn btn-primary" style={{ padding: '8px 24px', fontSize: '0.85rem' }}>Save Changes</button>
                   <button
@@ -3096,7 +3228,7 @@ function AdminPanel({ user }) {
                         <h4 style={{ fontSize: '0.85rem', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: '8px', letterSpacing: '0.05em' }}>
                           Contextual Metadata
                         </h4>
-                        <div style={{ backgroundColor: '#faf9f5', border: '1px solid var(--color-border)', borderRadius: '4px', padding: '12px', fontSize: '0.82rem' }}>
+                        <div style={{ backgroundColor: 'var(--color-surface-secondary, #EEE7DB)', border: '1px solid var(--color-border)', borderRadius: '4px', padding: '12px', fontSize: '0.82rem' }}>
                           {selectedAuditLog.metadata.ip && <div><strong>Client IP:</strong> <span style={{ fontFamily: 'monospace' }}>{selectedAuditLog.metadata.ip}</span></div>}
                           {selectedAuditLog.metadata.userAgent && <div style={{ marginTop: '4px' }}><strong>User-Agent:</strong> {selectedAuditLog.metadata.userAgent}</div>}
                           {Object.entries(selectedAuditLog.metadata).filter(([k]) => k !== 'ip' && k !== 'userAgent').map(([k, v]) => (

@@ -184,8 +184,8 @@ function RemediationCards({ sessionId, initialData = null, initialProgress = nul
                       <span style={{
                         fontSize: '0.72rem',
                         fontWeight: '700',
-                        color: '#1e3a8a',
-                        backgroundColor: '#eff6ff',
+                        color: 'var(--color-accent-terracotta, #A65F45)',
+                        backgroundColor: 'var(--color-terracotta-light, #FAF1ED)',
                         border: '1px solid #bfdbfe',
                         padding: '2px 8px',
                         borderRadius: '3px'
@@ -196,8 +196,8 @@ function RemediationCards({ sessionId, initialData = null, initialProgress = nul
                       <span style={{
                         fontSize: '0.72rem',
                         fontWeight: '700',
-                        color: '#065f46',
-                        backgroundColor: '#ecfdf5',
+                        color: 'var(--color-success, #536F61)',
+                        backgroundColor: 'var(--color-success-light, #EEF4F0)',
                         border: '1px solid #a7f3d0',
                         padding: '2px 8px',
                         borderRadius: '3px'
@@ -208,8 +208,8 @@ function RemediationCards({ sessionId, initialData = null, initialProgress = nul
                       <span style={{
                         fontSize: '0.72rem',
                         fontWeight: '700',
-                        color: '#92400e',
-                        backgroundColor: '#fffbeb',
+                        color: 'var(--color-warning, #B17A38)',
+                        backgroundColor: 'var(--color-warning-light, #FAF3E8)',
                         border: '1px solid #fde68a',
                         padding: '2px 8px',
                         borderRadius: '3px'
@@ -267,8 +267,8 @@ function RemediationCards({ sessionId, initialData = null, initialProgress = nul
                             <span style={{
                               fontSize: '0.65rem',
                               fontWeight: '700',
-                              color: '#92400e',
-                              backgroundColor: '#fef3c7',
+                              color: 'var(--color-warning, #B17A38)',
+                              backgroundColor: 'var(--color-warning-light, #FAF3E8)',
                               padding: '1px 6px',
                               borderRadius: '2px',
                               border: '1px solid #fde68a'
@@ -278,7 +278,7 @@ function RemediationCards({ sessionId, initialData = null, initialProgress = nul
                           )}
                         </div>
                         {ref.status === 'ENACTED_FUTURE_COMMENCEMENT' && ref.commencementNote && (
-                          <div style={{ fontSize: '0.72rem', color: '#b45309', margin: '2px 0 4px 0' }}>
+                          <div style={{ fontSize: '0.72rem', color: 'var(--color-warning, #B17A38)', margin: '2px 0 4px 0' }}>
                             {ref.commencementNote}
                           </div>
                         )}
@@ -314,8 +314,8 @@ function RemediationCards({ sessionId, initialData = null, initialProgress = nul
                       textAlign: 'center',
                       fontSize: '0.88rem',
                       padding: '9px 12px',
-                      backgroundColor: isReinforced ? 'var(--color-primary)' : '#b45309',
-                      borderColor: isReinforced ? 'var(--color-primary)' : '#b45309',
+                      backgroundColor: isReinforced ? 'var(--color-primary)' : 'var(--color-warning, #B17A38)',
+                      borderColor: isReinforced ? 'var(--color-primary)' : 'var(--color-warning, #B17A38)',
                       color: '#fff',
                       fontWeight: '600'
                     }}

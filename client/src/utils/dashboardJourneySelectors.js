@@ -42,6 +42,10 @@ export function selectPrimaryNextAction({
   hasFinal = false,
   pathwaysWithStatus = [],
   dueSpacedReviews = [],
+  dueQuizRecalls = [],
+  inProgressLesson = null,
+  recommendedLesson = null,
+  frequentlyMissedQuizTopic = null,
   completedFocusCount = 0,
   totalFocusCount = 0
 } = {}) {
@@ -65,10 +69,48 @@ export function selectPrimaryNextAction({
     };
   }
 
+  // 2. Due Pathway Spaced Retrieval (Time-sensitive retention check)
+  if (Array.isArray(dueSpacedReviews) && dueSpacedReviews.length > 0 && dueSpacedReviews[0]) {
+    const dueItem = dueSpacedReviews[0];
+    const habitTitle = resolvePathwayTitle(dueItem.pathwayId, dueItem.habitTitle);
+
+    return {
+      type: 'DUE_SPACED_REVIEW',
+      eyebrow: 'Follow-Up Review Due (~2 min)',
+      title: `Quick Review: ${habitTitle}`,
+      description: 'A short retention check is ready. Checking what you remember helps safe habits stay second nature.',
+      actionLabel: 'Start Quick Review \u2192',
+      actionType: 'SPACED_MODAL',
+      destination: null,
+      targetItem: dueItem,
+      estimatedMinutes: 2,
+      steps: null
+    };
+  }
+
+  // 3. Due Missed Quiz Concept Recall (~2 min quiz concept review)
+  if (Array.isArray(dueQuizRecalls) && dueQuizRecalls.length > 0 && dueQuizRecalls[0]) {
+    const recallItem = dueQuizRecalls[0];
+    const categoryName = recallItem.category || recallItem.question?.category || 'Cyber Law';
+
+    return {
+      type: 'DUE_QUIZ_RECALL',
+      eyebrow: 'Concept Recall Ready (~2 min)',
+      title: `Review Missed Concept: ${categoryName}`,
+      description: `You recently missed a question on ${categoryName}. Reviewing this concept now reinforces statutory rules and prevents future security mistakes.`,
+      actionLabel: 'Review Concept Now \u2192',
+      actionType: 'QUIZ_RECALL_MODAL',
+      destination: null,
+      targetItem: recallItem,
+      estimatedMinutes: 2,
+      steps: null
+    };
+  }
+
   // Find active in-progress pathway (Step 1 or 2 complete, but not Step 3)
   const inProgressItem = (pathwaysWithStatus || []).find(p => p && p.isInProgress && p.rec && p.rec.pathwayId);
 
-  // 2. Resume Pathway (Active in-progress lesson has highest momentum)
+  // 4. Resume Pathway (Active in-progress lesson has highest momentum)
   if (!hasFinal && inProgressItem && inProgressItem.rec) {
     const rec = inProgressItem.rec;
     const completedRecord = inProgressItem.completedRecord;
@@ -107,10 +149,26 @@ export function selectPrimaryNextAction({
     };
   }
 
+  // 5. Resume In-Progress Curriculum Lesson
+  if (inProgressLesson && inProgressLesson.slug) {
+    return {
+      type: 'RESUME_LESSON',
+      eyebrow: 'Curriculum Lesson in Progress',
+      title: `Resume: ${inProgressLesson.title || 'Curriculum Lesson'}`,
+      description: inProgressLesson.summary || 'Pick up where you left off in your structured study of Indian cyber law provisions.',
+      actionLabel: 'Continue Reading \u2192',
+      actionType: 'LINK',
+      destination: `/modules/${inProgressLesson.slug}`,
+      targetItem: inProgressLesson,
+      estimatedMinutes: 5,
+      steps: null
+    };
+  }
+
   // Find next unstarted recommended pathway
   const nextIncompleteItem = (pathwaysWithStatus || []).find(p => p && !p.isFullyCompleted && p.rec && p.rec.pathwayId);
 
-  // 3. Ready for Final Assessment (All recommended lessons complete, but Final Check not taken)
+  // 6. Ready for Final Assessment (All recommended lessons complete, but Final Check not taken)
   const allFocusComplete = safeTotal > 0 && safeCompleted >= safeTotal;
   if (!hasFinal && (allFocusComplete || (!nextIncompleteItem && (pathwaysWithStatus || []).length > 0))) {
     return {
@@ -127,26 +185,7 @@ export function selectPrimaryNextAction({
     };
   }
 
-  // 4. Due Spaced Retrieval (7-day retention check is time-sensitive and quick ~2 min)
-  if (Array.isArray(dueSpacedReviews) && dueSpacedReviews.length > 0 && dueSpacedReviews[0]) {
-    const dueItem = dueSpacedReviews[0];
-    const habitTitle = resolvePathwayTitle(dueItem.pathwayId, dueItem.habitTitle);
-
-    return {
-      type: 'DUE_SPACED_REVIEW',
-      eyebrow: 'A Review is Ready (~2 min)',
-      title: `Quick Review: ${habitTitle}`,
-      description: 'A short follow-up review is ready. Checking what you remember helps safe habits stay second nature.',
-      actionLabel: 'Start Quick Review \u2192',
-      actionType: 'SPACED_MODAL',
-      destination: null,
-      targetItem: dueItem,
-      estimatedMinutes: 2,
-      steps: null
-    };
-  }
-
-  // 5. Start Next Recommended Pathway
+  // 7. Start Next Recommended Pathway
   if (!hasFinal && nextIncompleteItem && nextIncompleteItem.rec) {
     const rec = nextIncompleteItem.rec;
     const title = resolvePathwayTitle(rec.pathwayId, rec.habitTitle);
@@ -169,10 +208,26 @@ export function selectPrimaryNextAction({
     };
   }
 
+  // 8. Start Recommended Curriculum Lesson
+  if (recommendedLesson && recommendedLesson.slug) {
+    return {
+      type: 'START_LESSON',
+      eyebrow: 'Recommended Curriculum Lesson',
+      title: recommendedLesson.title || 'Essential Cyber Law Lesson',
+      description: recommendedLesson.summary || 'Deepen your knowledge of primary Indian cyber statutes and legal protections.',
+      actionLabel: 'Read Lesson \u2192',
+      actionType: 'LINK',
+      destination: `/modules/${recommendedLesson.slug}`,
+      targetItem: recommendedLesson,
+      estimatedMinutes: 6,
+      steps: null
+    };
+  }
+
   // Find next eligible reinforcement pathway
   const nextReinforceItem = (pathwaysWithStatus || []).find(p => p && p.isReinforcementEligible && !p.isReinforced && p.rec && p.rec.pathwayId);
 
-  // 6. Targeted Habit Reinforcement Eligible
+  // 9. Targeted Habit Reinforcement Eligible
   if (hasFinal && nextReinforceItem && nextReinforceItem.rec) {
     const rec = nextReinforceItem.rec;
     const title = resolvePathwayTitle(rec.pathwayId, rec.habitTitle);
@@ -191,11 +246,27 @@ export function selectPrimaryNextAction({
     };
   }
 
-  // 7. All Caught Up / Steady Maintenance
+  // 10. Practice Weak Quiz Topic
+  if (frequentlyMissedQuizTopic && frequentlyMissedQuizTopic.topic) {
+    return {
+      type: 'PRACTICE_WEAK_QUIZ',
+      eyebrow: 'Targeted Subject Practice',
+      title: `Reinforce: ${frequentlyMissedQuizTopic.topic}`,
+      description: `Your accuracy in this domain is currently ${frequentlyMissedQuizTopic.accuracy}%. A short topic-wise quiz will help cement key provisions and evidence standards.`,
+      actionLabel: 'Practice Subject \u2192',
+      actionType: 'LINK',
+      destination: '/quizzes',
+      targetItem: frequentlyMissedQuizTopic,
+      estimatedMinutes: 4,
+      steps: null
+    };
+  }
+
+  // 11. All Caught Up / Steady Maintenance
   return {
     type: 'ALL_CAUGHT_UP',
     eyebrow: 'All Up to Date',
-    title: 'Your safety habits are up to date.',
+    title: 'Your safety habits and practice are up to date.',
     description: 'You have finished your recommended lessons and all reviews are current. You can practice cyber law quizzes, review your learning record, or return later for your next follow-up check.',
     actionLabel: 'Practice Law Quizzes \u2192',
     actionType: 'LINK',

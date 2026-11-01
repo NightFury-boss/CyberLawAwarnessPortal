@@ -65,6 +65,12 @@ function Laws() {
       filter: (l) => l.actName === 'Bharatiya Nyaya Sanhita, 2023'
     },
     {
+      id: 'bsa',
+      name: 'Bharatiya Sakshya Adhiniyam, 2023',
+      displayName: 'Digital Evidence (BSA, 2023)',
+      filter: (l) => l.actName === 'Bharatiya Sakshya Adhiniyam, 2023'
+    },
+    {
       id: 'judgments',
       name: 'Important Judgments',
       displayName: 'Important Judgments',
@@ -139,6 +145,56 @@ function Laws() {
       crimeSlug: 'identity-theft',
       caseStudy: '',
       advice: 'Under the IT Intermediary Rules, digital platforms lose safe harbor immunity if they fail to take down impersonation content within 24-36 hours.'
+    },
+    {
+      id: 'digital_arrest',
+      title: 'Fraudster on video call claiming to be Police/CBI/ED threatening "digital arrest"',
+      type: 'Government Impersonation & Extortion',
+      provisions: ['Section 66D', 'BNS Section 318', 'BNS Section 319'],
+      crime: 'Digital Arrest Scams',
+      crimeSlug: 'digital-arrest-scam',
+      caseStudy: 'digital-arrest-impersonation',
+      advice: 'No Indian law enforcement agency or court conducts "digital arrests" via Skype/WhatsApp. Cut the call, preserve call records, and dial 1930 immediately.'
+    },
+    {
+      id: 'predatory_loan',
+      title: 'Instant loan app accessing contacts and sending morphed images to relatives',
+      type: 'Extortion & Harassment',
+      provisions: ['Section 66E', 'BNS Section 351', 'BNS Section 78', 'Section 43'],
+      crime: 'Loan App Extortion',
+      crimeSlug: 'loan-app-extortion',
+      caseStudy: 'instant-loan-app-harassment',
+      advice: 'Lenders cannot harass contacts or threaten bodily privacy. File an emergency report on cybercrime.gov.in and check the lender against the RBI Sachet whitelist.'
+    },
+    {
+      id: 'voice_clone_fraud',
+      title: 'Received panicked call from family member claiming accident/arrest with cloned voice',
+      type: 'AI Impersonation Fraud',
+      provisions: ['Section 66D', 'BNS Section 319'],
+      crime: 'Deepfake & AI Impersonation',
+      crimeSlug: 'deepfake-ai-impersonation',
+      caseStudy: 'ai-voice-cloning-family-emergency',
+      advice: 'Never transfer emergency funds without secondary verification. Call the family member back directly on cellular network or verify through hostel/workplace contacts.'
+    },
+    {
+      id: 'electronic_evidence',
+      title: 'Need to submit WhatsApp chats, emails, or call recordings as legal court evidence',
+      type: 'Digital Evidence Admissibility',
+      provisions: ['BSA Section 63'],
+      crime: 'Digital Evidence & Forensics',
+      crimeSlug: 'phishing',
+      caseStudy: 'classified-marketplace-qr-fraud',
+      advice: 'Under BSA Section 63 (replacing Section 65B of Evidence Act), electronic records require an accompanying certificate signed by the device custodian to be legally admissible in court.'
+    },
+    {
+      id: 'cyberstalking_harassment',
+      title: 'Obsessive online tracking, repeated unwanted messages, or location stalking',
+      type: 'Cyberstalking & Personal Safety',
+      provisions: ['BNS Section 78', 'Section 66E'],
+      crime: 'Cyberstalking & Doxxing',
+      crimeSlug: 'cyberstalking-doxxing',
+      caseStudy: '',
+      advice: 'BNS Section 78 explicitly criminalizes electronic monitoring of women. Document all timestamps and handles without replying; file on cybercrime.gov.in.'
     }
   ];
 
@@ -498,7 +554,7 @@ function Laws() {
     let accentColor = 'var(--color-primary)';
     if (isOmitted) accentColor = 'var(--color-error)';
     else if (isNotYetInForce) accentColor = '#f59e0b';
-    else if (section.role === 'Data Protection') accentColor = '#10b981';
+    else if (section.role === 'Data Protection') accentColor = 'var(--color-success, #536F61)';
 
     const cardId = section.sectionNumber.replace(/\s+/g, '-');
 
@@ -997,7 +1053,7 @@ function Laws() {
 
         {/* Statutory Transition & Operational Status Guide */}
         <div style={{
-          backgroundColor: 'var(--bg-card, #ffffff)',
+          backgroundColor: 'var(--color-surface-card, #FCFAF5)',
           border: '1px solid var(--color-border)',
           borderRadius: '6px',
           padding: '16px 20px',
@@ -1005,7 +1061,7 @@ function Laws() {
           boxShadow: '0 1px 3px rgba(0,0,0,0.03)'
         }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', flexWrap: 'wrap', gap: '8px' }}>
-            <span style={{ fontSize: '0.75rem', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '0.8px', color: 'var(--accent-navy, #1e3a8a)' }}>
+            <span style={{ fontSize: '0.75rem', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '0.8px', color: 'var(--color-text-primary, #302B27)' }}>
               How Active Laws Apply Today
             </span>
             <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
@@ -1025,7 +1081,7 @@ function Laws() {
               padding: '12px',
               backgroundColor: 'var(--bg-secondary)',
               borderRadius: '4px',
-              borderLeft: '3px solid #10b981'
+              borderLeft: '3px solid var(--color-success, #536F61)'
             }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px' }}>
                 <span style={{ fontWeight: '700', color: 'var(--text-primary)' }}>IT Act § 43A</span>
@@ -1043,7 +1099,7 @@ function Laws() {
               padding: '12px',
               backgroundColor: 'var(--bg-secondary)',
               borderRadius: '4px',
-              borderLeft: '3px solid #3b82f6'
+              borderLeft: '3px solid var(--color-accent-gold, #B18A55)'
             }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px' }}>
                 <span style={{ fontWeight: '700', color: 'var(--text-primary)' }}>BNS 2023</span>
@@ -1061,7 +1117,7 @@ function Laws() {
               padding: '12px',
               backgroundColor: 'var(--bg-secondary)',
               borderRadius: '4px',
-              borderLeft: '3px solid #ef4444'
+              borderLeft: '3px solid var(--color-danger, #A34D43)'
             }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px' }}>
                 <span style={{ fontWeight: '700', color: 'var(--text-primary)' }}>IT Act § 66A</span>

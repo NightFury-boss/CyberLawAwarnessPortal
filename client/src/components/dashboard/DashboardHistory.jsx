@@ -5,9 +5,9 @@ import React from 'react';
  * Section F: Secondary progressive disclosure for session history and methodology notes
  * 
  * Philosophy:
- * - Keeps the primary study desk clean and actionable.
- * - Discloses historical assessment sessions, version isolation context, and methodology details.
- * - Does NOT expose internal database IDs, technical stack traces, or formula internals.
+ * - Keeps the primary study desk clean, purposeful, and actionable.
+ * - Discloses historical assessment sessions, version isolation context, and methodology details on demand.
+ * - Does NOT expose internal database IDs, stack traces, or formula internals.
  */
 function DashboardHistory({
   hasBaseline,
@@ -19,34 +19,47 @@ function DashboardHistory({
   const sessions = portfolioData?.behavioralTrajectory?.sessions || [];
 
   return (
-    <section className="desk-section desk-section-borderless" aria-labelledby="history-heading">
+    <section className="atelier-archive-drawer desk-archive-box" aria-labelledby="history-heading">
       <details className="desk-disclosure">
-        <summary className="desk-disclosure-summary">
-          <span id="history-heading">Past checks & how we measure habits</span>
+        <summary className="atelier-archive-summary desk-archive-summary">
+          <span id="history-heading">▸ Past Assessment Sessions &amp; Methodology Archive</span>
         </summary>
-        <div className="desk-disclosure-body">
-          <p className="desk-history-lead">
-            Each check is saved separately to ensure your history remains accurate. We compare checks using matching scenario models so your progress is always measured fairly.
+        <div className="desk-archive-body">
+          <p style={{ margin: '0 0 14px 0', color: 'var(--text-secondary, #56565c)' }}>
+            Each assessment session is recorded immutably under strict version isolation. Longitudinal progress is calculated only across comparable scenario versions to ensure rigorous measurement validity.
           </p>
 
           {/* Session History List */}
           {sessions.length > 0 && (
-            <div className="desk-history-sessions">
-              <h4 className="desk-history-subheading">Completed Checks</h4>
-              <ul className="desk-history-list">
+            <div style={{ marginBottom: '18px' }}>
+              <h4 style={{ margin: '0 0 8px 0', fontSize: '0.85rem', fontWeight: 700, color: 'var(--accent-navy, #0f2537)' }}>
+                Recorded Checkpoints
+              </h4>
+              <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '6px' }}>
                 {sessions.map((sess, idx) => {
                   const stageName = sess.scenarioCode === 'baseline' 
-                    ? 'First Check (Baseline)' 
+                    ? 'First Check (Your Digital Day)' 
                     : sess.scenarioCode === 'final' 
                       ? 'Final Check' 
-                      : 'Follow-Up Check';
+                      : 'Retention Follow-Up';
                   return (
-                    <li key={idx} className="desk-history-item">
-                      <span className="desk-history-stage">{stageName}</span>
-                      <span className="desk-history-version">Version {sess.scenarioVersion}</span>
-                      <time className="desk-history-date" dateTime={new Date(sess.completedAt).toISOString()}>
-                        {new Date(sess.completedAt).toLocaleDateString()}
-                      </time>
+                    <li
+                      key={idx}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        padding: '6px 10px',
+                        backgroundColor: 'var(--bg-primary, #fbfbf9)',
+                        border: '1px solid var(--color-border, #e6e5e0)',
+                        borderRadius: '4px',
+                        fontSize: '0.8rem'
+                      }}
+                    >
+                      <span style={{ fontWeight: 600, color: 'var(--accent-navy, #0f2537)' }}>{stageName}</span>
+                      <span style={{ color: 'var(--text-muted, #8b8b93)', fontSize: '0.74rem' }}>
+                        Scenario Model v{sess.scenarioVersion || 1} • {new Date(sess.completedAt).toLocaleDateString()}
+                      </span>
                     </li>
                   );
                 })}
@@ -54,17 +67,19 @@ function DashboardHistory({
             </div>
           )}
 
-          <div className="desk-methodology-notes">
-            <h4 className="desk-history-subheading">How We Measure Your Habits</h4>
-            <ul className="desk-notes-list">
+          <div style={{ borderTop: '1px dashed var(--color-border, #e6e5e0)', paddingTop: '12px' }}>
+            <h4 style={{ margin: '0 0 8px 0', fontSize: '0.85rem', fontWeight: 700, color: 'var(--accent-navy, #0f2537)' }}>
+              Methodological Commitments
+            </h4>
+            <ul style={{ margin: 0, paddingLeft: '18px', display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '0.8rem', color: 'var(--text-secondary, #56565c)' }}>
               <li>
-                <strong>Six Independent Habits:</strong> Each safety habit is measured on its own rather than averaged together, so a strong area never hides a habit that needs attention.
+                <strong>Six Canonical Habits:</strong> Each safety habit (TR, SI, VB, DQ, FP, UA) is measured independently, avoiding deceptive composite scores.
               </li>
               <li>
-                <strong>Knowledge vs. Habits:</strong> Quizzes test your understanding of Indian cyber laws, while scenario stories show how you react to realistic online situations.
+                <strong>Knowledge vs. Reflex:</strong> Statutory quizzes evaluate knowledge of primary legislation, whereas assessment simulations measure instinctive reaction under pressure.
               </li>
               <li>
-                <strong>Habit Changes Over Time:</strong> Statuses like <em>Still Strong, Steady, Needs Practice, or In Progress</em> are calculated directly by comparing your choices across completed checks.
+                <strong>Version Isolation:</strong> Completed sessions are immutable; improvements are tracked through longitudinal differential analysis.
               </li>
             </ul>
           </div>

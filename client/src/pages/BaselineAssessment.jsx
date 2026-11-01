@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
-import RemediationCards from '../components/RemediationCards';
+import DigitalAwarenessProfile from '../components/assessment/DigitalAwarenessProfile';
 import { performStateTransition } from '../utils/transitionUtils';
 
 function BaselineAssessment({ _user, updateProgressTrigger }) {
@@ -182,17 +182,8 @@ function BaselineAssessment({ _user, updateProgressTrigger }) {
     }
   };
 
-  const habitDimensions = [
-    { key: 'recognition', label: 'Spotting Dangers', desc: 'Catching deceptive prompts and urgency pressure' },
-    { key: 'signalIdentification', label: 'Spotting Fake Senders', desc: 'Noticing domain typos, spoofed headers, and payment traps' },
-    { key: 'verification', label: 'Checking Before Trusting', desc: 'Independently confirming requests via official apps/channels' },
-    { key: 'decisionQuality', label: 'Making Thoughtful Choices', desc: 'Taking safe, balanced actions across routine digital situations' },
-    { key: 'falsePositive', label: 'Staying Calm with Safe Messages', desc: 'Recognizing legitimate system notices without panicking' },
-    { key: 'unreviewedAcceptance', label: 'Not Clicking Without Checking', desc: 'Reading permissions and links before accepting or downloading' }
-  ];
-
   return (
-    <div className="container page-entry" style={{ padding: 'var(--space-xl) 0', maxWidth: '840px', fontFamily: 'var(--font-sans)' }}>
+    <div className="container page-entry" style={{ padding: 'var(--space-xl) var(--space-md)', maxWidth: '840px', fontFamily: 'var(--font-sans)', boxSizing: 'border-box' }}>
       {/* Accessible Live Region */}
       <div aria-live="polite" className="sr-only" style={{ position: 'absolute', width: '1px', height: '1px', padding: 0, margin: '-1px', overflow: 'hidden', clip: 'rect(0,0,0,0)', border: 0 }}>
         {currentStage ? `Situation order ${currentStage.stageOrder}: ${currentStage.title}. ${currentStage.description}` : ''}
@@ -380,7 +371,7 @@ function BaselineAssessment({ _user, updateProgressTrigger }) {
                 )}
 
                 {currentStage.mockInterfaceData.requiresCredentials ? (
-                  <div style={{ maxWidth: '420px', margin: '20px auto', border: '1px solid var(--color-border)', padding: '20px', borderRadius: '8px', backgroundColor: '#fff', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}>
+                  <div style={{ maxWidth: '420px', margin: '20px auto', border: '1px solid var(--color-border)', padding: '20px', borderRadius: '8px', backgroundColor: 'var(--color-surface-card, #FCFAF5)', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}>
                     <div style={{ textAlign: 'center', marginBottom: '16px' }}>
                       <h4 style={{ fontSize: '1.15rem', color: 'var(--text-primary)', margin: '0 0 4px 0' }}>Verification Portal</h4>
                       <span className="text-muted" style={{ fontSize: '0.8rem' }}>Enter credentials to proceed</span>
@@ -444,10 +435,10 @@ function BaselineAssessment({ _user, updateProgressTrigger }) {
 
             {/* Notification / Browser Dialog */}
             {currentStage.mockInterfaceType === 'notification' && (
-              <div style={{ maxWidth: '440px', margin: '30px auto', backgroundColor: '#fff', border: '1px solid var(--color-border)', borderRadius: '8px', padding: '16px', borderLeft: '4px solid #0f2537', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}>
+              <div style={{ maxWidth: '440px', margin: '30px auto', backgroundColor: 'var(--color-surface-card, #FCFAF5)', border: '1px solid var(--color-border)', borderRadius: '8px', padding: '16px', borderLeft: '4px solid var(--color-text-primary, #302B27)', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}>
                 <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
-                  <div style={{ width: '36px', height: '36px', borderRadius: '50%', backgroundColor: '#f0f4f8', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ color: '#0f2537' }}>
+                  <div style={{ width: '36px', height: '36px', borderRadius: '50%', backgroundColor: 'var(--color-surface-secondary, #EFE8DC)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ color: 'var(--color-text-primary, #302B27)' }}>
                       <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
                       <line x1="12" y1="9" x2="12" y2="13" />
                       <line x1="12" y1="17" x2="12.01" y2="17" />
@@ -477,12 +468,12 @@ function BaselineAssessment({ _user, updateProgressTrigger }) {
 
             {/* SMS Message Mockup */}
             {currentStage.mockInterfaceType === 'sms' && (
-              <div style={{ maxWidth: '340px', margin: '30px auto', backgroundColor: '#f1f5f9', border: '1px solid var(--color-border)', borderRadius: '24px', padding: '16px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}>
+              <div style={{ maxWidth: '340px', margin: '30px auto', backgroundColor: 'var(--color-surface-secondary, #EFE8DC)', border: '1px solid var(--color-border)', borderRadius: '24px', padding: '16px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}>
                 <div style={{ textAlign: 'center', fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '12px', fontWeight: 'bold' }}>
                   SMS from: {currentStage.mockInterfaceData.senderNumber || currentStage.mockInterfaceData.sender}
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  <div style={{ alignSelf: 'flex-start', backgroundColor: '#fff', border: '1px solid var(--color-border)', padding: '12px 16px', borderRadius: '16px 16px 16px 4px', maxWidth: '88%', fontSize: '0.9rem', lineHeight: '1.45', color: 'var(--text-primary)', wordBreak: 'break-word', overflowWrap: 'break-word', whiteSpace: 'pre-wrap' }}>
+                  <div style={{ alignSelf: 'flex-start', backgroundColor: 'var(--color-surface-card, #FCFAF5)', border: '1px solid var(--color-border)', padding: '12px 16px', borderRadius: '16px 16px 16px 4px', maxWidth: '88%', fontSize: '0.9rem', lineHeight: '1.45', color: 'var(--text-primary)', wordBreak: 'break-word', overflowWrap: 'break-word', whiteSpace: 'pre-wrap' }}>
                     {currentStage.mockInterfaceData.body || currentStage.mockInterfaceData.message || currentStage.mockInterfaceData.bodyText}
                     {(currentStage.mockInterfaceData.dateString || currentStage.mockInterfaceData.timestamp) && (
                       <span style={{ display: 'block', fontSize: '0.7rem', color: 'var(--text-muted)', textAlign: 'right', marginTop: '6px' }}>
@@ -496,13 +487,13 @@ function BaselineAssessment({ _user, updateProgressTrigger }) {
 
             {/* Phone Call Simulator */}
             {currentStage.mockInterfaceType === 'phone_call' && (
-              <div style={{ maxWidth: '320px', margin: '30px auto', backgroundColor: '#0f172a', color: '#fff', borderRadius: '24px', padding: '24px', textAlign: 'center', boxShadow: '0 10px 25px rgba(0,0,0,0.15)' }}>
+              <div style={{ maxWidth: '320px', margin: '30px auto', backgroundColor: '#0f172a', color: '#FCFAF5', borderRadius: '24px', padding: '24px', textAlign: 'center', boxShadow: '0 10px 25px rgba(0,0,0,0.15)' }}>
                 <div style={{ width: '64px', height: '64px', borderRadius: '50%', backgroundColor: '#334155', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px auto' }}>
                   <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ color: '#94a3b8' }}>
                     <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
                   </svg>
                 </div>
-                <h3 style={{ fontSize: '1.25rem', margin: '0 0 4px 0', color: '#fff' }}>{currentStage.mockInterfaceData.callerName || currentStage.mockInterfaceData.callerLabel || 'Incoming Call'}</h3>
+                <h3 style={{ fontSize: '1.25rem', margin: '0 0 4px 0', color: '#FCFAF5' }}>{currentStage.mockInterfaceData.callerName || currentStage.mockInterfaceData.callerLabel || 'Incoming Call'}</h3>
                 <span style={{ fontSize: '0.85rem', color: '#94a3b8', display: 'block', marginBottom: '20px' }}>{currentStage.mockInterfaceData.callerNumber}</span>
                 
                 <div style={{ border: '1px solid #334155', borderRadius: '8px', padding: '12px', backgroundColor: '#1e293b', fontSize: '0.85rem', lineHeight: '1.4', fontStyle: 'italic', color: '#cbd5e1', marginBottom: '24px', textAlign: 'left', wordBreak: 'break-word', overflowWrap: 'break-word' }}>
@@ -529,7 +520,7 @@ function BaselineAssessment({ _user, updateProgressTrigger }) {
                       type="button"
                       onClick={() => handlePhoneAction('accept')}
                       disabled={submitting}
-                      style={{ width: '48px', height: '48px', borderRadius: '50%', backgroundColor: '#22c55e', display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none', cursor: 'pointer' }}
+                      style={{ width: '48px', height: '48px', borderRadius: '50%', backgroundColor: 'var(--color-success, #536F61)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none', cursor: 'pointer' }}
                       aria-label="Accept Call"
                     >
                       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ color: 'white' }}>
@@ -544,8 +535,8 @@ function BaselineAssessment({ _user, updateProgressTrigger }) {
 
             {/* UPI Checkout Payment Simulation */}
             {currentStage.mockInterfaceType === 'checkout' && (
-              <div style={{ maxWidth: '340px', margin: '30px auto', border: '1px solid var(--color-border)', borderRadius: '12px', overflow: 'hidden', backgroundColor: '#fff', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}>
-                <div style={{ backgroundColor: '#0f2537', color: '#fff', padding: '12px 16px', fontSize: '0.9rem', fontWeight: 'bold' }}>
+              <div style={{ maxWidth: '340px', margin: '30px auto', border: '1px solid var(--color-border)', borderRadius: '12px', overflow: 'hidden', backgroundColor: 'var(--color-surface-card, #FCFAF5)', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}>
+                <div style={{ backgroundColor: 'var(--color-text-primary, #302B27)', color: '#FCFAF5', padding: '12px 16px', fontSize: '0.9rem', fontWeight: 'bold' }}>
                   Secure UPI Gateway Request
                 </div>
                 <div style={{ padding: '20px', textAlign: 'center' }}>
@@ -593,177 +584,14 @@ function BaselineAssessment({ _user, updateProgressTrigger }) {
       )}
 
       {/* ========================================================================= */}
-      {/* 3. COMPLETED HISTORY SUMMARY SCREEN                                       */}
+      {/* 3. DIGITAL AWARENESS PROFILE (POST-COMPLETION & RETURNING VIEW)          */}
       {/* ========================================================================= */}
-      {currentStep === 'completed_summary' && completedHistory && (
-        <div style={{ maxWidth: '680px', margin: '30px auto', textAlign: 'center' }}>
-          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
-            <img src="/logo/cyber-law-logo-icon.svg" alt="" style={{ height: '32px', width: 'auto' }} />
-            <span style={{ fontSize: '0.85rem', fontWeight: '800', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-              Cyber Law Awareness Portal
-            </span>
-          </div>
-
-          <h1 style={{ fontSize: '2.2rem', fontWeight: '800', marginTop: '10px', marginBottom: '8px' }}>
-            First Check Completed
-          </h1>
-          <p className="text-secondary" style={{ fontSize: '1.05rem', marginBottom: '24px' }}>
-            You have completed your first check. Your starting habits are saved below.
-          </p>
-
-          <div style={{
-            border: '1px solid var(--color-border)',
-            padding: '24px',
-            borderRadius: '8px',
-            backgroundColor: 'var(--bg-white)',
-            marginBottom: '28px',
-            textAlign: 'left',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.03)'
-          }}>
-            <div style={{ fontSize: '0.82rem', fontWeight: '800', color: '#0f2537', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '16px', textAlign: 'center' }}>
-              Your Starting Habits Across 6 Areas
-            </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '14px' }}>
-              {habitDimensions.map(dim => {
-                const score = completedHistory.behaviourScores?.[dim.key] ?? 0;
-                return (
-                  <div key={dim.key} style={{ padding: '12px', backgroundColor: 'var(--bg-primary)', borderRadius: '6px', borderLeft: '3px solid #0f2537' }}>
-                    <div style={{ fontSize: '0.82rem', fontWeight: '700', color: 'var(--text-primary)' }}>{dim.label}</div>
-                    <div style={{ fontSize: '1.5rem', fontWeight: '800', color: '#0f2537', margin: '2px 0' }}>{score}%</div>
-                    <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', lineHeight: '1.35' }}>{dim.desc}</div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', maxWidth: '380px', margin: '0 auto' }}>
-            <button 
-              onClick={() => { setResult(completedHistory); setCurrentStep('reveal_view'); }}
-              className="btn btn-primary"
-              style={{ padding: '12px 20px', fontWeight: '700' }}
-            >
-              See Story Decisions &amp; Explanations
-            </button>
-            <button 
-              onClick={() => navigate('/dashboard')}
-              className="btn btn-secondary"
-              style={{ padding: '12px 20px' }}
-            >
-              Continue to Dashboard
-            </button>
-            <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: '1px solid var(--color-border)' }}>
-              <button 
-                onClick={handleStart}
-                className="btn btn-outline"
-                style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}
-                disabled={loading}
-              >
-                {loading ? 'Starting...' : 'Retake First Check (New Attempt)'}
-              </button>
-              <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '4px' }}>
-                Starting a new attempt will not overwrite your past completed records.
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ========================================================================= */}
-      {/* 4. REVEAL / REPORT VIEW (POST-COMPLETION)                                  */}
-      {/* ========================================================================= */}
-      {currentStep === 'reveal_view' && result && (
-        <div className="reveal-pane portal-state-reveal-down" style={{ border: '1px solid var(--color-border)', borderTop: '3px solid #0f2537', borderRadius: '8px', padding: '28px', backgroundColor: '#fff', boxShadow: '0 2px 10px rgba(0,0,0,0.04)' }}>
-          <h2 style={{ fontSize: '2.1rem', fontWeight: '800', color: 'var(--text-primary)', marginBottom: '4px' }}>
-            Your First Check Results
-          </h2>
-          <p className="text-muted" style={{ fontSize: '0.98rem', marginBottom: '20px' }}>
-            Here is what your choices show about your online safety habits across 6 areas.
-          </p>
-          
-          <div style={{ marginBottom: '24px', borderLeft: '3px solid #0f2537', paddingLeft: '16px' }}>
-            <p style={{ fontSize: '1.05rem', color: 'var(--text-primary)', fontStyle: 'italic', margin: '0 0 6px 0', fontWeight: '700' }}>
-              &quot;You weren’t being tested on whether you could guess what was a scam.&quot;
-            </p>
-            <p style={{ fontSize: '0.95rem', color: 'var(--text-secondary)', margin: 0 }}>
-              &quot;You were being observed on how you make everyday digital decisions.&quot;
-            </p>
-          </div>
-
-          <div className="reveal-layout-grid" style={{ marginBottom: '28px' }}>
-            <div>
-              <h4 style={{ fontSize: '1.1rem', fontWeight: '700', marginBottom: '12px' }}>Your Safety Habits</h4>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                {habitDimensions.map(dim => {
-                  const score = result.behaviourScores?.[dim.key] ?? 0;
-                  return (
-                    <div key={dim.key} style={{ padding: '10px 14px', backgroundColor: 'var(--bg-secondary)', borderRadius: '6px', borderLeft: '3px solid #0f2537' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <strong style={{ fontSize: '0.88rem' }}>{dim.label}:</strong>
-                        <strong style={{ fontSize: '1.1rem', color: '#0f2537' }}>{score}%</strong>
-                      </div>
-                      <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '2px' }}>
-                        {dim.desc}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-
-            <div>
-              <div style={{
-                border: '1px solid var(--color-border)',
-                borderRadius: '8px',
-                padding: '20px',
-                backgroundColor: 'var(--bg-primary)'
-              }}>
-                <span style={{ fontSize: '0.8rem', fontWeight: '800', color: 'var(--text-primary)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-                  Your Baseline Record
-                </span>
-                <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', margin: '4px 0 14px 0' }}>
-                  These scores show your starting habits before you begin lessons. You will compare them against your final check later.
-                </p>
-
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  {habitDimensions.map(dim => (
-                    <div key={dim.key} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 12px', backgroundColor: '#fff', borderRadius: '4px', border: '1px solid var(--color-border)' }}>
-                      <span style={{ fontSize: '0.82rem', fontWeight: '600' }}>{dim.label}</span>
-                      <span style={{ fontSize: '0.95rem', fontWeight: '800', color: '#0f2537' }}>
-                        {result.behaviourScores?.[dim.key] ?? 0}%
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Actionable Safety Insights (Critical Mistakes) */}
-          {result.criticalMistakes && result.criticalMistakes.length > 0 && (
-            <div className="alert alert-error" style={{ marginBottom: '24px' }}>
-              <h4 style={{ margin: '0 0 6px 0', fontSize: '0.95rem' }}>Key Situations to Review:</h4>
-              <ul style={{ paddingLeft: '20px', fontSize: '0.85rem', margin: 0 }}>
-                {result.criticalMistakes.map((m, idx) => (
-                  <li key={idx} style={{ marginBottom: '4px' }}>{m}</li>
-                ))}
-              </ul>
-            </div>
-          )}
-
-          {/* Targeted Remediation & Micro-Learning Pathways */}
-          <RemediationCards sessionId={result?.sessionId || session || completedHistory?._id} />
-
-          <div style={{ textAlign: 'center', marginTop: '28px' }}>
-            <button 
-              onClick={() => navigate('/dashboard')} 
-              className="btn btn-primary"
-              style={{ padding: '12px 32px', fontSize: '1rem', fontWeight: '700' }}
-            >
-              Continue to Dashboard &rarr;
-            </button>
-          </div>
-        </div>
+      {(currentStep === 'reveal_view' || currentStep === 'completed_summary') && (result || completedHistory) && (
+        <DigitalAwarenessProfile
+          result={result}
+          completedHistory={completedHistory}
+          onRetake={handleStart}
+        />
       )}
     </div>
   );

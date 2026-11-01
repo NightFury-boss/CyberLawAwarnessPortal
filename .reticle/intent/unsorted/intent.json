@@ -1,0 +1,89 @@
+{
+  "intents": {
+    "inline:closing-the-defensive-portfolio-modal-3dbb8e61": {
+      "binding": {
+        "absent": true,
+        "kind": "element",
+        "query": {
+          "name": "Close Learning Record",
+          "role": "button"
+        }
+      },
+      "declaredAt": 1793383544879,
+      "id": "inline:closing-the-defensive-portfolio-modal-3dbb8e61",
+      "provenBy": {
+        "at": 1793383547223,
+        "grade": "presence",
+        "verdictId": "reticle_act_and_wait:1793383547223"
+      },
+      "state": "proved",
+      "statement": "Closing the Defensive Portfolio modal",
+      "status": "proved",
+      "subject": "unsorted",
+      "surface": {
+        "files": [
+          "src/components/dashboard/DefensivePortfolioModal.jsx"
+        ],
+        "route": "/dashboard"
+      },
+      "updatedAt": 1793383547260
+    },
+    "inline:opening-the-defensive-portfolio-modal-from-the-r-7f1f5004": {
+      "binding": {
+        "contains": "Verified Learning Record",
+        "kind": "text"
+      },
+      "declaredAt": 1793383521422,
+      "id": "inline:opening-the-defensive-portfolio-modal-from-the-r-7f1f5004",
+      "state": "bound",
+      "statement": "Opening the Defensive Portfolio modal from the redesigned masthead button",
+      "status": "proposed",
+      "subject": "unsorted",
+      "updatedAt": 1793383521438
+    },
+    "inline:verify-that-dashboard-renders-the-5-quiz-modes-i-194e558e": {
+      "binding": {
+        "contains": "Rapid Review",
+        "kind": "text"
+      },
+      "declaredAt": 1793382181385,
+      "id": "inline:verify-that-dashboard-renders-the-5-quiz-modes-i-194e558e",
+      "provenBy": {
+        "at": 1793382181434,
+        "grade": "presence",
+        "verdictId": "reticle_assert:1793382181434"
+      },
+      "state": "proved",
+      "statement": "Verify that Dashboard renders the 5 Quiz modes in DashboardQuizPractice section",
+      "status": "proved",
+      "subject": "unsorted",
+      "surface": {
+        "route": "/dashboard"
+      },
+      "updatedAt": 1793382181451
+    },
+    "inline:verify-that-the-redesigned-dashboard-renders-the-b2ea714b": {
+      "binding": {
+        "contains": "Verified Learning Record",
+        "kind": "text"
+      },
+      "declaredAt": 1793383493056,
+      "id": "inline:verify-that-the-redesigned-dashboard-renders-the-b2ea714b",
+      "provenBy": {
+        "at": 1793383493092,
+        "grade": "presence",
+        "verdictId": "reticle_assert:1793383493092"
+      },
+      "state": "proved",
+      "statement": "Verify that the redesigned Dashboard renders the Verified Learning Record button in the masthead",
+      "status": "proved",
+      "subject": "unsorted",
+      "surface": {
+        "route": "/dashboard"
+      },
+      "updatedAt": 1793383493110
+    }
+  },
+  "subject": "unsorted",
+  "version": 1
+}

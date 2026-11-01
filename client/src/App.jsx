@@ -23,6 +23,7 @@ const BaselineAssessment = lazy(() => import('./pages/BaselineAssessment'));
 const FinalAssessment = lazy(() => import('./pages/FinalAssessment'));
 const Quizzes = lazy(() => import('./pages/Quizzes'));
 const AdminPanel = lazy(() => import('./pages/AdminPanel'));
+const Modules = lazy(() => import('./pages/Modules'));
 
 function PageLoadingFallback() {
   return (
@@ -43,6 +44,8 @@ function AppContent() {
   // Navigation Context Determination
   const isWorkspace = location.pathname === '/dashboard' || 
                       location.pathname === '/quizzes' || 
+                      location.pathname.startsWith('/modules') ||
+                      location.pathname.startsWith('/lessons') ||
                       location.pathname.startsWith('/assessment/') ||
                       location.pathname.startsWith('/workspace');
   const isAdminPath = location.pathname.startsWith('/admin');
@@ -182,6 +185,23 @@ function AppContent() {
                   {/* Public Routes */}
                   <Route path="/" element={<Home user={user} />} />
                   <Route path="/about" element={<About />} />
+                  {/* Authenticated Learner Lesson Routes */}
+                  <Route 
+                    path="/modules" 
+                    element={user ? <Modules user={user} isWorkspace={true} /> : <Navigate to="/login" replace />} 
+                  />
+                  <Route 
+                    path="/modules/:slug" 
+                    element={user ? <Modules user={user} isWorkspace={true} /> : <Navigate to="/login" replace />} 
+                  />
+                  <Route 
+                    path="/lessons" 
+                    element={user ? <Navigate to="/modules" replace /> : <Navigate to="/login" replace />} 
+                  />
+                  <Route 
+                    path="/lessons/:slug" 
+                    element={user ? <Modules user={user} isWorkspace={true} /> : <Navigate to="/login" replace />} 
+                  />
                   <Route path="/laws" element={<Laws />} />
                   <Route path="/crimes" element={<Crimes />} />
                   <Route path="/cases" element={<Cases />} />
@@ -251,6 +271,14 @@ function AppContent() {
                   <Route 
                     path="/workspace/cases" 
                     element={user ? <Cases /> : <Navigate to="/login" replace />} 
+                  />
+                  <Route 
+                    path="/workspace/modules" 
+                    element={user ? <Modules user={user} isWorkspace={true} /> : <Navigate to="/login" replace />} 
+                  />
+                  <Route 
+                    path="/workspace/modules/:slug" 
+                    element={user ? <Modules user={user} isWorkspace={true} /> : <Navigate to="/login" replace />} 
                   />
                   <Route 
                     path="/workspace/prevention" 

@@ -14,6 +14,8 @@ import { selectJourneyStage } from '../../utils/dashboardJourneySelectors.js';
 function OrientationSummary({
   completedFocusCount = 0,
   totalFocusCount = 0,
+  lessonsCompletedCount = 0,
+  totalLessonsCount = 0,
   quizAttemptsCount = 0,
   completedRecallCount = 0,
   passedRecallCount = 0,
@@ -34,9 +36,17 @@ function OrientationSummary({
 
   return (
     <div className="desk-stats-inline" aria-label="Learning orientation summary">
+      {totalLessonsCount > 0 && (
+        <>
+          <span className="desk-stat-item">
+            <strong className="desk-stat-val">{lessonsCompletedCount}</strong> of {totalLessonsCount} lessons read
+          </span>
+          <span className="desk-stat-bullet" aria-hidden="true">&bull;</span>
+        </>
+      )}
       <span className="desk-stat-item">
         <strong className="desk-stat-val">{completedFocusCount}</strong>{' '}
-        {completedFocusCount === 1 ? 'lesson completed' : 'lessons completed'}
+        {completedFocusCount === 1 ? 'intervention completed' : 'interventions completed'}
       </span>
       <span className="desk-stat-bullet" aria-hidden="true">&bull;</span>
       <span className="desk-stat-item">

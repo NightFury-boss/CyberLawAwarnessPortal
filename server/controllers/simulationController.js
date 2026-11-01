@@ -32,6 +32,43 @@ async function getWeakestCategory(userId) {
   return null;
 }
 
+/**
+ * Gathers server-authoritative decision evidence for a completed session.
+ * Maps each AssessmentDecision to its corresponding ScenarioStage and ScenarioDecision.
+ */
+async function getSessionDecisionEvidence(sessionId) {
+  try {
+    const userDecisions = await AssessmentDecision.find({ assessmentSessionId: sessionId }).sort({ createdAt: 1 });
+    const decisionEvidence = [];
+    for (const d of userDecisions) {
+      const stg = await ScenarioStage.findById(d.stageId);
+      const dec = await ScenarioDecision.findById(d.decisionId);
+      if (stg && dec) {
+        decisionEvidence.push({
+          stageId: stg._id,
+          stageOrder: stg.stageOrder,
+          stageTitle: stg.title,
+          stageDescription: stg.description,
+          eventClassification: stg.eventClassification,
+          measurementFocus: stg.measurementFocus || [],
+          decisionId: dec._id,
+          decisionText: dec.optionText,
+          explanation: dec.explanation,
+          outcomeType: dec.outcomeType,
+          riskLevel: dec.riskLevel,
+          isCriticalMistake: Boolean(dec.isCriticalMistake),
+          behaviorEffects: dec.behaviorEffects || {},
+          selectedAt: d.selectedAt || d.createdAt
+        });
+      }
+    }
+    return decisionEvidence;
+  } catch (err) {
+    console.error('Failed to populate decision evidence for session:', err);
+    return [];
+  }
+}
+
 exports.getScenario = async (req, res) => {
   try {
     const { code } = req.params;
@@ -76,6 +113,37 @@ exports.startAssessment = async (req, res) => {
       });
     }
 
+    // Check if user already has an active, non-expired in-progress session for this scenario to prevent duplicates
+    const existingSession = await AssessmentSession.findOne({
+      userId,
+      scenarioCode,
+      status: 'in-progress',
+      expiresAt: { $gt: new Date() }
+    }).sort({ createdAt: -1 });
+
+    if (existingSession) {
+      const currentStage = await ScenarioStage.findById(existingSession.currentStageId);
+      if (currentStage) {
+        const decisions = await ScenarioDecision.find({ stageId: currentStage._id });
+        return res.json({
+          sessionId: existingSession._id,
+          resumed: true,
+          stage: {
+            id: currentStage._id,
+            title: currentStage.title,
+            description: currentStage.description,
+            stageOrder: currentStage.stageOrder,
+            mockInterfaceType: currentStage.mockInterfaceType,
+            mockInterfaceData: currentStage.mockInterfaceData,
+            decisions: decisions.map(d => ({
+              id: d._id,
+              optionText: d.optionText
+            }))
+          }
+        });
+      }
+    }
+
     const firstStage = await ScenarioStage.findOne({ scenarioId: scenario._id, stageOrder: 1 });
     if (!firstStage) {
       return res.status(404).json({
@@ -109,7 +177,13 @@ exports.startAssessment = async (req, res) => {
       unreviewedAcceptance: 0
     };
 
-    const expirationPeriod = 2 * 60 * 60 * 1000;
+    const INACTIVITY_WINDOW_MS = 2 * 60 * 60 * 1000; // 2 hours
+    const MAX_LIFETIME_MS = 24 * 60 * 60 * 1000; // 24 hours hard cap
+
+    const startedAt = new Date();
+    const maxLifetimeExpiresAt = new Date(startedAt.getTime() + MAX_LIFETIME_MS);
+    const expiresAt = new Date(Math.min(startedAt.getTime() + INACTIVITY_WINDOW_MS, maxLifetimeExpiresAt.getTime()));
+
     const session = await AssessmentSession.create({
       userId,
       scenarioId: scenario._id,
@@ -127,7 +201,9 @@ exports.startAssessment = async (req, res) => {
       unreviewedAcceptanceMaxPenaltyPoints: 0,
       criticalMistakes: [],
       stagesCompleted: 0,
-      expiresAt: new Date(Date.now() + expirationPeriod)
+      startedAt,
+      expiresAt,
+      maxLifetimeExpiresAt
     });
 
     const decisions = await ScenarioDecision.find({ stageId: firstStage._id });
@@ -188,8 +264,15 @@ exports.submitStep = async (req, res) => {
       });
     }
 
-    if (originalSession.expiresAt < new Date()) {
-      await AssessmentSession.findByIdAndUpdate(assessmentSessionId, { status: 'abandoned' });
+    const now = new Date();
+    const isPastInactivity = originalSession.expiresAt < now;
+    const isPastMaxLifetime = originalSession.maxLifetimeExpiresAt && originalSession.maxLifetimeExpiresAt < now;
+
+    if (isPastInactivity || isPastMaxLifetime) {
+      await AssessmentSession.findByIdAndUpdate(assessmentSessionId, {
+        status: 'abandoned',
+        abandonedAt: now
+      });
       return res.status(400).json({
         success: false,
         error: { code: 'SESSION_EXPIRED', message: 'Assessment session expired' }
@@ -267,6 +350,18 @@ exports.submitStep = async (req, res) => {
     if (nextStageId) {
       setParameters.currentStageId = nextStageId;
     }
+
+    // Sliding activity window (2h inactivity window, capped at 24h hard maximum lifetime)
+    const INACTIVITY_WINDOW_MS = 2 * 60 * 60 * 1000;
+    const sessionStarted = originalSession.startedAt 
+      ? new Date(originalSession.startedAt).getTime() 
+      : (originalSession.createdAt ? new Date(originalSession.createdAt).getTime() : now.getTime());
+    const maxLifetime = originalSession.maxLifetimeExpiresAt 
+      ? new Date(originalSession.maxLifetimeExpiresAt).getTime() 
+      : (sessionStarted + 24 * 60 * 60 * 1000);
+
+    const newExpiresAt = new Date(Math.min(now.getTime() + INACTIVITY_WINDOW_MS, maxLifetime));
+    setParameters.expiresAt = newExpiresAt;
 
     const pushParameters = {};
     if (decision.isCriticalMistake) {
@@ -458,6 +553,8 @@ function computeBehaviourDelta(baselineSession, finalSession) {
         }
       }
 
+      const decisionEvidence = await getSessionDecisionEvidence(session._id);
+
       return res.json({
         isCompleted: true,
         sessionId: session._id,
@@ -471,6 +568,7 @@ function computeBehaviourDelta(baselineSession, finalSession) {
         unreviewedAcceptancePenaltyPoints: session.unreviewedAcceptancePenaltyPoints,
         unreviewedAcceptanceMaxPenaltyPoints: session.unreviewedAcceptanceMaxPenaltyPoints,
         criticalMistakes: session.criticalMistakes,
+        decisionEvidence,
         explanation: decision.explanation,
         improvementDelta,
         deltaMessage,
@@ -516,12 +614,19 @@ exports.getSession = async (req, res) => {
     }
 
     if (session.status === 'in-progress') {
-      if (session.expiresAt && session.expiresAt < new Date()) {
-        await AssessmentSession.findByIdAndUpdate(session._id, { status: 'abandoned' });
+      const now = new Date();
+      const isPastInactivity = session.expiresAt && session.expiresAt < now;
+      const isPastMaxLifetime = session.maxLifetimeExpiresAt && session.maxLifetimeExpiresAt < now;
+
+      if (isPastInactivity || isPastMaxLifetime) {
+        await AssessmentSession.findByIdAndUpdate(session._id, {
+          status: 'abandoned',
+          abandonedAt: now
+        });
         return res.json({
           status: 'abandoned',
           sessionId: session._id,
-          message: 'Assessment session has expired'
+          message: 'Assessment session has expired due to inactivity or exceeding maximum lifetime'
         });
       }
 
@@ -574,6 +679,8 @@ exports.getSession = async (req, res) => {
         }
       }
 
+      const decisionEvidence = await getSessionDecisionEvidence(session._id);
+
       return res.json({
         status: 'completed',
         isCompleted: true,
@@ -590,6 +697,7 @@ exports.getSession = async (req, res) => {
         unreviewedAcceptancePenaltyPoints: session.unreviewedAcceptancePenaltyPoints || 0,
         unreviewedAcceptanceMaxPenaltyPoints: session.unreviewedAcceptanceMaxPenaltyPoints || 0,
         criticalMistakes: session.criticalMistakes || [],
+        decisionEvidence,
         behaviourDelta,
         baselineScores,
         deltaMessage,
@@ -624,27 +732,35 @@ exports.getScenarioStatus = async (req, res) => {
     }).sort({ createdAt: -1 });
 
     if (activeSession) {
-      const currentStage = await ScenarioStage.findById(activeSession.currentStageId);
-      if (currentStage) {
-        const decisions = await ScenarioDecision.find({ stageId: currentStage._id });
-        return res.json({
-          hasActiveSession: true,
-          hasCompletedSession: false,
-          status: 'in-progress',
-          sessionId: activeSession._id,
-          stage: {
-            id: currentStage._id,
-            title: currentStage.title,
-            description: currentStage.description,
-            stageOrder: currentStage.stageOrder,
-            mockInterfaceType: currentStage.mockInterfaceType,
-            mockInterfaceData: currentStage.mockInterfaceData,
-            decisions: decisions.map(d => ({
-              id: d._id,
-              optionText: d.optionText
-            }))
-          }
+      if (activeSession.maxLifetimeExpiresAt && activeSession.maxLifetimeExpiresAt < new Date()) {
+        await AssessmentSession.findByIdAndUpdate(activeSession._id, {
+          status: 'abandoned',
+          abandonedAt: new Date()
         });
+      } else {
+        const currentStage = await ScenarioStage.findById(activeSession.currentStageId);
+        if (currentStage) {
+          const decisions = await ScenarioDecision.find({ stageId: currentStage._id });
+          return res.json({
+            hasActiveSession: true,
+            hasCompletedSession: false,
+            status: 'in-progress',
+            sessionId: activeSession._id,
+            expiresAt: activeSession.expiresAt,
+            stage: {
+              id: currentStage._id,
+              title: currentStage.title,
+              description: currentStage.description,
+              stageOrder: currentStage.stageOrder,
+              mockInterfaceType: currentStage.mockInterfaceType,
+              mockInterfaceData: currentStage.mockInterfaceData,
+              decisions: decisions.map(d => ({
+                id: d._id,
+                optionText: d.optionText
+              }))
+            }
+          });
+        }
       }
     }
 
@@ -676,6 +792,8 @@ exports.getScenarioStatus = async (req, res) => {
         }
       }
 
+      const decisionEvidence = await getSessionDecisionEvidence(completedSession._id);
+
       return res.json({
         hasActiveSession: false,
         hasCompletedSession: true,
@@ -694,6 +812,7 @@ exports.getScenarioStatus = async (req, res) => {
           unreviewedAcceptancePenaltyPoints: completedSession.unreviewedAcceptancePenaltyPoints || 0,
           unreviewedAcceptanceMaxPenaltyPoints: completedSession.unreviewedAcceptanceMaxPenaltyPoints || 0,
           criticalMistakes: completedSession.criticalMistakes || [],
+          decisionEvidence,
           behaviourDelta,
           baselineScores,
           deltaMessage,
@@ -702,9 +821,40 @@ exports.getScenarioStatus = async (req, res) => {
       });
     }
 
+    // 3. Check if there was an expired or abandoned session for recovery guidance
+    const expiredSession = await AssessmentSession.findOne({
+      userId,
+      scenarioCode,
+      $or: [
+        { status: 'abandoned' },
+        { status: 'in-progress', expiresAt: { $lte: new Date() } }
+      ]
+    }).sort({ updatedAt: -1 });
+
+    if (expiredSession) {
+      if (expiredSession.status === 'in-progress') {
+        await AssessmentSession.findByIdAndUpdate(expiredSession._id, {
+          status: 'abandoned',
+          abandonedAt: new Date()
+        });
+      }
+      return res.json({
+        hasActiveSession: false,
+        hasCompletedSession: false,
+        hasExpiredSession: true,
+        status: 'expired',
+        expiredSession: {
+          sessionId: expiredSession._id,
+          stagesCompleted: expiredSession.stagesCompleted || 0,
+          expiredAt: expiredSession.expiresAt
+        }
+      });
+    }
+
     return res.json({
       hasActiveSession: false,
       hasCompletedSession: false,
+      hasExpiredSession: false,
       status: 'none'
     });
   } catch (error) {

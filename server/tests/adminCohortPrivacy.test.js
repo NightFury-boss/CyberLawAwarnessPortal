@@ -71,6 +71,7 @@ describe('Admin Analytics Cohort k-Anonymity Privacy Suite', () => {
     if (server) {
       await new Promise(resolve => server.close(resolve));
     }
+    await mongoose.connection.close();
   });
 
   it('suppresses cohort averages when sessions >= 5 but distinct users < 5 (single user with multiple sessions)', async () => {

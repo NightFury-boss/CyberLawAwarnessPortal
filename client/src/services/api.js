@@ -14,6 +14,26 @@ function getHeaders() {
   return headers;
 }
 
+// Timeout fetch wrapper (default 10s) to prevent hanging requests
+async function fetchWithTimeout(url, options = {}, timeoutMs = 10000) {
+  const controller = new AbortController();
+  const id = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const response = await fetch(url, {
+      ...options,
+      signal: controller.signal
+    });
+    return response;
+  } catch (err) {
+    if (err.name === 'AbortError') {
+      throw new Error(`Request timed out after ${timeoutMs / 1000}s`);
+    }
+    throw err;
+  } finally {
+    clearTimeout(id);
+  }
+}
+
 // Helper to handle responses
 async function handleResponse(response) {
   if (!response.ok) {
@@ -161,10 +181,86 @@ const api = {
     return handleResponse(res);
   },
 
+  // Learning Modules & Lessons
+  getModules: async (params = {}) => {
+    const query = new URLSearchParams();
+    if (params.category && params.category !== 'All') query.append('category', params.category);
+    if (params.difficulty && params.difficulty !== 'All') query.append('difficulty', params.difficulty);
+    if (params.search) query.append('search', params.search);
+
+    const queryString = query.toString() ? `?${query.toString()}` : '';
+    const res = await fetch(`${API_URL}/modules${queryString}`, {
+      headers: getHeaders()
+    });
+    return handleResponse(res);
+  },
+
+  getModuleBySlug: async (slug) => {
+    const res = await fetch(`${API_URL}/modules/${slug}`, {
+      headers: getHeaders()
+    });
+    return handleResponse(res);
+  },
+
+  recordModuleProgress: async (slug, data = { completed: true }) => {
+    const res = await fetch(`${API_URL}/modules/${slug}/progress`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(data)
+    });
+    return handleResponse(res);
+  },
+
   // Quizzes
   getQuizzes: async () => {
     const res = await fetch(`${API_URL}/quizzes`, {
       headers: getHeaders()
+    });
+    return handleResponse(res);
+  },
+
+  getQuizModes: async () => {
+    const res = await fetch(`${API_URL}/quizzes/modes`, {
+      headers: getHeaders()
+    });
+    return handleResponse(res);
+  },
+
+  getQuizTopics: async () => {
+    const res = await fetch(`${API_URL}/quizzes/topics`, {
+      headers: getHeaders()
+    });
+    return handleResponse(res);
+  },
+
+  getQuizHistory: async () => {
+    const res = await fetch(`${API_URL}/quizzes/history`, {
+      headers: getHeaders()
+    });
+    return handleResponse(res);
+  },
+
+  getDueQuizRecalls: async () => {
+    const res = await fetch(`${API_URL}/quizzes/recall/due`, {
+      headers: getHeaders()
+    });
+    return handleResponse(res);
+  },
+
+  submitQuizRecall: async (questionId, answer) => {
+    const res = await fetch(`${API_URL}/quizzes/recall/submit`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify({ questionId, answer })
+    });
+    return handleResponse(res);
+  },
+
+  startQuizSession: async (payload = {}) => {
+    const res = await fetch(`${API_URL}/quizzes/start`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(payload)
     });
     return handleResponse(res);
   },
@@ -176,25 +272,28 @@ const api = {
     return handleResponse(res);
   },
 
-  submitQuiz: async (quizId, answers) => {
+  submitQuiz: async (quizIdOrPayload, maybeAnswers) => {
+    const body = (quizIdOrPayload && typeof quizIdOrPayload === 'object' && quizIdOrPayload.answers)
+      ? quizIdOrPayload
+      : { quizId: quizIdOrPayload, answers: maybeAnswers };
     const res = await fetch(`${API_URL}/quizzes/submit`, {
       method: 'POST',
       headers: getHeaders(),
-      body: JSON.stringify({ quizId, answers })
+      body: JSON.stringify(body)
     });
     return handleResponse(res);
   },
 
   // Simulation / Assessments (Backend-Authoritative)
   getScenario: async (code) => {
-    const res = await fetch(`${API_URL}/assessments/${code}`, {
+    const res = await fetchWithTimeout(`${API_URL}/assessments/${code}`, {
       headers: getHeaders()
     });
     return handleResponse(res);
   },
 
   startAssessment: async (scenarioCode) => {
-    const res = await fetch(`${API_URL}/assessments/start`, {
+    const res = await fetchWithTimeout(`${API_URL}/assessments/start`, {
       method: 'POST',
       headers: getHeaders(),
       body: JSON.stringify({ scenarioCode })
@@ -203,21 +302,21 @@ const api = {
   },
 
   getAssessmentSession: async (sessionId) => {
-    const res = await fetch(`${API_URL}/assessments/session/${sessionId}`, {
+    const res = await fetchWithTimeout(`${API_URL}/assessments/session/${sessionId}`, {
       headers: getHeaders()
     });
     return handleResponse(res);
   },
 
   getAssessmentStatus: async (scenarioCode) => {
-    const res = await fetch(`${API_URL}/assessments/status/${scenarioCode}`, {
+    const res = await fetchWithTimeout(`${API_URL}/assessments/status/${scenarioCode}`, {
       headers: getHeaders()
     });
     return handleResponse(res);
   },
 
   submitAssessmentStep: async (assessmentSessionId, stageId, decisionId) => {
-    const res = await fetch(`${API_URL}/assessments/submit-step`, {
+    const res = await fetchWithTimeout(`${API_URL}/assessments/submit-step`, {
       method: 'POST',
       headers: getHeaders(),
       body: JSON.stringify({ assessmentSessionId, stageId, decisionId })
@@ -226,7 +325,7 @@ const api = {
   },
 
   getAssessmentRemediation: async (sessionId) => {
-    const res = await fetch(`${API_URL}/assessments/remediation/${sessionId}`, {
+    const res = await fetchWithTimeout(`${API_URL}/assessments/remediation/${sessionId}`, {
       headers: getHeaders()
     });
     return handleResponse(res);
@@ -234,7 +333,7 @@ const api = {
 
   // Progress Dashboard
   getProgress: async () => {
-    const res = await fetch(`${API_URL}/progress`, {
+    const res = await fetchWithTimeout(`${API_URL}/progress`, {
       headers: getHeaders()
     });
     return handleResponse(res);
@@ -561,6 +660,37 @@ const api = {
   },
   adminDeleteResource: async (id) => {
     const res = await fetch(`${API_URL}/admin/resources/${id}`, {
+      method: 'DELETE',
+      headers: getHeaders()
+    });
+    return handleResponse(res);
+  },
+
+  // Admin Learning Modules
+  adminGetModules: async () => {
+    const res = await fetch(`${API_URL}/modules/admin/all`, {
+      headers: getHeaders()
+    });
+    return handleResponse(res);
+  },
+  adminCreateModule: async (data) => {
+    const res = await fetch(`${API_URL}/modules/admin`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(data)
+    });
+    return handleResponse(res);
+  },
+  adminUpdateModule: async (id, data) => {
+    const res = await fetch(`${API_URL}/modules/admin/${id}`, {
+      method: 'PUT',
+      headers: getHeaders(),
+      body: JSON.stringify(data)
+    });
+    return handleResponse(res);
+  },
+  adminDeleteModule: async (id) => {
+    const res = await fetch(`${API_URL}/modules/admin/${id}`, {
       method: 'DELETE',
       headers: getHeaders()
     });

@@ -13,6 +13,8 @@
     "seed": "node server/config/seed.js",
     "seed:reset": "node server/config/seedReset.js",
     "test": "node server/tests/api.test.js",
+    "test:smoke": "node --test server/tests/stagingProductionSmoke.test.js",
+    "validate:staging": "node scripts/validate-staging-env.js",
     "verify:scenarios": "node server/utils/verifyScenarios.js"
   },
   "dependencies": {

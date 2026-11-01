@@ -12,6 +12,47 @@ const UserProgressSchema = new mongoose.Schema({
       type: String
     }
   ],
+  lessonProgress: [
+    {
+      slug: {
+        type: String,
+        required: true
+      },
+      status: {
+        type: String,
+        enum: ['not_started', 'in_progress', 'read_completed', 'knowledge_check_attempted', 'knowledge_check_passed'],
+        default: 'not_started'
+      },
+      readCompleted: {
+        type: Boolean,
+        default: false
+      },
+      readCompletedAt: {
+        type: Date
+      },
+      knowledgeCheckStatus: {
+        type: String,
+        enum: ['unattempted', 'attempted', 'passed', 'failed'],
+        default: 'unattempted'
+      },
+      knowledgeCheckScore: {
+        type: Number,
+        default: null
+      },
+      lastAnswerIndex: {
+        type: Number,
+        default: null
+      },
+      lastAccessedAt: {
+        type: Date,
+        default: Date.now
+      },
+      firstStartedAt: {
+        type: Date,
+        default: Date.now
+      }
+    }
+  ],
   badgesEarned: [
     {
       type: String
@@ -147,6 +188,54 @@ const UserProgressSchema = new mongoose.Schema({
         {
           questionId: {
             type: String
+          },
+          selectedOptionIndex: {
+            type: Number
+          },
+          isCorrect: {
+            type: Boolean
+          }
+        }
+      ]
+    }
+  ],
+  // Separate, isolated queue for missed standalone quiz concepts
+  quizRecallItems: [
+    {
+      questionId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'QuizQuestion',
+        required: true
+      },
+      sourceAttemptId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'QuizAttempt'
+      },
+      category: {
+        type: String,
+        default: 'General'
+      },
+      missedCount: {
+        type: Number,
+        default: 1
+      },
+      mastered: {
+        type: Boolean,
+        default: false
+      },
+      lastAttemptedAt: {
+        type: Date,
+        default: Date.now
+      },
+      nextReviewDue: {
+        type: Date,
+        default: Date.now
+      },
+      reviewHistory: [
+        {
+          reviewedAt: {
+            type: Date,
+            default: Date.now
           },
           selectedOptionIndex: {
             type: Number

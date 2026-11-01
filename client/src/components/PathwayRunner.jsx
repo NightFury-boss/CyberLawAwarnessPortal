@@ -366,7 +366,7 @@ function PathwayRunner({ pathway, sourceSessionId, initialProgress = null, isRei
         aria-labelledby="pathway-runner-title"
         tabIndex="-1"
         style={{
-          backgroundColor: 'var(--bg-white, #ffffff)',
+          backgroundColor: 'var(--color-surface-card, #FFFDFA)',
           color: 'var(--text-primary)',
           width: '100%',
           maxWidth: '780px',
@@ -385,10 +385,10 @@ function PathwayRunner({ pathway, sourceSessionId, initialProgress = null, isRei
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
-          backgroundColor: 'var(--bg-secondary, #f4f3ee)'
+          backgroundColor: 'var(--color-surface-secondary, #EEE7DB)'
         }}>
           <div>
-            <span style={{ fontSize: '0.75rem', fontWeight: '800', color: isReinforcementMode ? '#b45309' : 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '1px' }}>
+            <span style={{ fontSize: '0.75rem', fontWeight: '800', color: isReinforcementMode ? 'var(--color-warning, #B17A38)' : 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '1px' }}>
               {isReinforcementMode ? 'Habit Practice' : 'Lesson'} &bull; {pathway.difficulty || 'Essential'}
             </span>
             <h3 id="pathway-runner-title" style={{ margin: '4px 0 0 0', fontSize: '1.25rem', color: 'var(--text-primary)', fontWeight: '700' }}>
@@ -414,7 +414,7 @@ function PathwayRunner({ pathway, sourceSessionId, initialProgress = null, isRei
           style={{
             display: 'flex',
             borderBottom: '1px solid var(--color-border)',
-            backgroundColor: 'var(--bg-white, #ffffff)',
+            backgroundColor: 'var(--color-surface-card, #FFFDFA)',
             flexWrap: 'wrap'
           }}
         >
@@ -432,7 +432,7 @@ function PathwayRunner({ pathway, sourceSessionId, initialProgress = null, isRei
               flex: '1 1 120px',
               padding: '12px 8px',
               border: 'none',
-              background: currentStep === 1 ? 'var(--color-primary-light, #f0f4f8)' : 'transparent',
+              background: currentStep === 1 ? 'var(--color-surface-secondary, #EEE7DB)' : 'transparent',
               borderBottom: currentStep === 1 ? '3px solid var(--color-primary)' : '3px solid transparent',
               fontWeight: currentStep === 1 ? '700' : '500',
               color: currentStep === 1 ? 'var(--color-primary)' : 'var(--text-secondary)',
@@ -459,7 +459,7 @@ function PathwayRunner({ pathway, sourceSessionId, initialProgress = null, isRei
               flex: '1 1 120px',
               padding: '12px 8px',
               border: 'none',
-              background: currentStep === 2 ? 'var(--color-primary-light, #f0f4f8)' : 'transparent',
+              background: currentStep === 2 ? 'var(--color-surface-secondary, #EEE7DB)' : 'transparent',
               borderBottom: currentStep === 2 ? '3px solid var(--color-primary)' : '3px solid transparent',
               fontWeight: currentStep === 2 ? '700' : '500',
               color: currentStep === 2 ? 'var(--color-primary)' : 'var(--text-secondary)',
@@ -487,7 +487,7 @@ function PathwayRunner({ pathway, sourceSessionId, initialProgress = null, isRei
               flex: '1 1 120px',
               padding: '12px 8px',
               border: 'none',
-              background: currentStep === 3 ? 'var(--color-primary-light, #f0f4f8)' : 'transparent',
+              background: currentStep === 3 ? 'var(--color-surface-secondary, #EEE7DB)' : 'transparent',
               borderBottom: currentStep === 3 ? '3px solid var(--color-primary)' : '3px solid transparent',
               fontWeight: currentStep === 3 ? '700' : '500',
               color: currentStep === 3 ? 'var(--color-primary)' : 'var(--text-secondary)',
@@ -506,9 +506,9 @@ function PathwayRunner({ pathway, sourceSessionId, initialProgress = null, isRei
             <div
               role="alert"
               style={{
-                backgroundColor: '#fef2f2',
+                backgroundColor: 'var(--color-danger-light, #F9ECEB)',
                 borderLeft: '4px solid #ef4444',
-                color: '#991b1b',
+                color: 'var(--color-danger, #A34D43)',
                 padding: '10px 14px',
                 borderRadius: '4px',
                 marginBottom: 'var(--space-md)',
@@ -541,7 +541,7 @@ function PathwayRunner({ pathway, sourceSessionId, initialProgress = null, isRei
               ) : (
                 <div>
                   <div style={{
-                    backgroundColor: 'var(--bg-secondary, #f4f3ee)',
+                    backgroundColor: 'var(--color-surface-secondary, #EEE7DB)',
                     padding: 'var(--space-md)',
                     borderRadius: '6px',
                     border: '1px solid var(--color-border)',
@@ -568,7 +568,7 @@ function PathwayRunner({ pathway, sourceSessionId, initialProgress = null, isRei
                       padding: 'var(--space-md)',
                       border: '1px solid var(--color-border)',
                       borderRadius: '6px',
-                      backgroundColor: 'var(--bg-white, #ffffff)'
+                      backgroundColor: 'var(--color-surface-card, #FFFDFA)'
                     }}>
                       <h5 style={{ margin: '0 0 10px 0', fontSize: '1rem', color: 'var(--text-primary)' }}>
                         What would you do?
@@ -594,7 +594,7 @@ function PathwayRunner({ pathway, sourceSessionId, initialProgress = null, isRei
                               padding: '10px 14px',
                               borderRadius: '6px',
                               border: selectedDecisionIdx === oIdx ? '2px solid var(--color-primary)' : '1px solid var(--color-border)',
-                              backgroundColor: selectedDecisionIdx === oIdx ? 'var(--color-primary-light)' : 'var(--bg-white, #ffffff)',
+                              backgroundColor: selectedDecisionIdx === oIdx ? 'var(--color-primary-light)' : 'var(--color-surface-card, #FFFDFA)',
                               color: 'var(--text-primary)',
                               fontSize: '0.88rem',
                               cursor: stepsCompleted.caseStudy ? 'default' : 'pointer'
@@ -609,9 +609,9 @@ function PathwayRunner({ pathway, sourceSessionId, initialProgress = null, isRei
                         <div style={{
                           marginTop: '12px',
                           padding: '10px 14px',
-                          backgroundColor: '#ecfdf5',
+                          backgroundColor: 'var(--color-success-light, #EEF4F0)',
                           borderLeft: '3px solid #10b981',
-                          color: '#065f46',
+                          color: 'var(--color-success, #536F61)',
                           fontSize: '0.85rem',
                           borderRadius: '4px'
                         }}>
@@ -724,7 +724,7 @@ function PathwayRunner({ pathway, sourceSessionId, initialProgress = null, isRei
               {pathway.legalReferences && pathway.legalReferences.length > 0 && (
                 <div style={{
                   padding: 'var(--space-md)',
-                  backgroundColor: 'var(--bg-secondary, #f4f3ee)',
+                  backgroundColor: 'var(--color-surface-secondary, #EEE7DB)',
                   border: '1px solid var(--color-border)',
                   borderRadius: '6px',
                   marginBottom: 'var(--space-lg)'
@@ -821,23 +821,23 @@ function PathwayRunner({ pathway, sourceSessionId, initialProgress = null, isRei
                 /* Completion View */
                 <div style={{
                   padding: 'var(--space-lg)',
-                  backgroundColor: '#ecfdf5',
+                  backgroundColor: 'var(--color-success-light, #EEF4F0)',
                   border: '1px solid #10b981',
                   borderRadius: '6px',
                   textAlign: 'center'
                 }}>
                   <div style={{ fontSize: '2.5rem', marginBottom: '8px' }}>✓</div>
-                  <h4 style={{ color: '#065f46', fontSize: '1.3rem', margin: '0 0 6px 0' }}>
+                  <h4 style={{ color: 'var(--color-success, #536F61)', fontSize: '1.3rem', margin: '0 0 6px 0' }}>
                     {isReinforcementMode ? 'Practice Completed!' : 'Quick Quiz Passed!'}
                   </h4>
-                  <p style={{ color: '#047857', fontSize: '0.9rem', margin: '0 0 16px 0' }}>
+                  <p style={{ color: 'var(--color-success, #536F61)', fontSize: '0.9rem', margin: '0 0 16px 0' }}>
                     Score: {checkpointResult.score}% &bull; Passing Score: {checkpointResult.passingScore}%
                   </p>
-                  <p style={{ fontSize: '0.85rem', color: '#065f46', maxWidth: '500px', margin: '0 auto 12px auto', lineHeight: '1.5' }}>
+                  <p style={{ fontSize: '0.85rem', color: 'var(--color-success, #536F61)', maxWidth: '500px', margin: '0 auto 12px auto', lineHeight: '1.5' }}>
                     Great job! You passed the quick quiz for <strong>{pathway.habitTitle}</strong>. {isReinforcementMode ? 'Your extra practice has been recorded.' : 'This lesson is now marked completed.'}
                   </p>
                   {isReinforcementMode && (
-                    <p style={{ fontSize: '0.8rem', color: '#047857', maxWidth: '480px', margin: '0 auto 18px auto', fontStyle: 'italic', lineHeight: '1.4' }}>
+                    <p style={{ fontSize: '0.8rem', color: 'var(--color-success, #536F61)', maxWidth: '480px', margin: '0 auto 18px auto', fontStyle: 'italic', lineHeight: '1.4' }}>
                       Practicing safety habits after a break helps them stick. Staying alert in everyday situations is always important.
                     </p>
                   )}
@@ -858,15 +858,15 @@ function PathwayRunner({ pathway, sourceSessionId, initialProgress = null, isRei
                   {checkpointResult && !checkpointResult.passed && (
                     <div style={{
                       padding: '12px 16px',
-                      backgroundColor: '#fffbeb',
+                      backgroundColor: 'var(--color-warning-light, #FAF3E8)',
                       borderLeft: '4px solid #f59e0b',
                       borderRadius: '4px',
                       marginBottom: 'var(--space-md)'
                     }}>
-                      <strong style={{ color: '#92400e', fontSize: '0.9rem', display: 'block' }}>
+                      <strong style={{ color: 'var(--color-warning, #B17A38)', fontSize: '0.9rem', display: 'block' }}>
                         Score: {checkpointResult.score}% &mdash; Needed to pass: {checkpointResult.passingScore}%
                       </strong>
-                      <span style={{ fontSize: '0.82rem', color: '#b45309' }}>
+                      <span style={{ fontSize: '0.82rem', color: 'var(--color-warning, #B17A38)' }}>
                         Review the feedback below and try again.
                       </span>
                     </div>
@@ -881,7 +881,7 @@ function PathwayRunner({ pathway, sourceSessionId, initialProgress = null, isRei
                           padding: 'var(--space-md)',
                           border: '1px solid var(--color-border)',
                           borderRadius: '6px',
-                          backgroundColor: 'var(--bg-white, #ffffff)'
+                          backgroundColor: 'var(--color-surface-card, #FFFDFA)'
                         }}>
                           <div style={{ fontSize: '0.8rem', fontWeight: '700', color: 'var(--text-primary)', marginBottom: '4px' }}>
                             Question {idx + 1} of {checkpointQuestions.length}
@@ -910,7 +910,7 @@ function PathwayRunner({ pathway, sourceSessionId, initialProgress = null, isRei
                                     padding: '8px 12px',
                                     borderRadius: '5px',
                                     border: isSelected ? '2px solid var(--color-primary)' : '1px solid var(--color-border)',
-                                    backgroundColor: isSelected ? 'var(--color-primary-light)' : 'var(--bg-white, #ffffff)',
+                                    backgroundColor: isSelected ? 'var(--color-primary-light)' : 'var(--color-surface-card, #FFFDFA)',
                                     fontSize: '0.85rem',
                                     cursor: 'pointer'
                                   }}
@@ -925,9 +925,9 @@ function PathwayRunner({ pathway, sourceSessionId, initialProgress = null, isRei
                             <div style={{
                               marginTop: '8px',
                               padding: '8px 10px',
-                              backgroundColor: explanationItem.isCorrect ? '#ecfdf5' : '#fef2f2',
+                              backgroundColor: explanationItem.isCorrect ? 'var(--color-success-light, #EEF4F0)' : 'var(--color-danger-light, #F9ECEB)',
                               borderLeft: explanationItem.isCorrect ? '3px solid #10b981' : '3px solid #ef4444',
-                              color: explanationItem.isCorrect ? '#065f46' : '#991b1b',
+                              color: explanationItem.isCorrect ? 'var(--color-success, #536F61)' : 'var(--color-danger, #A34D43)',
                               fontSize: '0.8rem',
                               borderRadius: '3px'
                             }}>
@@ -993,7 +993,7 @@ function PathwayRunner({ pathway, sourceSessionId, initialProgress = null, isRei
                   : `You completed this lesson on ${completedAt ? new Date(completedAt).toLocaleDateString() : 'earlier session'}.`}
               </p>
               {(initialProgress?.checkpointScore !== null && initialProgress?.checkpointScore !== undefined) && (
-                <p style={{ color: '#065f46', fontWeight: '700', fontSize: '0.9rem', marginBottom: 'var(--space-sm)' }}>
+                <p style={{ color: 'var(--color-success, #536F61)', fontWeight: '700', fontSize: '0.9rem', marginBottom: 'var(--space-sm)' }}>
                   Quiz Score: {initialProgress.checkpointScore}%
                 </p>
               )}
@@ -1002,7 +1002,7 @@ function PathwayRunner({ pathway, sourceSessionId, initialProgress = null, isRei
                 maxWidth: '560px',
                 margin: '0 auto var(--space-md) auto',
                 padding: '8px 14px',
-                backgroundColor: 'var(--bg-white, #ffffff)',
+                backgroundColor: 'var(--color-surface-card, #FFFDFA)',
                 border: '1px solid var(--color-border)',
                 borderLeft: '3px solid #64748b',
                 textAlign: 'left',
@@ -1055,7 +1055,7 @@ function PathwayRunner({ pathway, sourceSessionId, initialProgress = null, isRei
                     padding: 'var(--space-md)',
                     border: '1px solid var(--color-border)',
                     borderRadius: '6px',
-                    backgroundColor: 'var(--bg-secondary, #fafaf9)'
+                    backgroundColor: 'var(--color-surface-secondary, #EEE7DB)'
                   }}
                 >
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-md)', borderBottom: '1px solid var(--color-border)', paddingBottom: '8px' }}>
@@ -1074,9 +1074,9 @@ function PathwayRunner({ pathway, sourceSessionId, initialProgress = null, isRei
                       role="alert"
                       style={{
                         padding: '10px 14px',
-                        backgroundColor: '#fef2f2',
+                        backgroundColor: 'var(--color-danger-light, #F9ECEB)',
                         borderLeft: '4px solid #ef4444',
-                        color: '#991b1b',
+                        color: 'var(--color-danger, #A34D43)',
                         fontSize: '0.85rem',
                         borderRadius: '4px'
                       }}
@@ -1089,9 +1089,9 @@ function PathwayRunner({ pathway, sourceSessionId, initialProgress = null, isRei
                       {reviewData && !reviewData.hasStoredAnswers && (
                         <div style={{
                           padding: '10px 14px',
-                          backgroundColor: '#f0fdf4',
+                          backgroundColor: 'var(--color-success-light, #EEF4F0)',
                           borderLeft: '4px solid #10b981',
-                          color: '#065f46',
+                          color: 'var(--color-success, #536F61)',
                           fontSize: '0.82rem',
                           marginBottom: 'var(--space-md)',
                           borderRadius: '4px'
@@ -1117,7 +1117,7 @@ function PathwayRunner({ pathway, sourceSessionId, initialProgress = null, isRei
                             key={q.questionId || qIdx}
                             style={{
                               padding: 'var(--space-md)',
-                              backgroundColor: 'var(--bg-white, #ffffff)',
+                              backgroundColor: 'var(--color-surface-card, #FFFDFA)',
                               border: '1px solid var(--color-border)',
                               borderRadius: '6px'
                             }}
@@ -1135,26 +1135,26 @@ function PathwayRunner({ pathway, sourceSessionId, initialProgress = null, isRei
                                 const isSelected = q.selectedOptionIndex === optIdx;
                                 const isCorrectOption = q.correctOptionIndex === optIdx;
 
-                                let optBg = 'var(--bg-white, #ffffff)';
+                                let optBg = 'var(--color-surface-card, #FFFDFA)';
                                 let optBorder = '1px solid var(--color-border)';
                                 let optColor = 'var(--text-primary)';
                                 let optBadge = null;
 
                                 if (isSelected && q.isCorrect) {
-                                  optBg = '#ecfdf5';
+                                  optBg = 'var(--color-success-light, #EEF4F0)';
                                   optBorder = '2px solid #10b981';
-                                  optColor = '#065f46';
-                                  optBadge = <span style={{ fontSize: '0.75rem', fontWeight: '700', color: '#065f46', marginLeft: 'auto' }}>✓ Your Answer (Correct)</span>;
+                                  optColor = 'var(--color-success, #536F61)';
+                                  optBadge = <span style={{ fontSize: '0.75rem', fontWeight: '700', color: 'var(--color-success, #536F61)', marginLeft: 'auto' }}>✓ Your Answer (Correct)</span>;
                                 } else if (isSelected && !q.isCorrect) {
-                                  optBg = '#fef2f2';
+                                  optBg = 'var(--color-danger-light, #F9ECEB)';
                                   optBorder = '2px solid #ef4444';
-                                  optColor = '#991b1b';
-                                  optBadge = <span style={{ fontSize: '0.75rem', fontWeight: '700', color: '#991b1b', marginLeft: 'auto' }}>✕ Your Answer (Incorrect)</span>;
+                                  optColor = 'var(--color-danger, #A34D43)';
+                                  optBadge = <span style={{ fontSize: '0.75rem', fontWeight: '700', color: 'var(--color-danger, #A34D43)', marginLeft: 'auto' }}>✕ Your Answer (Incorrect)</span>;
                                 } else if (isCorrectOption) {
-                                  optBg = '#f0fdf4';
+                                  optBg = 'var(--color-success-light, #EEF4F0)';
                                   optBorder = '1px solid #86efac';
-                                  optColor = '#166534';
-                                  optBadge = <span style={{ fontSize: '0.75rem', fontWeight: '700', color: '#166534', marginLeft: 'auto' }}>✓ Correct Defensive Rule</span>;
+                                  optColor = 'var(--color-success, #536F61)';
+                                  optBadge = <span style={{ fontSize: '0.75rem', fontWeight: '700', color: 'var(--color-success, #536F61)', marginLeft: 'auto' }}>✓ Correct Defensive Rule</span>;
                                 }
 
                                 return (
@@ -1183,7 +1183,7 @@ function PathwayRunner({ pathway, sourceSessionId, initialProgress = null, isRei
                             {q.explanation && (
                               <div style={{
                                 padding: '8px 12px',
-                                backgroundColor: '#f8fafc',
+                                backgroundColor: 'var(--color-surface-secondary, #EEE7DB)',
                                 borderLeft: '3px solid var(--color-primary)',
                                 color: 'var(--text-secondary)',
                                 fontSize: '0.82rem',

@@ -109,6 +109,21 @@ function Sidebar({ user, isCollapsed, setIsCollapsed, isOpen, setIsOpen }) {
           </Link>
 
           <Link
+            to="/workspace/modules"
+            className={`workspace-nav-link ${isActive('/workspace/modules') ? 'active' : ''}`}
+            data-tooltip="Learning Modules & Lessons"
+            onClick={handleLinkClick}
+          >
+            <span className="workspace-nav-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
+                <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
+              </svg>
+            </span>
+            <span className="workspace-nav-label">Lessons</span>
+          </Link>
+
+          <Link
             to="/quizzes"
             className={`workspace-nav-link ${isActive('/quizzes') ? 'active' : ''}`}
             data-tooltip="Cyber Law Quizzes"

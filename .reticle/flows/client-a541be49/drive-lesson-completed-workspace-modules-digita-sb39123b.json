@@ -1,0 +1,37 @@
+{
+  "version": 2,
+  "name": "drive-lesson-completed-workspace-modules-digita-sb39123b",
+  "projectId": "client-a541be49",
+  "createdAt": 1793353938774,
+  "steps": [
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "role",
+        "role": "button",
+        "name": "Mark as Complete"
+      },
+      "args": {},
+      "action": "click",
+      "expect": {
+        "kind": "text",
+        "contains": "Lesson Completed"
+      }
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "role",
+        "role": "link",
+        "name": "Dashboard"
+      },
+      "args": {},
+      "action": "click",
+      "expect": {
+        "kind": "text",
+        "contains": "Curriculum Lessons"
+      }
+    }
+  ],
+  "startPath": "/workspace/modules/digital-identity-foundations"
+}

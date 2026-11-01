@@ -16,7 +16,7 @@ function Crimes() {
     switch (category) {
       case 'Phishing & Messaging Scams':
         return {
-          color: '#1d4ed8',
+          color: 'var(--color-accent-gold, #B18A55)',
           bg: '#eff6ff',
           border: '#bfdbfe'
         };
@@ -57,6 +57,18 @@ function Crimes() {
           color: '#0f766e',
           bg: '#f0fdfa',
           border: '#99f6e4'
+        };
+      case 'Scams & Impersonation':
+        return {
+          color: '#0891b2',
+          bg: '#ecfeff',
+          border: '#a5f3fc'
+        };
+      case 'Emerging & AI Threats':
+        return {
+          color: '#7c3aed',
+          bg: '#f5f3ff',
+          border: '#ddd6fe'
         };
       default:
         return {
@@ -314,7 +326,7 @@ function Crimes() {
             <section className="crimes-rec-strip" aria-label="Recommended Topics to Learn">
               <div className="crimes-rec-header">
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: 'var(--color-accent, #2563eb)', display: 'inline-block' }} aria-hidden="true"></span>
+                  <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: 'var(--color-accent, var(--color-accent-terracotta, #A65F45))', display: 'inline-block' }} aria-hidden="true"></span>
                   <h3 className="crimes-rec-title">Recommended Topics to Learn</h3>
                 </div>
                 {recReason && (
@@ -818,7 +830,7 @@ function Crimes() {
           {/* SECTION 3: CRITICAL INDICATORS TO NOTICE */}
           <section id="indicators" style={{ marginBottom: 'var(--space-xl)' }}>
             <div style={{ marginBottom: 'var(--space-md)' }}>
-              <span className="editorial-eyebrow" style={{ color: 'var(--color-portal-blue, #2563eb)' }}>
+              <span className="editorial-eyebrow" style={{ color: 'var(--color-portal-blue, var(--color-accent-terracotta, #A65F45))' }}>
                 DECEPTION ANALYSIS & SIGNALS
               </span>
               <h2 style={{ fontSize: '1.8rem', color: 'var(--text-primary)', margin: '4px 0 8px 0' }}>
@@ -912,7 +924,7 @@ function Crimes() {
                 padding: 'var(--space-lg)'
               }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: 'var(--space-md)' }}>
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--color-portal-blue, #2563eb)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--color-portal-blue, var(--color-accent-terracotta, #A65F45))" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                     <circle cx="12" cy="12" r="10" />
                     <line x1="12" y1="8" x2="12" y2="12" />
                     <line x1="12" y1="16" x2="12.01" y2="16" />
@@ -964,7 +976,7 @@ function Crimes() {
                 borderRadius: '6px',
                 padding: 'var(--space-lg)'
               }}>
-                <h3 style={{ fontSize: '1.1rem', color: '#1a6234', fontWeight: '700', margin: '0 0 10px 0', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <h3 style={{ fontSize: '1.1rem', color: 'var(--color-success, #536F61)', fontWeight: '700', margin: '0 0 10px 0', display: 'flex', alignItems: 'center', gap: '6px' }}>
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                     <polyline points="20 6 9 17 4 12" />
                   </svg>
@@ -1008,7 +1020,7 @@ function Crimes() {
                 padding: 'var(--space-lg)',
                 borderRadius: '4px'
               }}>
-                <h3 style={{ color: '#1a6234', fontSize: '1.15rem', display: 'flex', gap: '6px', alignItems: 'center', marginBottom: 'var(--space-sm)', fontWeight: 'bold' }}>
+                <h3 style={{ color: 'var(--color-success, #536F61)', fontSize: '1.15rem', display: 'flex', gap: '6px', alignItems: 'center', marginBottom: 'var(--space-sm)', fontWeight: 'bold' }}>
                   Actions to Take (Defenses)
                 </h3>
                 <ul style={{ paddingLeft: 'var(--space-md)', fontSize: '0.9rem', lineHeight: '1.6' }}>
@@ -1024,7 +1036,7 @@ function Crimes() {
                 padding: 'var(--space-lg)',
                 borderRadius: '4px'
               }}>
-                <h3 style={{ color: '#7b1c12', fontSize: '1.15rem', display: 'flex', gap: '6px', alignItems: 'center', marginBottom: 'var(--space-sm)', fontWeight: 'bold' }}>
+                <h3 style={{ color: 'var(--color-danger, #A34D43)', fontSize: '1.15rem', display: 'flex', gap: '6px', alignItems: 'center', marginBottom: 'var(--space-sm)', fontWeight: 'bold' }}>
                   Actions to Avoid (Risks)
                 </h3>
                 <ul style={{ paddingLeft: 'var(--space-md)', fontSize: '0.9rem', lineHeight: '1.6' }}>
@@ -1066,7 +1078,7 @@ function Crimes() {
           {selectedCrime.whatWouldYouDo?.questionText && (
             <section id="scenario" style={{ marginBottom: 'var(--space-xl)', border: '1px solid var(--color-border)', padding: 'var(--space-lg)', borderRadius: '6px', backgroundColor: 'var(--bg-white)' }}>
               <div style={{ marginBottom: 'var(--space-sm)' }}>
-                <span className="editorial-eyebrow" style={{ color: 'var(--color-portal-blue, #2563eb)' }}>
+                <span className="editorial-eyebrow" style={{ color: 'var(--color-portal-blue, var(--color-accent-terracotta, #A65F45))' }}>
                   DECISION CHECKPOINT
                 </span>
                 <h3 style={{ fontSize: '1.4rem', color: 'var(--text-primary)', margin: '4px 0 6px 0', fontWeight: 'bold' }}>
@@ -1119,7 +1131,7 @@ function Crimes() {
                   borderLeft: `4px solid ${selectedCrime.whatWouldYouDo.options[selectedScenarioOption].isCorrect ? 'var(--color-success)' : 'var(--color-error)'}`,
                   borderRadius: '4px'
                 }}>
-                  <h4 style={{ margin: '0 0 4px 0', fontSize: '0.95rem', fontWeight: 'bold', color: selectedCrime.whatWouldYouDo.options[selectedScenarioOption].isCorrect ? '#1a6234' : '#7b1c12' }}>
+                  <h4 style={{ margin: '0 0 4px 0', fontSize: '0.95rem', fontWeight: 'bold', color: selectedCrime.whatWouldYouDo.options[selectedScenarioOption].isCorrect ? 'var(--color-success, #536F61)' : 'var(--color-danger, #A34D43)' }}>
                     {selectedCrime.whatWouldYouDo.options[selectedScenarioOption].isCorrect ? 'CORRECT VERIFICATION' : 'UNSAFE REFLEX'}
                   </h4>
                   <p style={{ fontSize: '0.9rem', margin: 0, lineHeight: '1.5' }}>

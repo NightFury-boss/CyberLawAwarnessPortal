@@ -28,12 +28,60 @@ const LearningModuleSchema = new mongoose.Schema({
   },
   difficulty: {
     type: String,
-    default: 'Medium'
+    enum: ['Beginner', 'Intermediate', 'Advanced'],
+    default: 'Beginner'
   },
   estimatedMinutes: {
     type: Number,
     default: 5
   },
+  order: {
+    type: Number,
+    default: 1
+  },
+  icon: {
+    type: String,
+    default: 'BookOpen'
+  },
+  keyTakeaways: [
+    {
+      type: String
+    }
+  ],
+  sections: [
+    {
+      title: {
+        type: String,
+        required: true
+      },
+      content: {
+        type: String,
+        required: true
+      }
+    }
+  ],
+  quickCheck: {
+    question: {
+      type: String
+    },
+    options: [
+      {
+        type: String
+      }
+    ],
+    correctIndex: {
+      type: Number,
+      default: 0
+    },
+    explanation: {
+      type: String
+    }
+  },
+  actionSteps: [
+    {
+      type: String
+    }
+  ],
   relatedLawSections: [
     {
       type: String
@@ -45,6 +93,16 @@ const LearningModuleSchema = new mongoose.Schema({
     }
   ],
   relatedScenarios: [
+    {
+      type: String
+    }
+  ],
+  relatedCaseStudies: [
+    {
+      type: String
+    }
+  ],
+  relatedResources: [
     {
       type: String
     }

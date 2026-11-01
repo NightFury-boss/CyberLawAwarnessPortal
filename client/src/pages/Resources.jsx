@@ -133,6 +133,42 @@ function Resources() {
         group: 'CYBER_SAFETY_GUIDES',
         isOfficial: true
       };
+    } else if (titleLower.includes('chakshu')) {
+      return {
+        ...res,
+        authority: 'Department of Telecommunications (DoT)',
+        sourceType: 'REPORTING SERVICE',
+        badgeColor: 'var(--color-danger)',
+        group: 'REPORT_GET_HELP',
+        isOfficial: true
+      };
+    } else if (titleLower.includes('sachet')) {
+      return {
+        ...res,
+        authority: 'Reserve Bank of India (RBI)',
+        sourceType: 'VERIFICATION SERVICE',
+        badgeColor: 'var(--color-primary)',
+        group: 'REPORT_GET_HELP',
+        isOfficial: true
+      };
+    } else if (titleLower.includes('cert-in')) {
+      return {
+        ...res,
+        authority: 'CERT-In, Ministry of Electronics & IT',
+        sourceType: 'GOVERNMENT ADVISORY',
+        badgeColor: 'var(--color-success)',
+        group: 'CYBER_SAFETY_GUIDES',
+        isOfficial: true
+      };
+    } else if (titleLower.includes('nciipc')) {
+      return {
+        ...res,
+        authority: 'NCIIPC, Government of India',
+        sourceType: 'INFRASTRUCTURE ADVISORY',
+        badgeColor: 'var(--color-info)',
+        group: 'CYBER_SAFETY_GUIDES',
+        isOfficial: true
+      };
     }
     return {
       ...res,
@@ -167,7 +203,7 @@ function Resources() {
   const refEduMaterial = filteredResources.filter(r => r.group === 'REFERENCE_EDUCATIONAL');
 
   // Categories list for tabs
-  const categoriesList = ['All', 'REPORTING SERVICE', 'HELPLINE SERVICE', 'GOVERNMENT RESOURCE'];
+  const categoriesList = ['All', 'REPORTING SERVICE', 'HELPLINE SERVICE', 'GOVERNMENT RESOURCE', 'VERIFICATION SERVICE', 'GOVERNMENT ADVISORY'];
 
   return (
     <div className="container page-entry" style={{ padding: 'var(--space-xl) 0', maxWidth: '900px', fontFamily: 'var(--font-sans)', color: 'var(--text-primary)' }}>

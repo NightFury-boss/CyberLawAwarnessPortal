@@ -248,7 +248,7 @@ function Navbar({ user, setUser, isWorkspace, sidebarOpen, setSidebarOpen }) {
                   <Link
                     to="/admin"
                     className="btn btn-primary"
-                    style={{ backgroundColor: '#0a192f', borderColor: '#0a192f', color: '#ffffff', fontWeight: '600' }}
+                    style={{ backgroundColor: 'var(--color-text-primary, #302B27)', borderColor: 'var(--color-text-primary, #302B27)', color: '#ffffff', fontWeight: '600' }}
                   >
                     Admin Dashboard
                   </Link>
@@ -362,13 +362,13 @@ function Navbar({ user, setUser, isWorkspace, sidebarOpen, setSidebarOpen }) {
               {user ? (
                 <>
                   <div style={{ fontSize: '0.84rem', color: 'var(--text-secondary)' }}>
-                    Signed in as <strong>{user.fullName}</strong> {user.role === 'admin' && <span style={{ fontSize: '0.7rem', padding: '2px 6px', borderRadius: '4px', backgroundColor: '#1e3a8a', color: '#fff', marginLeft: '6px' }}>ADMIN</span>}
+                    Signed in as <strong>{user.fullName}</strong> {user.role === 'admin' && <span style={{ fontSize: '0.7rem', padding: '2px 6px', borderRadius: '4px', backgroundColor: 'var(--color-accent-gold, #B18A55)', color: '#fff', marginLeft: '6px' }}>ADMIN</span>}
                   </div>
                   {user.role === 'admin' ? (
                     <Link
                       to="/admin"
                       className="btn btn-primary"
-                      style={{ width: '100%', justifyContent: 'center', backgroundColor: '#0a192f', borderColor: '#0a192f' }}
+                      style={{ width: '100%', justifyContent: 'center', backgroundColor: 'var(--color-text-primary, #302B27)', borderColor: 'var(--color-text-primary, #302B27)' }}
                       onClick={() => setMobileDrawerOpen(false)}
                     >
                       Admin Dashboard

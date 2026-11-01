@@ -1,0 +1,23 @@
+{
+  "version": 2,
+  "name": "drive-question-1-of-quizzes-sb39123b",
+  "projectId": "client-a541be49",
+  "createdAt": 1793380529225,
+  "steps": [
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "role",
+        "role": "listitem",
+        "name": "Rapid 5-Question Session Quick Practice Short, untimed quizzes with immediate explanations and takeaways after each question. Perfect for daily practice. 5 Questions • Untimed Start →"
+      },
+      "args": {},
+      "action": "click",
+      "expect": {
+        "kind": "text",
+        "contains": "Question 1 of"
+      }
+    }
+  ],
+  "startPath": "/quizzes"
+}

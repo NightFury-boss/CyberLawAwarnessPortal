@@ -14,7 +14,6 @@ import React, { useState } from 'react';
  * - Primary Visualization: Restrained Six-Axis Radial Visualization (thin lines, subtle rings, no continuous loop).
  * - DimensionMatrix: Directional indicators (↑, →, ↓) with text retention classification.
  * - InterpretationNote: Generated strictly from actual backend trajectory state.
- * - Honest states: A (No baseline), B (Baseline only), C (Baseline + Final), D (Baseline + Final + Reassessment), E/F.
  */
 const CANONICAL_DIMENSIONS = [
   { key: 'TR', label: 'Threat Recognition', plainDesc: 'Spotting Dangers', angle: -90 },
@@ -38,15 +37,6 @@ function getCoordinates(value, angleDeg) {
     x: CENTER_X + r * Math.cos(angleRad),
     y: CENTER_Y + r * Math.sin(angleRad)
   };
-}
-
-function buildPolygonPath(scores, defaultValue = 0) {
-  const points = CANONICAL_DIMENSIONS.map((dim) => {
-    const val = scores[dim.key] !== null && scores[dim.key] !== undefined ? scores[dim.key] : defaultValue;
-    const { x, y } = getCoordinates(val, dim.angle);
-    return `${x.toFixed(1)},${y.toFixed(1)}`;
-  });
-  return `M ${points.join(' L ')} Z`;
 }
 
 function getRetentionLabel(state) {
@@ -100,10 +90,9 @@ function BehavioralEvolution({
       return "Start with Your Digital Day to see how you respond to online situations.";
     }
     if (!hasFinal) {
-      return "Your first check established your starting point. Complete your recommended lessons before taking the final check.";
+      return "Your first check established your starting baseline. Complete your recommended lessons before taking the final check.";
     }
 
-    // Check for strongest positive change
     let maxDelta = -999;
     let strongestDim = null;
     let anyDeclined = false;
@@ -130,65 +119,59 @@ function BehavioralEvolution({
     }
 
     if (anyDeclined) {
-      return "A few habits would benefit from extra practice. Short practice checks are recommended.";
+      return "A few habits would benefit from extra practice. Short targeted practice checks are recommended.";
     }
 
     return "Your results show steady, consistent online habits across all six areas.";
   };
 
   /* ========================================================================= */
-  /* STATE A: PRE-BASELINE STATE                                               */
+  /* STATE A: PRE-BASELINE BLUEPRINT                                           */
   /* ========================================================================= */
   if (!hasBaseline) {
     return (
-      <section className="desk-section" aria-labelledby="behavior-heading">
-        <div className="desk-section-header">
-          <div>
-            <span className="editorial-eyebrow" style={{ color: 'var(--color-portal-blue, #2563eb)' }}>
-              DECISION HABITS
+      <section className="atelier-behavioral-studio desk-behavioral-studio" aria-labelledby="behavior-heading">
+        <div className="behavioral-studio-header">
+          <div className="desk-panel-header">
+            <div>
+              <span className="desk-panel-eyebrow">Decision Habits Blueprint</span>
+              <h2 id="behavior-heading" className="desk-panel-title">
+                Six Discrete Behavioral Dimensions
+              </h2>
+              <p className="desk-panel-sub">
+                We evaluate your instinctive choices across six independent behavioral areas rather than averaging them into a single score.
+              </p>
+            </div>
+            <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#d97706', backgroundColor: '#fef3c7', padding: '4px 10px', borderRadius: '4px' }}>
+              First Check Needed
             </span>
-            <h2 id="behavior-heading" className="desk-section-title">How Your Decisions Change</h2>
-            <p className="desk-section-sub">
-              See how your online decision habits evolve across your practice and assessments.
-            </p>
           </div>
-          <span className="desk-section-counter">First Check Needed</span>
         </div>
 
-        <div className="desk-summary-block" style={{ marginBottom: '1.5rem' }}>
-          <p className="desk-quiet-empty" style={{ margin: 0 }}>
-            {generateInterpretation()} Complete Your Digital Day to see your baseline across all six safety areas.
-          </p>
+        <div className="behavioral-narrative-note" style={{ marginBottom: '20px' }}>
+          <strong>How it works:</strong> {generateInterpretation()} In <em>Your Digital Day</em>, you navigate realistic dilemmas under simulated time pressure.
         </div>
 
-        <div className="desk-table-container">
-          <table className="desk-quiet-table" aria-label="Authoritative Dimensions Framework">
-            <thead>
-              <tr>
-                <th scope="col">Habit Area</th>
-                <th scope="col">First Check</th>
-                <th scope="col">Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {CANONICAL_DIMENSIONS.map(dim => (
-                <tr key={dim.key}>
-                  <td>
-                    <span className="desk-dim-name">{dim.label}</span>
-                    <span className="desk-dim-subname" style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-muted)' }}>{dim.plainDesc}</span>
-                  </td>
-                  <td className="desk-table-num">—</td>
-                  <td className="desk-table-note">
-                    <span className="retention-state-text state-pending-data">Check Needed</span>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <div className="behavioral-dimension-grid">
+          {CANONICAL_DIMENSIONS.map(dim => (
+            <div key={dim.key} className="dimension-cell">
+              <div className="dimension-cell-header">
+                <span className="dimension-cell-name">{dim.label}</span>
+                <span style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--text-muted, #8b8b93)', fontFamily: 'monospace' }}>
+                  {dim.key}
+                </span>
+              </div>
+              <span className="dimension-cell-plain">{dim.plainDesc}</span>
+              <div className="dimension-cell-footer">
+                <span style={{ fontSize: '0.74rem', color: 'var(--text-muted, #8b8b93)' }}>Baseline: —</span>
+                <span className="dimension-status-badge">Check Needed</span>
+              </div>
+            </div>
+          ))}
         </div>
 
-        <p className="desk-evidence-note" style={{ marginTop: '1rem' }}>
-          Your decision habits are measured through realistic online simulations. We evaluate each of the six areas separately instead of combining them into a single average, so that specific risks are never hidden.
+        <p style={{ marginTop: '16px', fontSize: '0.78rem', color: 'var(--text-muted, #8b8b93)', fontStyle: 'italic', margin: '16px 0 0 0' }}>
+          Each habit is measured independently so that a high score in one area never conceals a dangerous blindspot in another.
         </p>
       </section>
     );
@@ -201,75 +184,44 @@ function BehavioralEvolution({
   const activeHoveredData = activeHoveredDim ? (dimensions[activeHoveredDim.key] || {}) : null;
 
   return (
-    <section className="desk-section" aria-labelledby="behavior-heading">
-      {/* 1. SECTION HEADER */}
-      <div className="desk-section-header">
-        <div>
-          <span className="editorial-eyebrow" style={{ color: 'var(--color-portal-blue, #2563eb)' }}>
-            DECISION HABITS
+    <section className="atelier-behavioral-studio desk-behavioral-studio" aria-labelledby="behavior-heading">
+      {/* 1. Header */}
+      <div className="behavioral-studio-header">
+        <div className="desk-panel-header">
+          <div>
+            <span className="desk-panel-eyebrow">Behavioral Development Studio</span>
+            <h2 id="behavior-heading" className="desk-panel-title">
+              How Your Decisions Evolve
+            </h2>
+            <p className="desk-panel-sub">
+              Longitudinal habit shifts measured across realistic online dilemmas.
+            </p>
+          </div>
+          <span style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--accent-navy, #0f2537)', backgroundColor: 'var(--bg-secondary, #f4f3ee)', padding: '4px 10px', borderRadius: '4px' }}>
+            {!hasFinal ? 'Baseline Established' : (hasTrajectoryReassessment ? `${trajectoryData?.comparableSessionsCount || 3} Checks Compared` : 'Baseline → Final')}
           </span>
-          <h2 id="behavior-heading" className="desk-section-title">How Your Decisions Change</h2>
-          <p className="desk-section-sub">
-            See how your online decision habits evolve across your practice and assessments.
-          </p>
         </div>
-        <span className="desk-section-counter">
-          {!hasFinal ? 'First Check Complete' : (
-            hasTrajectoryReassessment 
-              ? `${trajectoryData?.comparableSessionsCount || 3} checks compared`
-              : 'First Check → Final Check'
-          )}
-        </span>
       </div>
 
-      {/* 2. BEHAVIORAL SUMMARY & INTERPRETATION BANNER */}
-      <div 
-        className="desk-interpretation-banner"
-        style={{
-          backgroundColor: 'var(--bg-secondary, #f4f3ee)',
-          border: '1px solid var(--color-border, #dfe3e6)',
-          borderLeft: '4px solid var(--color-primary, #0f2537)',
-          padding: '12px 18px',
-          borderRadius: '4px',
-          marginBottom: '24px',
-          fontSize: '0.92rem',
-          lineHeight: '1.55',
-          color: 'var(--text-secondary, #3d4b58)'
-        }}
-      >
+      {/* 2. Key Observation */}
+      <div className="behavioral-narrative-note" style={{ marginBottom: '24px' }}>
         <strong>Key Observation:</strong> {generateInterpretation()}
       </div>
 
-      {/* 3. VISUALIZATION & MATRIX CONTAINER */}
-      <div className="desk-trajectory-split">
-        
-        {/* LEFT COLUMN: RESTRAINED SIX-AXIS RADIAL VISUALIZATION */}
-        <div 
-          className="desk-radial-panel"
-          style={{
-            backgroundColor: 'var(--bg-white, #ffffff)',
-            border: '1px solid var(--color-border, #dfe3e6)',
-            borderRadius: '6px',
-            padding: '20px 16px',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            position: 'relative'
-          }}
-          role="region"
-          aria-label="Six-axis radial chart showing canonical behavioral dimensions"
-        >
+      {/* 3. Split Layout: Radial Visualization & Matrix */}
+      <div className="behavioral-atelier-grid behavioral-studio-layout">
+        {/* Radial Map */}
+        <div className="behavioral-chart-box">
           <div style={{ width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-            <span style={{ fontSize: '0.72rem', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-tertiary, #52606d)' }}>
-              RADIAL PROFILE
+            <span style={{ fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-muted, #8b8b93)' }}>
+              Radial Profile
             </span>
-            <span style={{ fontSize: '0.72rem', color: 'var(--text-muted, #52606d)', fontFamily: 'monospace' }}>
-              6 AXES
+            <span style={{ fontSize: '0.72rem', color: 'var(--text-muted, #8b8b93)', fontFamily: 'monospace' }}>
+              6 Canonical Axes
             </span>
           </div>
 
-          <div style={{ position: 'relative', width: '100%', maxWidth: '320px', aspectRatio: '1/1' }}>
+          <div style={{ position: 'relative', width: '100%', maxWidth: '300px', aspectRatio: '1/1' }}>
             <svg
               viewBox="0 0 340 340"
               style={{ width: '100%', height: '100%', overflow: 'visible' }}
@@ -287,14 +239,14 @@ function BehavioralEvolution({
                     key={lvl}
                     points={ringPoints.join(' ')}
                     fill="none"
-                    stroke="var(--color-border, #dfe3e6)"
+                    stroke="var(--color-border, #e6e5e0)"
                     strokeWidth="1"
                     strokeDasharray={lvl === 1.0 ? 'none' : '2 2'}
                   />
                 );
               })}
 
-              {/* Axis Spoke Lines from Center to Outer Vertex */}
+              {/* Axis Spoke Lines */}
               {CANONICAL_DIMENSIONS.map((dim) => {
                 const outer = getCoordinates(100, dim.angle);
                 const isHovered = hoveredDimKey === dim.key;
@@ -305,57 +257,56 @@ function BehavioralEvolution({
                     y1={CENTER_Y}
                     x2={outer.x}
                     y2={outer.y}
-                    stroke={isHovered ? 'var(--color-portal-blue, #2563eb)' : 'var(--color-border, #dfe3e6)'}
+                    stroke={isHovered ? 'var(--color-primary, #2563eb)' : 'var(--color-border, #e6e5e0)'}
                     strokeWidth={isHovered ? '2' : '1'}
-                    transition="stroke 0.2s ease"
                   />
                 );
               })}
 
-              {/* Baseline Polygon (Dashed Slate) */}
+              {/* Baseline Polygon (Dashed Charcoal) */}
               {hasBaseline && Object.values(baseScores).some(v => typeof v === 'number') && (
                 <polygon
                   points={CANONICAL_DIMENSIONS.map(d => {
                     const c = getCoordinates(baseScores[d.key], d.angle);
                     return `${c.x.toFixed(1)},${c.y.toFixed(1)}`;
                   }).join(' ')}
-                  fill="rgba(82, 96, 109, 0.08)"
-                  stroke="#52606d"
+                  fill="rgba(99, 91, 83, 0.08)"
+                  stroke="#635B53"
                   strokeWidth="1.5"
                   strokeDasharray="4 3"
                   className="radial-polygon-anim"
                 />
               )}
 
-              {/* Final Polygon (Solid Navy) */}
+              {/* Final Polygon (Solid Espresso) */}
               {hasFinal && Object.values(finalScores).some(v => typeof v === 'number') && (
                 <polygon
                   points={CANONICAL_DIMENSIONS.map(d => {
                     const c = getCoordinates(finalScores[d.key], d.angle);
                     return `${c.x.toFixed(1)},${c.y.toFixed(1)}`;
                   }).join(' ')}
-                  fill="rgba(15, 37, 55, 0.12)"
-                  stroke="#0f2537"
+                  fill="rgba(48, 43, 39, 0.12)"
+                  stroke="#302B27"
                   strokeWidth="2"
                   className="radial-polygon-anim"
                 />
               )}
 
-              {/* Reassessment Polygon (Solid Blue) */}
+              {/* Reassessment Polygon (Solid Terracotta) */}
               {hasTrajectoryReassessment && Object.values(reassessScores).some(v => typeof v === 'number') && (
                 <polygon
                   points={CANONICAL_DIMENSIONS.map(d => {
                     const c = getCoordinates(reassessScores[d.key], d.angle);
                     return `${c.x.toFixed(1)},${c.y.toFixed(1)}`;
                   }).join(' ')}
-                  fill="rgba(37, 99, 235, 0.12)"
-                  stroke="#2563eb"
+                  fill="rgba(166, 95, 69, 0.12)"
+                  stroke="#A65F45"
                   strokeWidth="2"
                   className="radial-polygon-anim"
                 />
               )}
 
-              {/* Outer Dimension Label Buttons */}
+              {/* Axis Labels */}
               {CANONICAL_DIMENSIONS.map((dim) => {
                 const labelCoord = getCoordinates(124, dim.angle);
                 const isHovered = hoveredDimKey === dim.key;
@@ -382,7 +333,7 @@ function BehavioralEvolution({
                       fontSize="11"
                       fontFamily="var(--font-sans, sans-serif)"
                       fontWeight={isHovered ? '700' : '600'}
-                      fill={isHovered ? 'var(--color-accent, #2563eb)' : 'var(--text-primary, #1c1c1e)'}
+                      fill={isHovered ? 'var(--color-accent-terracotta, #A65F45)' : 'var(--color-text-primary, #302B27)'}
                     >
                       {dim.key}
                     </text>
@@ -390,7 +341,7 @@ function BehavioralEvolution({
                 );
               })}
 
-              {/* Vertex Nodes for Final (or Baseline if Final not yet taken) */}
+              {/* Vertex Nodes */}
               {CANONICAL_DIMENSIONS.map((dim) => {
                 const activeVal = hasFinal ? finalScores[dim.key] : baseScores[dim.key];
                 if (typeof activeVal !== 'number') return null;
@@ -403,185 +354,109 @@ function BehavioralEvolution({
                     cx={x}
                     cy={y}
                     r={isHovered ? 5.5 : 3.5}
-                    fill={isHovered ? '#2563eb' : (hasFinal ? '#0f2537' : '#52606d')}
-                    stroke="#ffffff"
+                    fill={isHovered ? '#A65F45' : (hasFinal ? '#302B27' : '#635B53')}
+                    stroke="#FCFAF5"
                     strokeWidth="1.5"
-                    style={{ transition: 'all 0.18s ease' }}
                   />
                 );
               })}
             </svg>
 
-            {/* Contextual Desktop Tooltip on Hover / Focus */}
+            {/* Hover Tooltip */}
             {activeHoveredDim && activeHoveredData && (
               <div
                 style={{
                   position: 'absolute',
-                  bottom: '10px',
+                  bottom: '8px',
                   left: '50%',
                   transform: 'translateX(-50%)',
-                  backgroundColor: 'rgba(15, 37, 55, 0.96)',
-                  color: '#ffffff',
-                  padding: '8px 12px',
+                  backgroundColor: 'rgba(48, 43, 39, 0.95)',
+                  color: '#FCFAF5',
+                  padding: '6px 12px',
                   borderRadius: '4px',
-                  fontSize: '0.78rem',
+                  fontSize: '0.76rem',
                   lineHeight: '1.4',
                   whiteSpace: 'nowrap',
                   pointerEvents: 'none',
-                  zIndex: 10,
-                  boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
+                  zIndex: 10
                 }}
               >
-                <div style={{ fontWeight: '700', marginBottom: '2px' }}>
+                <div style={{ fontWeight: 700 }}>
                   {activeHoveredDim.label} ({activeHoveredDim.key})
                 </div>
-                <div style={{ display: 'flex', gap: '8px', fontSize: '0.74rem' }}>
+                <div style={{ display: 'flex', gap: '8px', fontSize: '0.72rem', marginTop: '2px' }}>
                   <span>Base: {activeHoveredData.baseline !== null ? `${activeHoveredData.baseline}%` : '—'}</span>
                   {hasFinal && <span>Final: {activeHoveredData.final !== null ? `${activeHoveredData.final}%` : '—'}</span>}
-                  {hasTrajectoryReassessment && <span>Reassess: {activeHoveredData.reassessment !== null ? `${activeHoveredData.reassessment}%` : '—'}</span>}
                 </div>
               </div>
             )}
           </div>
 
-          {/* Visualization Legend */}
-          <div 
-            style={{ 
-              display: 'flex', 
-              flexWrap: 'wrap', 
-              justifyContent: 'center', 
-              gap: '12px', 
-              marginTop: '12px',
-              fontSize: '0.76rem',
-              color: 'var(--text-secondary, #3d4b58)'
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <span style={{ display: 'inline-block', width: '16px', height: '0px', borderTop: '2px dashed #52606d' }} />
+          <div className="behavioral-chart-legend">
+            <div>
+              <span className="legend-swatch" style={{ backgroundColor: '#635B53' }} />
               <span>Baseline</span>
             </div>
             {hasFinal && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <span style={{ display: 'inline-block', width: '16px', height: '2px', backgroundColor: '#0f2537' }} />
+              <div>
+                <span className="legend-swatch" style={{ backgroundColor: '#302B27' }} />
                 <span>Final</span>
               </div>
             )}
             {hasTrajectoryReassessment && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <span style={{ display: 'inline-block', width: '16px', height: '2px', backgroundColor: '#2563eb' }} />
-                <span>Reassessment</span>
+              <div>
+                <span className="legend-swatch" style={{ backgroundColor: '#A65F45' }} />
+                <span>Follow-Up</span>
               </div>
             )}
           </div>
         </div>
 
-        {/* RIGHT COLUMN: SIX-DIMENSION MATRIX */}
-        <div className="desk-comparison-panel">
-          <div className="desk-table-container">
-            <table className="desk-quiet-table" aria-label="Behavioral Evolution Matrix">
-              <thead>
-                <tr>
-                  <th scope="col">Habit Area</th>
-                  <th scope="col">First Check</th>
-                  {hasFinal && <th scope="col">Final Check</th>}
-                  {hasTrajectoryReassessment && <th scope="col">Follow-Up</th>}
-                  {hasFinal && <th scope="col">Change</th>}
-                  <th scope="col">Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {CANONICAL_DIMENSIONS.map((dim) => {
-                  const dimData = dimensions[dim.key] || {};
-                  const baseVal = dimData.baseline !== null && dimData.baseline !== undefined ? dimData.baseline : null;
-                  const finalVal = dimData.final !== null && dimData.final !== undefined ? dimData.final : null;
-                  const reassessVal = dimData.reassessment !== null && dimData.reassessment !== undefined ? dimData.reassessment : null;
-                  const dir = getDirectionalIndicator(baseVal, finalVal);
-                  const isHovered = hoveredDimKey === dim.key;
-                  const statusClass = `state-${(dimData.retentionState || 'pending-data').toLowerCase().replace(/_/g, '-')}`;
+        {/* Dimension Matrix Grid */}
+        <div className="behavioral-matrix-box">
+          <div className="behavioral-dimension-grid">
+            {CANONICAL_DIMENSIONS.map((dim) => {
+              const dimData = dimensions[dim.key] || {};
+              const baseVal = dimData.baseline !== null && dimData.baseline !== undefined ? dimData.baseline : null;
+              const finalVal = dimData.final !== null && dimData.final !== undefined ? dimData.final : null;
+              const dir = getDirectionalIndicator(baseVal, finalVal);
+              const isHovered = hoveredDimKey === dim.key;
 
-                  return (
-                    <tr
-                      key={dim.key}
-                      onMouseEnter={() => setHoveredDimKey(dim.key)}
-                      onMouseLeave={() => setHoveredDimKey(null)}
-                      style={{
-                        backgroundColor: isHovered ? 'var(--bg-secondary, #f4f3ee)' : 'transparent',
-                        transition: 'background-color 0.15s ease'
-                      }}
-                    >
-                      <td>
-                        <span className="desk-dim-name">{dim.label}</span>
-                        <span className="desk-dim-subname" style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-muted)' }}>{dim.plainDesc}</span>
-                      </td>
-                      <td className="desk-table-num">
-                        {baseVal !== null ? `${baseVal}%` : '—'}
-                      </td>
-                      {hasFinal && (
-                        <td className="desk-table-num">
-                          {finalVal !== null ? `${finalVal}%` : '—'}
-                        </td>
-                      )}
-                      {hasTrajectoryReassessment && (
-                        <td className="desk-table-num">
-                          {reassessVal !== null ? `${reassessVal}%` : '—'}
-                        </td>
-                      )}
-                      {hasFinal && (
-                        <td>
-                          {dir ? (
-                            <span 
-                              className={`dir-indicator ${dir.className}`} 
-                              title={`${dir.text} (${dir.delta})`}
-                              style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontWeight: '600' }}
-                            >
-                              <span className="dir-symbol" aria-hidden="true">{dir.symbol}</span>
-                              <span className="dir-text">{dir.text}</span>
-                            </span>
-                          ) : (
-                            <span className="dir-text">—</span>
-                          )}
-                        </td>
-                      )}
-                      <td>
-                        <span
-                          role="status"
-                          aria-label={`Status: ${getRetentionLabel(dimData.retentionState)}`}
-                          className={`retention-state-text ${statusClass}`}
-                        >
-                          {!hasFinal ? 'First Check Saved' : getRetentionLabel(dimData.retentionState)}
-                        </span>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+              return (
+                <div
+                  key={dim.key}
+                  className="dimension-cell"
+                  onMouseEnter={() => setHoveredDimKey(dim.key)}
+                  onMouseLeave={() => setHoveredDimKey(null)}
+                  style={{
+                    backgroundColor: isHovered ? 'var(--color-surface-secondary, #EFE8DC)' : 'var(--color-surface-card, #FCFAF5)'
+                  }}
+                >
+                  <div className="dimension-cell-header">
+                    <span className="dimension-cell-name">{dim.label}</span>
+                    <span style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--text-muted, #8b8b93)' }}>
+                      {dim.key}
+                    </span>
+                  </div>
+                  <span className="dimension-cell-plain">{dim.plainDesc}</span>
+                  <div className="dimension-cell-footer">
+                    <span style={{ fontSize: '0.76rem', color: 'var(--text-secondary, #56565c)' }}>
+                      {hasFinal ? `${baseVal ?? '—'}% → ${finalVal ?? '—'}%` : `Score: ${baseVal ?? '—'}%`}
+                    </span>
+                    <span className="dimension-status-badge">
+                      {hasFinal ? (dir ? `${dir.symbol} ${dir.text}` : 'Steady') : 'Baseline Saved'}
+                    </span>
+                  </div>
+                </div>
+              );
+            })}
           </div>
 
-          {/* Longitudinal Evidence Note */}
-          <div style={{ marginTop: '14px', fontSize: '0.82rem', color: 'var(--text-muted, #52606d)', lineHeight: '1.5' }}>
-            {!hasFinal ? (
-              <p style={{ margin: 0 }}>
-                First check recorded. Complete your assigned lessons to unlock the final check.
-              </p>
-            ) : !hasTrajectoryReassessment ? (
-              <p style={{ margin: 0 }}>
-                First check and final check completed. You can retake the simulation anytime to check your habits over time.
-              </p>
-            ) : (
-              <p style={{ margin: 0 }}>
-                This record compares your choices across spaced checks. All scores come from simulated online situations.
-              </p>
-            )}
-          </div>
+          <p style={{ margin: '8px 0 0 0', fontSize: '0.76rem', color: 'var(--text-muted, #8b8b93)' }}>
+            Each habit is evaluated separately from simulated actions. Scores reflect how you reacted under pressure, not legal test answers.
+          </p>
         </div>
-
       </div>
-
-      {/* 4. METHODOLOGY SAFEGUARD NOTICE */}
-      <p className="desk-evidence-note" style={{ marginTop: '1.25rem' }}>
-        Your decision habits are measured through realistic online simulations. We evaluate each of the six areas separately instead of combining them into a single average, so that specific risks are never hidden.
-      </p>
     </section>
   );
 }
