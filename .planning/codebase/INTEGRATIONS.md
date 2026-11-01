@@ -3,7 +3,7 @@
 ## Database: MongoDB Atlas
 - **Driver**: `mongoose` (v8.2.1)
 - **Connection URI**: Stored securely in `server/.env` (`MONGODB_URI`).
-- **Cluster**: Remote MongoDB Atlas shard cluster (`cluster0.xxeclfp.mongodb.net`).
+- **Cluster**: Remote MongoDB Atlas shard cluster (`<atlas-cluster-subdomain>.mongodb.net`).
 - **Connection Strategy**: Single pooled connection initialized via `server/config/db.js` with auto-reconnect and monitor listeners.
 
 ## Simulated Interface Integrations

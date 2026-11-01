@@ -122,7 +122,7 @@ async function runValidation() {
         family: 4
       });
       const pingRes = await mongoose.connection.db.admin().ping();
-      record('MONGODB_URI', true, `Connected to cluster (${conn.connection.host}, ping: ok)`);
+      record('MONGODB_URI', true, 'Handshake successful (ping: ok)');
       await mongoose.disconnect();
     } catch (err) {
       record('MONGODB_URI', false, `Database connection failed: ${err.message}`, true);
