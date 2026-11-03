@@ -1,6 +1,10 @@
 const API_URL = (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_API_URL)
   ? import.meta.env.VITE_API_URL
-  : 'http://localhost:5000/api';
+  : (typeof window !== 'undefined' && window.location && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') && window.location.port !== '5000'
+      ? 'http://localhost:5000/api'
+      : (typeof window !== 'undefined' && window.location && window.location.origin
+          ? `${window.location.origin}/api`
+          : 'http://localhost:5000/api'));
 
 // Helper to get headers
 function getHeaders() {
@@ -315,11 +319,17 @@ const api = {
     return handleResponse(res);
   },
 
-  submitAssessmentStep: async (assessmentSessionId, stageId, decisionId) => {
+  submitAssessmentStep: async (assessmentSessionId, stageId, decisionId, signalProbeDecisionId, idempotencyKey) => {
     const res = await fetchWithTimeout(`${API_URL}/assessments/submit-step`, {
       method: 'POST',
       headers: getHeaders(),
-      body: JSON.stringify({ assessmentSessionId, stageId, decisionId })
+      body: JSON.stringify({
+        assessmentSessionId,
+        stageId,
+        decisionId,
+        ...(signalProbeDecisionId ? { signalProbeDecisionId } : {}),
+        ...(idempotencyKey ? { idempotencyKey } : {})
+      })
     });
     return handleResponse(res);
   },

@@ -15,6 +15,10 @@ const AssessmentSession = require('../models/AssessmentSession');
 const CyberCrime = require('../models/CyberCrime');
 const CaseStudy = require('../models/CaseStudy');
 const LawSection = require('../models/LawSection');
+const UserProgress = require('../models/UserProgress');
+const AssessmentDecision = require('../models/AssessmentDecision');
+const ScenarioStage = require('../models/ScenarioStage');
+const ScenarioDecision = require('../models/ScenarioDecision');
 
 // Product severity multipliers (Heuristics reflecting real-world harm potential)
 const SEVERITY_WEIGHTS = {
@@ -36,21 +40,29 @@ const METRIC_KEYS = [
 ];
 
 /**
- * Calculate opportunity sufficiency multiplier
- * @param {number} opportunities - applicable opportunities or max penalty points
+ * Calculate opportunity sufficiency multiplier (Configurable Product Heuristic)
+ * @param {number} encounters - discrete decision encounters (v2) or opportunity points (v1)
+ * @param {number} scoringVersion - 1 or 2
  */
-function getOpportunityFactor(opportunities) {
-  if (opportunities === undefined || opportunities === null || opportunities < 2) {
+function getOpportunityFactor(encounters, scoringVersion = 1) {
+  if (encounters === undefined || encounters === null || encounters < 2) {
     return 0.0; // Insufficient sample; measurement not statistically meaningful
   }
-  if (opportunities >= 2 && opportunities <= 3) {
-    return 0.75; // Low confidence
+  if (scoringVersion === 2) {
+    if (encounters >= 2 && encounters <= 3) {
+      return 0.70; // Low-sample product heuristic dampener
+    }
+    return 1.0; // Standard confidence (>= 4)
   }
-  return 1.0; // Standard confidence (>= 4)
+  // Legacy v1 behavior
+  if (encounters >= 2 && encounters <= 3) {
+    return 0.75;
+  }
+  return 1.0;
 }
 
 /**
- * Extract normalized score and opportunity count for a metric from session
+ * Extract normalized score, encounter count, and opportunity count for a metric from session
  */
 function extractMetricData(session, metricKey) {
   const scoresMap = session.behaviourScores instanceof Map
@@ -61,6 +73,10 @@ function extractMetricData(session, metricKey) {
     ? Object.fromEntries(session.behaviourOpportunities)
     : (session.behaviourOpportunities || {});
 
+  const encountersMap = session.behaviourEncounters instanceof Map
+    ? Object.fromEntries(session.behaviourEncounters)
+    : (session.behaviourEncounters || {});
+
   const normalizedScore = typeof scoresMap[metricKey] === 'number'
     ? scoresMap[metricKey]
     : null;
@@ -69,18 +85,27 @@ function extractMetricData(session, metricKey) {
     ? oppsMap[metricKey]
     : 0;
 
-  // For penalty metrics, use actual max penalty points as the opportunity measure
-  if (metricKey === 'falsePositive') {
-    if (typeof session.falsePositiveMaxPenaltyPoints === 'number' && session.falsePositiveMaxPenaltyPoints > 0) {
-      opportunities = session.falsePositiveMaxPenaltyPoints;
-    }
-  } else if (metricKey === 'unreviewedAcceptance') {
-    if (typeof session.unreviewedAcceptanceMaxPenaltyPoints === 'number' && session.unreviewedAcceptanceMaxPenaltyPoints > 0) {
-      opportunities = session.unreviewedAcceptanceMaxPenaltyPoints;
+  let encounters = opportunities;
+  if (session.scoringVersion === 2 && typeof encountersMap[metricKey] === 'number') {
+    encounters = encountersMap[metricKey];
+  }
+
+  // For penalty metrics in legacy v1, use actual max penalty points as the opportunity measure
+  if (session.scoringVersion !== 2) {
+    if (metricKey === 'falsePositive') {
+      if (typeof session.falsePositiveMaxPenaltyPoints === 'number' && session.falsePositiveMaxPenaltyPoints > 0) {
+        opportunities = session.falsePositiveMaxPenaltyPoints;
+        encounters = session.falsePositiveMaxPenaltyPoints;
+      }
+    } else if (metricKey === 'unreviewedAcceptance') {
+      if (typeof session.unreviewedAcceptanceMaxPenaltyPoints === 'number' && session.unreviewedAcceptanceMaxPenaltyPoints > 0) {
+        opportunities = session.unreviewedAcceptanceMaxPenaltyPoints;
+        encounters = session.unreviewedAcceptanceMaxPenaltyPoints;
+      }
     }
   }
 
-  return { normalizedScore, opportunities };
+  return { normalizedScore, opportunities, encounters };
 }
 
 /**
@@ -88,23 +113,33 @@ function extractMetricData(session, metricKey) {
  */
 function rankEligibleMetrics(session) {
   const ranked = [];
+  const scoringVersion = session.scoringVersion === 2 ? 2 : 1;
 
   for (const metricKey of METRIC_KEYS) {
-    const { normalizedScore, opportunities } = extractMetricData(session, metricKey);
+    const { normalizedScore, opportunities, encounters } = extractMetricData(session, metricKey);
 
-    if (normalizedScore === null) continue; // Skip missing metrics gracefully
+    if (normalizedScore === null) continue; // Skip unassessed metrics gracefully
 
-    const opportunityFactor = getOpportunityFactor(opportunities);
+    const opportunityFactor = getOpportunityFactor(encounters, scoringVersion);
     const deficit = Math.max(0, 100 - normalizedScore);
     const severityWeight = SEVERITY_WEIGHTS[metricKey] || 1.0;
 
     const priorityScore = deficit * severityWeight * opportunityFactor;
-    const isEligibleWeakness = normalizedScore < 75 && opportunityFactor > 0;
+
+    let isEligibleWeakness = normalizedScore < 75 && opportunityFactor > 0;
+
+    // Phase 4.2 / 4.3 Rule for v2 False Positive: Cumulative penalty <= 2 is STRENGTH
+    if (scoringVersion === 2 && metricKey === 'falsePositive') {
+      if (typeof session.falsePositivePenaltyPoints === 'number' && session.falsePositivePenaltyPoints <= 2) {
+        isEligibleWeakness = false;
+      }
+    }
 
     ranked.push({
       metricKey,
       normalizedScore,
       opportunities,
+      encounters,
       opportunityFactor,
       deficit,
       severityWeight,
@@ -187,6 +222,78 @@ function determineFinalHabitState(finalMetric, baselineMetric) {
 }
 
 /**
+ * Build an evidence-grounded explanation for a recommended pathway based on session data and decision history.
+ *
+ * @param {Object} pathway - Catalog pathway definition
+ * @param {Object|null} metricInfo - Metric calculation details { metricKey, normalizedScore, opportunities, opportunityFactor }
+ * @param {Object} session - AssessmentSession document
+ * @param {Array} decisionEvidence - Array of populated user decisions [{ stageTitle, optionText, explanation, behaviorEffects, riskLevel, isCriticalMistake }]
+ * @returns {string} Grounded explanation text
+ */
+function buildEvidenceGroundedExplanation(pathway, metricInfo, session, decisionEvidence = []) {
+  if (!pathway) return '';
+
+  // Case 1: Maintenance / All-Strong pathway
+  if (pathway.metricKey === 'all' || pathway.dimensionCode === 'ALL') {
+    if (decisionEvidence && decisionEvidence.length > 0) {
+      return `Demonstrated solid vigilance across all evaluated stages in your ${session.scenarioCode || 'assessment'} assessment. ${pathway.observedBehaviorExplanation}`;
+    }
+    return pathway.observedBehaviorExplanation;
+  }
+
+  // Case 2: Insufficient or zero opportunities
+  if (!metricInfo || metricInfo.opportunities === 0 || metricInfo.opportunityFactor === 0) {
+    return 'Insufficient assessment evidence: zero opportunities were evaluated for this dimension in this session.';
+  }
+
+  // Case 3: Granular decision evidence is unavailable (e.g. historical sessions or simulated fixtures)
+  if (!decisionEvidence || decisionEvidence.length === 0) {
+    return `Granular decision evidence unavailable for this session. Evaluated from recorded ${metricInfo.normalizedScore}% score across ${metricInfo.opportunities} opportunities. ${pathway.observedBehaviorExplanation}`;
+  }
+
+  // Case 4: Inspect decision evidence for specific negative or high-risk choices
+  const metricKey = pathway.metricKey;
+  const relevantDecisions = [];
+
+  for (const d of decisionEvidence) {
+    const effects = d.behaviorEffects || {};
+    const hasEffect = effects[metricKey] !== undefined && effects[metricKey] !== null;
+    const isFocus = Array.isArray(d.measurementFocus) && d.measurementFocus.includes(metricKey);
+
+    if (metricKey === 'unreviewedAcceptance' || metricKey === 'falsePositive') {
+      // Penalty metrics: positive number indicates penalty incurred
+      if (effects[metricKey] > 0 || (d.isCriticalMistake && ['high-risk', 'critical'].includes(d.riskLevel))) {
+        relevantDecisions.push({
+          decision: d,
+          severity: d.riskLevel === 'critical' ? 3 : d.riskLevel === 'high-risk' ? 2 : 1
+        });
+      }
+    } else {
+      // Positive scoring metrics: 0 points or high risk indicates vulnerability
+      if ((hasEffect && effects[metricKey] === 0) || (isFocus && ['medium-risk', 'high-risk', 'critical'].includes(d.riskLevel)) || d.isCriticalMistake) {
+        relevantDecisions.push({
+          decision: d,
+          severity: d.isCriticalMistake ? 3 : d.riskLevel === 'critical' ? 3 : d.riskLevel === 'high-risk' ? 2 : 1
+        });
+      }
+    }
+  }
+
+  if (relevantDecisions.length > 0) {
+    // Sort by highest severity first
+    relevantDecisions.sort((a, b) => b.severity - a.severity);
+    const top = relevantDecisions[0].decision;
+    const stageTitle = top.stageTitle || 'Assessment Scenario';
+    const chosenText = top.optionText || 'your selection';
+    const detailExplanation = top.explanation ? top.explanation : pathway.observedBehaviorExplanation;
+    return `Observed in "${stageTitle}": You selected "${chosenText}". ${detailExplanation}`;
+  }
+
+  // If decisions exist but no single negative trigger is isolated (e.g. general lower score across subtle cues)
+  return `Demonstrated score of ${metricInfo.normalizedScore}% across ${metricInfo.opportunities} evaluated opportunities in your ${session.scenarioCode || 'assessment'} assessment. ${pathway.observedBehaviorExplanation}`;
+}
+
+/**
  * Generate server-authoritative remediation recommendations for a session
  * @param {string} sessionId - MongoDB AssessmentSession ObjectId
  * @param {string} userId - Authenticated user ObjectId string
@@ -244,7 +351,8 @@ async function generateRemediation(sessionId, userId) {
         pathway: maintenancePathway,
         state: 'mastery',
         stateBadge: 'Advanced Vigilance',
-        stateMessage: 'All measured everyday digital habits are strong. Explore advanced protections against SIM swapping and identity theft.'
+        stateMessage: 'All measured everyday digital habits are strong. Explore advanced protections against SIM swapping and identity theft.',
+        metricInfo: null
       });
     }
   } else if (eligibleWeaknesses.length === 1) {
@@ -265,7 +373,8 @@ async function generateRemediation(sessionId, userId) {
         pathway: path,
         state: stateInfo.state,
         stateBadge: stateInfo.badge,
-        stateMessage: stateInfo.message
+        stateMessage: stateInfo.message,
+        metricInfo: primary
       });
     }
 
@@ -274,7 +383,8 @@ async function generateRemediation(sessionId, userId) {
         pathway: maintenancePathway,
         state: 'mastery',
         stateBadge: 'Advanced Vigilance',
-        stateMessage: 'Alongside your primary focus area, maintain vigilance against secondary channel attacks.'
+        stateMessage: 'Alongside your primary focus area, maintain vigilance against secondary channel attacks.',
+        metricInfo: null
       });
     }
   } else {
@@ -296,14 +406,45 @@ async function generateRemediation(sessionId, userId) {
           pathway: path,
           state: stateInfo.state,
           stateBadge: stateInfo.badge,
-          stateMessage: stateInfo.message
+          stateMessage: stateInfo.message,
+          metricInfo
         });
       }
     }
   }
 
+  // Load decision evidence for granular groundings
+  let decisionEvidence = [];
+  try {
+    const userDecisions = await AssessmentDecision.find({ assessmentSessionId: session._id }).sort({ createdAt: 1 });
+    for (const d of userDecisions) {
+      const stg = await ScenarioStage.findById(d.stageId);
+      const dec = await ScenarioDecision.findById(d.decisionId);
+      if (stg && dec) {
+        decisionEvidence.push({
+          stageId: stg._id,
+          stageTitle: stg.title,
+          stageOrder: stg.stageOrder,
+          measurementFocus: stg.measurementFocus || [],
+          decisionId: dec._id,
+          optionText: dec.optionText,
+          explanation: dec.explanation,
+          riskLevel: dec.riskLevel,
+          isCriticalMistake: Boolean(dec.isCriticalMistake),
+          behaviorEffects: dec.behaviorEffects || {}
+        });
+      }
+    }
+  } catch (err) {
+    console.warn(`[RemediationEngine] Decision evidence lookup failed for session ${session._id}:`, err.message);
+  }
+
   // Validate referenced DB entities before returning
   const validatedRecommendations = [];
+  const userProgress = await UserProgress.findOne({ userId });
+  const completedModuleSlugs = userProgress?.completedModules || [];
+  const lessonProgressList = userProgress?.lessonProgress || [];
+
   for (const item of selectedPathways) {
     const p = item.pathway;
 
@@ -317,10 +458,42 @@ async function generateRemediation(sessionId, userId) {
       continue;
     }
 
+    // Resolve connected curriculum lesson progress
+    let curriculumLessonInfo = null;
+    if (p.curriculumLesson) {
+      const lp = lessonProgressList.find(l => l.slug === p.curriculumLesson.slug);
+      const isLessonCompleted = completedModuleSlugs.includes(p.curriculumLesson.slug) || lp?.status === 'knowledge_check_passed';
+      const lessonStatus = lp?.status || (isLessonCompleted ? 'read_completed' : 'not_started');
+      const readCompleted = Boolean(lp?.readCompleted || isLessonCompleted);
+
+      curriculumLessonInfo = {
+        slug: p.curriculumLesson.slug,
+        title: p.curriculumLesson.title,
+        category: p.curriculumLesson.category,
+        relevanceReason: p.curriculumLesson.relevanceReason,
+        status: lessonStatus,
+        isCompleted: isLessonCompleted,
+        readCompleted
+      };
+    }
+
+    const observedBehaviorExplanation = buildEvidenceGroundedExplanation(
+      p,
+      item.metricInfo,
+      session,
+      decisionEvidence
+    );
+
     // Clean payload for client: NO raw scores, multipliers, or internal formula details
     validatedRecommendations.push({
       pathwayId: p.pathwayId,
       metricKey: p.metricKey,
+      dimensionCode: p.dimensionCode || null,
+      dimensionName: p.dimensionName || null,
+      dimensionShortName: p.dimensionShortName || null,
+      observedBehaviorExplanation,
+      whyItMatters: p.whyItMatters || null,
+      whatYouWillPractice: p.whatYouWillPractice || null,
       habitTitle: p.habitTitle,
       pedagogicalFocus: p.pedagogicalFocus,
       coreRule: p.coreRule,
@@ -339,7 +512,9 @@ async function generateRemediation(sessionId, userId) {
       primaryLawSectionNumber: p.primaryLawSectionNumber,
       legalReferences: p.legalReferences,
       actionLabel: p.actionLabel,
-      actionRoute: p.actionRoute
+      actionRoute: p.actionRoute,
+      curriculumLesson: curriculumLessonInfo,
+      defensivePillars: p.defensivePillars || null
     });
   }
 
@@ -360,5 +535,6 @@ module.exports = {
   getOpportunityFactor,
   rankEligibleMetrics,
   determineFinalHabitState,
+  buildEvidenceGroundedExplanation,
   generateRemediation
 };

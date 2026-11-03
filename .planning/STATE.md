@@ -1,38 +1,92 @@
 # Project State & Current Position
 
-## Current Position
-- **Active Phase**: Phase 5 Complete & Frozen (Habit Retention, Targeted Reinforcement & Longitudinal Evidence).
-- **System Health**: All 11 automated test suites pass 100% with 0 errors. Client Vite production build succeeds with 0 errors.
-- **Authoritative Model**: Six-Metric Behavioral Model (`TR`, `SI`, `VB`, `DQ`, `FP`, `UA`) authoritative and server-enforced.
-- **Remediation & Reinforcement**: 
-  - Phase 3 Remediation Engine ($Deficit \times SeverityWeight \times OpportunityFactor$) and verified statutory metadata (`remediationCatalog.js`).
-  - Phase 4 Adaptive Learning Pathways (`completedPathways` tracking initial structured intervention).
-  - Phase 5 Targeted Habit Reinforcement (`reinforcementsCompleted` gated to `continued_practice` and `emerging_gap`).
-- **Longitudinal Evidence**: Three-Pillar Defensive Portfolio (`GET /api/progress/portfolio`) and Assessment Comparability Trajectory (`GET /api/assessments/trajectory`).
-- **Learning & Evidence Distinction**: Learning completion, knowledge practice, and behavioral change remain strictly segregated across data models, endpoints, and UI presentations. Zero composite scores or gamification.
+## 1. Milestone Status & Position
+- **Active Canonical Stage**: **Stage 2 — Assessment Quality & Reliability**
+  - `AQ-1`: Six-Dimensional Assessment Quality Audit — **COMPLETED**
+  - `AQ-2`: Assessment Refinement Design Proposal v2.5.0 — **APPROVED**
+  - `AQ-3`: Controlled Implementation (3 Waves) & Verification — **COMPLETED**
+  - `AQ-4`: Integrated Assessment Validation — **NEXT PRIORITY (AWAITING USER AUTHORIZATION)**
+- **Canonical Development Roadmap Position**:
+  - `Stage 1`: Core Learner Experience — **COMPLETED & FROZEN** (Milestone 3.3 Closed)
+  - `Stage 2`: Assessment Quality & Reliability — **CURRENT PRIORITY**
+  - `Stage 3`: Counterfactual Scenario Learning (Original Phase 4) — **PENDING**
+  - `Stage 4`: Digital Rights & Privacy Education (Original Phase 5) — **PENDING**
+  - `Stage 5`: Spaced Retrieval & Long-Term Retention (RT-1..4) — **PENDING**
+  - `Stage 6`: Dashboard Integration & Refinement (Original Phase 6) — **PENDING**
+- **Separate Deferred Workstream**:
+  - `Post-Development Design Improvement`: **DEFERRED** (Tracked in [`.planning/DESIGN_IMPROVEMENT_BACKLOG.md`](file:///c:/Users/Asus/Desktop/cyber-law-portal/.planning/DESIGN_IMPROVEMENT_BACKLOG.md); initiates only after Stages 1–6 complete).
+- **System Health**: All automated test suites pass 100% with 0 errors. Client Vite production build succeeds with 0 errors (built in ~530ms). MongoDB Atlas cluster healthy and accessible.
+- **Authoritative Model**: Six-Dimensional Behavioral Model (`TR`, `SI`, `VB`, `DQ`, `FP`, `UA`) authoritative, server-enforced, and immutably versioned. Standardized to "Criterion-Referenced Behavioral Diagnostic Rubric".
 
-## Recent Accomplishments
-1. **Phase 5 Complete**:
-   - Extended `server/models/UserProgress.js` with `reinforcementsCompleted` subdocument array.
-   - Implemented `POST /api/progress/pathways/reinforce` with server-authoritative scoring and gating.
-   - Implemented `GET /api/progress/portfolio` and `GET /api/assessments/trajectory`.
-   - Upgraded `PathwayRunner.jsx`, `RemediationCards.jsx`, `FinalAssessment.jsx`, and `Dashboard.jsx`.
-   - Built comprehensive automated suite `server/tests/phase5ReinforcementAndPortfolio.test.js` (Tests A–Q passing 100%).
-   - Extended E2E suite `server/tests/e2eUserJourneyAudit.js` with Steps 8–12.
-   - Full regression across all 11 suites passing 100%.
+---
 
-## Verification Status
-- `node server/tests/phase5ReinforcementAndPortfolio.test.js` -> 100% GREEN (Tests A-Q)
-- `node server/tests/pathwayProgress.test.js` -> 100% GREEN (Tests A-O)
-- `node server/tests/e2eUserJourneyAudit.js` -> 100% GREEN (Steps 1-12)
-- `node server/tests/remediationEngine.test.js` -> 100% GREEN
-- `node server/tests/behavioralAuthoritativeResult.test.js` -> 100% GREEN (Tests A-G)
-- `node server/tests/digitalDay.test.js` -> 100% GREEN (Tests A-M)
-- `node server/tests/deltaIsolation.test.js` -> 100% GREEN
-- `node server/tests/fixtureValidation.test.js` -> 100% GREEN
-- `node server/tests/api.test.js` -> 100% GREEN
-- `node server/utils/verifyScenarios.js` -> 100% GREEN (0 errors)
-- `npm run build --prefix client` -> 100% GREEN (0 errors)
+## 2. Completed Assessment Refinement Specification (AQ-3 v2.5.1 Amended)
+The implemented and verified design specification establishes:
+1. **Scoring Version Isolation & Cutover Contract**:
+   - `SCORING_V2_CUTOVER_DATE=2026-11-04T00:00:00.000Z` in `server/.env`.
+   - `cutoverConfig.js` enforces synchronous fail-closed validation at startup.
+   - Deterministic resolver preserves explicit versions, maps pre-cutover sessions to v1, stamps new post-cutover sessions as v2 at birth, and rejects unknown versions with `UNSUPPORTED_SCORING_VERSION`.
+2. **Global 16-Point Threat Recognition Budget**:
+   - Both Path 1 (Early Resolution via Stage 7 -> Stage 8 -> Stage 10) and Path 2 (Escalation & Late Recovery via Stage 7 -> Stage 9 -> Stage 10) operate against a strict 16-point denominator.
+   - Stage 7 early termination awards +4 TR and +2 VB; Stage 9 late recovery awards +2 TR and +2 VB.
+3. **Signal Identification Universal Forensic Probes**:
+   - 5 discrete 4-option forensic cue probes deployed across common stages (Stages 2, 3, 10, 11, 12).
+   - Atomic submission: stage submissions missing mandatory probe IDs fail with HTTP 400 (`INCOMPLETE_STAGE_SUBMISSION`) with zero database mutations.
+   - 2-step learner interaction: primary choice renders probe dynamically; learner selects cue before confirming.
+   - Client persists stage idempotency key in `sessionStorage` (`idemp_${sessionId}_${stageId}`) across reloads and retries.
+4. **Construct-Pure Decision Quality (DQ)**:
+   - DQ construct stripped of verification and panic overlaps; evaluated exclusively across Stages 5 and 13 ($N=2, DQ_{\text{max}} = 4$). Stage 14 (Evening Closure) strictly non-scoring.
+5. **Approved UA Model ($N=4, \text{Max Penalty}=8$)**:
+   - Unreviewed Acceptance evaluated across 4 genuine encounters on both paths (Stages 3, 4, 6, 10).
+   - No manufactured 5th encounter; exact path parity.
+6. **Idempotency & Partial Unique Compound Index**:
+   - Unique partial compound index on `AssessmentDecision`: `{ assessmentSessionId: 1, idempotencyKey: 1 }` with `{ unique: true, partialFilterExpression: { idempotencyKey: { $exists: true, $type: "string" } } }`.
+   - Safe retry returns HTTP 200 (`isRetry: true`); mismatched payload or re-submission conflicts return HTTP 409.
+   - Multi-document transactions on MongoDB Atlas replica set ensure atomic rollbacks.
+7. **First-Class Null Representation & Confidence Heuristics**:
+   - Unassessed dimensions ($N=0$) are stored as `null` in `behaviourScores`, excluded from remediation rankings, and rendered as neutral unassessed cards in `DigitalAwarenessProfile.jsx`.
+   - Low-sample heuristic dampener (0.70) applied for $N \in [2, 3]$ with `(Focused sample)` visual badges in the UI.
+   - False Positive cumulative penalty $\le 2$ treated as `STRENGTH` across both 4-encounter and 3-encounter paths.
+   - Scoring transparency blocks for penalty dimensions (`FP` and `UA`) in `DigitalAwarenessProfile.jsx` show accrued penalties, applicable max penalties, evaluated encounters, and the $\le 2$ penalty threshold.
 
+---
 
+## 3. Officially Frozen Learner Experience Structure (Stage 1 Baseline)
+The following structural specifications remain invariant:
+1. **Canonical Learner Journey**:
+   - Six mutually exclusive learner states evaluated deterministically in `PrimaryFocus.jsx` via `client/src/utils/dashboardJourneySelectors.js`.
+2. **Component & Route Ownership**:
+   - `/dashboard` (`Dashboard.jsx`) owns macro orientation, study dossier, pathway execution launching, quiz studio, and portfolio drawer.
+   - `/assessment/baseline` and `/assessment/final` own dedicated simulation flows with CAS atomic concurrency locks.
+   - `DigitalAwarenessProfile.jsx` owns diagnostic interpretation and statutory grounding.
+   - `PathwayRunner.jsx` owns 3-step structured intervention execution as a modal dialog.
+3. **Verified Defensive Learning Portfolio**:
+   - Standardized to "Verified Defensive Learning Portfolio" across three discrete pillars (Interventions, Knowledge Practice, Behavioral Trajectory).
+4. **Statutory Accuracy & Legal Status Taxonomy**:
+   - `IN_FORCE`: IT Act 2000 §§ 43, 66, 66C, 66D; BNS 2023 §§ 318(4), 319; BSA 2023 § 63.
+   - `ENACTED_FUTURE_COMMENCEMENT`: DPDP Act 2023 §§ 6, 8, 11 under G.S.R. 843(E) dated 13 November 2025 (not in force on 3 November 2026).
+   - `STRUCK_DOWN_HISTORICAL`: IT Act 2000 § 66A struck down in *Shreya Singhal v. Union of India (2015)*.
+5. **Cybercrime Emergency Reporting Principles**:
+   - Directs victims immediately to National Cybercrime Helpline **1930** and official portal `https://cybercrime.gov.in`.
+   - Mentions CFCFRMS and Golden Hour reporting without guaranteeing fund recovery.
 
+---
+
+## 4. Current Execution Boundary & Immediate Next Action
+- **Current Priority**: Awaiting explicit user authorization before commencing **AQ-3 (Controlled Implementation)**.
+- **Strict Boundary**: Zero product code, styling, schemas, scoring rules, or historical records may be altered without explicit user approval.
+- **Deferred Workstream**: Post-Development Design Improvement is strictly deferred to [`.planning/DESIGN_IMPROVEMENT_BACKLOG.md`](file:///c:/Users/Asus/Desktop/cyber-law-portal/.planning/DESIGN_IMPROVEMENT_BACKLOG.md).
+
+---
+
+## 5. Verification Status Summary
+
+### Baseline Verification Status
+- `node server/tests/scoring_v2_authoritative.test.js` -> 100% GREEN (15/15 checks passed).
+- `node server/tests/scoring_path_equivalence.test.js` -> 100% GREEN (3/3 comprehensive paths passed; Path 1 vs Path 2 exact 16 TR / 10 SI / 16 VB / 4 DQ parity, honest FP score divergence, unified STRENGTH classification).
+- `node server/tests/si_idempotency_atomicity.test.js` -> 100% GREEN (7/7 checks passed; mandatory probe atomic rejection with zero DB writes, idempotent retry HTTP 200, conflict detection HTTP 409, and partial unique index compatibility).
+- `node server/tests/behavioralAuthoritativeResult.test.js` -> 100% GREEN (Tests A–G passed 100%).
+- `node server/tests/remediationEngine.test.js` -> 100% GREEN (Tests A–M passed 100%).
+- `node server/tests/phase2_awareness_profile.test.js` -> 100% GREEN (10/10 checks passed).
+- `node server/tests/phase3_2_navigation_and_integrity.test.js` -> 100% GREEN (7/7 checks passed).
+- `npm run build --prefix client` -> 100% GREEN (81 modules transformed, 0 errors, built in 530ms).

@@ -223,16 +223,31 @@ async function runTests() {
     }
   });
 
-  test('4.2 DPDP Act Section 6 is properly annotated as future commencement (not currently in force)', () => {
+  test('4.2 DPDP Act Section 6 is properly annotated with dual commencement groups under G.S.R. 843(E)', () => {
     const catalog = require('../config/remediationCatalog');
     const uaPathway = catalog.find(p => p.pathwayId === 'pathway-ua-upi-consent');
     assert.ok(uaPathway, 'UA pathway must exist');
 
-    const dpdpRef = uaPathway.legalReferences.find(r => r.act.includes('Digital Personal Data Protection'));
-    assert.ok(dpdpRef, 'DPDP Act reference must exist');
-    assert.strictEqual(dpdpRef.status, 'ENACTED_FUTURE_COMMENCEMENT', 'DPDP Act must be marked ENACTED_FUTURE_COMMENCEMENT');
-    assert.ok(dpdpRef.commencementNote.includes('Notification S.O. 4932(E)'), 'Commencement note must cite notification');
-    assert.strictEqual(dpdpRef.relationshipType, 'CONTEXTUAL', 'DPDP Act reference must be CONTEXTUAL');
+    const dpdpRefs = uaPathway.legalReferences.filter(r => r.act.includes('Digital Personal Data Protection'));
+    assert.strictEqual(dpdpRefs.length, 2, 'Must have 2 distinct DPDP Act Section 6 provision groups');
+
+    // 1. Eighteen-month group: Section 6(1)–(8) & 6(10) -> 13 May 2027
+    const ref18m = dpdpRefs.find(r => r.section.includes('6(1)–(8)'));
+    assert.ok(ref18m, 'Section 6(1)–(8) & 6(10) reference must exist');
+    assert.strictEqual(ref18m.status, 'ENACTED_FUTURE_COMMENCEMENT', 'Must be marked ENACTED_FUTURE_COMMENCEMENT');
+    assert.ok(ref18m.commencementNote.includes('G.S.R. 843(E)'), 'Commencement note must cite G.S.R. 843(E)');
+    assert.ok(!ref18m.commencementNote.includes('S.O. 4932(E)'), 'Must not cite obsolete S.O. 4932(E)');
+    assert.ok(ref18m.commencementNote.includes('eighteen months') || ref18m.commencementNote.includes('18 months') || ref18m.commencementNote.includes('13 May 2027'), 'Must specify 18-month timeline');
+    assert.strictEqual(ref18m.relationshipType, 'CONTEXTUAL', 'Relationship must be CONTEXTUAL');
+
+    // 2. One-year group: Section 6(9) -> 13 November 2026
+    const ref1y = dpdpRefs.find(r => r.section.includes('6(9)'));
+    assert.ok(ref1y, 'Section 6(9) reference must exist');
+    assert.strictEqual(ref1y.status, 'ENACTED_FUTURE_COMMENCEMENT', 'Must be marked ENACTED_FUTURE_COMMENCEMENT');
+    assert.ok(ref1y.commencementNote.includes('G.S.R. 843(E)'), 'Commencement note must cite G.S.R. 843(E)');
+    assert.ok(!ref1y.commencementNote.includes('S.O. 4932(E)'), 'Must not cite obsolete S.O. 4932(E)');
+    assert.ok(ref1y.commencementNote.includes('one year') || ref1y.commencementNote.includes('1 year') || ref1y.commencementNote.includes('13 November 2026'), 'Must specify 1-year timeline');
+    assert.strictEqual(ref1y.relationshipType, 'CONTEXTUAL', 'Relationship must be CONTEXTUAL');
   });
 
   test('4.3 IT Act Section 66C and 66D are active statutory provisions', () => {

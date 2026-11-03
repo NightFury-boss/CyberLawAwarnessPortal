@@ -40,7 +40,7 @@ function SignInForm({ setUser, onSwitchToSignUp }) {
         navigate('/dashboard');
       }
     } catch (err) {
-      setError('Unable to sign in. Check your email and password and try again.');
+      setError(err.message || 'Unable to sign in. Check your email and password and try again.');
     } finally {
       setLoading(false);
     }
@@ -71,7 +71,7 @@ function SignInForm({ setUser, onSwitchToSignUp }) {
         <div className="auth-alert-error" role="alert" aria-live="polite">
           <div className="alert-content">
             <strong className="alert-title">Unable to sign in</strong>
-            <p className="alert-desc">Check your email and password and try again.</p>
+            <p className="alert-desc">{error}</p>
           </div>
         </div>
       )}

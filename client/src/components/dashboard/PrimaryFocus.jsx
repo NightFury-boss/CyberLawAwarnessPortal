@@ -14,6 +14,8 @@ import { selectPrimaryNextAction } from '../../utils/dashboardJourneySelectors.j
 export default function PrimaryFocus({
   hasBaseline = false,
   hasFinal = false,
+  hasActiveFinal = false,
+  activeFinalStage = null,
   pathwaysWithStatus = [],
   dueSpacedReviews = [],
   dueQuizRecalls = [],
@@ -39,6 +41,8 @@ export default function PrimaryFocus({
   const action = selectPrimaryNextAction({
     hasBaseline,
     hasFinal,
+    hasActiveFinal,
+    activeFinalStage,
     pathwaysWithStatus: effectivePathways,
     dueSpacedReviews,
     dueQuizRecalls,
@@ -55,6 +59,7 @@ export default function PrimaryFocus({
       case 'DUE_QUIZ_RECALL':
         return 'atelier-dossier-card state-recall';
       case 'READY_FOR_FINAL':
+      case 'RESUME_FINAL':
         return 'atelier-dossier-card state-ready';
       case 'REINFORCE_HABIT':
         return 'atelier-dossier-card state-reinforce';

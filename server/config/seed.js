@@ -344,7 +344,7 @@ async function seed(isReset = false) {
         exampleScenario: 'A fitness application pre-ticks a box allowing third-party ad networks to read your location logs. Under DPDP Section 6, this consent is invalid.',
         penaltyOrLegalEffect: 'Administrative penalties on data fiduciaries up to ₹250 crore for significant breaches.',
         legalStatus: 'NOT_YET_IN_FORCE',
-        commencementStatus: 'Passed by Parliament in August 2023. Not yet notified in force, pending establishment of the Data Protection Board (DPBI).',
+        commencementStatus: 'Enacted August 2023. Under Notification G.S.R. 843(E) dated 13 November 2025, commencement is staggered: Section 6(9) is scheduled one year post-publication (13 November 2026), and Section 6(1)–(8) & 6(10) are scheduled eighteen months post-publication (13 May 2027). Neither provision group is in force as of 2 November 2026.',
         amendmentStatus: 'New enactment under the DPDP Act, 2023.',
         keywords: ['consent', 'privacy', 'personal data', 'tracking', 'data principal'],
         relatedCyberCrimes: ['data-breach'],
@@ -2969,6 +2969,8 @@ async function seed(isReset = false) {
           eventClassification: stg.eventClassification,
           measurementFocus: stg.measurementFocus || [],
           targetSignals: stg.targetSignals || [],
+          hasSignalProbe: Boolean(stg.hasSignalProbe),
+          signalProbes: stg.signalProbes || [],
           terminal: stg.terminal || false
         };
 

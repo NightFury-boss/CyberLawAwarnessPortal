@@ -17,8 +17,14 @@ const remediationCatalog = [
   {
     pathwayId: 'pathway-ua-upi-consent',
     metricKey: 'unreviewedAcceptance',
+    dimensionCode: 'UA',
+    dimensionName: 'Unreviewed Acceptance Control',
+    dimensionShortName: 'Autopilot Control',
     habitTitle: 'Autopilot Control & UPI PIN Safety',
     pedagogicalFocus: 'Eliminating reflexive approvals, auditing device permissions, and mastering UPI transaction mechanics.',
+    observedBehaviorExplanation: 'During the assessment, payment prompts and device permissions were authorized without verifying whether the request was an incoming credit or an outgoing debit.',
+    whyItMatters: 'Scammers exploit reflexive taps. Approving a request without reading the debit amount or entering a UPI PIN for a "reward" results in immediate, irreversible financial loss.',
+    whatYouWillPractice: 'You will practice reading every UPI confirmation screen, auditing mobile permission requests, and recognizing that entering a PIN debits your account.',
     coreRule: 'A UPI PIN is entered ONLY to SEND money, NEVER to receive funds, cashback, or refunds.',
     difficulty: 'Essential',
     estimatedMinutes: 3,
@@ -26,6 +32,26 @@ const remediationCatalog = [
     caseStudySlug: 'classified-marketplace-qr-fraud',
     preventionAnchor: '#payments',
     primaryLawSectionNumber: 'Section 66C',
+    curriculumLesson: {
+      slug: 'upi-qr-payment-fraud',
+      title: 'UPI, QR Code and Digital Payment Fraud',
+      category: 'Recognizing Threats',
+      relevanceReason: 'Provides complete background on collect-request mechanics, QR code overlay risks, and Indian payment security standards.'
+    },
+    defensivePillars: {
+      whatToDo: [
+        'Read the full UPI screen to confirm whether the transaction is "PAY" (debit) or "COLLECT" before acting.',
+        'Audit app permissions regularly and revoke SMS/Contacts access for utilities like flashlights or calculators.',
+        'Check that any QR code scanned matches the authentic merchant name displayed at the physical counter.'
+      ],
+      whatToAvoid: [
+        'Never enter your UPI PIN to receive money, cashback, refunds, or marketplace payments.',
+        'Never accept collect requests sent by unknown buyers on classified marketplaces.',
+        'Never grant Accessibility or SMS permissions to apps downloaded outside verified stores.'
+      ],
+      howToVerify: 'Verify transaction requests directly inside your primary banking application. When receiving money, legitimate payers only need your UPI ID or phone number; they never require you to approve a request or input your PIN.',
+      ifMistakeOccurs: 'If a fraudulent debit occurs, immediately freeze UPI access via your banking app, inform your bank helpline, and call the National Cybercrime Helpline 1930 or visit cybercrime.gov.in. Prompt reporting enables CFCFRMS coordination between banks to attempt inter-bank transaction holds (subject to bank response; recovery is not guaranteed).'
+    },
     legalReferences: [
       {
         act: 'Information Technology Act, 2000',
@@ -38,13 +64,23 @@ const remediationCatalog = [
       },
       {
         act: 'Digital Personal Data Protection Act, 2023',
-        section: 'Section 6',
-        officialTitle: 'Consent',
+        section: 'Section 6(1)–(8) & 6(10)',
+        officialTitle: 'Consent Standards & Withdrawal Obligations',
         status: 'ENACTED_FUTURE_COMMENCEMENT',
-        commencementNote: 'Enacted August 2023; Notification S.O. 4932(E) dated 13 Nov 2025 appoints commencement after 18 months (May 2027). Not in force as of 9 September 2026.',
+        commencementNote: 'Enacted August 2023. Notification G.S.R. 843(E) dated 13 November 2025 appoints commencement eighteen months after publication (13 May 2027). As of 2 November 2026, not in force.',
         relationshipType: 'CONTEXTUAL',
-        attribution: 'Imposes statutory obligations upon the Data Fiduciary (the service provider) to request only specific, informed, and necessary consent.',
-        educationalContext: 'Section 6 of the DPDP Act establishes the upcoming legislative standard requiring service providers to seek clear, informed consent. Understanding this principle helps users identify when applications request access beyond legitimate service needs.'
+        attribution: 'Imposes statutory obligations upon the Data Fiduciary (the service provider) to request only specific, informed, and necessary consent without bundled permissions.',
+        educationalContext: 'Sections 6(1)–(8) and 6(10) of the DPDP Act establish the upcoming legislative standard requiring service providers to seek clear, informed consent. Understanding this principle helps users identify when applications request access beyond legitimate service needs.'
+      },
+      {
+        act: 'Digital Personal Data Protection Act, 2023',
+        section: 'Section 6(9)',
+        officialTitle: 'Data Protection Officer Contact Notice',
+        status: 'ENACTED_FUTURE_COMMENCEMENT',
+        commencementNote: 'Enacted August 2023. Notification G.S.R. 843(E) dated 13 November 2025 appoints commencement one year after publication (13 November 2026). As of 2 November 2026, not in force.',
+        relationshipType: 'CONTEXTUAL',
+        attribution: 'Requires data fiduciaries to publish or provide contact details of an authorized officer or Data Protection Officer for user inquiries.',
+        educationalContext: 'Section 6(9) of the DPDP Act establishes accountability channels for digital users to contact data fiduciaries regarding their personal data and consent withdrawal.'
       }
     ],
     actionLabel: 'Review UPI Scam Case Study',
@@ -96,8 +132,14 @@ const remediationCatalog = [
   {
     pathwayId: 'pathway-vb-out-of-band',
     metricKey: 'verification',
+    dimensionCode: 'VB',
+    dimensionName: 'Verification Behavior',
+    dimensionShortName: 'Out-of-Band Verification',
     habitTitle: 'Independent Out-of-Band Verification',
     pedagogicalFocus: 'Replacing in-channel questioning with independent secondary-channel verification during urgent or coercive contacts.',
+    observedBehaviorExplanation: 'During the assessment, high-pressure claims made by an incoming contact were accepted without independently verifying the caller through an outside, trusted channel.',
+    whyItMatters: 'Impersonation scams (like "digital arrest" and fake courier customs notices) rely on intimidation and manufactured authority. Believing caller ID or caller-provided numbers traps victims in coercion.',
+    whatYouWillPractice: 'You will practice disconnecting suspicious calls, locating independently published directory numbers, and confirming institutional claims out-of-band.',
     coreRule: 'Never verify an authority using the contact information they provide. Disconnect and call official numbers found through an independent directory.',
     difficulty: 'Intermediate',
     estimatedMinutes: 4,
@@ -105,6 +147,26 @@ const remediationCatalog = [
     caseStudySlug: 'digital-arrest-impersonation',
     preventionAnchor: '#reporting',
     primaryLawSectionNumber: 'Section 66D',
+    curriculumLesson: {
+      slug: 'digital-arrest-impersonation-scams',
+      title: 'Digital Arrest and Impersonation Scams',
+      category: 'Recognizing Threats',
+      relevanceReason: 'Analyzes psychological coercion tactics used in digital arrest schemes and the statutory framework under BNS and IT Act.'
+    },
+    defensivePillars: {
+      whatToDo: [
+        'Disconnect any call where the caller threatens arrest, customs seizure, or legal action over video/audio.',
+        'Look up official landline contact numbers from official government (.gov.in) or corporate websites.',
+        'Inform trusted family members or colleagues immediately before complying with unusual instructions.'
+      ],
+      whatToAvoid: [
+        'Never verify an authority using numbers, letters, or links provided by the caller themselves.',
+        'Never agree to stay on a continuous video call under the guise of "digital arrest" or "surveillance".',
+        'Never transfer money to a "court escrow" or "verification account" dictated over a phone call.'
+      ],
+      howToVerify: 'Indian law enforcement, customs, and judicial authorities never conduct interrogations or issue arrest warrants via WhatsApp or Skype video calls. Verify any purported FIR or notice by visiting your local police station in person or calling their publicly listed landline.',
+      ifMistakeOccurs: 'If you shared financial or personal information under intimidation, immediately disconnect, block the caller, contact your bank to freeze impacted accounts, and report the incident to Helpline 1930 or cybercrime.gov.in.'
+    },
     legalReferences: [
       {
         act: 'Information Technology Act, 2000',
@@ -185,8 +247,14 @@ const remediationCatalog = [
   {
     pathwayId: 'pathway-tr-lure-detection',
     metricKey: 'recognition',
+    dimensionCode: 'TR',
+    dimensionName: 'Threat Recognition',
+    dimensionShortName: 'Threat Lure Spotting',
     habitTitle: 'Threat Lure Spotting in Routine Contacts',
     pedagogicalFocus: 'Spotting disguised malicious stimuli in delivery notifications, salary alerts, and account warnings.',
+    observedBehaviorExplanation: 'During the assessment, urgent notifications and delivery parcel alerts went unquestioned because they resembled routine everyday workflows.',
+    whyItMatters: 'Modern phishing exploits routine convenience. Disguised messages about pending deliveries or account warnings trigger instinctive clicks before critical thinking engages.',
+    whatYouWillPractice: 'You will practice identifying artificial urgency triggers, verifying sender identities, and handling unsolicited contact safely.',
     coreRule: 'Inspect unexpected urgency cues and delivery failures directly on official courier portals, never via SMS links.',
     difficulty: 'Beginner',
     estimatedMinutes: 3,
@@ -194,6 +262,26 @@ const remediationCatalog = [
     caseStudySlug: 'phishing-credential-takeover',
     preventionAnchor: '#browsing',
     primaryLawSectionNumber: 'Section 66D',
+    curriculumLesson: {
+      slug: 'phishing-social-engineering',
+      title: 'Understanding Phishing and Social Engineering',
+      category: 'Recognizing Threats',
+      relevanceReason: 'Explores social engineering psychology, common phishing pretexts, and technical indicators of fraudulent communications.'
+    },
+    defensivePillars: {
+      whatToDo: [
+        'Inspect notification claims directly on the official shopping app or carrier portal where you placed your order.',
+        'Check the tracking number independently rather than clicking links inside SMS or WhatsApp messages.',
+        'Treat any message with a tight artificial deadline (e.g. "update within 2 hours") with heightened skepticism.'
+      ],
+      whatToAvoid: [
+        'Never click shortened URLs (bit.ly, tinyurl) sent via SMS for courier or billing updates.',
+        'Never enter account passwords or personal details on pages opened directly from text messages.',
+        'Never call back mobile numbers embedded in warning texts.'
+      ],
+      howToVerify: 'Open the merchant app or visit the courier website by typing the verified URL directly into your browser. If a delivery issue actually exists, the official order tracking dashboard will show the identical status update.',
+      ifMistakeOccurs: 'If you clicked a suspicious link and entered account credentials, immediately navigate to the authentic website, change your password, and enable multi-factor authentication (MFA). If financial details were submitted, notify your bank immediately.'
+    },
     legalReferences: [
       {
         act: 'Information Technology Act, 2000',
@@ -254,8 +342,14 @@ const remediationCatalog = [
   {
     pathwayId: 'pathway-si-syntax-analysis',
     metricKey: 'signalIdentification',
+    dimensionCode: 'SI',
+    dimensionName: 'Signal Identification',
+    dimensionShortName: 'Technical Signal & Domain Inspection',
     habitTitle: 'Technical Signal & Domain Inspection',
     pedagogicalFocus: 'Identifying deception markers: lookalike sender domains, mismatched VPAs, and advance-fee task lures.',
+    observedBehaviorExplanation: 'During the assessment, subtle domain character substitutions and advance-fee task signals were overlooked during decision-making.',
+    whyItMatters: 'Attackers create lookalike domains (e.g., using hyphens, homoglyphs, or wrong top-level extensions) to harvest credentials and deceive job seekers into paying advance deposits.',
+    whatYouWillPractice: 'You will practice inspecting full URL syntax, identifying genuine official domain boundaries (.gov.in, official corporate domains), and spotting advance-fee recruitment traps.',
     coreRule: 'Inspect root domains in the address bar before entering details. Legitimate employers never charge advance task or registration fees.',
     difficulty: 'Intermediate',
     estimatedMinutes: 4,
@@ -263,6 +357,26 @@ const remediationCatalog = [
     caseStudySlug: 'fake-job-offer-scam',
     preventionAnchor: '#browsing',
     primaryLawSectionNumber: 'BNS Section 318',
+    curriculumLesson: {
+      slug: 'phishing-social-engineering',
+      title: 'Understanding Phishing and Social Engineering',
+      category: 'Recognizing Threats',
+      relevanceReason: 'Details technical signal analysis, lookalike domain architectures, and advance-fee deception under BNS Section 318(4).'
+    },
+    defensivePillars: {
+      whatToDo: [
+        'Inspect the full URL in your browser address bar to identify the exact root domain before entering any login credential.',
+        'Verify that government communications originate from official .gov.in or .nic.in domains.',
+        'Remember that legitimate employers and freelance platforms never charge registration, equipment, or task security fees.'
+      ],
+      whatToAvoid: [
+        'Never trust browser tab titles, logos, or page headers; only the address bar domain is cryptographically bound to the server.',
+        'Never pay advance "refundable security deposits" for remote work or freelance task review.',
+        'Never enter passwords on websites with misspelled brand names (e.g. paypa1, onl1ne-bank).'
+      ],
+      howToVerify: 'Check domain registration and certificate details in your browser by clicking the padlock icon. For employment offers, cross-reference the opening on the employer\'s official career page or LinkedIn company profile.',
+      ifMistakeOccurs: 'If you paid an advance fee in a task scam, terminate communication immediately, preserve chat and payment receipts (UTR numbers), and report the fraud to Helpline 1930 and cybercrime.gov.in.'
+    },
     legalReferences: [
       {
         act: 'Bharatiya Nyaya Sanhita, 2023',
@@ -334,8 +448,14 @@ const remediationCatalog = [
   {
     pathwayId: 'pathway-dq-digital-hygiene',
     metricKey: 'decisionQuality',
+    dimensionCode: 'DQ',
+    dimensionName: 'Decision Quality',
+    dimensionShortName: 'Daily Digital Prudence',
     habitTitle: 'Daily Digital Prudence & System Hygiene',
     pedagogicalFocus: 'Establishing deliberate pause habits before executing system updates, installing utilities, or scanning physical QR codes.',
+    observedBehaviorExplanation: 'During the assessment, decisions prioritized immediate convenience over fundamental system hygiene, such as sideloading unverified files or trusting unverified public QR codes.',
+    whyItMatters: 'Malware, fake utilities, and rogue APKs rely on users bypassing system guardrails for a perceived convenience or discount, exposing devices to background surveillance.',
+    whatYouWillPractice: 'You will practice evaluating app permissions, relying exclusively on trusted app repositories, and validating physical QR codes before scanning.',
     coreRule: 'Never scan a table QR code to receive money, and schedule OS updates only through official system settings.',
     difficulty: 'Essential',
     estimatedMinutes: 3,
@@ -344,6 +464,26 @@ const remediationCatalog = [
     preventionAnchor: '#browsing',
     primaryLawSectionNumber: null, // Intentionally null; pure practical hygiene
     legalReferences: [],           // Intentionally empty; no forced statute
+    curriculumLesson: {
+      slug: 'securing-smartphones-and-accounts',
+      title: 'Securing Your Smartphone and Digital Accounts',
+      category: 'Defensive Practice',
+      relevanceReason: 'Covers practical device hardening, permissions auditing, update management, and defensive hygiene against rogue utilities.'
+    },
+    defensivePillars: {
+      whatToDo: [
+        'Download applications only from official app stores (Google Play, Apple App Store) and verify publisher credentials.',
+        'Install operating system and security patches promptly through official device settings.',
+        'Confirm with venue staff that physical QR codes pasted on tables or counters belong to the establishment.'
+      ],
+      whatToAvoid: [
+        'Never install APK files sent over WhatsApp, Telegram, or downloaded from web links.',
+        'Never scan unverified promotional QR stickers promising high cashback or rewards.',
+        'Never click on web pop-ups claiming your device is infected and offering cleanup tools.'
+      ],
+      howToVerify: 'Check the URL preview before opening any link generated by a QR scanner. For system updates, verify update availability exclusively in Settings > System Updates, never through browser links.',
+      ifMistakeOccurs: 'If a suspicious application was installed, immediately turn on Airplane Mode, uninstall the application, restart the device in Safe Mode if necessary, and run a scan with your operating system\'s built-in security tool.'
+    },
     actionLabel: 'Explore QR & Hygiene Case Study',
     actionRoute: '/cases?slug=restaurant-qr-code-scam',
     checkpoint: {
@@ -393,8 +533,14 @@ const remediationCatalog = [
   {
     pathwayId: 'pathway-fp-evidence-triage',
     metricKey: 'falsePositive',
+    dimensionCode: 'FP',
+    dimensionName: 'False Positive Control',
+    dimensionShortName: 'Evidence-Based Triage',
     habitTitle: 'Evidence-Based Alert Triage',
     pedagogicalFocus: 'Distinguishing standard automated receipts from deceptive urgency traps to prevent alarm fatigue and unnecessary disruption.',
+    observedBehaviorExplanation: 'During the assessment, standard automated transactional notifications were treated with disproportionate alarm.',
+    whyItMatters: 'Alarm fatigue leads to unnecessary account locks and emotional distress, or causes users to dismiss critical genuine warnings when an actual emergency occurs.',
+    whatYouWillPractice: 'You will practice evaluating notification content calmly, verifying recent account history independently, and avoiding impulsive reactions.',
     coreRule: 'Legitimate services inform you of completed account activities without requesting credentials. Do not block legitimate alerts prematurely.',
     difficulty: 'Intermediate',
     estimatedMinutes: 3,
@@ -403,6 +549,26 @@ const remediationCatalog = [
     preventionAnchor: '#evidence',
     primaryLawSectionNumber: null, // Intentionally null; Section 72A removed
     legalReferences: [],           // Intentionally empty; pure alert triage
+    curriculumLesson: {
+      slug: 'reporting-cybercrime-evidence-preservation',
+      title: 'Reporting Cybercrime and Preserving Evidence in India',
+      category: 'Defensive Practice',
+      relevanceReason: 'Teaches evidence collection, distinguishing authentic receipts from fraudulent coercion, and statutory procedures under BSA Section 63.'
+    },
+    defensivePillars: {
+      whatToDo: [
+        'Read automated notifications carefully to understand whether they report a completed action or request an interaction.',
+        'Open your official banking application independently to review transaction history before raising an alarm.',
+        'Save official customer service numbers from your physical cards into your phone contacts for rapid reference.'
+      ],
+      whatToAvoid: [
+        'Do not panic or immediately call unverified phone numbers sent in unsolicited messages.',
+        'Do not forward routine transactional alerts to social media or unverified community groups.',
+        'Do not block legitimate banking SMS shortcodes (e.g. from your bank), which prevents delivery of critical real-time alerts.'
+      ],
+      howToVerify: 'Legitimate transactional receipts state completed facts (e.g. amount debited, remaining balance) and never demand that you click a link or provide your password to "verify" the transaction.',
+      ifMistakeOccurs: 'If you realize a notification was legitimate after reporting it, review your banking app status. If you suspect an unauthorized transaction did occur, call your bank customer service using the number on your card and report via 1930.'
+    },
     actionLabel: 'Learn Alert Triage Rules',
     actionRoute: '/prevention#evidence',
     checkpoint: {
@@ -452,8 +618,14 @@ const remediationCatalog = [
   {
     pathwayId: 'pathway-maintenance-reinforcement',
     metricKey: 'reinforcement',
+    dimensionCode: 'ALL',
+    dimensionName: 'Advanced Defensive Hardening',
+    dimensionShortName: 'Secondary Channel Hardening',
     habitTitle: 'Advanced Defense & Secondary Channel Hardening',
     pedagogicalFocus: 'Maintaining high digital vigilance across complex threats including SIM swapping and biometric exploits.',
+    observedBehaviorExplanation: 'Your assessment demonstrated strong vigilance across all measured baseline digital habits. This pathway hardens advanced secondary channels against targeted attacks.',
+    whyItMatters: 'When primary defenses are solid, sophisticated threat actors target secondary authentication channels, such as SIM swapping, email recovery loops, and biometric compromise.',
+    whatYouWillPractice: 'You will practice configuring app-based authenticators, securing SIM card PINs, and locking biometric authentication via official government portals.',
     coreRule: 'When basic habits are solid, protect secondary channels: lock biometric authentication via mAadhaar and enable SIM PINs.',
     difficulty: 'Advanced',
     estimatedMinutes: 4,
@@ -461,6 +633,26 @@ const remediationCatalog = [
     caseStudySlug: 'sim-swap-compromise',
     preventionAnchor: '#passwords',
     primaryLawSectionNumber: 'Section 66C',
+    curriculumLesson: {
+      slug: 'passwords-mfa-passkeys',
+      title: 'Passwords, MFA and Passkeys',
+      category: 'Foundations',
+      relevanceReason: 'Covers multi-factor authentication, cryptographic passkeys, and defensive credential architecture against SIM swapping.'
+    },
+    defensivePillars: {
+      whatToDo: [
+        'Transition from SMS-based two-factor authentication to authenticator apps (e.g. Aegis, Google Authenticator) or passkeys.',
+        'Lock your Aadhaar biometric authentication via the official mAadhaar application or UIDAI portal.',
+        'Set a SIM card PIN in your phone settings to prevent unauthorized SIM porting or swapping.'
+      ],
+      whatToAvoid: [
+        'Never use SMS OTP as the sole authentication factor on primary financial or email accounts where authenticator apps are supported.',
+        'Never leave biometric authentication unlocked permanently when not actively in use.',
+        'Never ignore sudden, unexplained loss of cellular network connectivity ("No Service") on your smartphone.'
+      ],
+      howToVerify: 'Verify your active biometric lock status directly in the mAadhaar application. If your phone unexpectedly loses cellular connectivity in a populated area, immediately contact your telecom operator from another phone to check if an unauthorized SIM swap or port request was initiated.',
+      ifMistakeOccurs: 'If you suspect a SIM swap (unexpected loss of signal and incoming alerts), immediately contact your telecom operator to block the SIM, notify your bank to suspend net banking and UPI access, and report to Helpline 1930.'
+    },
     legalReferences: [
       {
         act: 'Information Technology Act, 2000',

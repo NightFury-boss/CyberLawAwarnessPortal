@@ -40,6 +40,8 @@ import { resolvePathwayTitle } from './evidenceSelectors.js';
 export function selectPrimaryNextAction({
   hasBaseline = false,
   hasFinal = false,
+  hasActiveFinal = false,
+  activeFinalStage = null,
   pathwaysWithStatus = [],
   dueSpacedReviews = [],
   dueQuizRecalls = [],
@@ -65,6 +67,23 @@ export function selectPrimaryNextAction({
       destination: '/assessment/baseline',
       targetItem: null,
       estimatedMinutes: 5,
+      steps: null
+    };
+  }
+
+  // 1b. Interrupted Final Assessment in Progress (Active Final Resumption)
+  if (hasActiveFinal && activeFinalStage) {
+    const stageOrder = activeFinalStage?.stageOrder || 1;
+    return {
+      type: 'RESUME_FINAL',
+      eyebrow: 'Final Check in Progress',
+      title: 'Resume Your Final Safety Check',
+      description: `You have an active evaluation in progress (Situation ${stageOrder} of 5). Complete your decisions to see how your defensive habits improved.`,
+      actionLabel: `Resume Final Check (Step ${stageOrder} of 5) \u2192`,
+      actionType: 'LINK',
+      destination: '/assessment/final',
+      targetItem: null,
+      estimatedMinutes: 3,
       steps: null
     };
   }

@@ -15,6 +15,10 @@ const AssessmentSessionSchema = new mongoose.Schema({
     type: Number,
     default: 1
   },
+  scoringVersion: {
+    type: Number,
+    required: false
+  },
   scenarioCode: {
     type: String,
     required: true
@@ -40,7 +44,7 @@ const AssessmentSessionSchema = new mongoose.Schema({
   },
   behaviourScores: {
     type: Map,
-    of: Number,
+    of: mongoose.Schema.Types.Mixed,
     default: {
       recognition: 100,
       signalIdentification: 100,
@@ -51,6 +55,18 @@ const AssessmentSessionSchema = new mongoose.Schema({
     }
   },
   behaviourOpportunities: {
+    type: Map,
+    of: Number,
+    default: {
+      recognition: 0,
+      signalIdentification: 0,
+      verification: 0,
+      decisionQuality: 0,
+      falsePositive: 0,
+      unreviewedAcceptance: 0
+    }
+  },
+  behaviourEncounters: {
     type: Map,
     of: Number,
     default: {

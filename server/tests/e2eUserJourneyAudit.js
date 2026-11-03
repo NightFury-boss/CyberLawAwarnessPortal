@@ -142,7 +142,7 @@ async function runAudit() {
           assert(!ref.educationalContext.toLowerCase().includes('you violated'), 'Must not accuse user of statutory violation');
           if (ref.act.includes('Digital Personal Data Protection Act') && ref.section.includes('Section 6')) {
             assert.strictEqual(ref.status, 'ENACTED_FUTURE_COMMENCEMENT', 'DPDP §6 must be ENACTED_FUTURE_COMMENCEMENT');
-            assert(ref.commencementNote.includes('Not in force as of 9 September 2026'), 'Must display future commencement note');
+            assert(ref.commencementNote.toLowerCase().includes('not in force') && ref.commencementNote.includes('G.S.R. 843(E)'), 'Must display future commencement note citing G.S.R. 843(E)');
             console.log('    -> Verified DPDP §6 accurately marked as ENACTED_FUTURE_COMMENCEMENT');
           }
         });

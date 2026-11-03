@@ -93,13 +93,20 @@ async function testDeltaIsolation() {
     const decisions = await ScenarioDecision.find({ stageId: stage._id });
     const decision = decisions[0]; // pick first option
 
+    let probeId = undefined;
+    if (stage.hasSignalProbe && stage.signalProbes && stage.signalProbes.length > 0) {
+      probeId = stage.signalProbes[0]._id;
+    }
+
     const submitRes = await fetch('http://localhost:5997/api/simulation/submit-step', {
       method: 'POST',
       headers: authHeaders,
       body: JSON.stringify({
         assessmentSessionId: finalV2Session._id,
         stageId: stage._id,
-        decisionId: decision._id
+        decisionId: decision._id,
+        ...(probeId ? { signalProbeDecisionId: probeId } : {}),
+        idempotencyKey: `idemp_d1_${stage._id}_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`
       })
     });
     lastSubmitData = await submitRes.json();
@@ -156,13 +163,20 @@ async function testDeltaIsolation() {
     const decisions = await ScenarioDecision.find({ stageId: stage._id });
     const decision = decisions[0];
 
+    let probeId = undefined;
+    if (stage.hasSignalProbe && stage.signalProbes && stage.signalProbes.length > 0) {
+      probeId = stage.signalProbes[0]._id;
+    }
+
     const submitRes = await fetch('http://localhost:5997/api/simulation/submit-step', {
       method: 'POST',
       headers: authHeaders,
       body: JSON.stringify({
         assessmentSessionId: finalV2Session2._id,
         stageId: stage._id,
-        decisionId: decision._id
+        decisionId: decision._id,
+        ...(probeId ? { signalProbeDecisionId: probeId } : {}),
+        idempotencyKey: `idemp_d2_${stage._id}_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`
       })
     });
     lastSubmitData2 = await submitRes.json();

@@ -6,6 +6,7 @@
 const CyberCrime = require('../models/CyberCrime');
 const CaseStudy = require('../models/CaseStudy');
 const LawSection = require('../models/LawSection');
+const LearningModule = require('../models/LearningModule');
 
 const APPROVED_STATUSES = ['IN_FORCE', 'ENACTED_FUTURE_COMMENCEMENT', 'STRUCK_DOWN_HISTORICAL'];
 const APPROVED_RELATIONSHIPS = ['DIRECT', 'CONTEXTUAL', 'EDUCATIONAL_ONLY'];
@@ -25,8 +26,14 @@ function validateCatalogStructure(catalog) {
 
     const requiredFields = [
       'metricKey',
+      'dimensionCode',
+      'dimensionName',
+      'dimensionShortName',
       'habitTitle',
       'pedagogicalFocus',
+      'observedBehaviorExplanation',
+      'whyItMatters',
+      'whatYouWillPractice',
       'coreRule',
       'difficulty',
       'estimatedMinutes',
@@ -34,13 +41,32 @@ function validateCatalogStructure(catalog) {
       'caseStudySlug',
       'preventionAnchor',
       'actionLabel',
-      'actionRoute'
+      'actionRoute',
+      'defensivePillars',
+      'curriculumLesson'
     ];
 
     for (const field of requiredFields) {
       if (pathway[field] === undefined || pathway[field] === null || pathway[field] === '') {
         throw new Error(`Pathway ${pathway.pathwayId} missing required field: ${field}`);
       }
+    }
+
+    const VALID_DIMENSIONS = ['UA', 'VB', 'TR', 'SI', 'DQ', 'FP', 'ALL'];
+    if (!VALID_DIMENSIONS.includes(pathway.dimensionCode)) {
+      throw new Error(`Pathway ${pathway.pathwayId} has invalid dimensionCode: ${pathway.dimensionCode}`);
+    }
+
+    if (!pathway.curriculumLesson.slug || !pathway.curriculumLesson.title) {
+      throw new Error(`Pathway ${pathway.pathwayId} curriculumLesson missing slug or title`);
+    }
+
+    if (!Array.isArray(pathway.defensivePillars?.whatToDo) || !Array.isArray(pathway.defensivePillars?.whatToAvoid)) {
+      throw new Error(`Pathway ${pathway.pathwayId} defensivePillars must include whatToDo and whatToAvoid arrays`);
+    }
+
+    if (!pathway.defensivePillars?.howToVerify || !pathway.defensivePillars?.ifMistakeOccurs) {
+      throw new Error(`Pathway ${pathway.pathwayId} defensivePillars must include howToVerify and ifMistakeOccurs`);
     }
 
     if (!Array.isArray(pathway.legalReferences)) {
@@ -81,13 +107,25 @@ function validateCatalogStructure(catalog) {
         throw new Error(`Educational context in ${pathway.pathwayId} must not accuse user of violating statute`);
       }
 
-      // Specific DPDP Act Section 6 status enforcement as of 9 Sep 2026
+      // Specific DPDP Act Section 6 status enforcement under Notification G.S.R. 843(E)
       if (ref.act.includes('Digital Personal Data Protection') && ref.section.includes('6')) {
         if (ref.status !== 'ENACTED_FUTURE_COMMENCEMENT') {
-          throw new Error(`DPDP Act Section 6 must be marked ENACTED_FUTURE_COMMENCEMENT as of 9 September 2026`);
+          throw new Error(`DPDP Act Section 6 must be marked ENACTED_FUTURE_COMMENCEMENT`);
         }
-        if (!ref.commencementNote || !ref.commencementNote.includes('18 months')) {
-          throw new Error(`DPDP Act Section 6 must specify 18-month commencement notification timeline`);
+        if (!ref.commencementNote || !ref.commencementNote.includes('G.S.R. 843(E)')) {
+          throw new Error(`DPDP Act Section 6 must cite Notification G.S.R. 843(E)`);
+        }
+        if (ref.commencementNote.includes('S.O. 4932(E)')) {
+          throw new Error(`DPDP Act Section 6 must not retain obsolete S.O. 4932(E)`);
+        }
+        if (ref.section.includes('6(9)')) {
+          if (!ref.commencementNote.includes('one year') && !ref.commencementNote.includes('1 year') && !ref.commencementNote.includes('13 November 2026')) {
+            throw new Error(`DPDP Act Section 6(9) must specify one-year commencement timeline`);
+          }
+        } else {
+          if (!ref.commencementNote.includes('eighteen months') && !ref.commencementNote.includes('18 months') && !ref.commencementNote.includes('13 May 2027')) {
+            throw new Error(`DPDP Act Section 6(1)–(8) & 6(10) must specify 18-month commencement notification timeline`);
+          }
         }
       }
     }
@@ -130,6 +168,13 @@ async function validateCatalogDatabaseIntegrity(catalog) {
       const lawSection = await LawSection.findOne({ sectionNumber: pathway.primaryLawSectionNumber });
       if (!lawSection) {
         throw new Error(`Referenced LawSection not found in DB: ${pathway.primaryLawSectionNumber} (Pathway: ${pathway.pathwayId})`);
+      }
+    }
+
+    if (pathway.curriculumLesson && pathway.curriculumLesson.slug) {
+      const moduleDoc = await LearningModule.findOne({ slug: pathway.curriculumLesson.slug });
+      if (!moduleDoc) {
+        throw new Error(`Referenced LearningModule slug not found in DB: ${pathway.curriculumLesson.slug} (Pathway: ${pathway.pathwayId})`);
       }
     }
   }

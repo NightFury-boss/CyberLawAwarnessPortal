@@ -68,6 +68,18 @@ const ScenarioStageSchema = new mongoose.Schema({
       ref: 'ScenarioDecision'
     }
   ],
+  hasSignalProbe: {
+    type: Boolean,
+    default: false
+  },
+  signalProbes: [
+    {
+      optionText: { type: String, required: true },
+      isCorrect: { type: Boolean, default: false },
+      explanation: { type: String, default: '' },
+      identifiedSignal: { type: String, default: '' }
+    }
+  ],
   terminal: {
     type: Boolean,
     default: false

@@ -504,9 +504,11 @@ async function runTests() {
           // DPDP Section 6 Rule
           if (ref.act.includes('Digital Personal Data Protection') && ref.section.includes('6')) {
             assert.strictEqual(ref.status, 'ENACTED_FUTURE_COMMENCEMENT',
-              'DPDP Act Section 6 must be marked ENACTED_FUTURE_COMMENCEMENT as of September 2026');
-            assert(ref.commencementNote && ref.commencementNote.includes('18 months'),
-              'DPDP Section 6 must note 18-month commencement notification timeline');
+              'DPDP Act Section 6 must be marked ENACTED_FUTURE_COMMENCEMENT');
+            assert(ref.commencementNote && ref.commencementNote.includes('G.S.R. 843(E)'),
+              'DPDP Section 6 must cite Notification G.S.R. 843(E)');
+            assert(!ref.commencementNote.includes('S.O. 4932(E)'),
+              'DPDP Section 6 must not retain obsolete S.O. 4932(E)');
           }
 
           // Rule against corporate liability 43A in user hygiene

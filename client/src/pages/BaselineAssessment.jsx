@@ -18,6 +18,10 @@ function BaselineAssessment({ _user, updateProgressTrigger }) {
   const [mockPassword, setMockPassword] = useState('');
   const [mockOtp, setMockOtp] = useState('');
 
+  // Step-1 / Step-2 Signal Probe selection state
+  const [selectedPrimaryDecisionId, setSelectedPrimaryDecisionId] = useState(null);
+  const [selectedProbeId, setSelectedProbeId] = useState(null);
+
   const [result, setResult] = useState(null);
   const [submitting, setSubmitting] = useState(false);
 
@@ -102,6 +106,14 @@ function BaselineAssessment({ _user, updateProgressTrigger }) {
     }
   };
 
+  const handlePrimaryChoice = (decisionId) => {
+    if (currentStage?.hasSignalProbe && currentStage?.signalProbes?.length > 0) {
+      setSelectedPrimaryDecisionId(decisionId);
+    } else {
+      submitStep(decisionId, null);
+    }
+  };
+
   const handlePhoneAction = async (actionType) => {
     if (submitting || !currentStage) return;
     if (actionType === 'decline') {
@@ -111,7 +123,7 @@ function BaselineAssessment({ _user, updateProgressTrigger }) {
         d.optionText.toLowerCase().includes('decline')
       );
       if (declineDecision) {
-        await submitStep(declineDecision.id);
+        handlePrimaryChoice(declineDecision.id);
       }
     } else if (actionType === 'accept') {
       const acceptDecision = currentStage.decisions.find(d => 
@@ -120,7 +132,7 @@ function BaselineAssessment({ _user, updateProgressTrigger }) {
         d.optionText.toLowerCase().includes('accept')
       );
       if (acceptDecision) {
-        await submitStep(acceptDecision.id);
+        handlePrimaryChoice(acceptDecision.id);
       }
     }
   };
@@ -133,9 +145,9 @@ function BaselineAssessment({ _user, updateProgressTrigger }) {
       d.optionText.toLowerCase().includes('verify account')
     );
     if (clickDecision) {
-      await submitStep(clickDecision.id);
+      handlePrimaryChoice(clickDecision.id);
     } else if (currentStage.decisions.length > 0) {
-      await submitStep(currentStage.decisions[currentStage.decisions.length - 1].id);
+      handlePrimaryChoice(currentStage.decisions[currentStage.decisions.length - 1].id);
     }
   };
 
@@ -148,16 +160,28 @@ function BaselineAssessment({ _user, updateProgressTrigger }) {
       d.optionText.toLowerCase().includes('password')
     );
     const decisionId = loginDecision ? loginDecision.id : (currentStage.decisions[0] ? currentStage.decisions[0].id : '');
-    await submitStep(decisionId);
+    handlePrimaryChoice(decisionId);
   };
 
-  const submitStep = async (decisionId) => {
+  const submitStep = async (decisionId, probeId = null) => {
     if (submitting || !session || !currentStage) return;
     setSubmitting(true);
     setError('');
+
+    // Persist idempotency key across retries, reloads, and network hiccups
+    const storageKey = `idemp_${session}_${currentStage.id}`;
+    let idempotencyKey = sessionStorage.getItem(storageKey);
+    if (!idempotencyKey) {
+      idempotencyKey = `idemp_${session}_${currentStage.id}_${Date.now()}`;
+      sessionStorage.setItem(storageKey, idempotencyKey);
+    }
+
     try {
-      const nextData = await api.submitAssessmentStep(session, currentStage.id, decisionId);
+      const nextData = await api.submitAssessmentStep(session, currentStage.id, decisionId, probeId, idempotencyKey);
       
+      // Cleanup stage idempotency key only after successful server confirmation
+      sessionStorage.removeItem(storageKey);
+
       performStateTransition(() => {
         if (nextData.isCompleted) {
           sessionStorage.removeItem('active_baseline_session_id');
@@ -168,6 +192,8 @@ function BaselineAssessment({ _user, updateProgressTrigger }) {
         } else {
           setCurrentStage(nextData.stage);
           setCurrentStep('active_simulation');
+          setSelectedPrimaryDecisionId(null);
+          setSelectedProbeId(null);
           setMockUserId('');
           setMockPassword('');
           setMockOtp('');
@@ -560,20 +586,121 @@ function BaselineAssessment({ _user, updateProgressTrigger }) {
 
           {/* Decision Station Console */}
           <section className="decision-station" aria-label="Decision Action Console">
-            <h3 className="decision-station-title">What would you do?</h3>
+            <h3 className="decision-station-title">
+              {currentStage.hasSignalProbe ? 'Step 1: Choose Your Primary Defensive Action' : 'What would you do?'}
+            </h3>
             <div className="decision-cards-list">
-              {currentStage.decisions.map((opt, optIdx) => (
-                <button
-                  key={opt.id}
-                  onClick={() => submitStep(opt.id)}
-                  className="decision-action-card"
-                  disabled={submitting}
-                >
-                  <span className="decision-number-badge">{optIdx + 1}</span>
-                  <span className="decision-action-text">{opt.optionText}</span>
-                </button>
-              ))}
+              {currentStage.decisions.map((opt, optIdx) => {
+                const isSelected = selectedPrimaryDecisionId === opt.id;
+                return (
+                  <button
+                    key={opt.id}
+                    type="button"
+                    onClick={() => handlePrimaryChoice(opt.id)}
+                    className={`decision-action-card ${isSelected ? 'selected-decision' : ''}`}
+                    style={isSelected ? { borderColor: 'var(--color-primary, #302B27)', backgroundColor: 'var(--color-surface-secondary, #EFE8DC)', boxShadow: '0 0 0 2px var(--color-primary, #302B27)' } : {}}
+                    disabled={submitting}
+                  >
+                    <span className="decision-number-badge">{optIdx + 1}</span>
+                    <span className="decision-action-text">{opt.optionText}</span>
+                  </button>
+                );
+              })}
             </div>
+
+            {/* Step 2: Signal Identification Probe (Universal Forensic Cue) */}
+            {currentStage.hasSignalProbe && selectedPrimaryDecisionId && (
+              <div 
+                className="signal-probe-panel page-entry" 
+                style={{ 
+                  marginTop: '24px', 
+                  padding: '20px', 
+                  backgroundColor: 'var(--color-surface-card, #FCFAF5)', 
+                  border: '2px solid var(--color-primary, #302B27)', 
+                  borderRadius: '8px' 
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                  <span style={{ fontSize: '0.72rem', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '0.08em', backgroundColor: 'var(--color-primary, #302B27)', color: '#fff', padding: '2px 8px', borderRadius: '4px' }}>
+                    Step 2 of 2
+                  </span>
+                  <strong style={{ fontSize: '0.95rem', color: 'var(--color-text-primary, #302B27)' }}>
+                    Signal Identification &amp; Technical Cue Detection
+                  </strong>
+                </div>
+                <p style={{ fontSize: '0.88rem', color: 'var(--text-secondary)', marginBottom: '16px', lineHeight: '1.4' }}>
+                  What specific technical cue, sender anomaly, or deceptive warning sign in this situation guided your choice?
+                </p>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  {(currentStage.signalProbes || []).map((probe) => {
+                    const isProbeSelected = selectedProbeId === probe.id;
+                    return (
+                      <button
+                        key={probe.id}
+                        type="button"
+                        onClick={() => setSelectedProbeId(probe.id)}
+                        className={`decision-action-card ${isProbeSelected ? 'selected-probe' : ''}`}
+                        style={{
+                          textAlign: 'left',
+                          padding: '12px 14px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '12px',
+                          backgroundColor: isProbeSelected ? 'var(--color-surface-secondary, #EFE8DC)' : '#fff',
+                          borderColor: isProbeSelected ? 'var(--color-primary, #302B27)' : 'var(--color-border)',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        <span style={{
+                          width: '20px',
+                          height: '20px',
+                          borderRadius: '50%',
+                          border: '2px solid var(--color-primary, #302B27)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          flexShrink: 0,
+                          backgroundColor: isProbeSelected ? 'var(--color-primary, #302B27)' : 'transparent'
+                        }}>
+                          {isProbeSelected && <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#fff' }} />}
+                        </span>
+                        <span style={{ fontSize: '0.88rem', color: 'var(--text-primary)', lineHeight: '1.4' }}>
+                          {probe.optionText}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <div style={{ display: 'flex', gap: '12px', marginTop: '20px', alignItems: 'center' }}>
+                  <button
+                    type="button"
+                    onClick={() => submitStep(selectedPrimaryDecisionId, selectedProbeId)}
+                    disabled={!selectedProbeId || submitting}
+                    className="btn btn-primary"
+                    style={{
+                      padding: '10px 24px',
+                      fontWeight: '700',
+                      fontSize: '0.9rem',
+                      opacity: (!selectedProbeId || submitting) ? 0.6 : 1
+                    }}
+                  >
+                    {submitting ? 'Submitting Responses...' : 'Confirm Decision & Signal Observation →'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { setSelectedPrimaryDecisionId(null); setSelectedProbeId(null); }}
+                    disabled={submitting}
+                    className="btn btn-secondary"
+                    style={{ fontSize: '0.85rem' }}
+                  >
+                    Change Action
+                  </button>
+                </div>
+              </div>
+            )}
+
             {submitting && (
               <div style={{ textAlign: 'center', marginTop: '12px', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
                 Recording your decision...

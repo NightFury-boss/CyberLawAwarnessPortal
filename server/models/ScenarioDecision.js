@@ -25,7 +25,7 @@ const ScenarioDecisionSchema = new mongoose.Schema({
     }
   ],
   behaviorEffects: {
-    recognition: { type: Number, min: 0, max: 2, default: 0 },
+    recognition: { type: Number, min: 0, max: 4, default: 0 },
     signalIdentification: { type: Number, min: 0, max: 2, default: 0 },
     verification: { type: Number, min: 0, max: 2, default: 0 },
     decisionQuality: { type: Number, min: 0, max: 2, default: 0 },

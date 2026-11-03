@@ -142,14 +142,14 @@ async function auditScenario(scenarioId) {
           }
         }
 
-        // Validate behaviorEffects are within range [0, 1, 2]
+        // Validate behaviorEffects are within controlled range ([0, 4] for recognition to support Stage 7 early resolution, [0, 2] for all others)
         if (dec.behaviorEffects) {
           const effects = dec.behaviorEffects;
-          const clamp = (val) => Math.max(0, Math.min(2, Math.round(val || 0)));
           const checkMetric = (name, val) => {
-            if (val < 0 || val > 2) {
+            const maxVal = name === 'recognition' ? 4 : 2;
+            if (val < 0 || val > maxVal) {
               result.valid = false;
-              result.errors.push(`Decision "${dec.optionText.substring(0, 30)}" has behaviorEffect "${name}" = ${val} which is outside the controlled range [0, 1, 2].`);
+              result.errors.push(`Decision "${dec.optionText.substring(0, 30)}" has behaviorEffect "${name}" = ${val} which is outside the controlled range [0, ${maxVal}].`);
             }
           };
           

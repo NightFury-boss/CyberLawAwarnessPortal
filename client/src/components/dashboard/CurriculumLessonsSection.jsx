@@ -23,12 +23,12 @@ export default function CurriculumLessonsSection({
 
   // Core curriculum chapters for the fast-jump constellation
   const CORE_CHAPTERS = [
-    { title: 'Digital Identity & Privacy', slug: 'digital-identity-foundations', statute: 'IT Act §43' },
-    { title: 'Phishing & Social Vectors', slug: 'phishing-and-social-engineering', statute: 'IT Act §66D' },
-    { title: 'UPI & Banking Safeguards', slug: 'upi-banking-financial-fraud', statute: '1930 / CFCFRMS' },
-    { title: 'Passwords & Credentials', slug: 'passwords-mfa-and-passkeys', statute: 'IT Act §66C' },
-    { title: 'Digital Evidence Rules', slug: 'electronic-evidence-bsa-63', statute: 'BSA 2023 §63' },
-    { title: 'BNS Cybercrime Law', slug: 'bns-cybercrime-provisions', statute: 'BNS 2023' }
+    { title: 'Digital Identity Foundations', slug: 'digital-identity-foundations', statute: 'IT Act §43' },
+    { title: 'Phishing & Social Vectors', slug: 'phishing-social-engineering', statute: 'IT Act §66D' },
+    { title: 'UPI & Payment Safeguards', slug: 'upi-qr-payment-fraud', statute: '1930 / CFCFRMS' },
+    { title: 'Passwords & Credentials', slug: 'passwords-mfa-passkeys', statute: 'IT Act §66C' },
+    { title: 'Digital Evidence Standards', slug: 'digital-evidence-bsa-63', statute: 'BSA 2023 §63' },
+    { title: 'IT Act Statutory Framework', slug: 'it-act-fundamentals', statute: 'IT Act 2000' }
   ];
 
   return (

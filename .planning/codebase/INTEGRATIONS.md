@@ -5,6 +5,11 @@
 - **Connection URI**: Stored securely in `server/.env` (`MONGODB_URI`).
 - **Cluster**: Remote MongoDB Atlas shard cluster (`<atlas-cluster-subdomain>.mongodb.net`).
 - **Connection Strategy**: Single pooled connection initialized via `server/config/db.js` with auto-reconnect and monitor listeners.
+- **Security & Credential Status**:
+  - The repository owner reports database credentials have been fully rotated on MongoDB Atlas.
+  - Active connection tested and verified with current environment credentials.
+  - GitHub Secret Scanning alert is resolved; `server/.env.staging.example` contains sanitized placeholders only.
+  - Git history has not been rewritten; access is secured via Atlas-side credential revocation.
 
 ## Simulated Interface Integrations
 - **Mock Interfaces**:

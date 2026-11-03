@@ -519,6 +519,33 @@ function PathwayRunner({ pathway, sourceSessionId, initialProgress = null, isRei
             </div>
           )}
 
+          {/* Resumption Context Notice */}
+          {initialProgress && currentStep > 1 && currentStep < 4 && !errorMsg && (
+            <div
+              style={{
+                backgroundColor: 'var(--color-surface-secondary, #EEE7DB)',
+                borderLeft: '4px solid var(--color-primary)',
+                padding: '8px 12px',
+                borderRadius: '4px',
+                marginBottom: 'var(--space-md)',
+                fontSize: '0.82rem',
+                color: 'var(--text-secondary)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                flexWrap: 'wrap',
+                gap: '6px'
+              }}
+            >
+              <span>
+                <strong>Resuming your lesson: </strong>
+                {currentStep === 2 && 'Step 1 (Real Story) completed. Continuing with Step 2 (Safety Rule).'}
+                {currentStep === 3 && 'Steps 1 & 2 completed. Continuing with Step 3 (Quick Quiz).'}
+              </span>
+              <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>Auto-resumed</span>
+            </div>
+          )}
+
           {/* ========================================================================= */}
           {/* STEP 1: INCIDENT LEARNING (CASE STUDY)                                    */}
           {/* ========================================================================= */}
@@ -707,18 +734,124 @@ function PathwayRunner({ pathway, sourceSessionId, initialProgress = null, isRei
                 </p>
               </div>
 
-              {/* Practical Checklist */}
-              <div style={{ marginBottom: 'var(--space-lg)' }}>
-                <h5 style={{ fontSize: '0.95rem', fontWeight: '700', color: 'var(--text-primary)', marginBottom: '8px' }}>
-                  Simple Steps to Protect Yourself:
-                </h5>
-                <ul style={{ margin: 0, paddingLeft: '20px', fontSize: '0.88rem', lineHeight: '1.7', color: 'var(--text-secondary)' }}>
-                  <li>Never approve incoming payment requests or scan unfamiliar QR codes to receive money.</li>
-                  <li>Verify any caller or sender claims through a trusted separate channel before acting.</li>
-                  <li>Inspect website domain spellings carefully in your browser bar rather than trusting logos.</li>
-                  <li>Do not let panic make your choices; check your actual bank account or app directly.</li>
-                </ul>
+              {/* Practical Defensive Pillars */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginBottom: 'var(--space-lg)' }}>
+                {/* 1. What to Do */}
+                <div style={{
+                  padding: '12px 14px',
+                  backgroundColor: 'var(--color-surface-card, #FFFFFF)',
+                  border: '1px solid var(--color-border)',
+                  borderLeft: '4px solid var(--color-success, #536F61)',
+                  borderRadius: '4px'
+                }}>
+                  <strong style={{ fontSize: '0.85rem', color: 'var(--color-success, #536F61)', display: 'block', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                    ✓ What to Do
+                  </strong>
+                  <ul style={{ margin: 0, paddingLeft: '18px', fontSize: '0.86rem', lineHeight: '1.6', color: 'var(--text-secondary)' }}>
+                    {(pathway.defensivePillars?.whatToDo || [
+                      'Read the full screen prompt to confirm transaction details before taking action.',
+                      'Verify caller or sender claims through an independent, trusted channel.',
+                      'Inspect website domain spellings carefully in your browser bar.'
+                    ]).map((item, iIdx) => (
+                      <li key={iIdx}>{item}</li>
+                    ))}
+                  </ul>
+                </div>
+
+                {/* 2. What to Avoid */}
+                <div style={{
+                  padding: '12px 14px',
+                  backgroundColor: 'var(--color-surface-card, #FFFFFF)',
+                  border: '1px solid var(--color-border)',
+                  borderLeft: '4px solid var(--color-danger, #A34D43)',
+                  borderRadius: '4px'
+                }}>
+                  <strong style={{ fontSize: '0.85rem', color: 'var(--color-danger, #A34D43)', display: 'block', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                    ✕ What to Avoid
+                  </strong>
+                  <ul style={{ margin: 0, paddingLeft: '18px', fontSize: '0.86rem', lineHeight: '1.6', color: 'var(--text-secondary)' }}>
+                    {(pathway.defensivePillars?.whatToAvoid || [
+                      'Never approve incoming payment requests or enter your PIN to receive money.',
+                      'Never verify an authority using phone numbers or links provided by the caller.',
+                      'Never let urgency or fear dictate your digital choices.'
+                    ]).map((item, aIdx) => (
+                      <li key={aIdx}>{item}</li>
+                    ))}
+                  </ul>
+                </div>
+
+                {/* 3. Out-of-Band Verification Procedure */}
+                {pathway.defensivePillars?.howToVerify && (
+                  <div style={{
+                    padding: '12px 14px',
+                    backgroundColor: 'var(--color-surface-secondary, #EEE7DB)',
+                    border: '1px solid var(--color-border)',
+                    borderRadius: '4px',
+                    fontSize: '0.85rem',
+                    lineHeight: '1.5'
+                  }}>
+                    <strong style={{ color: 'var(--text-primary)', display: 'block', marginBottom: '4px', textTransform: 'uppercase', fontSize: '0.75rem', letterSpacing: '0.5px' }}>
+                      How to Verify Independently:
+                    </strong>
+                    <span style={{ color: 'var(--text-secondary)' }}>{pathway.defensivePillars.howToVerify}</span>
+                  </div>
+                )}
+
+                {/* 4. If a Mistake Occurs / Emergency Response */}
+                {pathway.defensivePillars?.ifMistakeOccurs && (
+                  <div style={{
+                    padding: '12px 14px',
+                    backgroundColor: 'var(--color-warning-light, #FAF3E8)',
+                    border: '1px solid #fde68a',
+                    borderLeft: '4px solid var(--color-warning, #B17A38)',
+                    borderRadius: '4px',
+                    fontSize: '0.85rem',
+                    lineHeight: '1.5'
+                  }}>
+                    <strong style={{ color: 'var(--color-warning, #B17A38)', display: 'block', marginBottom: '4px', textTransform: 'uppercase', fontSize: '0.75rem', letterSpacing: '0.5px' }}>
+                      If You Suspect Fraud:
+                    </strong>
+                    <span style={{ color: 'var(--text-secondary)' }}>{pathway.defensivePillars.ifMistakeOccurs}</span>
+                  </div>
+                )}
               </div>
+
+              {/* Connected Curriculum Lesson Deep Dive */}
+              {pathway.curriculumLesson && (
+                <div style={{
+                  padding: '12px 14px',
+                  backgroundColor: 'var(--color-surface-card, #FFFFFF)',
+                  border: '1px solid var(--color-border)',
+                  borderRadius: '6px',
+                  marginBottom: 'var(--space-lg)',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  flexWrap: 'wrap',
+                  gap: '10px'
+                }}>
+                  <div>
+                    <div style={{ fontSize: '0.7rem', fontWeight: '700', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                      Connected Curriculum Lesson &bull; {pathway.curriculumLesson.category}
+                    </div>
+                    <div style={{ fontSize: '0.92rem', fontWeight: '700', color: 'var(--text-primary)', marginTop: '2px' }}>
+                      {pathway.curriculumLesson.title}
+                    </div>
+                    <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '2px' }}>
+                      {pathway.curriculumLesson.relevanceReason}
+                    </div>
+                  </div>
+                  <a
+                    href={`/modules?slug=${pathway.curriculumLesson.slug}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="btn btn-secondary"
+                    style={{ padding: '6px 12px', fontSize: '0.82rem' }}
+                  >
+                    Read Lesson in New Tab ↗
+                  </a>
+                </div>
+              )}
 
               {/* Legal Reference Note (Optional & Non-Accusatory) */}
               {pathway.legalReferences && pathway.legalReferences.length > 0 && (
@@ -833,8 +966,11 @@ function PathwayRunner({ pathway, sourceSessionId, initialProgress = null, isRei
                   <p style={{ color: 'var(--color-success, #536F61)', fontSize: '0.9rem', margin: '0 0 16px 0' }}>
                     Score: {checkpointResult.score}% &bull; Passing Score: {checkpointResult.passingScore}%
                   </p>
-                  <p style={{ fontSize: '0.85rem', color: 'var(--color-success, #536F61)', maxWidth: '500px', margin: '0 auto 12px auto', lineHeight: '1.5' }}>
-                    Great job! You passed the quick quiz for <strong>{pathway.habitTitle}</strong>. {isReinforcementMode ? 'Your extra practice has been recorded.' : 'This lesson is now marked completed.'}
+                  <p style={{ fontSize: '0.85rem', color: 'var(--color-success, #536F61)', maxWidth: '520px', margin: '0 auto 12px auto', lineHeight: '1.5' }}>
+                    Great job! You demonstrated conceptual understanding of the rules and statutory principles in <strong>{pathway.habitTitle}</strong>. {isReinforcementMode ? 'Your extra practice has been recorded.' : 'This lesson is now marked completed.'}
+                  </p>
+                  <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', maxWidth: '490px', margin: '0 auto 18px auto', fontStyle: 'italic', lineHeight: '1.4' }}>
+                    Note: Passing this checkpoint confirms your conceptual understanding of these defensive rules and legal provisions. Practical digital safety reflexes are measured separately through real-world scenario assessments.
                   </p>
                   {isReinforcementMode && (
                     <p style={{ fontSize: '0.8rem', color: 'var(--color-success, #536F61)', maxWidth: '480px', margin: '0 auto 18px auto', fontStyle: 'italic', lineHeight: '1.4' }}>

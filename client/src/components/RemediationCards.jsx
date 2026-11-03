@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import PathwayRunner from './PathwayRunner';
 
@@ -15,7 +15,8 @@ import PathwayRunner from './PathwayRunner';
  * - Calm, educational language. Never accuse user habits of being statutory violations.
  * - Never displays raw scores, severity weights, or composite metrics.
  */
-function RemediationCards({ sessionId, initialData = null, initialProgress = null }) {
+function RemediationCards({ sessionId, initialData = null, initialProgress = null, isPreviewOnly = false }) {
+  const navigate = useNavigate();
   const [data, setData] = useState(initialData);
   const [userProgress, setUserProgress] = useState(initialProgress);
   const [loading, setLoading] = useState(!initialData && Boolean(sessionId));
@@ -167,6 +168,20 @@ function RemediationCards({ sessionId, initialData = null, initialProgress = nul
                     }}>
                       Lesson
                     </span>
+                    {rec.dimensionCode && (
+                      <span style={{
+                        fontSize: '0.7rem',
+                        fontWeight: '700',
+                        color: 'var(--color-accent-terracotta, #A65F45)',
+                        backgroundColor: 'var(--color-surface-secondary, #EEE7DB)',
+                        border: '1px solid var(--color-border)',
+                        padding: '2px 8px',
+                        borderRadius: '3px',
+                        letterSpacing: '0.5px'
+                      }}>
+                        {rec.dimensionCode} &bull; {rec.dimensionShortName || rec.dimensionName}
+                      </span>
+                    )}
                     {rec.difficulty && (
                       <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
                         {rec.difficulty}
@@ -236,11 +251,88 @@ function RemediationCards({ sessionId, initialData = null, initialProgress = nul
                   {rec.pedagogicalFocus}
                 </p>
 
+                {/* Assessment Observation Callout */}
+                {rec.observedBehaviorExplanation && (
+                  <div style={{
+                    backgroundColor: 'var(--color-surface-secondary, #EEE7DB)',
+                    borderLeft: '3px solid var(--color-accent-gold, #B18A55)',
+                    padding: '8px 12px',
+                    borderRadius: '4px',
+                    fontSize: '0.82rem',
+                    color: 'var(--text-secondary)',
+                    lineHeight: '1.45',
+                    margin: '8px 0 var(--space-sm) 0'
+                  }}>
+                    <strong style={{ color: 'var(--text-primary)', display: 'block', marginBottom: '2px', fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                      Assessment Evidence
+                    </strong>
+                    {rec.observedBehaviorExplanation}
+                  </div>
+                )}
+
+                {/* Why This Matters */}
+                {rec.whyItMatters && (
+                  <p style={{ fontSize: '0.84rem', color: 'var(--text-secondary)', margin: '0 0 var(--space-sm) 0', lineHeight: '1.5' }}>
+                    <strong style={{ color: 'var(--text-primary)' }}>Why this matters: </strong>
+                    {rec.whyItMatters}
+                  </p>
+                )}
+
                 {/* Practical Defensive Rule */}
                 {rec.coreRule && (
                   <div className="remediation-rule-box">
                     <strong>Safety Rule:</strong>
                     {rec.coreRule}
+                  </div>
+                )}
+
+                {/* Connected Curriculum Lesson */}
+                {rec.curriculumLesson && (
+                  <div style={{
+                    margin: 'var(--space-sm) 0 var(--space-md) 0',
+                    padding: '10px 12px',
+                    backgroundColor: 'var(--color-surface-card, #FFFFFF)',
+                    border: '1px solid var(--color-border)',
+                    borderRadius: '6px',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    flexWrap: 'wrap',
+                    gap: '8px'
+                  }}>
+                    <div>
+                      <div style={{ fontSize: '0.68rem', fontWeight: '700', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                        Curriculum Deep Dive &bull; {rec.curriculumLesson.category}
+                      </div>
+                      <div style={{ fontSize: '0.88rem', fontWeight: '700', color: 'var(--text-primary)', marginTop: '2px' }}>
+                        {rec.curriculumLesson.title}
+                      </div>
+                      <div style={{ fontSize: '0.76rem', color: 'var(--text-secondary)', marginTop: '2px' }}>
+                        {rec.curriculumLesson.relevanceReason}
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      {rec.curriculumLesson.isCompleted ? (
+                        <span style={{ fontSize: '0.72rem', fontWeight: '700', color: 'var(--color-success, #536F61)', backgroundColor: 'var(--color-success-light, #EEF4F0)', padding: '2px 8px', borderRadius: '3px' }}>
+                          Lesson Completed ✓
+                        </span>
+                      ) : rec.curriculumLesson.readCompleted ? (
+                        <span style={{ fontSize: '0.72rem', fontWeight: '700', color: 'var(--color-warning, #B17A38)', backgroundColor: 'var(--color-warning-light, #FAF3E8)', padding: '2px 8px', borderRadius: '3px' }}>
+                          Read in Progress
+                        </span>
+                      ) : (
+                        <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
+                          Not Started
+                        </span>
+                      )}
+                      <Link
+                        to={`/workspace/modules/${rec.curriculumLesson.slug}`}
+                        className="btn btn-secondary"
+                        style={{ padding: '4px 10px', fontSize: '0.78rem' }}
+                      >
+                        Read Lesson &rarr;
+                      </Link>
+                    </div>
                   </div>
                 )}
 
@@ -305,7 +397,30 @@ function RemediationCards({ sessionId, initialData = null, initialProgress = nul
 
               {/* Action CTA */}
               <div style={{ marginTop: 'var(--space-md)', paddingTop: 'var(--space-sm)', borderTop: '1px dashed var(--color-border)', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                {isReinforcementEligible ? (
+                {isPreviewOnly ? (
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    padding: '8px 12px',
+                    backgroundColor: 'var(--color-surface-secondary, #EEE7DB)',
+                    borderRadius: '4px',
+                    fontSize: '0.82rem',
+                    color: 'var(--text-secondary)'
+                  }}>
+                    <span style={{ fontWeight: '600', color: 'var(--text-primary)' }}>
+                      Ready in Your Dashboard Workspace
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => navigate('/dashboard')}
+                      className="btn btn-secondary"
+                      style={{ fontSize: '0.78rem', padding: '4px 10px' }}
+                    >
+                      Go to Dashboard &rarr;
+                    </button>
+                  </div>
+                ) : isReinforcementEligible ? (
                   <button
                     onClick={() => setActivePathwayForRunner({ ...rec, _isReinforcement: true })}
                     className="btn btn-primary"

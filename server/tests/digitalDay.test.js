@@ -14,6 +14,7 @@ const ScenarioDecision = require('../models/ScenarioDecision');
 const AssessmentSession = require('../models/AssessmentSession');
 const AssessmentDecision = require('../models/AssessmentDecision');
 const { auditScenario } = require('../services/scenarioIntegrityService');
+const connectDB = require('../config/db');
 
 const PORT = 5998;
 const BASE_URL = `http://localhost:${PORT}/api`;
@@ -23,6 +24,8 @@ let userToken = '';
 let userId = '';
 
 async function setup() {
+  await connectDB();
+
   await new Promise((resolve) => {
     server = app.listen(PORT, () => {
       console.log(`[Test Server] Listening on port ${PORT}`);
@@ -49,6 +52,32 @@ async function setup() {
   });
   const loginData = await loginRes.json();
   userToken = loginData.token;
+
+  // Prerequisite: Final assessment requires an authoritative completed baseline session
+  const baselineSc = await Scenario.findOne({ slug: 'baseline', version: 2 });
+  if (baselineSc) {
+    const firstStage = await ScenarioStage.findOne({ scenarioId: baselineSc._id, stageOrder: 1 });
+    await AssessmentSession.create({
+      userId,
+      scenarioId: baselineSc._id,
+      scenarioCode: 'baseline',
+      scenarioVersion: 2,
+      scoringVersion: 2,
+      currentStageId: firstStage ? firstStage._id : new mongoose.Types.ObjectId(),
+      status: 'completed',
+      completedAt: new Date(Date.now() - 3600000),
+      expiresAt: new Date(Date.now() + 3600000),
+      score: 85,
+      behaviourScores: {
+        recognition: 80,
+        signalIdentification: 75,
+        verification: 85,
+        decisionQuality: 90,
+        falsePositive: 80,
+        unreviewedAcceptance: 85
+      }
+    });
+  }
 }
 
 async function teardown() {
@@ -92,6 +121,7 @@ async function runAllTests() {
 
     // Helper to start session
     async function startSession(code, version = 2) {
+      await AssessmentSession.deleteMany({ userId, scenarioCode: code, status: 'in-progress' });
       const res = await fetch(`${BASE_URL}/assessments/start`, {
         method: 'POST',
         headers: {
@@ -107,6 +137,15 @@ async function runAllTests() {
 
     // Helper to submit step
     async function submitStep(sessionId, stageId, decisionId, extras = {}) {
+      let probeId = extras.signalProbeDecisionId;
+      if (!probeId) {
+        const stg = await ScenarioStage.findById(stageId);
+        if (stg && stg.hasSignalProbe && stg.signalProbes && stg.signalProbes.length > 0) {
+          const correctProbe = stg.signalProbes.find(p => p.isCorrect);
+          probeId = correctProbe ? correctProbe._id : stg.signalProbes[0]._id;
+        }
+      }
+
       const res = await fetch(`${BASE_URL}/assessments/submit-step`, {
         method: 'POST',
         headers: {
@@ -117,6 +156,8 @@ async function runAllTests() {
           assessmentSessionId: sessionId,
           stageId,
           decisionId,
+          ...(probeId ? { signalProbeDecisionId: probeId } : {}),
+          idempotencyKey: extras.idempotencyKey || `idemp_dd_${stageId}_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`,
           ...extras
         })
       });
@@ -232,14 +273,14 @@ async function runAllTests() {
       console.log(`  * Behaviour Scores:`, finalReport.behaviourScores);
       console.log(`  * Opportunities:`, finalReport.behaviourOpportunities);
 
-      // Verify Safe Path Opportunities match approved specification:
-      // TR Max = 14, SI Max = 8, VB Max = 14, DQ Max = 24, FP Max = 8, UA Max = 6
-      if (finalReport.behaviourOpportunities.recognition !== 14) throw new Error(`Safe Path TR Max expected 14, got ${finalReport.behaviourOpportunities.recognition}`);
-      if (finalReport.behaviourOpportunities.signalIdentification !== 8) throw new Error(`Safe Path SI Max expected 8, got ${finalReport.behaviourOpportunities.signalIdentification}`);
-      if (finalReport.behaviourOpportunities.verification !== 14) throw new Error(`Safe Path VB Max expected 14, got ${finalReport.behaviourOpportunities.verification}`);
-      if (finalReport.behaviourOpportunities.decisionQuality !== 24) throw new Error(`Safe Path DQ Max expected 24, got ${finalReport.behaviourOpportunities.decisionQuality}`);
+      // Verify Safe Path Opportunities match approved v2.5.0 + UA amendment specification:
+      // TR Max = 16, SI Max = 10, VB Max = 16, DQ Max = 4, FP Max = 8, UA Max = 8
+      if (finalReport.behaviourOpportunities.recognition !== 16) throw new Error(`Safe Path TR Max expected 16, got ${finalReport.behaviourOpportunities.recognition}`);
+      if (finalReport.behaviourOpportunities.signalIdentification !== 10) throw new Error(`Safe Path SI Max expected 10, got ${finalReport.behaviourOpportunities.signalIdentification}`);
+      if (finalReport.behaviourOpportunities.verification !== 16) throw new Error(`Safe Path VB Max expected 16, got ${finalReport.behaviourOpportunities.verification}`);
+      if (finalReport.behaviourOpportunities.decisionQuality !== 4) throw new Error(`Safe Path DQ Max expected 4, got ${finalReport.behaviourOpportunities.decisionQuality}`);
       if (finalReport.behaviourOpportunities.falsePositive !== 8) throw new Error(`Safe Path FP Max Penalty expected 8, got ${finalReport.behaviourOpportunities.falsePositive}`);
-      if (finalReport.behaviourOpportunities.unreviewedAcceptance !== 6) throw new Error(`Safe Path UA Max Penalty expected 6, got ${finalReport.behaviourOpportunities.unreviewedAcceptance}`);
+      if (finalReport.behaviourOpportunities.unreviewedAcceptance !== 8) throw new Error(`Safe Path UA Max Penalty expected 8, got ${finalReport.behaviourOpportunities.unreviewedAcceptance}`);
 
       // Optimal choices: 100% across all metrics
       if (finalReport.behaviourScores.recognition !== 100) throw new Error(`Safe Path TR expected 100%, got ${finalReport.behaviourScores.recognition}`);
@@ -302,14 +343,14 @@ async function runAllTests() {
       console.log(`  * Risky Path Completed! Scores:`, report.behaviourScores);
       console.log(`  * Opportunities:`, report.behaviourOpportunities);
 
-      // Verify Risky Path Opportunities match approved specification:
-      // TR Max = 16, SI Max = 8, VB Max = 16, DQ Max = 24, FP Max = 6, UA Max = 6
+      // Verify Risky Path Opportunities match approved v2.5.0 + UA amendment specification:
+      // TR Max = 16, SI Max = 10, VB Max = 16, DQ Max = 4, FP Max = 6, UA Max = 8
       if (report.behaviourOpportunities.recognition !== 16) throw new Error(`Risky Path TR Max expected 16, got ${report.behaviourOpportunities.recognition}`);
-      if (report.behaviourOpportunities.signalIdentification !== 8) throw new Error(`Risky Path SI Max expected 8, got ${report.behaviourOpportunities.signalIdentification}`);
+      if (report.behaviourOpportunities.signalIdentification !== 10) throw new Error(`Risky Path SI Max expected 10, got ${report.behaviourOpportunities.signalIdentification}`);
       if (report.behaviourOpportunities.verification !== 16) throw new Error(`Risky Path VB Max expected 16, got ${report.behaviourOpportunities.verification}`);
-      if (report.behaviourOpportunities.decisionQuality !== 24) throw new Error(`Risky Path DQ Max expected 24, got ${report.behaviourOpportunities.decisionQuality}`);
+      if (report.behaviourOpportunities.decisionQuality !== 4) throw new Error(`Risky Path DQ Max expected 4, got ${report.behaviourOpportunities.decisionQuality}`);
       if (report.behaviourOpportunities.falsePositive !== 6) throw new Error(`Risky Path FP Max Penalty expected 6 (Stage 8A skipped), got ${report.behaviourOpportunities.falsePositive}`);
-      if (report.behaviourOpportunities.unreviewedAcceptance !== 6) throw new Error(`Risky Path UA Max Penalty expected 6, got ${report.behaviourOpportunities.unreviewedAcceptance}`);
+      if (report.behaviourOpportunities.unreviewedAcceptance !== 8) throw new Error(`Risky Path UA Max Penalty expected 8, got ${report.behaviourOpportunities.unreviewedAcceptance}`);
 
       console.log('  * PASS: Risky Path traversal & opportunity matrix 100% verified');
     }
@@ -420,22 +461,32 @@ async function runAllTests() {
       const sessionId = start.sessionId;
       let curStage = start.stage;
 
-      // Stages 1-3: neutral
-      for (let s = 1; s <= 3; s++) {
-        const decs = await ScenarioDecision.find({ stageId: curStage.id });
-        const res = await submitStep(sessionId, curStage.id, decs[0]._id);
-        curStage = res.data.stage;
-      }
-
-      // Stage 4 (UPI Cashback): Choose 4A (Enter UPI PIN blindly) -> +2 UA Penalty, Critical Mistake!
+      // Stage 1 (Legitimate): neutral
       let decs = await ScenarioDecision.find({ stageId: curStage.id });
-      let dec4A = decs.find(d => d.optionText.includes('Enter UPI PIN'));
-      let res = await submitStep(sessionId, curStage.id, dec4A._id);
+      let res = await submitStep(sessionId, curStage.id, decs[0]._id);
       curStage = res.data.stage;
 
-      // Stage 5: neutral
+      // Stage 2 (SpeedPost): neutral
       decs = await ScenarioDecision.find({ stageId: curStage.id });
       res = await submitStep(sessionId, curStage.id, decs[0]._id);
+      curStage = res.data.stage;
+
+      // Stage 3 (Freelance Career): Choose 3A (Pay upfront fee) -> +2 UA Penalty
+      decs = await ScenarioDecision.find({ stageId: curStage.id });
+      let dec3A = decs.find(d => d.optionText.includes('Pay ₹499 upfront'));
+      res = await submitStep(sessionId, curStage.id, dec3A._id);
+      curStage = res.data.stage;
+
+      // Stage 4 (UPI Cashback): Choose 4A (Enter UPI PIN blindly) -> +2 UA Penalty, Critical Mistake!
+      decs = await ScenarioDecision.find({ stageId: curStage.id });
+      let dec4A = decs.find(d => d.optionText.includes('Enter UPI PIN'));
+      res = await submitStep(sessionId, curStage.id, dec4A._id);
+      curStage = res.data.stage;
+
+      // Stage 5: neutral (choose 5A: Review device, Yes it's me -> ua: 0)
+      decs = await ScenarioDecision.find({ stageId: curStage.id });
+      let dec5A = decs.find(d => d.optionText.includes('Review device and location'));
+      res = await submitStep(sessionId, curStage.id, dec5A._id);
       curStage = res.data.stage;
 
       // Stage 6 (Scanner Permissions): Choose 6A (Allow All Permissions) -> +2 UA Penalty
@@ -444,21 +495,25 @@ async function runAllTests() {
       res = await submitStep(sessionId, curStage.id, dec6A._id);
       curStage = res.data.stage;
 
-      // Stages 7-8: Route to 9
-      for (let s = 7; s <= 8; s++) {
-        decs = await ScenarioDecision.find({ stageId: curStage.id });
-        res = await submitStep(sessionId, curStage.id, decs[0]._id);
-        curStage = res.data.stage;
-      }
-
-      // Stage 9 (Cafe QR): Choose 9A (Pay without reviewing merchant) -> +2 UA Penalty
+      // Stage 7: Route to Safe Path (Stage 8A)
       decs = await ScenarioDecision.find({ stageId: curStage.id });
-      let dec9A = decs.find(d => d.optionText.includes('pay without reviewing'));
-      res = await submitStep(sessionId, curStage.id, dec9A._id);
+      let dec7A = decs.find(d => d.optionText.includes('official customer care'));
+      res = await submitStep(sessionId, curStage.id, dec7A._id);
+      curStage = res.data.stage;
+
+      // Stage 8A (E-Commerce Dispatch): neutral
+      decs = await ScenarioDecision.find({ stageId: curStage.id });
+      res = await submitStep(sessionId, curStage.id, decs[0]._id);
+      curStage = res.data.stage;
+
+      // Stage 10 (Cafe QR): Choose 10A (Pay without reviewing merchant) -> +2 UA Penalty
+      decs = await ScenarioDecision.find({ stageId: curStage.id });
+      let dec10A = decs.find(d => d.optionText.includes('pay without reviewing'));
+      res = await submitStep(sessionId, curStage.id, dec10A._id);
       curStage = res.data.stage;
 
       // Fast-forward remaining stages to completion
-      for (let s = 10; s <= 13; s++) {
+      while (res.data.stage) {
         decs = await ScenarioDecision.find({ stageId: curStage.id });
         res = await submitStep(sessionId, curStage.id, decs[0]._id);
         if (res.data.stage) curStage = res.data.stage;
@@ -471,8 +526,8 @@ async function runAllTests() {
       console.log(`  * UA Penalty Points: ${uaPenalty}/${uaMaxPenalty} | Normalized Score: ${uaScore}%`);
       console.log(`  * Critical Mistakes recorded:`, res.data.criticalMistakes);
 
-      if (uaPenalty !== 6) throw new Error(`Expected exactly 6 UA penalty points, got ${uaPenalty}`);
-      if (uaMaxPenalty !== 6) throw new Error(`Expected exactly 6 UA max penalty points, got ${uaMaxPenalty}`);
+      if (uaPenalty !== 8) throw new Error(`Expected exactly 8 UA penalty points, got ${uaPenalty}`);
+      if (uaMaxPenalty !== 8) throw new Error(`Expected exactly 8 UA max penalty points, got ${uaMaxPenalty}`);
       if (uaScore !== 0) throw new Error(`Expected 0% UA score after maximum unreviewed acceptance, got ${uaScore}%`);
       if (res.data.criticalMistakes.length === 0) throw new Error('Expected critical mistake recorded for Stage 4A!');
 
@@ -499,7 +554,7 @@ async function runAllTests() {
       if (strongDec.behaviorEffects.verification !== 2) throw new Error(`Strong verification expected VB=2, got ${strongDec.behaviorEffects.verification}`);
       if (partialDec.behaviorEffects.verification !== 1) throw new Error(`Partial verification expected VB=1, got ${partialDec.behaviorEffects.verification}`);
       if (blindDec.behaviorEffects.verification !== 0) throw new Error(`Blind transfer expected VB=0, got ${blindDec.behaviorEffects.verification}`);
-      if (declineDec.behaviorEffects.verification !== 0) throw new Error(`Decline transfer expected VB=0, got ${declineDec.behaviorEffects.verification}`);
+      if (declineDec.behaviorEffects.verification !== 1) throw new Error(`Decline transfer expected VB=1, got ${declineDec.behaviorEffects.verification}`);
 
       console.log('  * PASS: Strong (VB=2), Partial (VB=1), and Non-verification (VB=0) verified exactly as specified');
     }
@@ -511,17 +566,17 @@ async function runAllTests() {
     {
       const stagesWithSI = await ScenarioStage.find({
         scenarioId: finalV2._id,
-        measurementFocus: 'SIGNAL_IDENTIFICATION'
+        hasSignalProbe: true
       }).sort({ stageOrder: 1 });
 
       const stageOrders = stagesWithSI.map(s => s.stageOrder);
-      console.log(`  * Stages measuring SI (orders):`, stageOrders);
-      // Expected: Stage 2 (order 2), Stage 3 (order 3), Stage 9 (order 10), Stage 10 (order 11)
-      if (stagesWithSI.length !== 4) throw new Error(`Expected exactly 4 stages measuring SI, got ${stagesWithSI.length}`);
-      if (!stageOrders.includes(2) || !stageOrders.includes(3) || !stageOrders.includes(10) || !stageOrders.includes(11)) {
+      console.log(`  * Stages measuring SI via Signal Probe (orders):`, stageOrders);
+      // Expected 5 genuine probe encounters: Stages 2, 3, 10, 11, 12
+      if (stagesWithSI.length !== 5) throw new Error(`Expected exactly 5 stages measuring SI via probes, got ${stagesWithSI.length}`);
+      if (!stageOrders.includes(2) || !stageOrders.includes(3) || !stageOrders.includes(10) || !stageOrders.includes(11) || !stageOrders.includes(12)) {
         throw new Error(`Unexpected stages measuring SI: ${stageOrders}`);
       }
-      console.log('  * PASS: SI applied only to authored stages (2, 3, 9, 10)');
+      console.log('  * PASS: SI applied via Signal Probes to 5 authored stages (2, 3, 10, 11, 12)');
     }
 
     // ----------------------------------------------------
@@ -533,18 +588,17 @@ async function runAllTests() {
         scenarioId: finalV2._id,
         measurementFocus: 'DECISION_QUALITY'
       });
-      // 12 scored stages: 1-7, 8A, 8B, 9-12 (total 13 stage records in DB including both 8A and 8B)
-      console.log(`  * Scored stages measuring DQ in DB: ${stagesWithDQ.length}`);
-      if (stagesWithDQ.length !== 13) throw new Error(`Expected 13 stage records with DQ (12 on each path), got ${stagesWithDQ.length}`);
+      console.log(`  * Stages measuring DQ in DB: ${stagesWithDQ.length}`);
+      if (stagesWithDQ.length !== 2) throw new Error(`Expected 2 stages with DQ in DB (Stages 5 and 13), got ${stagesWithDQ.length}`);
 
-      const stage13 = await ScenarioStage.findOne({ scenarioId: finalV2._id, stageOrder: 14 });
-      if (stage13.measurementFocus.includes('DECISION_QUALITY')) {
-        throw new Error('Stage 13 must NOT include DECISION_QUALITY (pure non-scoring)');
+      const stage14 = await ScenarioStage.findOne({ scenarioId: finalV2._id, stageOrder: 14 });
+      if (stage14.measurementFocus.includes('DECISION_QUALITY')) {
+        throw new Error('Stage 14 must NOT include DECISION_QUALITY (pure non-scoring)');
       }
-      if (stage13.measurementFocus.length !== 0) {
-        throw new Error(`Stage 13 measurementFocus must be empty [], got: ${stage13.measurementFocus}`);
+      if (stage14.measurementFocus.length !== 0) {
+        throw new Error(`Stage 14 measurementFocus must be empty [], got: ${stage14.measurementFocus}`);
       }
-      console.log('  * PASS: DQ balanced across all 12 situations; Stage 13 is strictly non-scoring');
+      console.log('  * PASS: DQ balanced across Stages 5 and 13 (max 4 pts); Stage 14 is strictly non-scoring');
     }
 
     // ----------------------------------------------------
@@ -561,10 +615,10 @@ async function runAllTests() {
       const res1 = await submitStep(sessionId, stageId, decs[0]._id);
       if (res1.status !== 200) throw new Error(`First submit failed: ${JSON.stringify(res1.data)}`);
 
-      // Second submit of SAME stage: Must be rejected with 400 DUPLICATE_SUBMISSION or STAGE_OUT_OF_SEQUENCE
+      // Second submit of SAME stage: Must be rejected with 400 DUPLICATE_SUBMISSION/STAGE_OUT_OF_SEQUENCE or 409 STAGE_DECISION_ALREADY_COMMITTED
       const res2 = await submitStep(sessionId, stageId, decs[0]._id);
-      if (res2.status !== 400) {
-        throw new Error(`Replay attack allowed! Expected status 400, got ${res2.status}`);
+      if (res2.status !== 400 && res2.status !== 409) {
+        throw new Error(`Replay attack allowed! Expected status 400 or 409, got ${res2.status}`);
       }
       console.log(`  * Replay blocked with code: ${res2.data.error?.code}`);
       console.log('  * PASS: Replay submission rejected');
@@ -641,6 +695,9 @@ async function runAllTests() {
     console.log('ALL DIGITAL DAY TESTS (A - M) PASSED SUCCESSFULLY!');
     console.log('==================================================\n');
 
+  } catch (err) {
+    console.error('\n❌ ERROR IN TEST EXECUTION:', err);
+    throw err;
   } finally {
     await teardown();
   }

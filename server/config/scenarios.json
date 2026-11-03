@@ -686,7 +686,6 @@
         },
         "eventClassification": "legitimate",
         "measurementFocus": [
-          "DECISION_QUALITY",
           "FALSE_POSITIVE_CONTROL"
         ],
         "targetSignals": [],
@@ -696,8 +695,12 @@
             "optionText": "Acknowledge the routine credit alert and continue your morning routine",
             "scoreChange": 10,
             "behaviorEffects": {
-              "decisionQuality": 2,
-              "falsePositive": 0
+              "recognition": 0,
+              "signalIdentification": 0,
+              "verification": 0,
+              "decisionQuality": 0,
+              "falsePositive": 0,
+              "unreviewedAcceptance": 0
             },
             "riskLevel": "safe",
             "isCriticalMistake": false,
@@ -709,8 +712,12 @@
             "optionText": "Panic and call the bank customer care line to demand account freezing",
             "scoreChange": -10,
             "behaviorEffects": {
+              "recognition": 0,
+              "signalIdentification": 0,
+              "verification": 0,
               "decisionQuality": 0,
-              "falsePositive": 2
+              "falsePositive": 2,
+              "unreviewedAcceptance": 0
             },
             "riskLevel": "safe",
             "isCriticalMistake": false,
@@ -722,8 +729,12 @@
             "optionText": "Mark the notification as spam and block your bank's official shortcode",
             "scoreChange": -5,
             "behaviorEffects": {
-              "decisionQuality": 1,
-              "falsePositive": 1
+              "recognition": 0,
+              "signalIdentification": 0,
+              "verification": 0,
+              "decisionQuality": 0,
+              "falsePositive": 2,
+              "unreviewedAcceptance": 0
             },
             "riskLevel": "low-risk",
             "isCriticalMistake": false,
@@ -731,7 +742,9 @@
             "explanation": "Blocking your bank's legitimate shortcode prevents you from receiving future critical transactional and security alerts.",
             "outcomeType": "false-positive"
           }
-        ]
+        ],
+        "hasSignalProbe": false,
+        "signalProbes": []
       },
       {
         "stageOrder": 2,
@@ -746,9 +759,7 @@
         "eventClassification": "malicious",
         "measurementFocus": [
           "THREAT_RECOGNITION",
-          "SIGNAL_IDENTIFICATION",
-          "VERIFICATION",
-          "DECISION_QUALITY"
+          "VERIFICATION"
         ],
         "targetSignals": [
           "unexpected_domain",
@@ -763,7 +774,9 @@
               "recognition": 0,
               "signalIdentification": 0,
               "verification": 0,
-              "decisionQuality": 0
+              "decisionQuality": 0,
+              "falsePositive": 0,
+              "unreviewedAcceptance": 0
             },
             "riskLevel": "high-risk",
             "isCriticalMistake": false,
@@ -776,9 +789,11 @@
             "scoreChange": 20,
             "behaviorEffects": {
               "recognition": 2,
-              "signalIdentification": 2,
+              "signalIdentification": 0,
               "verification": 2,
-              "decisionQuality": 2
+              "decisionQuality": 0,
+              "falsePositive": 0,
+              "unreviewedAcceptance": 0
             },
             "riskLevel": "safe",
             "isCriticalMistake": false,
@@ -791,15 +806,44 @@
             "scoreChange": 5,
             "behaviorEffects": {
               "recognition": 1,
-              "signalIdentification": 1,
-              "verification": 0,
-              "decisionQuality": 1
+              "signalIdentification": 0,
+              "verification": 1,
+              "decisionQuality": 0,
+              "falsePositive": 0,
+              "unreviewedAcceptance": 0
             },
             "riskLevel": "low-risk",
             "isCriticalMistake": false,
             "nextStageOrder": 3,
             "explanation": "Engaging with scam numbers confirms your phone line is active, encouraging further targeted scam attempts.",
             "outcomeType": "neutral"
+          }
+        ],
+        "hasSignalProbe": true,
+        "signalProbes": [
+          {
+            "optionText": "The tracking URL uses an unauthorized lookalike domain rather than the official postal/courier portal.",
+            "isCorrect": true,
+            "explanation": "Official couriers and postal services host tracking exclusively on their verified .gov.in or registered company root domains.",
+            "identifiedSignal": "unexpected_domain"
+          },
+          {
+            "optionText": "The delivery failure notification was dispatched after standard working hours.",
+            "isCorrect": false,
+            "explanation": "Automated delivery dispatch notifications are generated 24/7; delivery time is not a reliable forensic indicator.",
+            "identifiedSignal": "unusual_contact_method"
+          },
+          {
+            "optionText": "The consignment tracking number contains an odd number of numeric digits.",
+            "isCorrect": false,
+            "explanation": "Tracking number formats vary widely across logistics providers and do not indicate fraud by digit count.",
+            "identifiedSignal": "unexpected_data_request"
+          },
+          {
+            "optionText": "I did not identify a specific technical anomaly in this notification.",
+            "isCorrect": false,
+            "explanation": "Admitting cue absence is honest but reflects missed signal identification.",
+            "identifiedSignal": ""
           }
         ]
       },
@@ -817,8 +861,7 @@
         "eventClassification": "malicious",
         "measurementFocus": [
           "THREAT_RECOGNITION",
-          "SIGNAL_IDENTIFICATION",
-          "DECISION_QUALITY"
+          "UNREVIEWED_ACCEPTANCE"
         ],
         "targetSignals": [
           "unexpected_payment_request",
@@ -832,7 +875,10 @@
             "behaviorEffects": {
               "recognition": 0,
               "signalIdentification": 0,
-              "decisionQuality": 0
+              "verification": 0,
+              "decisionQuality": 0,
+              "falsePositive": 0,
+              "unreviewedAcceptance": 2
             },
             "riskLevel": "high-risk",
             "isCriticalMistake": false,
@@ -845,8 +891,11 @@
             "scoreChange": 20,
             "behaviorEffects": {
               "recognition": 2,
-              "signalIdentification": 2,
-              "decisionQuality": 2
+              "signalIdentification": 0,
+              "verification": 0,
+              "decisionQuality": 0,
+              "falsePositive": 0,
+              "unreviewedAcceptance": 0
             },
             "riskLevel": "safe",
             "isCriticalMistake": false,
@@ -859,14 +908,44 @@
             "scoreChange": 10,
             "behaviorEffects": {
               "recognition": 1,
-              "signalIdentification": 1,
-              "decisionQuality": 1
+              "signalIdentification": 0,
+              "verification": 0,
+              "decisionQuality": 0,
+              "falsePositive": 0,
+              "unreviewedAcceptance": 2
             },
             "riskLevel": "medium-risk",
             "isCriticalMistake": false,
             "nextStageOrder": 4,
             "explanation": "Cautious inquiry, but scammers easily provide links to cloned corporate websites to prolong deceptive engagement.",
             "outcomeType": "neutral"
+          }
+        ],
+        "hasSignalProbe": true,
+        "signalProbes": [
+          {
+            "optionText": "The recruiter demands an upfront refundable security deposit/registration fee before assigning work.",
+            "isCorrect": true,
+            "explanation": "Legitimate employers and platforms never require job applicants to pay registration, training, or deposit fees.",
+            "identifiedSignal": "unexpected_payment_request"
+          },
+          {
+            "optionText": "The message contains casual emoji in the opening greeting.",
+            "isCorrect": false,
+            "explanation": "Tone and informal language are subjective and do not constitute definitive forensic proof of cyber fraud.",
+            "identifiedSignal": "unusual_contact_method"
+          },
+          {
+            "optionText": "The outreach was sent through an instant messaging channel rather than email.",
+            "isCorrect": false,
+            "explanation": "Many legitimate recruiters initiate first contact on messaging platforms; the fee demand is the decisive indicator.",
+            "identifiedSignal": "unusual_contact_method"
+          },
+          {
+            "optionText": "I did not identify a specific technical anomaly in this offer.",
+            "isCorrect": false,
+            "explanation": "Admitting cue absence is honest but reflects missed signal identification.",
+            "identifiedSignal": ""
           }
         ]
       },
@@ -884,7 +963,6 @@
         "measurementFocus": [
           "THREAT_RECOGNITION",
           "VERIFICATION",
-          "DECISION_QUALITY",
           "UNREVIEWED_ACCEPTANCE"
         ],
         "targetSignals": [
@@ -898,8 +976,10 @@
             "scoreChange": -25,
             "behaviorEffects": {
               "recognition": 0,
+              "signalIdentification": 0,
               "verification": 0,
               "decisionQuality": 0,
+              "falsePositive": 0,
               "unreviewedAcceptance": 2
             },
             "riskLevel": "critical",
@@ -913,8 +993,10 @@
             "scoreChange": 20,
             "behaviorEffects": {
               "recognition": 2,
+              "signalIdentification": 0,
               "verification": 2,
-              "decisionQuality": 2,
+              "decisionQuality": 0,
+              "falsePositive": 0,
               "unreviewedAcceptance": 0
             },
             "riskLevel": "safe",
@@ -928,9 +1010,11 @@
             "scoreChange": 10,
             "behaviorEffects": {
               "recognition": 1,
-              "verification": 1,
-              "decisionQuality": 1,
-              "unreviewedAcceptance": 0
+              "signalIdentification": 0,
+              "verification": 0,
+              "decisionQuality": 0,
+              "falsePositive": 0,
+              "unreviewedAcceptance": 2
             },
             "riskLevel": "safe",
             "isCriticalMistake": false,
@@ -938,7 +1022,9 @@
             "explanation": "Checking with household members clarifies billing history, though directly checking the utility portal provides immediate authoritative confirmation.",
             "outcomeType": "neutral"
           }
-        ]
+        ],
+        "hasSignalProbe": false,
+        "signalProbes": []
       },
       {
         "stageOrder": 5,
@@ -963,8 +1049,12 @@
             "optionText": "Acknowledge the reminder and plan to update your password via the standard student portal settings",
             "scoreChange": 10,
             "behaviorEffects": {
+              "recognition": 0,
+              "signalIdentification": 0,
+              "verification": 0,
               "decisionQuality": 2,
-              "falsePositive": 0
+              "falsePositive": 0,
+              "unreviewedAcceptance": 0
             },
             "riskLevel": "safe",
             "isCriticalMistake": false,
@@ -976,8 +1066,12 @@
             "optionText": "Panic, submit a cybercrime report against the university IT desk, and refuse to ever log in again",
             "scoreChange": -10,
             "behaviorEffects": {
+              "recognition": 0,
+              "signalIdentification": 0,
+              "verification": 0,
               "decisionQuality": 0,
-              "falsePositive": 2
+              "falsePositive": 2,
+              "unreviewedAcceptance": 0
             },
             "riskLevel": "safe",
             "isCriticalMistake": false,
@@ -989,8 +1083,12 @@
             "optionText": "Dismiss the reminder and wait until the 5th day before checking the account",
             "scoreChange": 5,
             "behaviorEffects": {
+              "recognition": 0,
+              "signalIdentification": 0,
+              "verification": 0,
               "decisionQuality": 1,
-              "falsePositive": 1
+              "falsePositive": 1,
+              "unreviewedAcceptance": 0
             },
             "riskLevel": "low-risk",
             "isCriticalMistake": false,
@@ -998,7 +1096,9 @@
             "explanation": "Acceptable, though delaying password updates until the last day risks account lockout during exams.",
             "outcomeType": "neutral"
           }
-        ]
+        ],
+        "hasSignalProbe": false,
+        "signalProbes": []
       },
       {
         "stageOrder": 6,
@@ -1017,7 +1117,6 @@
         "eventClassification": "malicious",
         "measurementFocus": [
           "VERIFICATION",
-          "DECISION_QUALITY",
           "UNREVIEWED_ACCEPTANCE"
         ],
         "targetSignals": [
@@ -1029,8 +1128,11 @@
             "optionText": "Grant all requested accessibility and notification permissions to expedite your file download",
             "scoreChange": -20,
             "behaviorEffects": {
+              "recognition": 0,
+              "signalIdentification": 0,
               "verification": 0,
               "decisionQuality": 0,
+              "falsePositive": 0,
               "unreviewedAcceptance": 2
             },
             "riskLevel": "high-risk",
@@ -1043,8 +1145,11 @@
             "optionText": "Immediately deny permissions, cancel installation, delete the downloaded APK, and report the website",
             "scoreChange": 20,
             "behaviorEffects": {
+              "recognition": 0,
+              "signalIdentification": 0,
               "verification": 2,
-              "decisionQuality": 2,
+              "decisionQuality": 0,
+              "falsePositive": 0,
               "unreviewedAcceptance": 0
             },
             "riskLevel": "safe",
@@ -1057,8 +1162,11 @@
             "optionText": "Deny accessibility permissions but leave the APK file stored in your Downloads folder",
             "scoreChange": 10,
             "behaviorEffects": {
+              "recognition": 0,
+              "signalIdentification": 0,
               "verification": 1,
-              "decisionQuality": 1,
+              "decisionQuality": 0,
+              "falsePositive": 0,
               "unreviewedAcceptance": 1
             },
             "riskLevel": "safe",
@@ -1067,7 +1175,9 @@
             "explanation": "Denying permissions prevents active compromise, but leaving unverified malware installers on storage risks accidental execution later.",
             "outcomeType": "neutral"
           }
-        ]
+        ],
+        "hasSignalProbe": false,
+        "signalProbes": []
       },
       {
         "stageOrder": 7,
@@ -1083,8 +1193,7 @@
         "eventClassification": "malicious",
         "measurementFocus": [
           "THREAT_RECOGNITION",
-          "VERIFICATION",
-          "DECISION_QUALITY"
+          "VERIFICATION"
         ],
         "targetSignals": [
           "authority_impersonation",
@@ -1096,9 +1205,12 @@
             "optionText": "Hang up immediately, recognize the 'digital arrest' script as a criminal extortion scam, and file an incident report on 1930",
             "scoreChange": 20,
             "behaviorEffects": {
-              "recognition": 2,
+              "recognition": 4,
+              "signalIdentification": 0,
               "verification": 2,
-              "decisionQuality": 2
+              "decisionQuality": 0,
+              "falsePositive": 0,
+              "unreviewedAcceptance": 0
             },
             "riskLevel": "safe",
             "isCriticalMistake": false,
@@ -1111,8 +1223,11 @@
             "scoreChange": -20,
             "behaviorEffects": {
               "recognition": 0,
+              "signalIdentification": 0,
               "verification": 0,
-              "decisionQuality": 0
+              "decisionQuality": 0,
+              "falsePositive": 0,
+              "unreviewedAcceptance": 0
             },
             "riskLevel": "critical",
             "isCriticalMistake": false,
@@ -1124,9 +1239,12 @@
             "optionText": "Stay on the call and demand the officer's badge number and station address before deciding what to do",
             "scoreChange": 10,
             "behaviorEffects": {
-              "recognition": 1,
+              "recognition": 2,
+              "signalIdentification": 0,
               "verification": 1,
-              "decisionQuality": 1
+              "decisionQuality": 0,
+              "falsePositive": 0,
+              "unreviewedAcceptance": 0
             },
             "riskLevel": "low-risk",
             "isCriticalMistake": false,
@@ -1134,7 +1252,9 @@
             "explanation": "Challenging the caller demonstrates skepticism, though staying connected gives experienced scammers opportunities to manipulate your emotions.",
             "outcomeType": "neutral"
           }
-        ]
+        ],
+        "hasSignalProbe": false,
+        "signalProbes": []
       },
       {
         "stageOrder": 8,
@@ -1149,7 +1269,7 @@
         },
         "eventClassification": "legitimate",
         "measurementFocus": [
-          "DECISION_QUALITY",
+          "VERIFICATION",
           "FALSE_POSITIVE_CONTROL"
         ],
         "targetSignals": [],
@@ -1159,8 +1279,12 @@
             "optionText": "Read the email calmly, note the generous timeline, and plan to verify details through your official netbanking portal over the weekend",
             "scoreChange": 10,
             "behaviorEffects": {
-              "decisionQuality": 2,
-              "falsePositive": 0
+              "recognition": 0,
+              "signalIdentification": 0,
+              "verification": 2,
+              "decisionQuality": 0,
+              "falsePositive": 0,
+              "unreviewedAcceptance": 0
             },
             "riskLevel": "safe",
             "isCriticalMistake": false,
@@ -1172,8 +1296,12 @@
             "optionText": "Assume this email is another attack from the fake police caller and mark your bank's verified corporate domain as phishing",
             "scoreChange": -10,
             "behaviorEffects": {
+              "recognition": 0,
+              "signalIdentification": 0,
+              "verification": 0,
               "decisionQuality": 0,
-              "falsePositive": 2
+              "falsePositive": 2,
+              "unreviewedAcceptance": 0
             },
             "riskLevel": "safe",
             "isCriticalMistake": false,
@@ -1185,8 +1313,12 @@
             "optionText": "Archive the email without reading it",
             "scoreChange": 5,
             "behaviorEffects": {
-              "decisionQuality": 1,
-              "falsePositive": 1
+              "recognition": 0,
+              "signalIdentification": 0,
+              "verification": 0,
+              "decisionQuality": 0,
+              "falsePositive": 1,
+              "unreviewedAcceptance": 0
             },
             "riskLevel": "safe",
             "isCriticalMistake": false,
@@ -1194,7 +1326,9 @@
             "explanation": "Benign, but ignoring legitimate KYC re-verification deadlines can eventually lead to temporary transaction restrictions.",
             "outcomeType": "neutral"
           }
-        ]
+        ],
+        "hasSignalProbe": false,
+        "signalProbes": []
       },
       {
         "stageOrder": 9,
@@ -1210,8 +1344,7 @@
         "eventClassification": "malicious",
         "measurementFocus": [
           "THREAT_RECOGNITION",
-          "VERIFICATION",
-          "DECISION_QUALITY"
+          "VERIFICATION"
         ],
         "targetSignals": [
           "authority_impersonation",
@@ -1224,8 +1357,11 @@
             "scoreChange": 20,
             "behaviorEffects": {
               "recognition": 2,
+              "signalIdentification": 0,
               "verification": 2,
-              "decisionQuality": 2
+              "decisionQuality": 0,
+              "falsePositive": 0,
+              "unreviewedAcceptance": 0
             },
             "riskLevel": "safe",
             "isCriticalMistake": false,
@@ -1238,8 +1374,11 @@
             "scoreChange": -25,
             "behaviorEffects": {
               "recognition": 0,
+              "signalIdentification": 0,
               "verification": 0,
-              "decisionQuality": 0
+              "decisionQuality": 0,
+              "falsePositive": 0,
+              "unreviewedAcceptance": 0
             },
             "riskLevel": "critical",
             "isCriticalMistake": false,
@@ -1252,8 +1391,11 @@
             "scoreChange": -10,
             "behaviorEffects": {
               "recognition": 1,
+              "signalIdentification": 0,
               "verification": 0,
-              "decisionQuality": 1
+              "decisionQuality": 0,
+              "falsePositive": 0,
+              "unreviewedAcceptance": 0
             },
             "riskLevel": "medium-risk",
             "isCriticalMistake": false,
@@ -1261,7 +1403,9 @@
             "explanation": "Negotiating with extortionists validates their power over you and still results in irreversible financial loss.",
             "outcomeType": "unsafe-action"
           }
-        ]
+        ],
+        "hasSignalProbe": false,
+        "signalProbes": []
       },
       {
         "stageOrder": 10,
@@ -1277,9 +1421,7 @@
         "eventClassification": "malicious",
         "measurementFocus": [
           "THREAT_RECOGNITION",
-          "SIGNAL_IDENTIFICATION",
           "VERIFICATION",
-          "DECISION_QUALITY",
           "UNREVIEWED_ACCEPTANCE"
         ],
         "targetSignals": [
@@ -1296,6 +1438,7 @@
               "signalIdentification": 0,
               "verification": 0,
               "decisionQuality": 0,
+              "falsePositive": 0,
               "unreviewedAcceptance": 2
             },
             "riskLevel": "high-risk",
@@ -1309,9 +1452,10 @@
             "scoreChange": 20,
             "behaviorEffects": {
               "recognition": 2,
-              "signalIdentification": 2,
+              "signalIdentification": 0,
               "verification": 2,
-              "decisionQuality": 2,
+              "decisionQuality": 0,
+              "falsePositive": 0,
               "unreviewedAcceptance": 0
             },
             "riskLevel": "safe",
@@ -1325,16 +1469,44 @@
             "scoreChange": 5,
             "behaviorEffects": {
               "recognition": 1,
-              "signalIdentification": 1,
+              "signalIdentification": 0,
               "verification": 1,
-              "decisionQuality": 1,
-              "unreviewedAcceptance": 1
+              "decisionQuality": 0,
+              "falsePositive": 0,
+              "unreviewedAcceptance": 2
             },
             "riskLevel": "low-risk",
             "isCriticalMistake": false,
             "nextStageOrder": 11,
             "explanation": "Inquiring is prudent, but cashiers often fail to recognize overlay tampering until transactions fail.",
             "outcomeType": "neutral"
+          }
+        ],
+        "hasSignalProbe": true,
+        "signalProbes": [
+          {
+            "optionText": "The beneficiary/merchant name displayed on the payment review screen does not match the store name.",
+            "isCorrect": true,
+            "explanation": "Physical QR sticker overlays route funds to an unauthorized private VPA; verifying the terminal payee name reveals the fraud.",
+            "identifiedSignal": "mismatched_branding"
+          },
+          {
+            "optionText": "The QR code image has a green outer frame instead of a blue brand frame.",
+            "isCorrect": false,
+            "explanation": "QR styling, colors, and border frames are cosmetic and customizable by merchants.",
+            "identifiedSignal": "mismatched_branding"
+          },
+          {
+            "optionText": "The UPI application took more than 3 seconds to launch the camera scanner.",
+            "isCorrect": false,
+            "explanation": "App load latency is a device performance factor, not a security signal.",
+            "identifiedSignal": "unexpected_data_request"
+          },
+          {
+            "optionText": "I did not identify a specific technical anomaly on the payment interface.",
+            "isCorrect": false,
+            "explanation": "Admitting cue absence is honest but reflects missed signal identification.",
+            "identifiedSignal": ""
           }
         ]
       },
@@ -1351,9 +1523,7 @@
         "eventClassification": "malicious",
         "measurementFocus": [
           "THREAT_RECOGNITION",
-          "SIGNAL_IDENTIFICATION",
-          "VERIFICATION",
-          "DECISION_QUALITY"
+          "VERIFICATION"
         ],
         "targetSignals": [
           "unexpected_domain",
@@ -1368,7 +1538,9 @@
               "recognition": 0,
               "signalIdentification": 0,
               "verification": 0,
-              "decisionQuality": 0
+              "decisionQuality": 0,
+              "falsePositive": 0,
+              "unreviewedAcceptance": 0
             },
             "riskLevel": "high-risk",
             "isCriticalMistake": false,
@@ -1381,9 +1553,11 @@
             "scoreChange": 20,
             "behaviorEffects": {
               "recognition": 2,
-              "signalIdentification": 2,
+              "signalIdentification": 0,
               "verification": 2,
-              "decisionQuality": 2
+              "decisionQuality": 0,
+              "falsePositive": 0,
+              "unreviewedAcceptance": 0
             },
             "riskLevel": "safe",
             "isCriticalMistake": false,
@@ -1396,15 +1570,44 @@
             "scoreChange": 10,
             "behaviorEffects": {
               "recognition": 1,
-              "signalIdentification": 1,
+              "signalIdentification": 0,
               "verification": 1,
-              "decisionQuality": 1
+              "decisionQuality": 0,
+              "falsePositive": 0,
+              "unreviewedAcceptance": 0
             },
             "riskLevel": "low-risk",
             "isCriticalMistake": false,
             "nextStageOrder": 12,
             "explanation": "Consulting a professional avoids direct link compromise, though the non-governmental domain is an obvious phishing indicator.",
             "outcomeType": "neutral"
+          }
+        ],
+        "hasSignalProbe": true,
+        "signalProbes": [
+          {
+            "optionText": "The sender email address uses an unverified third-party domain rather than the official institutional portal.",
+            "isCorrect": true,
+            "explanation": "Phishing lures impersonate tax and subscription authorities but cannot send from verified institutional root domains.",
+            "identifiedSignal": "unexpected_domain"
+          },
+          {
+            "optionText": "The notification was marked with normal rather than high priority.",
+            "isCorrect": false,
+            "explanation": "Email priority flags are arbitrary metadata easily manipulated by any sender.",
+            "identifiedSignal": "unrequested_account_action"
+          },
+          {
+            "optionText": "The message body does not address the recipient by full legal surname.",
+            "isCorrect": false,
+            "explanation": "Many legitimate automated mailers use partial names or generic greetings.",
+            "identifiedSignal": "unusual_contact_method"
+          },
+          {
+            "optionText": "I did not identify a specific technical anomaly in this email.",
+            "isCorrect": false,
+            "explanation": "Admitting cue absence is honest but reflects missed signal identification.",
+            "identifiedSignal": ""
           }
         ]
       },
@@ -1421,8 +1624,7 @@
         "eventClassification": "ambiguous",
         "measurementFocus": [
           "THREAT_RECOGNITION",
-          "VERIFICATION",
-          "DECISION_QUALITY"
+          "VERIFICATION"
         ],
         "targetSignals": [
           "urgency",
@@ -1435,8 +1637,11 @@
             "scoreChange": -15,
             "behaviorEffects": {
               "recognition": 0,
+              "signalIdentification": 0,
               "verification": 0,
-              "decisionQuality": 0
+              "decisionQuality": 0,
+              "falsePositive": 0,
+              "unreviewedAcceptance": 0
             },
             "riskLevel": "high-risk",
             "isCriticalMistake": false,
@@ -1449,8 +1654,11 @@
             "scoreChange": 20,
             "behaviorEffects": {
               "recognition": 2,
+              "signalIdentification": 0,
               "verification": 2,
-              "decisionQuality": 2
+              "decisionQuality": 0,
+              "falsePositive": 0,
+              "unreviewedAcceptance": 0
             },
             "riskLevel": "safe",
             "isCriticalMistake": false,
@@ -1463,8 +1671,11 @@
             "scoreChange": 15,
             "behaviorEffects": {
               "recognition": 2,
-              "verification": 1,
-              "decisionQuality": 2
+              "signalIdentification": 0,
+              "verification": 2,
+              "decisionQuality": 0,
+              "falsePositive": 0,
+              "unreviewedAcceptance": 0
             },
             "riskLevel": "medium-risk",
             "isCriticalMistake": false,
@@ -1477,14 +1688,44 @@
             "scoreChange": 5,
             "behaviorEffects": {
               "recognition": 1,
-              "verification": 0,
-              "decisionQuality": 1
+              "signalIdentification": 0,
+              "verification": 1,
+              "decisionQuality": 0,
+              "falsePositive": 0,
+              "unreviewedAcceptance": 0
             },
             "riskLevel": "low-risk",
             "isCriticalMistake": false,
             "nextStageOrder": 13,
             "explanation": "Overly detached reaction. In genuine family emergencies, verifying before discarding maintains relationships while preserving security.",
             "outcomeType": "false-positive"
+          }
+        ],
+        "hasSignalProbe": true,
+        "signalProbes": [
+          {
+            "optionText": "The sender requests an urgent fund transfer to an unknown private VPA while evading direct voice confirmation.",
+            "isCorrect": true,
+            "explanation": "Emergency distress impersonation relies on urgency to bypass voice verification and redirects funds to disposable VPAs.",
+            "identifiedSignal": "unusual_contact_method"
+          },
+          {
+            "optionText": "The emergency distress message was sent from a mobile number without a profile avatar.",
+            "isCorrect": false,
+            "explanation": "Avatar presence is an optional privacy setting, not a reliable threat indicator.",
+            "identifiedSignal": "unusual_contact_method"
+          },
+          {
+            "optionText": "The requested amount is rounded to an exact ten thousand rupees.",
+            "isCorrect": false,
+            "explanation": "Rounded amounts are common in both genuine emergencies and scams; evasive contact is the forensic cue.",
+            "identifiedSignal": "unexpected_payment_request"
+          },
+          {
+            "optionText": "I did not identify a specific technical anomaly in this communication.",
+            "isCorrect": false,
+            "explanation": "Admitting cue absence is honest but reflects missed signal identification.",
+            "identifiedSignal": ""
           }
         ]
       },
@@ -1511,8 +1752,12 @@
             "optionText": "Approve the security update to install overnight while connected to charger and Wi-Fi",
             "scoreChange": 10,
             "behaviorEffects": {
+              "recognition": 0,
+              "signalIdentification": 0,
+              "verification": 0,
               "decisionQuality": 2,
-              "falsePositive": 0
+              "falsePositive": 0,
+              "unreviewedAcceptance": 0
             },
             "riskLevel": "safe",
             "isCriticalMistake": false,
@@ -1524,8 +1769,12 @@
             "optionText": "Reject all system updates permanently because you believe all notifications are malicious hacks",
             "scoreChange": -10,
             "behaviorEffects": {
+              "recognition": 0,
+              "signalIdentification": 0,
+              "verification": 0,
               "decisionQuality": 0,
-              "falsePositive": 2
+              "falsePositive": 2,
+              "unreviewedAcceptance": 0
             },
             "riskLevel": "safe",
             "isCriticalMistake": false,
@@ -1537,8 +1786,12 @@
             "optionText": "Postpone the update for 24 hours to check reviews online",
             "scoreChange": 5,
             "behaviorEffects": {
+              "recognition": 0,
+              "signalIdentification": 0,
+              "verification": 0,
               "decisionQuality": 1,
-              "falsePositive": 1
+              "falsePositive": 1,
+              "unreviewedAcceptance": 0
             },
             "riskLevel": "low-risk",
             "isCriticalMistake": false,
@@ -1546,7 +1799,9 @@
             "explanation": "Acceptable caution, though critical security patches should be applied expeditiously.",
             "outcomeType": "neutral"
           }
-        ]
+        ],
+        "hasSignalProbe": false,
+        "signalProbes": []
       },
       {
         "stageOrder": 14,
@@ -1573,7 +1828,9 @@
             "explanation": "Your baseline behavioral profile is generated from your intuitive daily choices.",
             "outcomeType": "correct"
           }
-        ]
+        ],
+        "hasSignalProbe": false,
+        "signalProbes": []
       }
     ]
   },
@@ -1617,8 +1874,7 @@
         },
         "eventClassification": "legitimate",
         "measurementFocus": [
-          "FALSE_POSITIVE_CONTROL",
-          "DECISION_QUALITY"
+          "FALSE_POSITIVE_CONTROL"
         ],
         "targetSignals": [],
         "terminal": false,
@@ -1627,8 +1883,12 @@
             "optionText": "Acknowledge the notification and check account balance normally",
             "scoreChange": 10,
             "behaviorEffects": {
-              "decisionQuality": 2,
-              "falsePositive": 0
+              "recognition": 0,
+              "signalIdentification": 0,
+              "verification": 0,
+              "decisionQuality": 0,
+              "falsePositive": 0,
+              "unreviewedAcceptance": 0
             },
             "riskLevel": "safe",
             "isCriticalMistake": false,
@@ -1640,8 +1900,12 @@
             "optionText": "Report SMS as fraud / attempt to block bank",
             "scoreChange": -10,
             "behaviorEffects": {
+              "recognition": 0,
+              "signalIdentification": 0,
+              "verification": 0,
               "decisionQuality": 0,
-              "falsePositive": 2
+              "falsePositive": 2,
+              "unreviewedAcceptance": 0
             },
             "riskLevel": "safe",
             "isCriticalMistake": false,
@@ -1653,8 +1917,12 @@
             "optionText": "Dismiss notification without checking",
             "scoreChange": 0,
             "behaviorEffects": {
-              "decisionQuality": 1,
-              "falsePositive": 0
+              "recognition": 0,
+              "signalIdentification": 0,
+              "verification": 0,
+              "decisionQuality": 0,
+              "falsePositive": 0,
+              "unreviewedAcceptance": 0
             },
             "riskLevel": "safe",
             "isCriticalMistake": false,
@@ -1662,7 +1930,9 @@
             "explanation": "Acceptable disengagement, but reviewing verified account statements is standard financial hygiene.",
             "outcomeType": "neutral"
           }
-        ]
+        ],
+        "hasSignalProbe": false,
+        "signalProbes": []
       },
       {
         "stageOrder": 2,
@@ -1678,9 +1948,7 @@
         "eventClassification": "malicious",
         "measurementFocus": [
           "THREAT_RECOGNITION",
-          "SIGNAL_IDENTIFICATION",
-          "VERIFICATION",
-          "DECISION_QUALITY"
+          "VERIFICATION"
         ],
         "targetSignals": [
           "unexpected_domain",
@@ -1695,7 +1963,9 @@
               "recognition": 0,
               "signalIdentification": 0,
               "verification": 0,
-              "decisionQuality": 0
+              "decisionQuality": 0,
+              "falsePositive": 0,
+              "unreviewedAcceptance": 0
             },
             "riskLevel": "high-risk",
             "isCriticalMistake": false,
@@ -1712,9 +1982,11 @@
             ],
             "behaviorEffects": {
               "recognition": 2,
-              "signalIdentification": 2,
+              "signalIdentification": 0,
               "verification": 2,
-              "decisionQuality": 2
+              "decisionQuality": 0,
+              "falsePositive": 0,
+              "unreviewedAcceptance": 0
             },
             "riskLevel": "safe",
             "isCriticalMistake": false,
@@ -1726,16 +1998,45 @@
             "optionText": "Delete the message without checking tracking status",
             "scoreChange": 5,
             "behaviorEffects": {
-              "recognition": 1,
+              "recognition": 0,
               "signalIdentification": 0,
               "verification": 0,
-              "decisionQuality": 1
+              "decisionQuality": 0,
+              "falsePositive": 0,
+              "unreviewedAcceptance": 0
             },
             "riskLevel": "low-risk",
             "isCriticalMistake": false,
             "nextStageOrder": 3,
             "explanation": "Cautious avoidance prevents harm, but independent verification provides certainty regarding legitimate postal deliveries.",
             "outcomeType": "neutral"
+          }
+        ],
+        "hasSignalProbe": true,
+        "signalProbes": [
+          {
+            "optionText": "The tracking URL uses an unauthorized lookalike domain rather than the official postal/courier portal.",
+            "isCorrect": true,
+            "explanation": "Official couriers and postal services host tracking exclusively on their verified .gov.in or registered company root domains.",
+            "identifiedSignal": "unexpected_domain"
+          },
+          {
+            "optionText": "The delivery failure notification was dispatched after standard working hours.",
+            "isCorrect": false,
+            "explanation": "Automated delivery dispatch notifications are generated 24/7; delivery time is not a reliable forensic indicator.",
+            "identifiedSignal": "unusual_contact_method"
+          },
+          {
+            "optionText": "The consignment tracking number contains an odd number of numeric digits.",
+            "isCorrect": false,
+            "explanation": "Tracking number formats vary widely across logistics providers and do not indicate fraud by digit count.",
+            "identifiedSignal": "unexpected_data_request"
+          },
+          {
+            "optionText": "I did not identify a specific technical anomaly in this notification.",
+            "isCorrect": false,
+            "explanation": "Admitting cue absence is honest but reflects missed signal identification.",
+            "identifiedSignal": ""
           }
         ]
       },
@@ -1752,8 +2053,7 @@
         "eventClassification": "malicious",
         "measurementFocus": [
           "THREAT_RECOGNITION",
-          "SIGNAL_IDENTIFICATION",
-          "DECISION_QUALITY"
+          "UNREVIEWED_ACCEPTANCE"
         ],
         "targetSignals": [
           "unexpected_payment_request",
@@ -1767,7 +2067,10 @@
             "behaviorEffects": {
               "recognition": 0,
               "signalIdentification": 0,
-              "decisionQuality": 0
+              "verification": 0,
+              "decisionQuality": 0,
+              "falsePositive": 0,
+              "unreviewedAcceptance": 2
             },
             "riskLevel": "high-risk",
             "isCriticalMistake": false,
@@ -1784,8 +2087,11 @@
             ],
             "behaviorEffects": {
               "recognition": 2,
-              "signalIdentification": 2,
-              "decisionQuality": 2
+              "signalIdentification": 0,
+              "verification": 0,
+              "decisionQuality": 0,
+              "falsePositive": 0,
+              "unreviewedAcceptance": 0
             },
             "riskLevel": "safe",
             "isCriticalMistake": false,
@@ -1801,14 +2107,44 @@
             ],
             "behaviorEffects": {
               "recognition": 1,
-              "signalIdentification": 1,
-              "decisionQuality": 1
+              "signalIdentification": 0,
+              "verification": 0,
+              "decisionQuality": 0,
+              "falsePositive": 0,
+              "unreviewedAcceptance": 1
             },
             "riskLevel": "medium-risk",
             "isCriticalMistake": false,
             "nextStageOrder": 4,
             "explanation": "Partial recognition. You noticed the unusual payment, but questioning a scammer within the same chat allows them to deploy persuasive social engineering scripts.",
             "outcomeType": "neutral"
+          }
+        ],
+        "hasSignalProbe": true,
+        "signalProbes": [
+          {
+            "optionText": "The recruiter demands an upfront refundable security deposit/registration fee before assigning work.",
+            "isCorrect": true,
+            "explanation": "Legitimate employers and platforms never require job applicants to pay registration, training, or deposit fees.",
+            "identifiedSignal": "unexpected_payment_request"
+          },
+          {
+            "optionText": "The message contains casual emoji in the opening greeting.",
+            "isCorrect": false,
+            "explanation": "Tone and informal language are subjective and do not constitute definitive forensic proof of cyber fraud.",
+            "identifiedSignal": "unusual_contact_method"
+          },
+          {
+            "optionText": "The outreach was sent through an instant messaging channel rather than email.",
+            "isCorrect": false,
+            "explanation": "Many legitimate recruiters initiate first contact on messaging platforms; the fee demand is the decisive indicator.",
+            "identifiedSignal": "unusual_contact_method"
+          },
+          {
+            "optionText": "I did not identify a specific technical anomaly in this offer.",
+            "isCorrect": false,
+            "explanation": "Admitting cue absence is honest but reflects missed signal identification.",
+            "identifiedSignal": ""
           }
         ]
       },
@@ -1826,8 +2162,7 @@
         "measurementFocus": [
           "THREAT_RECOGNITION",
           "VERIFICATION",
-          "UNREVIEWED_ACCEPTANCE",
-          "DECISION_QUALITY"
+          "UNREVIEWED_ACCEPTANCE"
         ],
         "targetSignals": [
           "unexpected_payment_request",
@@ -1840,9 +2175,11 @@
             "scoreChange": -30,
             "behaviorEffects": {
               "recognition": 0,
+              "signalIdentification": 0,
               "verification": 0,
-              "unreviewedAcceptance": 2,
-              "decisionQuality": 0
+              "decisionQuality": 0,
+              "falsePositive": 0,
+              "unreviewedAcceptance": 2
             },
             "riskLevel": "critical",
             "isCriticalMistake": true,
@@ -1855,9 +2192,11 @@
             "scoreChange": 15,
             "behaviorEffects": {
               "recognition": 2,
-              "verification": 0,
-              "unreviewedAcceptance": 0,
-              "decisionQuality": 2
+              "signalIdentification": 0,
+              "verification": 2,
+              "decisionQuality": 0,
+              "falsePositive": 0,
+              "unreviewedAcceptance": 0
             },
             "riskLevel": "safe",
             "isCriticalMistake": false,
@@ -1870,9 +2209,11 @@
             "scoreChange": 20,
             "behaviorEffects": {
               "recognition": 2,
+              "signalIdentification": 0,
               "verification": 2,
-              "unreviewedAcceptance": 0,
-              "decisionQuality": 2
+              "decisionQuality": 0,
+              "falsePositive": 0,
+              "unreviewedAcceptance": 0
             },
             "riskLevel": "safe",
             "isCriticalMistake": false,
@@ -1880,7 +2221,9 @@
             "explanation": "Optimal response. Refusing the debit and reporting the fraudulent VPA protects the wider payments ecosystem.",
             "outcomeType": "correct"
           }
-        ]
+        ],
+        "hasSignalProbe": false,
+        "signalProbes": []
       },
       {
         "stageOrder": 5,
@@ -1894,8 +2237,9 @@
         },
         "eventClassification": "legitimate",
         "measurementFocus": [
+          "DECISION_QUALITY",
           "FALSE_POSITIVE_CONTROL",
-          "DECISION_QUALITY"
+          "UNREVIEWED_ACCEPTANCE"
         ],
         "targetSignals": [],
         "terminal": false,
@@ -1904,8 +2248,12 @@
             "optionText": "Review device and location on screen, confirm \"Yes, it's me\"",
             "scoreChange": 10,
             "behaviorEffects": {
+              "recognition": 0,
+              "signalIdentification": 0,
+              "verification": 0,
               "decisionQuality": 2,
-              "falsePositive": 0
+              "falsePositive": 0,
+              "unreviewedAcceptance": 0
             },
             "riskLevel": "safe",
             "isCriticalMistake": false,
@@ -1917,8 +2265,12 @@
             "optionText": "Panicked click on \"No, secure account\"",
             "scoreChange": -10,
             "behaviorEffects": {
+              "recognition": 0,
+              "signalIdentification": 0,
+              "verification": 0,
               "decisionQuality": 0,
-              "falsePositive": 2
+              "falsePositive": 2,
+              "unreviewedAcceptance": 0
             },
             "riskLevel": "safe",
             "isCriticalMistake": false,
@@ -1930,8 +2282,12 @@
             "optionText": "Dismiss prompt without reviewing",
             "scoreChange": 0,
             "behaviorEffects": {
+              "recognition": 0,
+              "signalIdentification": 0,
+              "verification": 0,
               "decisionQuality": 1,
-              "falsePositive": 1
+              "falsePositive": 1,
+              "unreviewedAcceptance": 0
             },
             "riskLevel": "low-risk",
             "isCriticalMistake": false,
@@ -1939,7 +2295,9 @@
             "explanation": "Neglecting authentication prompts leaves legitimate sign-ins unverified, creating potential security ambiguities.",
             "outcomeType": "neutral"
           }
-        ]
+        ],
+        "hasSignalProbe": false,
+        "signalProbes": []
       },
       {
         "stageOrder": 6,
@@ -1954,8 +2312,7 @@
         "eventClassification": "malicious",
         "measurementFocus": [
           "VERIFICATION",
-          "UNREVIEWED_ACCEPTANCE",
-          "DECISION_QUALITY"
+          "UNREVIEWED_ACCEPTANCE"
         ],
         "targetSignals": [
           "unusual_permission"
@@ -1966,9 +2323,12 @@
             "optionText": "Tap \"Allow All Permissions\" to proceed quickly",
             "scoreChange": -20,
             "behaviorEffects": {
+              "recognition": 0,
+              "signalIdentification": 0,
               "verification": 0,
-              "unreviewedAcceptance": 2,
-              "decisionQuality": 0
+              "decisionQuality": 0,
+              "falsePositive": 0,
+              "unreviewedAcceptance": 2
             },
             "riskLevel": "high-risk",
             "isCriticalMistake": false,
@@ -1980,9 +2340,12 @@
             "optionText": "Review requested permissions, allow Camera only, and deny Contacts, SMS, Location",
             "scoreChange": 20,
             "behaviorEffects": {
+              "recognition": 0,
+              "signalIdentification": 0,
               "verification": 2,
-              "unreviewedAcceptance": 0,
-              "decisionQuality": 2
+              "decisionQuality": 0,
+              "falsePositive": 0,
+              "unreviewedAcceptance": 0
             },
             "riskLevel": "safe",
             "isCriticalMistake": false,
@@ -1994,9 +2357,12 @@
             "optionText": "Cancel installation and remove the application",
             "scoreChange": 10,
             "behaviorEffects": {
-              "verification": 1,
-              "unreviewedAcceptance": 0,
-              "decisionQuality": 1
+              "recognition": 0,
+              "signalIdentification": 0,
+              "verification": 0,
+              "decisionQuality": 0,
+              "falsePositive": 0,
+              "unreviewedAcceptance": 2
             },
             "riskLevel": "safe",
             "isCriticalMistake": false,
@@ -2004,7 +2370,9 @@
             "explanation": "Safe disengagement. Rejecting intrusive software is a solid defensive choice.",
             "outcomeType": "neutral"
           }
-        ]
+        ],
+        "hasSignalProbe": false,
+        "signalProbes": []
       },
       {
         "stageOrder": 7,
@@ -2019,8 +2387,7 @@
         "eventClassification": "malicious",
         "measurementFocus": [
           "THREAT_RECOGNITION",
-          "VERIFICATION",
-          "DECISION_QUALITY"
+          "VERIFICATION"
         ],
         "targetSignals": [
           "authority_impersonation",
@@ -2032,9 +2399,12 @@
             "optionText": "Hang up and check connection status directly with telecom provider through official customer care",
             "scoreChange": 20,
             "behaviorEffects": {
-              "recognition": 2,
+              "recognition": 4,
+              "signalIdentification": 0,
               "verification": 2,
-              "decisionQuality": 2
+              "decisionQuality": 0,
+              "falsePositive": 0,
+              "unreviewedAcceptance": 0
             },
             "riskLevel": "safe",
             "isCriticalMistake": false,
@@ -2047,8 +2417,11 @@
             "scoreChange": -20,
             "behaviorEffects": {
               "recognition": 0,
+              "signalIdentification": 0,
               "verification": 0,
-              "decisionQuality": 0
+              "decisionQuality": 0,
+              "falsePositive": 0,
+              "unreviewedAcceptance": 0
             },
             "riskLevel": "critical",
             "isCriticalMistake": false,
@@ -2060,9 +2433,12 @@
             "optionText": "Hang up immediately and ignore the call without independent verification",
             "scoreChange": 10,
             "behaviorEffects": {
-              "recognition": 1,
-              "verification": 0,
-              "decisionQuality": 1
+              "recognition": 4,
+              "signalIdentification": 0,
+              "verification": 2,
+              "decisionQuality": 0,
+              "falsePositive": 0,
+              "unreviewedAcceptance": 0
             },
             "riskLevel": "low-risk",
             "isCriticalMistake": false,
@@ -2070,7 +2446,9 @@
             "explanation": "Cautious disengagement avoids immediate harm, though independently confirming your account standing provides complete assurance.",
             "outcomeType": "neutral"
           }
-        ]
+        ],
+        "hasSignalProbe": false,
+        "signalProbes": []
       },
       {
         "stageOrder": 8,
@@ -2086,8 +2464,8 @@
         },
         "eventClassification": "legitimate",
         "measurementFocus": [
-          "FALSE_POSITIVE_CONTROL",
-          "DECISION_QUALITY"
+          "VERIFICATION",
+          "FALSE_POSITIVE_CONTROL"
         ],
         "targetSignals": [],
         "terminal": false,
@@ -2096,8 +2474,12 @@
             "optionText": "Review order status and delivery date normally",
             "scoreChange": 10,
             "behaviorEffects": {
-              "decisionQuality": 2,
-              "falsePositive": 0
+              "recognition": 0,
+              "signalIdentification": 0,
+              "verification": 2,
+              "decisionQuality": 0,
+              "falsePositive": 0,
+              "unreviewedAcceptance": 0
             },
             "riskLevel": "safe",
             "isCriticalMistake": false,
@@ -2109,8 +2491,12 @@
             "optionText": "Report dispatch confirmation email as phishing attempt",
             "scoreChange": -10,
             "behaviorEffects": {
+              "recognition": 0,
+              "signalIdentification": 0,
+              "verification": 0,
               "decisionQuality": 0,
-              "falsePositive": 2
+              "falsePositive": 2,
+              "unreviewedAcceptance": 0
             },
             "riskLevel": "safe",
             "isCriticalMistake": false,
@@ -2122,8 +2508,12 @@
             "optionText": "Archive email",
             "scoreChange": 5,
             "behaviorEffects": {
-              "decisionQuality": 1,
-              "falsePositive": 0
+              "recognition": 0,
+              "signalIdentification": 0,
+              "verification": 0,
+              "decisionQuality": 0,
+              "falsePositive": 1,
+              "unreviewedAcceptance": 0
             },
             "riskLevel": "safe",
             "isCriticalMistake": false,
@@ -2131,7 +2521,9 @@
             "explanation": "Acceptable inbox management, though reviewing delivery details is routine digital hygiene.",
             "outcomeType": "neutral"
           }
-        ]
+        ],
+        "hasSignalProbe": false,
+        "signalProbes": []
       },
       {
         "stageOrder": 9,
@@ -2146,8 +2538,7 @@
         "eventClassification": "malicious",
         "measurementFocus": [
           "THREAT_RECOGNITION",
-          "VERIFICATION",
-          "DECISION_QUALITY"
+          "VERIFICATION"
         ],
         "targetSignals": [
           "authority_impersonation",
@@ -2160,8 +2551,11 @@
             "scoreChange": 20,
             "behaviorEffects": {
               "recognition": 2,
+              "signalIdentification": 0,
               "verification": 2,
-              "decisionQuality": 2
+              "decisionQuality": 0,
+              "falsePositive": 0,
+              "unreviewedAcceptance": 0
             },
             "riskLevel": "safe",
             "isCriticalMistake": false,
@@ -2174,8 +2568,11 @@
             "scoreChange": -30,
             "behaviorEffects": {
               "recognition": 0,
+              "signalIdentification": 0,
               "verification": 0,
-              "decisionQuality": 0
+              "decisionQuality": 0,
+              "falsePositive": 0,
+              "unreviewedAcceptance": 0
             },
             "riskLevel": "critical",
             "isCriticalMistake": true,
@@ -2188,8 +2585,11 @@
             "scoreChange": 5,
             "behaviorEffects": {
               "recognition": 1,
+              "signalIdentification": 0,
               "verification": 1,
-              "decisionQuality": 1
+              "decisionQuality": 0,
+              "falsePositive": 0,
+              "unreviewedAcceptance": 0
             },
             "riskLevel": "medium-risk",
             "isCriticalMistake": false,
@@ -2197,7 +2597,9 @@
             "explanation": "Partial resistance, but remaining engaged on the line allows extortionists to escalate intimidation and threats.",
             "outcomeType": "neutral"
           }
-        ]
+        ],
+        "hasSignalProbe": false,
+        "signalProbes": []
       },
       {
         "stageOrder": 10,
@@ -2212,10 +2614,8 @@
         "eventClassification": "malicious",
         "measurementFocus": [
           "THREAT_RECOGNITION",
-          "SIGNAL_IDENTIFICATION",
           "VERIFICATION",
-          "UNREVIEWED_ACCEPTANCE",
-          "DECISION_QUALITY"
+          "UNREVIEWED_ACCEPTANCE"
         ],
         "targetSignals": [
           "mismatched_branding",
@@ -2230,8 +2630,9 @@
               "recognition": 0,
               "signalIdentification": 0,
               "verification": 0,
-              "unreviewedAcceptance": 2,
-              "decisionQuality": 0
+              "decisionQuality": 0,
+              "falsePositive": 0,
+              "unreviewedAcceptance": 2
             },
             "riskLevel": "high-risk",
             "isCriticalMistake": false,
@@ -2248,10 +2649,11 @@
             ],
             "behaviorEffects": {
               "recognition": 2,
-              "signalIdentification": 2,
+              "signalIdentification": 0,
               "verification": 2,
-              "unreviewedAcceptance": 0,
-              "decisionQuality": 2
+              "decisionQuality": 0,
+              "falsePositive": 0,
+              "unreviewedAcceptance": 0
             },
             "riskLevel": "safe",
             "isCriticalMistake": false,
@@ -2267,16 +2669,44 @@
             ],
             "behaviorEffects": {
               "recognition": 1,
-              "signalIdentification": 1,
+              "signalIdentification": 0,
               "verification": 0,
-              "unreviewedAcceptance": 0,
-              "decisionQuality": 1
+              "decisionQuality": 0,
+              "falsePositive": 0,
+              "unreviewedAcceptance": 2
             },
             "riskLevel": "low-risk",
             "isCriticalMistake": false,
             "nextStageOrder": 11,
             "explanation": "Cautious personal protection, though alerting the shopkeeper prevents other customers from being defrauded.",
             "outcomeType": "neutral"
+          }
+        ],
+        "hasSignalProbe": true,
+        "signalProbes": [
+          {
+            "optionText": "The beneficiary/merchant name displayed on the payment review screen does not match the store name.",
+            "isCorrect": true,
+            "explanation": "Physical QR sticker overlays route funds to an unauthorized private VPA; verifying the terminal payee name reveals the fraud.",
+            "identifiedSignal": "mismatched_branding"
+          },
+          {
+            "optionText": "The QR code image has a green outer frame instead of a blue brand frame.",
+            "isCorrect": false,
+            "explanation": "QR styling, colors, and border frames are cosmetic and customizable by merchants.",
+            "identifiedSignal": "mismatched_branding"
+          },
+          {
+            "optionText": "The UPI application took more than 3 seconds to launch the camera scanner.",
+            "isCorrect": false,
+            "explanation": "App load latency is a device performance factor, not a security signal.",
+            "identifiedSignal": "unexpected_data_request"
+          },
+          {
+            "optionText": "I did not identify a specific technical anomaly on the payment interface.",
+            "isCorrect": false,
+            "explanation": "Admitting cue absence is honest but reflects missed signal identification.",
+            "identifiedSignal": ""
           }
         ]
       },
@@ -2295,9 +2725,7 @@
         "eventClassification": "malicious",
         "measurementFocus": [
           "THREAT_RECOGNITION",
-          "SIGNAL_IDENTIFICATION",
-          "VERIFICATION",
-          "DECISION_QUALITY"
+          "VERIFICATION"
         ],
         "targetSignals": [
           "unexpected_domain",
@@ -2312,7 +2740,9 @@
               "recognition": 0,
               "signalIdentification": 0,
               "verification": 0,
-              "decisionQuality": 0
+              "decisionQuality": 0,
+              "falsePositive": 0,
+              "unreviewedAcceptance": 0
             },
             "riskLevel": "high-risk",
             "isCriticalMistake": false,
@@ -2329,9 +2759,11 @@
             ],
             "behaviorEffects": {
               "recognition": 2,
-              "signalIdentification": 2,
+              "signalIdentification": 0,
               "verification": 2,
-              "decisionQuality": 2
+              "decisionQuality": 0,
+              "falsePositive": 0,
+              "unreviewedAcceptance": 0
             },
             "riskLevel": "safe",
             "isCriticalMistake": false,
@@ -2347,15 +2779,44 @@
             ],
             "behaviorEffects": {
               "recognition": 1,
-              "signalIdentification": 1,
-              "verification": 0,
-              "decisionQuality": 1
+              "signalIdentification": 0,
+              "verification": 1,
+              "decisionQuality": 0,
+              "falsePositive": 0,
+              "unreviewedAcceptance": 0
             },
             "riskLevel": "low-risk",
             "isCriticalMistake": false,
             "nextStageOrder": 12,
             "explanation": "Cautious avoidance avoids the phishing site, though verifying your genuine subscription ensures you have no unexpected recurring debits.",
             "outcomeType": "neutral"
+          }
+        ],
+        "hasSignalProbe": true,
+        "signalProbes": [
+          {
+            "optionText": "The sender email address uses an unverified third-party domain rather than the official institutional portal.",
+            "isCorrect": true,
+            "explanation": "Phishing lures impersonate tax and subscription authorities but cannot send from verified institutional root domains.",
+            "identifiedSignal": "unexpected_domain"
+          },
+          {
+            "optionText": "The notification was marked with normal rather than high priority.",
+            "isCorrect": false,
+            "explanation": "Email priority flags are arbitrary metadata easily manipulated by any sender.",
+            "identifiedSignal": "unrequested_account_action"
+          },
+          {
+            "optionText": "The message body does not address the recipient by full legal surname.",
+            "isCorrect": false,
+            "explanation": "Many legitimate automated mailers use partial names or generic greetings.",
+            "identifiedSignal": "unusual_contact_method"
+          },
+          {
+            "optionText": "I did not identify a specific technical anomaly in this email.",
+            "isCorrect": false,
+            "explanation": "Admitting cue absence is honest but reflects missed signal identification.",
+            "identifiedSignal": ""
           }
         ]
       },
@@ -2372,8 +2833,7 @@
         "eventClassification": "ambiguous",
         "measurementFocus": [
           "THREAT_RECOGNITION",
-          "VERIFICATION",
-          "DECISION_QUALITY"
+          "VERIFICATION"
         ],
         "targetSignals": [
           "urgency",
@@ -2386,8 +2846,11 @@
             "scoreChange": -20,
             "behaviorEffects": {
               "recognition": 0,
+              "signalIdentification": 0,
               "verification": 0,
-              "decisionQuality": 0
+              "decisionQuality": 0,
+              "falsePositive": 0,
+              "unreviewedAcceptance": 0
             },
             "riskLevel": "high-risk",
             "isCriticalMistake": false,
@@ -2400,8 +2863,11 @@
             "scoreChange": 20,
             "behaviorEffects": {
               "recognition": 2,
+              "signalIdentification": 0,
               "verification": 2,
-              "decisionQuality": 2
+              "decisionQuality": 0,
+              "falsePositive": 0,
+              "unreviewedAcceptance": 0
             },
             "riskLevel": "safe",
             "isCriticalMistake": false,
@@ -2414,8 +2880,11 @@
             "scoreChange": 10,
             "behaviorEffects": {
               "recognition": 1,
+              "signalIdentification": 0,
               "verification": 1,
-              "decisionQuality": 1
+              "decisionQuality": 0,
+              "falsePositive": 0,
+              "unreviewedAcceptance": 0
             },
             "riskLevel": "medium-risk",
             "isCriticalMistake": false,
@@ -2428,14 +2897,44 @@
             "scoreChange": 5,
             "behaviorEffects": {
               "recognition": 1,
-              "verification": 0,
-              "decisionQuality": 1
+              "signalIdentification": 0,
+              "verification": 1,
+              "decisionQuality": 0,
+              "falsePositive": 0,
+              "unreviewedAcceptance": 0
             },
             "riskLevel": "low-risk",
             "isCriticalMistake": false,
             "nextStageOrder": 13,
             "explanation": "Cautious avoidance avoids financial loss, though it misses the opportunity to establish truth if your friend genuinely needed help or their account was hacked.",
             "outcomeType": "neutral"
+          }
+        ],
+        "hasSignalProbe": true,
+        "signalProbes": [
+          {
+            "optionText": "The sender requests an urgent fund transfer to an unknown private VPA while evading direct voice confirmation.",
+            "isCorrect": true,
+            "explanation": "Emergency distress impersonation relies on urgency to bypass voice verification and redirects funds to disposable VPAs.",
+            "identifiedSignal": "unusual_contact_method"
+          },
+          {
+            "optionText": "The emergency distress message was sent from a mobile number without a profile avatar.",
+            "isCorrect": false,
+            "explanation": "Avatar presence is an optional privacy setting, not a reliable threat indicator.",
+            "identifiedSignal": "unusual_contact_method"
+          },
+          {
+            "optionText": "The requested amount is rounded to an exact ten thousand rupees.",
+            "isCorrect": false,
+            "explanation": "Rounded amounts are common in both genuine emergencies and scams; evasive contact is the forensic cue.",
+            "identifiedSignal": "unexpected_payment_request"
+          },
+          {
+            "optionText": "I did not identify a specific technical anomaly in this communication.",
+            "isCorrect": false,
+            "explanation": "Admitting cue absence is honest but reflects missed signal identification.",
+            "identifiedSignal": ""
           }
         ]
       },
@@ -2451,8 +2950,8 @@
         },
         "eventClassification": "legitimate",
         "measurementFocus": [
-          "FALSE_POSITIVE_CONTROL",
-          "DECISION_QUALITY"
+          "DECISION_QUALITY",
+          "FALSE_POSITIVE_CONTROL"
         ],
         "targetSignals": [],
         "terminal": false,
@@ -2461,8 +2960,12 @@
             "optionText": "Schedule or install official security update",
             "scoreChange": 10,
             "behaviorEffects": {
+              "recognition": 0,
+              "signalIdentification": 0,
+              "verification": 0,
               "decisionQuality": 2,
-              "falsePositive": 0
+              "falsePositive": 0,
+              "unreviewedAcceptance": 0
             },
             "riskLevel": "safe",
             "isCriticalMistake": false,
@@ -2474,8 +2977,12 @@
             "optionText": "Block update service as potential spyware",
             "scoreChange": -10,
             "behaviorEffects": {
+              "recognition": 0,
+              "signalIdentification": 0,
+              "verification": 0,
               "decisionQuality": 0,
-              "falsePositive": 2
+              "falsePositive": 2,
+              "unreviewedAcceptance": 0
             },
             "riskLevel": "safe",
             "isCriticalMistake": false,
@@ -2487,8 +2994,12 @@
             "optionText": "Postpone update indefinitely",
             "scoreChange": 0,
             "behaviorEffects": {
-              "decisionQuality": 1,
-              "falsePositive": 1
+              "recognition": 0,
+              "signalIdentification": 0,
+              "verification": 0,
+              "decisionQuality": 0,
+              "falsePositive": 1,
+              "unreviewedAcceptance": 0
             },
             "riskLevel": "low-risk",
             "isCriticalMistake": false,
@@ -2496,7 +3007,9 @@
             "explanation": "Neglecting essential security patches leaves known security holes unpatched on your device.",
             "outcomeType": "neutral"
           }
-        ]
+        ],
+        "hasSignalProbe": false,
+        "signalProbes": []
       },
       {
         "stageOrder": 14,
@@ -2530,7 +3043,9 @@
             "explanation": "Transitioning to your personalized behavioral reveal.",
             "outcomeType": "correct"
           }
-        ]
+        ],
+        "hasSignalProbe": false,
+        "signalProbes": []
       }
     ]
   }

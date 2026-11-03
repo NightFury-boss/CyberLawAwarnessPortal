@@ -113,6 +113,25 @@ exports.startAssessment = async (req, res) => {
       });
     }
 
+    // Prerequisite enforcement: A Final Assessment requires an authoritative completed baseline session for this learner
+    if (scenarioCode === 'final') {
+      const completedBaseline = await AssessmentSession.findOne({
+        userId,
+        scenarioCode: 'baseline',
+        status: 'completed'
+      });
+
+      if (!completedBaseline) {
+        return res.status(403).json({
+          success: false,
+          error: {
+            code: 'PREREQUISITE_NOT_MET',
+            message: 'You must complete the First Check (baseline assessment) before taking the Final Check.'
+          }
+        });
+      }
+    }
+
     // Check if user already has an active, non-expired in-progress session for this scenario to prevent duplicates
     const existingSession = await AssessmentSession.findOne({
       userId,
@@ -135,6 +154,11 @@ exports.startAssessment = async (req, res) => {
             stageOrder: currentStage.stageOrder,
             mockInterfaceType: currentStage.mockInterfaceType,
             mockInterfaceData: currentStage.mockInterfaceData,
+            hasSignalProbe: Boolean(currentStage.hasSignalProbe),
+            signalProbes: (currentStage.signalProbes || []).map(p => ({
+              id: p._id,
+              optionText: p.optionText
+            })),
             decisions: decisions.map(d => ({
               id: d._id,
               optionText: d.optionText
@@ -188,6 +212,7 @@ exports.startAssessment = async (req, res) => {
       userId,
       scenarioId: scenario._id,
       scenarioVersion: scenario.version,
+      scoringVersion: 2,
       scenarioCode,
       status: 'in-progress',
       currentStageId: firstStage._id,
@@ -195,6 +220,14 @@ exports.startAssessment = async (req, res) => {
       categoryScores,
       behaviourScores,
       behaviourOpportunities,
+      behaviourEncounters: {
+        recognition: 0,
+        signalIdentification: 0,
+        verification: 0,
+        decisionQuality: 0,
+        falsePositive: 0,
+        unreviewedAcceptance: 0
+      },
       falsePositivePenaltyPoints: 0,
       falsePositiveMaxPenaltyPoints: 0,
       unreviewedAcceptancePenaltyPoints: 0,
@@ -216,6 +249,11 @@ exports.startAssessment = async (req, res) => {
         description: firstStage.description,
         mockInterfaceType: firstStage.mockInterfaceType,
         mockInterfaceData: firstStage.mockInterfaceData,
+        hasSignalProbe: Boolean(firstStage.hasSignalProbe),
+        signalProbes: (firstStage.signalProbes || []).map(p => ({
+          id: p._id,
+          optionText: p.optionText
+        })),
         decisions: decisions.map(d => ({
           id: d._id,
           optionText: d.optionText
@@ -232,7 +270,7 @@ exports.startAssessment = async (req, res) => {
 
 exports.submitStep = async (req, res) => {
   try {
-    const { assessmentSessionId, stageId, decisionId } = req.body;
+    const { assessmentSessionId, stageId, decisionId, signalProbeDecisionId, idempotencyKey } = req.body;
     const userId = req.user._id;
 
     if (!assessmentSessionId || !stageId || !decisionId) {
@@ -279,11 +317,111 @@ exports.submitStep = async (req, res) => {
       });
     }
 
+    // Idempotency Key Validation (Phase 4.3 Task 4 Contract)
+    if (originalSession.scoringVersion === 2 && (idempotencyKey === undefined || idempotencyKey === null)) {
+      return res.status(400).json({
+        success: false,
+        error: { code: 'MISSING_IDEMPOTENCY_KEY', message: 'idempotencyKey is required for version 2 assessment submissions.' }
+      });
+    }
+
+    let sanitizedKey = undefined;
+    if (idempotencyKey !== undefined && idempotencyKey !== null) {
+      if (typeof idempotencyKey !== 'string' || idempotencyKey.trim().length === 0) {
+        return res.status(400).json({
+          success: false,
+          error: { code: 'INVALID_IDEMPOTENCY_KEY', message: 'idempotencyKey cannot be empty or whitespace.' }
+        });
+      }
+      sanitizedKey = idempotencyKey.trim();
+      if (!/^[a-zA-Z0-9_\-:]{8,128}$/.test(sanitizedKey)) {
+        return res.status(400).json({
+          success: false,
+          error: { code: 'MALFORMED_IDEMPOTENCY_KEY', message: 'idempotencyKey must be between 8 and 128 alphanumeric, hyphen, colon, or underscore characters.' }
+        });
+      }
+    }
+
+    // Idempotency & Conflict Check (Pre-sequence check to safely handle retries of already-committed stages)
+    const existingDecision = await AssessmentDecision.findOne({
+      assessmentSessionId,
+      $or: [
+        { stageId },
+        ...(sanitizedKey ? [{ idempotencyKey: sanitizedKey }] : [])
+      ]
+    });
+
+    if (existingDecision) {
+      const isSameStage = existingDecision.stageId.toString() === stageId.toString();
+      const isSamePrimary = existingDecision.decisionId.toString() === decisionId.toString();
+      const isSameProbe = (!existingDecision.signalProbeDecisionId && !signalProbeDecisionId) ||
+        (existingDecision.signalProbeDecisionId && signalProbeDecisionId && existingDecision.signalProbeDecisionId.toString() === signalProbeDecisionId.toString());
+      const isSameKey = existingDecision.idempotencyKey && sanitizedKey && existingDecision.idempotencyKey === sanitizedKey;
+
+      // 1. Same key + same payload: Idempotent retry
+      if (isSameKey && isSameStage && isSamePrimary && isSameProbe) {
+        return res.json({
+          success: true,
+          isRetry: true,
+          message: 'Decision already recorded for this stage (Idempotent retry).'
+        });
+      }
+
+      // 2. Same key + different payload: Payload mismatch conflict
+      if (isSameKey) {
+        return res.status(409).json({
+          success: false,
+          error: { code: 'IDEMPOTENCY_KEY_PAYLOAD_MISMATCH', message: 'Idempotency key was previously submitted with a different decision payload.' }
+        });
+      }
+
+      // 3. Stage already committed with a different key or no key
+      if (isSameStage) {
+        return res.status(409).json({
+          success: false,
+          error: { code: 'STAGE_DECISION_ALREADY_COMMITTED', message: 'A decision has already been committed for this scenario stage.' }
+        });
+      }
+
+      // 4. Idempotency key previously used for a different stage
+      return res.status(409).json({
+        success: false,
+        error: { code: 'IDEMPOTENCY_KEY_PAYLOAD_MISMATCH', message: 'Idempotency key was previously used for a different stage.' }
+      });
+    }
+
     if (originalSession.currentStageId.toString() !== stageId.toString()) {
       return res.status(400).json({
         success: false,
         error: { code: 'STAGE_OUT_OF_SEQUENCE', message: 'Invalid stage sequence: stage already processed or skipped' }
       });
+    }
+
+    const currentStage = await ScenarioStage.findById(stageId);
+    if (!currentStage) {
+      return res.status(404).json({
+        success: false,
+        error: { code: 'STAGE_NOT_FOUND', message: 'Scenario stage not found' }
+      });
+    }
+
+    // Atomic validation: Mandatory signal probe if stage has forensic probe
+    if (currentStage.hasSignalProbe) {
+      if (!signalProbeDecisionId) {
+        return res.status(400).json({
+          success: false,
+          error: { code: 'INCOMPLETE_STAGE_SUBMISSION', message: 'Signal probe identification is mandatory for this stage.' }
+        });
+      }
+      const validProbe = currentStage.signalProbes && currentStage.signalProbes.id
+        ? currentStage.signalProbes.id(signalProbeDecisionId)
+        : null;
+      if (!validProbe) {
+        return res.status(400).json({
+          success: false,
+          error: { code: 'INVALID_PROBE_REFERENCE', message: 'The provided probe option is invalid for this stage.' }
+        });
+      }
     }
 
     const decision = await ScenarioDecision.findById(decisionId);
@@ -292,23 +430,6 @@ exports.submitStep = async (req, res) => {
         success: false,
         error: { code: 'INVALID_DECISION', message: 'Decision does not match current stage' }
       });
-    }
-
-    // Lock choice event & block replay double-clicks
-    try {
-      await AssessmentDecision.create({
-        assessmentSessionId,
-        stageId,
-        decisionId
-      });
-    } catch (dbErr) {
-      if (dbErr.code === 11000) {
-        return res.status(400).json({
-          success: false,
-          error: { code: 'DUPLICATE_SUBMISSION', message: 'Duplicate submission: choice already processed for this stage' }
-        });
-      }
-      throw dbErr;
     }
 
     let scoreChange = decision.scoreChange || 0;
@@ -368,30 +489,110 @@ exports.submitStep = async (req, res) => {
       pushParameters.criticalMistakes = decision.optionText + ' - ' + decision.explanation;
     }
 
-    // Execute atomic Compare-and-Swap state update
-    const session = await AssessmentSession.findOneAndUpdate(
-      {
-        _id: assessmentSessionId,
-        currentStageId: stageId,
-        status: 'in-progress',
-        expiresAt: { $gt: new Date() }
-      },
-      {
-        $set: setParameters,
-        $inc: {
-          score: scoreChange,
-          stagesCompleted: 1
-        },
-        ...(Object.keys(pushParameters).length > 0 ? { $push: pushParameters } : {})
-      },
-      { new: true }
-    );
+    // Multi-Document Transaction with Atomic Rollback & Concurrency Lock
+    let mongoSession = null;
+    let useTransaction = false;
+    try {
+      mongoSession = await mongoose.startSession();
+      mongoSession.startTransaction();
+      useTransaction = true;
+    } catch (sessionErr) {
+      if (mongoSession) {
+        try { await mongoSession.endSession(); } catch (e) {}
+        mongoSession = null;
+      }
+      useTransaction = false;
+    }
 
-    if (!session) {
-      return res.status(400).json({
-        success: false,
-        error: { code: 'DUPLICATE_SUBMISSION', message: 'Double-submit block: step already modified by another thread' }
-      });
+    let session = null;
+    try {
+      await AssessmentDecision.create([{
+        assessmentSessionId,
+        stageId,
+        decisionId,
+        signalProbeDecisionId: signalProbeDecisionId || undefined,
+        idempotencyKey: sanitizedKey || undefined
+      }], useTransaction ? { session: mongoSession } : {});
+
+      // Execute atomic Compare-and-Swap state update
+      session = await AssessmentSession.findOneAndUpdate(
+        {
+          _id: assessmentSessionId,
+          currentStageId: stageId,
+          status: 'in-progress',
+          expiresAt: { $gt: new Date() }
+        },
+        {
+          $set: setParameters,
+          $inc: {
+            score: scoreChange,
+            stagesCompleted: 1
+          },
+          ...(Object.keys(pushParameters).length > 0 ? { $push: pushParameters } : {})
+        },
+        { new: true, ...(useTransaction ? { session: mongoSession } : {}) }
+      );
+
+      if (!session) {
+        if (useTransaction) await mongoSession.abortTransaction();
+        return res.status(409).json({
+          success: false,
+          error: { code: 'STAGE_DECISION_ALREADY_COMMITTED', message: 'Concurrent modification conflict: stage already advanced.' }
+        });
+      }
+
+      if (useTransaction) {
+        await mongoSession.commitTransaction();
+      }
+    } catch (dbErr) {
+      if (useTransaction) {
+        try { await mongoSession.abortTransaction(); } catch (e) {}
+      }
+      if (dbErr.code === 11000) {
+        const racedDecision = await AssessmentDecision.findOne({
+          assessmentSessionId,
+          $or: [
+            { stageId },
+            ...(sanitizedKey ? [{ idempotencyKey: sanitizedKey }] : [])
+          ]
+        });
+        if (racedDecision) {
+          const isSameStage = racedDecision.stageId.toString() === stageId.toString();
+          const isSamePrimary = racedDecision.decisionId.toString() === decisionId.toString();
+          const isSameProbe = (!racedDecision.signalProbeDecisionId && !signalProbeDecisionId) ||
+            (racedDecision.signalProbeDecisionId && signalProbeDecisionId && racedDecision.signalProbeDecisionId.toString() === signalProbeDecisionId.toString());
+          const isSameKey = racedDecision.idempotencyKey && sanitizedKey && racedDecision.idempotencyKey === sanitizedKey;
+
+          if (isSameKey && isSameStage && isSamePrimary && isSameProbe) {
+            return res.json({
+              success: true,
+              isRetry: true,
+              message: 'Concurrent duplicate submission resolved idempotently.'
+            });
+          }
+          if (isSameKey) {
+            return res.status(409).json({
+              success: false,
+              error: { code: 'IDEMPOTENCY_KEY_PAYLOAD_MISMATCH', message: 'Idempotency key conflict: previously submitted with different payload.' }
+            });
+          }
+          if (isSameStage) {
+            return res.status(409).json({
+              success: false,
+              error: { code: 'STAGE_DECISION_ALREADY_COMMITTED', message: 'Duplicate submission: choice already processed for this stage.' }
+            });
+          }
+        }
+        return res.status(409).json({
+          success: false,
+          error: { code: 'STAGE_DECISION_ALREADY_COMMITTED', message: 'Duplicate submission: choice already processed for this stage' }
+        });
+      }
+      throw dbErr;
+    } finally {
+      if (mongoSession) {
+        try { await mongoSession.endSession(); } catch (e) {}
+      }
     }
 
     session.score = Math.max(0, Math.min(100, session.score));
@@ -401,6 +602,7 @@ exports.submitStep = async (req, res) => {
     
     session.behaviourScores = scoringResult.scores;
     session.behaviourOpportunities = scoringResult.opportunities;
+    session.behaviourEncounters = scoringResult.encounters;
     session.falsePositivePenaltyPoints = scoringResult.falsePositivePenaltyPoints;
     session.falsePositiveMaxPenaltyPoints = scoringResult.falsePositiveMaxPenaltyPoints;
     session.unreviewedAcceptancePenaltyPoints = scoringResult.unreviewedAcceptancePenaltyPoints;
@@ -418,8 +620,14 @@ exports.submitStep = async (req, res) => {
           id: nextStage._id,
           title: nextStage.title,
           description: nextStage.description,
+          stageOrder: nextStage.stageOrder,
           mockInterfaceType: nextStage.mockInterfaceType,
           mockInterfaceData: nextStage.mockInterfaceData,
+          hasSignalProbe: Boolean(nextStage.hasSignalProbe),
+          signalProbes: (nextStage.signalProbes || []).map(p => ({
+            id: p._id,
+            optionText: p.optionText
+          })),
           decisions: decisions.map(d => ({
             id: d._id,
             optionText: d.optionText
@@ -650,6 +858,11 @@ exports.getSession = async (req, res) => {
           stageOrder: currentStage.stageOrder,
           mockInterfaceType: currentStage.mockInterfaceType,
           mockInterfaceData: currentStage.mockInterfaceData,
+          hasSignalProbe: Boolean(currentStage.hasSignalProbe),
+          signalProbes: (currentStage.signalProbes || []).map(p => ({
+            id: p._id,
+            optionText: p.optionText
+          })),
           decisions: decisions.map(d => ({
             id: d._id,
             optionText: d.optionText
@@ -754,6 +967,11 @@ exports.getScenarioStatus = async (req, res) => {
               stageOrder: currentStage.stageOrder,
               mockInterfaceType: currentStage.mockInterfaceType,
               mockInterfaceData: currentStage.mockInterfaceData,
+              hasSignalProbe: Boolean(currentStage.hasSignalProbe),
+              signalProbes: (currentStage.signalProbes || []).map(p => ({
+                id: p._id,
+                optionText: p.optionText
+              })),
               decisions: decisions.map(d => ({
                 id: d._id,
                 optionText: d.optionText
@@ -955,7 +1173,7 @@ const DIMENSION_DEFS = [
   { key: 'VB', metricKey: 'verification', label: 'Verification Behaviour' },
   { key: 'DQ', metricKey: 'decisionQuality', label: 'Decision Quality' },
   { key: 'FP', metricKey: 'falsePositive', label: 'False Positive Control' },
-  { key: 'UA', metricKey: 'unreviewedAcceptance', label: 'Autopilot Control' }
+  { key: 'UA', metricKey: 'unreviewedAcceptance', label: 'Unreviewed Acceptance Control' }
 ];
 
 /**

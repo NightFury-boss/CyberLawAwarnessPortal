@@ -39,6 +39,7 @@ function Dashboard({ user, progressTrigger }) {
   const [dueQuizRecalls, setDueQuizRecalls] = useState([]);
   const [isQuizRecallModalOpen, setIsQuizRecallModalOpen] = useState(false);
   const [baselineStatus, setBaselineStatus] = useState(null);
+  const [finalStatus, setFinalStatus] = useState(null);
   const [showFullStudio, setShowFullStudio] = useState(false);
   const [loadState, setLoadState] = useState('LOADING'); // 'LOADING' | 'RESOLVED' | 'ERROR'
   const [errorMessage, setErrorMessage] = useState('');
@@ -63,9 +64,10 @@ function Dashboard({ user, progressTrigger }) {
     try {
       // 1. Authoritative identity and assessment status checks MUST succeed.
       // If either fails due to network/server failure, we MUST NOT assume the learner is new or has completed anything.
-      const [prog, baseStatus] = await Promise.all([
+      const [prog, baseStatus, finStatus] = await Promise.all([
         api.getProgress(),
-        api.getAssessmentStatus('baseline')
+        api.getAssessmentStatus('baseline'),
+        api.getAssessmentStatus('final').catch(() => null)
       ]);
 
       // 2. Secondary enrichment data (portfolio, trajectory, recalls, etc.) may degrade gracefully
@@ -79,6 +81,7 @@ function Dashboard({ user, progressTrigger }) {
 
       setProgress(prog);
       setBaselineStatus(baseStatus);
+      setFinalStatus(finStatus);
       setPortfolioData(port);
       setTrajectoryData(traj);
       setDueSpacedReviews(spacedRes?.dueReviews || []);
@@ -170,6 +173,8 @@ function Dashboard({ user, progressTrigger }) {
   const hasActiveBaseline = Boolean(baselineStatus?.hasActiveSession && baselineStatus?.stage);
   const activeBaselineStage = baselineStatus?.stage || null;
   const activeBaselineSessionId = baselineStatus?.sessionId || null;
+  const hasActiveFinal = Boolean(finalStatus?.hasActiveSession && finalStatus?.stage);
+  const activeFinalStage = finalStatus?.stage || null;
   const hasExpiredBaseline = Boolean(baselineStatus?.hasExpiredSession);
   const expiredBaselineSession = baselineStatus?.expiredSession || null;
   const hasTrajectoryReassessment = Boolean(trajectoryData?.hasReassessment);
@@ -404,6 +409,8 @@ displayName={firstName}
           <PrimaryFocus
             hasBaseline={hasBaseline}
             hasFinal={hasFinal}
+            hasActiveFinal={hasActiveFinal}
+            activeFinalStage={activeFinalStage}
             pathwaysWithStatus={pathwaysWithStatus}
             dueSpacedReviews={dueSpacedReviews}
             dueQuizRecalls={dueQuizRecalls}

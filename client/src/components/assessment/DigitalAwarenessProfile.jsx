@@ -96,12 +96,21 @@ const STATUTORY_REFERENCES = [
   },
   {
     act: 'Digital Personal Data Protection Act, 2023',
-    section: 'Section 6',
-    officialTitle: 'Consent obligations of data fiduciaries',
+    section: 'Section 6(1)–(8) & 6(10)',
+    officialTitle: 'Consent standards and withdrawal obligations',
     status: 'ENACTED_FUTURE_COMMENCEMENT',
-    statusLabel: 'Enacted • Commencement Pending Notification',
-    summary: 'Establishes clear statutory requirements that organizations must seek informed, specific consent and cannot bundle unnecessary permissions.',
-    practicalContext: 'Notice: Enacted August 2023; Notification S.O. 4932(E) appoints commencement after 18 months (May 2027; not currently in force as of 9 September 2026). Understanding this standard helps learners identify overreaching permission requests.'
+    statusLabel: 'Enacted • Commencement 13 May 2027',
+    summary: 'Establishes clear statutory requirements that consent must be free, specific, informed, unconditional, and unambiguous with clear affirmative action. Data fiduciaries cannot bundle non-essential permissions or deny service for withholding non-necessary data.',
+    practicalContext: 'Enacted August 2023. Notification G.S.R. 843(E) (dated 13 November 2025) appoints commencement eighteen months post-publication (13 May 2027). As of 2 November 2026, not yet in force. Clarifies defensive reflexes against overreaching permission requests.'
+  },
+  {
+    act: 'Digital Personal Data Protection Act, 2023',
+    section: 'Section 6(9)',
+    officialTitle: 'Notice of Data Protection Officer contact details',
+    status: 'ENACTED_FUTURE_COMMENCEMENT',
+    statusLabel: 'Enacted • Commencement 13 Nov 2026',
+    summary: 'Requires data fiduciaries to provide or make available contact details of a Data Protection Officer or person authorized to respond to communication from Data Principals.',
+    practicalContext: 'Enacted August 2023. Notification G.S.R. 843(E) (dated 13 November 2025) appoints commencement one year post-publication (13 November 2026). As of 2 November 2026, not yet in force. Establishes institutional accountability channels for personal data inquiries.'
   }
 ];
 
@@ -127,16 +136,22 @@ function DigitalAwarenessProfile({ result, completedHistory, onRetake }) {
     : 'Recent Assessment';
 
   // Analyze strengths and improvement opportunities from evidence
+  const isV2 = activeData.scoringVersion === 2;
+  const rawEncounters = activeData.behaviourEncounters || {};
+
   const evaluatedDimensions = Object.keys(DIMENSION_CONFIG).map((key) => {
     const config = DIMENSION_CONFIG[key];
     const score = typeof rawScores[key] === 'number' ? rawScores[key] : null;
     const opps = typeof rawOpportunities[key] === 'number' ? rawOpportunities[key] : 0;
+    const encounters = typeof rawEncounters[key] === 'number' ? rawEncounters[key] : opps;
     
     let status = 'unassessed';
-    if (opps === 0) {
+    if (score === null || opps === 0 || encounters === 0) {
       status = 'unassessed';
-    } else if (opps === 1) {
+    } else if (encounters === 1) {
       status = 'limited';
+    } else if (key === 'falsePositive' && isV2 && typeof activeData.falsePositivePenaltyPoints === 'number' && activeData.falsePositivePenaltyPoints <= 2) {
+      status = 'strength';
     } else if (score >= 75) {
       status = 'strength';
     } else {
@@ -148,6 +163,7 @@ function DigitalAwarenessProfile({ result, completedHistory, onRetake }) {
       ...config,
       score,
       opportunities: opps,
+      encounters,
       status
     };
   });
@@ -215,7 +231,19 @@ function DigitalAwarenessProfile({ result, completedHistory, onRetake }) {
                 </span>
                 <h3 className="profile-item-title">{s.learnerTitle}</h3>
                 <p className="profile-item-evidence">
-                  {s.measurementExplanation} You maintained a score of <strong>{s.score}%</strong> across {s.opportunities} simulated opportunities.
+                  {s.key === 'falsePositive' && isV2 ? (
+                    <>
+                      You exercised calm restraint across <strong>{s.encounters}</strong> evaluated authentic situations, accruing only <strong>{activeData.falsePositivePenaltyPoints ?? 0}</strong> penalty point(s) out of <strong>{s.opportunities}</strong> max applicable penalty points (normalized: <strong>{s.score}%</strong>). In our model, a penalty ≤ 2 denotes <strong>Demonstrated Strength</strong> across both branch paths.
+                    </>
+                  ) : s.key === 'unreviewedAcceptance' && isV2 ? (
+                    <>
+                      You inspected requests carefully across <strong>{s.encounters}</strong> evaluated situations, accruing only <strong>{activeData.unreviewedAcceptancePenaltyPoints ?? 0}</strong> penalty point(s) out of <strong>{s.opportunities}</strong> max penalty points (normalized: <strong>{s.score}%</strong>).
+                    </>
+                  ) : (
+                    <>
+                      {s.measurementExplanation} You maintained a score of <strong>{s.score}%</strong> across {s.opportunities} simulated opportunities.
+                    </>
+                  )}
                 </p>
                 <div className="profile-item-callout">
                   <strong>Practical Value</strong>
@@ -308,17 +336,27 @@ function DigitalAwarenessProfile({ result, completedHistory, onRetake }) {
 
             if (isUnassessed) {
               badgeClass = 'badge-not-assessed';
-              badgeText = 'Not Assessed in This Scenario';
+              badgeText = 'Not Evaluated in This Scenario';
             } else if (isLimited) {
               badgeClass = 'badge-limited-evidence';
               badgeText = 'Limited Evidence (1 check)';
             } else if (isStrength) {
               badgeClass = 'badge-measured-strength';
-              badgeText = 'Demonstrated Strength';
+              badgeText = isV2 && dim.encounters >= 2 && dim.encounters <= 3
+                ? 'Demonstrated Strength (Focused sample)'
+                : 'Demonstrated Strength';
               fillClass = 'meter-fill-strength';
             } else if ((dim.score ?? 0) < 40) {
               fillClass = 'meter-fill-danger';
+            } else if (isV2 && dim.encounters >= 2 && dim.encounters <= 3) {
+              badgeText = 'Improvement Opportunity (Focused sample)';
             }
+
+            const statsLabel = isUnassessed
+              ? 'No evaluations'
+              : isV2
+                ? `${dim.encounters} evaluated situations`
+                : `${dim.opportunities} opportunity points`;
 
             return (
               <div key={dim.key} className="dimension-card">
@@ -352,12 +390,24 @@ function DigitalAwarenessProfile({ result, completedHistory, onRetake }) {
                       )}
                     </div>
                     <div className="dimension-meter-stats">
-                      <span>{isUnassessed ? 'No opportunities' : `${dim.opportunities} opportunity points`}</span>
+                      <span>{statsLabel}</span>
                       <span className="dimension-score-number">
                         {isUnassessed ? 'N/A' : `${dim.score}%`}
                       </span>
                     </div>
                   </div>
+
+                  {dim.key === 'falsePositive' && !isUnassessed && isV2 && (
+                    <div style={{ marginTop: '10px', padding: '8px 12px', backgroundColor: 'var(--bg-secondary)', borderRadius: '6px', fontSize: '0.78rem', color: 'var(--text-secondary)', lineHeight: '1.4' }}>
+                      <strong>Scoring Transparency:</strong> Accrued <strong>{activeData.falsePositivePenaltyPoints ?? 0}</strong> penalty pt(s) out of <strong>{dim.opportunities || activeData.falsePositiveMaxPenaltyPoints || 8}</strong> max penalty across <strong>{dim.encounters}</strong> evaluated authentic situations. A raw penalty ≤ 2 is classified as <strong>Demonstrated Strength</strong> across both branch paths.
+                    </div>
+                  )}
+
+                  {dim.key === 'unreviewedAcceptance' && !isUnassessed && isV2 && (
+                    <div style={{ marginTop: '10px', padding: '8px 12px', backgroundColor: 'var(--bg-secondary)', borderRadius: '6px', fontSize: '0.78rem', color: 'var(--text-secondary)', lineHeight: '1.4' }}>
+                      <strong>Scoring Transparency:</strong> Accrued <strong>{activeData.unreviewedAcceptancePenaltyPoints ?? 0}</strong> penalty pt(s) out of <strong>{dim.opportunities || activeData.unreviewedAcceptanceMaxPenaltyPoints || 8}</strong> max penalty across <strong>{dim.encounters}</strong> evaluated situations.
+                    </div>
+                  )}
                 </div>
 
                 <div className="dimension-action-rule">
@@ -407,9 +457,9 @@ function DigitalAwarenessProfile({ result, completedHistory, onRetake }) {
           <div className="helpline-details">
             <h3 className="helpline-title">National Cybercrime Reporting: Helpline 1930</h3>
             <p className="helpline-desc">
-              If financial cyber fraud occurs, report immediately to National Helpline <strong>1930</strong> or <strong>cybercrime.gov.in</strong>. 
-              Reporting within the <strong>Golden Hour (2–3 hours)</strong> triggers the Citizen Financial Cyber Fraud Reporting and Management System (CFCFRMS) 
-              to coordinate temporary inter-bank transaction holds. <em>(Hold success depends on bank response; fund recovery is never guaranteed.)</em>
+              If financial cyber fraud occurs, report as swiftly as possible to the National Cybercrime Helpline <strong>1930</strong> or visit <strong>cybercrime.gov.in</strong>. 
+              Prompt reporting enables law enforcement and financial intermediaries to coordinate through CFCFRMS to attempt inter-bank transaction holds. 
+              <em>(Inter-bank hold execution is subject to technical verification and intermediary response speeds; fund freezes or recovery cannot be guaranteed.)</em>
             </p>
           </div>
           <a 
@@ -441,11 +491,11 @@ function DigitalAwarenessProfile({ result, completedHistory, onRetake }) {
             What Happens Next?
           </h2>
           <p className="profile-section-desc">
-            Based on your baseline findings, our server-authoritative recommendation engine selected these targeted 3-step micro-learning pathways to build practical habits.
+            Based on your baseline findings, your learning workspace has unlocked targeted 3-step micro-learning pathways. You can launch, practice, and track them directly from your dashboard.
           </p>
         </div>
 
-        <RemediationCards sessionId={sessionId} />
+        <RemediationCards sessionId={sessionId} isPreviewOnly={true} />
       </section>
 
       {/* ========================================================================= */}
@@ -530,7 +580,7 @@ function DigitalAwarenessProfile({ result, completedHistory, onRetake }) {
           onClick={() => navigate('/dashboard')}
           className="profile-btn-primary"
         >
-          Continue to Dashboard &rarr;
+          Go to Your Learning Dashboard &rarr;
         </button>
 
         {onRetake && (

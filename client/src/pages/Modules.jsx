@@ -10,8 +10,10 @@ function Modules({ user, isWorkspace = false }) {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Determine current slug from params or path
-  const slug = params.slug || (location.pathname.includes('/modules/') ? location.pathname.split('/modules/')[1]?.split('/')[0] : null);
+  // Determine current slug from params, path or query parameters
+  const querySlug = new URLSearchParams(location.search).get('slug');
+  const pathSlug = params.slug || (location.pathname.includes('/modules/') ? location.pathname.split('/modules/')[1]?.split('/')[0] : null);
+  const slug = pathSlug || querySlug || null;
 
   const isWorkspaceContext = isWorkspace || location.pathname.startsWith('/workspace');
   const getContextPath = (p) => (isWorkspaceContext ? `/workspace${p}` : p);

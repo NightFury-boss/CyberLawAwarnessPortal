@@ -11,12 +11,17 @@ function FinalAssessment({ _user, updateProgressTrigger }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [completedHistory, setCompletedHistory] = useState(null);
+  const [hasMetPrerequisite, setHasMetPrerequisite] = useState(true);
   const stageHeadingRef = useRef(null);
   
   // Custom mock inputs (instantly discarded)
   const [mockUserId, setMockUserId] = useState('');
   const [mockPassword, setMockPassword] = useState('');
   const [mockZipPassword, setMockZipPassword] = useState('');
+
+  // Step-1 / Step-2 Signal Probe selection state
+  const [selectedPrimaryDecisionId, setSelectedPrimaryDecisionId] = useState(null);
+  const [selectedProbeId, setSelectedProbeId] = useState(null);
 
   const [result, setResult] = useState(null);
   const [submitting, setSubmitting] = useState(false);
@@ -53,8 +58,26 @@ function FinalAssessment({ _user, updateProgressTrigger }) {
           }
         }
 
-        const statusData = await api.getAssessmentStatus('final');
+        const [statusData, progressData] = await Promise.all([
+          api.getAssessmentStatus('final'),
+          api.getProgress().catch(() => null)
+        ]);
         if (!isMounted) return;
+
+        const hasBaselineCompleted = Boolean(
+          (progressData?.baselineScore !== null && progressData?.baselineScore !== undefined) ||
+          progressData?.hasCompletedBaseline ||
+          progressData?.latestSessionId
+        );
+
+        if (!hasBaselineCompleted && !statusData?.hasCompletedSession && !statusData?.hasActiveSession) {
+          setHasMetPrerequisite(false);
+          setCurrentStep('start_screen');
+          setLoading(false);
+          return;
+        }
+
+        setHasMetPrerequisite(true);
 
         if (statusData.hasActiveSession && statusData.stage) {
           sessionStorage.setItem('active_final_session_id', statusData.sessionId);
@@ -96,9 +119,20 @@ function FinalAssessment({ _user, updateProgressTrigger }) {
         setTimeout(() => stageHeadingRef.current?.focus(), 50);
       });
     } catch (err) {
+      if (err.message && err.message.toLowerCase().includes('prerequisite')) {
+        setHasMetPrerequisite(false);
+      }
       setError(err.message || 'Failed to start final assessment.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handlePrimaryChoice = (decisionId) => {
+    if (currentStage?.hasSignalProbe && currentStage?.signalProbes?.length > 0) {
+      setSelectedPrimaryDecisionId(decisionId);
+    } else {
+      handleSelectOption(decisionId, null);
     }
   };
 
@@ -111,7 +145,7 @@ function FinalAssessment({ _user, updateProgressTrigger }) {
         d.optionText.toLowerCase().includes('decline')
       );
       if (declineDecision) {
-        await handleSelectOption(declineDecision.id);
+        handlePrimaryChoice(declineDecision.id);
       }
     } else if (actionType === 'accept') {
       const acceptDecision = currentStage.decisions.find(d => 
@@ -120,7 +154,7 @@ function FinalAssessment({ _user, updateProgressTrigger }) {
         d.optionText.toLowerCase().includes('accept')
       );
       if (acceptDecision) {
-        await handleSelectOption(acceptDecision.id);
+        handlePrimaryChoice(acceptDecision.id);
       }
     }
   };
@@ -133,9 +167,9 @@ function FinalAssessment({ _user, updateProgressTrigger }) {
       d.optionText.toLowerCase().includes('telegram')
     );
     if (clickDecision) {
-      await handleSelectOption(clickDecision.id);
+      handlePrimaryChoice(clickDecision.id);
     } else if (currentStage.decisions.length > 0) {
-      await handleSelectOption(currentStage.decisions[currentStage.decisions.length - 1].id);
+      handlePrimaryChoice(currentStage.decisions[currentStage.decisions.length - 1].id);
     }
   };
 
@@ -148,7 +182,7 @@ function FinalAssessment({ _user, updateProgressTrigger }) {
       d.optionText.toLowerCase().includes('password')
     );
     const decisionId = loginDecision ? loginDecision.id : (currentStage.decisions[0] ? currentStage.decisions[0].id : '');
-    await handleSelectOption(decisionId);
+    handlePrimaryChoice(decisionId);
   };
 
   const handleZipSubmit = async (e) => {
@@ -160,15 +194,27 @@ function FinalAssessment({ _user, updateProgressTrigger }) {
       d.optionText.toLowerCase().includes('extract')
     );
     const decisionId = zipDecision ? zipDecision.id : (currentStage.decisions[0] ? currentStage.decisions[0].id : '');
-    await handleSelectOption(decisionId);
+    handlePrimaryChoice(decisionId);
   };
 
-  const handleSelectOption = async (decisionId) => {
+  const handleSelectOption = async (decisionId, probeId = null) => {
     if (submitting || !session || !currentStage) return;
     setSubmitting(true);
     setError('');
+
+    // Persist idempotency key across retries, reloads, and network hiccups
+    const storageKey = `idemp_${session}_${currentStage.id}`;
+    let idempotencyKey = sessionStorage.getItem(storageKey);
+    if (!idempotencyKey) {
+      idempotencyKey = `idemp_${session}_${currentStage.id}_${Date.now()}`;
+      sessionStorage.setItem(storageKey, idempotencyKey);
+    }
+
     try {
-      const nextData = await api.submitAssessmentStep(session, currentStage.id, decisionId);
+      const nextData = await api.submitAssessmentStep(session, currentStage.id, decisionId, probeId, idempotencyKey);
+
+      // Cleanup stage idempotency key only after successful server confirmation
+      sessionStorage.removeItem(storageKey);
 
       // Clear input fields
       setMockUserId('');
@@ -185,6 +231,8 @@ function FinalAssessment({ _user, updateProgressTrigger }) {
         } else {
           // Move to next adaptive branch stage returned by backend
           setCurrentStage(nextData.stage);
+          setSelectedPrimaryDecisionId(null);
+          setSelectedProbeId(null);
           window.scrollTo({ top: 0, behavior: 'instant' });
           setTimeout(() => stageHeadingRef.current?.focus(), 50);
         }
@@ -206,7 +254,65 @@ function FinalAssessment({ _user, updateProgressTrigger }) {
       {/* ========================================================================= */}
       {/* 1. START SCREEN & BRIEFING                                                */}
       {/* ========================================================================= */}
-      {currentStep === 'start_screen' && (
+      {currentStep === 'start_screen' && !hasMetPrerequisite && (
+        <div className="simulation-briefing-card">
+          <div className="simulation-briefing-logo">
+            <img src="/logo/cyber-law-logo-icon.svg" alt="" style={{ height: '36px', width: 'auto' }} />
+            <span style={{ fontSize: '0.85rem', fontWeight: '800', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+              Cyber Law Awareness Portal
+            </span>
+          </div>
+
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '4px 12px', backgroundColor: 'var(--color-surface-secondary, #EEE7DB)', border: '1px solid var(--color-border)', borderRadius: '20px', marginBottom: '16px', alignSelf: 'flex-start' }}>
+            <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: 'var(--color-accent-terracotta, #A65F45)' }} aria-hidden="true" />
+            <span style={{ fontSize: '0.78rem', fontWeight: '700', color: 'var(--color-accent-terracotta, #A65F45)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              First Check Needed
+            </span>
+          </div>
+
+          <h1 className="simulation-briefing-title">First Check Required</h1>
+          <p className="simulation-briefing-lead">
+            The Final Safety Check measures how your digital defense habits have grown compared to your starting baseline.
+            To establish your starting baseline and calibrate your personal habit blueprint, please complete your First Check (Your Digital Day) first.
+          </p>
+
+          <div className="simulation-briefing-points">
+            <div className="simulation-point-item">
+              <span className="simulation-point-icon">1</span>
+              <div>
+                <h4 className="simulation-point-title">Calibrate Baseline</h4>
+                <p className="simulation-point-desc">Take the 5-minute First Check to measure your instinctive responses across 6 core safety dimensions.</p>
+              </div>
+            </div>
+            <div className="simulation-point-item">
+              <span className="simulation-point-icon">2</span>
+              <div>
+                <h4 className="simulation-point-title">Personalized Pathways</h4>
+                <p className="simulation-point-desc">Unlock targeted 3-step micro-learning lessons tailored to your specific defensive gaps.</p>
+              </div>
+            </div>
+            <div className="simulation-point-item">
+              <span className="simulation-point-icon">3</span>
+              <div>
+                <h4 className="simulation-point-title">Measure Habit Growth</h4>
+                <p className="simulation-point-desc">Return here to complete your Final Check and see your side-by-side behavioral shift.</p>
+              </div>
+            </div>
+          </div>
+
+          <div style={{ marginTop: '24px' }}>
+            <button
+              onClick={() => navigate('/assessment/baseline')}
+              className="btn btn-primary"
+              style={{ padding: '0.85rem 2.6rem', fontSize: '1rem', fontWeight: '700' }}
+            >
+              Start First Check: Your Digital Day &rarr;
+            </button>
+          </div>
+        </div>
+      )}
+
+      {currentStep === 'start_screen' && hasMetPrerequisite && (
         <div className="simulation-briefing-card">
           <div className="simulation-briefing-logo">
             <img src="/logo/cyber-law-logo-icon.svg" alt="" style={{ height: '36px', width: 'auto' }} />
@@ -719,21 +825,127 @@ function FinalAssessment({ _user, updateProgressTrigger }) {
           {/* Decision Station Console                                              */}
           {/* ===================================================================== */}
           <div className="decision-station">
-            <h3 className="decision-station-title">What would you do?</h3>
+            <h3 className="decision-station-title">
+              {currentStage.hasSignalProbe ? 'Step 1: Choose Your Primary Defensive Action' : 'What would you do?'}
+            </h3>
             <div className="decision-cards-list">
-              {currentStage.decisions.map((opt, idx) => (
-                <button
-                  key={opt.id}
-                  onClick={() => handleSelectOption(opt.id)}
-                  className="decision-action-card"
-                  disabled={submitting}
-                  aria-label={`Action ${idx + 1}: ${opt.optionText}`}
-                >
-                  <span className="decision-number-badge">{idx + 1}</span>
-                  <span className="decision-action-text">{opt.optionText}</span>
-                </button>
-              ))}
+              {currentStage.decisions.map((opt, idx) => {
+                const isSelected = selectedPrimaryDecisionId === opt.id;
+                return (
+                  <button
+                    key={opt.id}
+                    type="button"
+                    onClick={() => handlePrimaryChoice(opt.id)}
+                    className={`decision-action-card ${isSelected ? 'selected-decision' : ''}`}
+                    style={isSelected ? { borderColor: 'var(--color-primary, #302B27)', backgroundColor: 'var(--color-surface-secondary, #EFE8DC)', boxShadow: '0 0 0 2px var(--color-primary, #302B27)' } : {}}
+                    disabled={submitting}
+                    aria-label={`Action ${idx + 1}: ${opt.optionText}`}
+                  >
+                    <span className="decision-number-badge">{idx + 1}</span>
+                    <span className="decision-action-text">{opt.optionText}</span>
+                  </button>
+                );
+              })}
             </div>
+
+            {/* Step 2: Signal Identification Probe (Universal Forensic Cue) */}
+            {currentStage.hasSignalProbe && selectedPrimaryDecisionId && (
+              <div 
+                className="signal-probe-panel page-entry" 
+                style={{ 
+                  marginTop: '24px', 
+                  padding: '20px', 
+                  backgroundColor: 'var(--color-surface-card, #FCFAF5)', 
+                  border: '2px solid var(--color-primary, #302B27)', 
+                  borderRadius: '8px' 
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                  <span style={{ fontSize: '0.72rem', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '0.08em', backgroundColor: 'var(--color-primary, #302B27)', color: '#fff', padding: '2px 8px', borderRadius: '4px' }}>
+                    Step 2 of 2
+                  </span>
+                  <strong style={{ fontSize: '0.95rem', color: 'var(--color-text-primary, #302B27)' }}>
+                    Signal Identification &amp; Technical Cue Detection
+                  </strong>
+                </div>
+                <p style={{ fontSize: '0.88rem', color: 'var(--text-secondary)', marginBottom: '16px', lineHeight: '1.4' }}>
+                  What specific technical cue, sender anomaly, or deceptive warning sign in this situation guided your choice?
+                </p>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  {(currentStage.signalProbes || []).map((probe) => {
+                    const isProbeSelected = selectedProbeId === probe.id;
+                    return (
+                      <button
+                        key={probe.id}
+                        type="button"
+                        onClick={() => setSelectedProbeId(probe.id)}
+                        className={`decision-action-card ${isProbeSelected ? 'selected-probe' : ''}`}
+                        style={{
+                          textAlign: 'left',
+                          padding: '12px 14px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '12px',
+                          backgroundColor: isProbeSelected ? 'var(--color-surface-secondary, #EFE8DC)' : '#fff',
+                          borderColor: isProbeSelected ? 'var(--color-primary, #302B27)' : 'var(--color-border)',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        <span style={{
+                          width: '20px',
+                          height: '20px',
+                          borderRadius: '50%',
+                          border: '2px solid var(--color-primary, #302B27)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          flexShrink: 0,
+                          backgroundColor: isProbeSelected ? 'var(--color-primary, #302B27)' : 'transparent'
+                        }}>
+                          {isProbeSelected && <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#fff' }} />}
+                        </span>
+                        <span style={{ fontSize: '0.88rem', color: 'var(--text-primary)', lineHeight: '1.4' }}>
+                          {probe.optionText}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <div style={{ display: 'flex', gap: '12px', marginTop: '20px', alignItems: 'center' }}>
+                  <button
+                    type="button"
+                    onClick={() => handleSelectOption(selectedPrimaryDecisionId, selectedProbeId)}
+                    disabled={!selectedProbeId || submitting}
+                    className="btn btn-primary"
+                    style={{
+                      padding: '10px 24px',
+                      fontWeight: '700',
+                      fontSize: '0.9rem',
+                      opacity: (!selectedProbeId || submitting) ? 0.6 : 1
+                    }}
+                  >
+                    {submitting ? 'Submitting Responses...' : 'Confirm Decision & Signal Observation →'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { setSelectedPrimaryDecisionId(null); setSelectedProbeId(null); }}
+                    disabled={submitting}
+                    className="btn btn-secondary"
+                    style={{ fontSize: '0.85rem' }}
+                  >
+                    Change Action
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {submitting && (
+              <div style={{ textAlign: 'center', marginTop: '12px', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+                Recording your decision...
+              </div>
+            )}
           </div>
         </div>
       )}

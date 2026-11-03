@@ -1243,9 +1243,10 @@ function Quizzes({ user, updateProgressTrigger }) {
                   </p>
                   <div className="quiz-recommended-grid">
                     {recommendedLearning.map((item, idx) => {
-                      const linkUrl = item.type === 'learning_module'
-                        ? `/modules/${item.slug}`
-                        : `/crimes/cases/${item.slug}`;
+                      const isModule = item.type === 'learning_module' || item.type === 'lesson';
+                      const linkUrl = isModule
+                        ? `/workspace/modules/${item.slug}`
+                        : `/workspace/cases?slug=${item.slug}`;
                       return (
                         <Link key={idx} to={linkUrl} className="quiz-recommended-card">
                           <span className="quiz-recommended-type">
