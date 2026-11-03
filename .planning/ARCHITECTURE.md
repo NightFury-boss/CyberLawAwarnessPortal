@@ -5,7 +5,7 @@ The Cyber Law Awareness Portal is an academic, full-stack educational and diagno
 
 ```mermaid
 graph TD
-    subgraph ClientLayer ["Client Presentation (React 18 + Vite)"]
+    subgraph ClientLayer ["Client Presentation (React 19 + Vite)"]
         PublicApp["Public Portal Shell (Home, Laws, Crimes, Cases)"]
         WorkspaceApp["Workspace Shell (Dashboard, Modules, Quizzes, Profile)"]
         SimRunner["Simulation Shell (Baseline & Final Assessment)"]

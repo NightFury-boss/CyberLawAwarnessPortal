@@ -29,7 +29,7 @@ $$\text{Experience} \longrightarrow \text{Understand} \longrightarrow \text{Lear
 5. **Scenario Version & Session Immutability**: Historical completed assessment sessions and their decision evidence records are permanently immutable.
 
 ### Technology Stack:
-- **Client (SPA)**: React.js 18, Vite 6, React Router DOM 6, Lucide React, vanilla CSS design tokens (warm editorial styling, zero neon/cyberpunk aesthetics).
+- **Client (SPA)**: React.js 19 (19.2.8), Vite 8, React Router DOM 6, Lucide React, vanilla CSS design tokens (warm editorial styling, zero neon/cyberpunk aesthetics).
 - **Backend (API)**: Node.js (v24 LTS) + Express.js REST API with JWT authentication, HTTP security headers, and RBAC (`user`, `admin`).
 - **Database**: MongoDB Atlas (3-node replica set `Cluster0` / `ac-0t3cegi-shard-00`) via Mongoose 8+.
 - **Statutory Corpus**: Information Technology Act 2000, Bharatiya Nyaya Sanhita 2023, Digital Personal Data Protection Act 2023, and Bharatiya Sakshya Adhiniyam 2023.

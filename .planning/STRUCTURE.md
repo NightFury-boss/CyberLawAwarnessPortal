@@ -11,7 +11,7 @@ cyber-law-portal/
 │   ├── ROADMAP.md                          # Phase breakdown and milestone status
 │   ├── STATE.md                            # Current execution position, health, and verification status
 │   └── STRUCTURE.md                        # Canonical component ownership and structural reference
-├── client/                                 # React 18 + Vite frontend application
+├── client/                                 # React 19 + Vite frontend application
 │   ├── src/
 │   │   ├── components/                     # UI components, widgets, modals, and assessment mockups
 │   │   │   ├── assessment/                 # DigitalAwarenessProfile, score breakdowns, radar charts
