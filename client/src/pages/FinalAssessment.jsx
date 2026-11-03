@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import RemediationCards from '../components/RemediationCards';
 import { performStateTransition } from '../utils/transitionUtils';
+import { getExperiencedSituationIndex } from '../utils/dashboardJourneySelectors';
 
 function FinalAssessment({ _user, updateProgressTrigger }) {
   const [session, setSession] = useState(null); // active session ID
@@ -323,7 +324,7 @@ function FinalAssessment({ _user, updateProgressTrigger }) {
 
           <h1 className="simulation-briefing-title">Your Final Safety Check</h1>
           <p className="simulation-briefing-lead">
-            Welcome back to <strong>&ldquo;A Day in Your Digital Life&rdquo;</strong>. Experience 5 realistic situations and make the decisions you would make in everyday life. See how much your digital safety habits have grown since your First Check.
+            Welcome back to <strong>&ldquo;A Day in Your Digital Life&rdquo;</strong>. Experience 13 realistic situations and make the decisions you would make in everyday life. See how much your digital safety habits have grown since your First Check.
           </p>
 
           <div className="simulation-briefing-points">
@@ -481,7 +482,7 @@ function FinalAssessment({ _user, updateProgressTrigger }) {
               <span>FINAL CHECK: A DAY IN YOUR DIGITAL LIFE</span>
             </div>
             <div style={{ fontFamily: 'monospace', fontWeight: '700', fontSize: '0.85rem' }}>
-              Situation {currentStage.stageOrder} of 5
+              Situation {getExperiencedSituationIndex(currentStage.stageOrder)} of 13
             </div>
           </div>
 
@@ -489,7 +490,7 @@ function FinalAssessment({ _user, updateProgressTrigger }) {
           <div className="quiz-progress-track" style={{ marginBottom: '22px' }} aria-hidden="true">
             <div 
               className="quiz-progress-fill" 
-              style={{ width: `${(currentStage.stageOrder / 5) * 100}%` }}
+              style={{ width: `${(getExperiencedSituationIndex(currentStage.stageOrder) / 13) * 100}%` }}
             />
           </div>
 

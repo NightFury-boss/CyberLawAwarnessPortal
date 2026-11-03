@@ -112,7 +112,33 @@ Enforced via `server/config/cutoverConfig.js` and `assessmentScoringService.js`:
 
 ---
 
-## 6. Superseded Values Register `[Historical]`
+## 6. Integrated Assessment Lifecycle & Resumption Contracts `[Current]`
+
+### Scenario Graph Topology & Experienced Situations:
+- **Baseline and Final Scenarios** contain 14 database stage records, producing exactly **13 experienced situations** for every learner:
+  - Stages 1–6: Linear common path.
+  - Stage 7: Branching node. Decision 1/3 $\longrightarrow$ Stage 8 (Path 1: Bank KYC, legitimate); Decision 2 $\longrightarrow$ Stage 9 (Path 2: Skype interrogation, malicious).
+  - Stages 8 & 9: Both converge cleanly to Stage 10.
+  - Stages 10–14: Linear convergence common path.
+- **Universal Forensic Signal Probes**: Present at **Stages 2, 3, 10, 11, and 12** (5 total probes $\times$ 2 pts = 10 pts SI).
+- **Opportunity Parity**:
+  - `TR`: 16 points (Both paths).
+  - `SI`: 10 points (Both paths).
+  - `VB`: 16 points (Both paths, 8 situations $\times$ 2 pts).
+  - `DQ`: 4 points (Both paths, 2 situations $\times$ 2 pts).
+  - `FP`: 8 points on Path 1 (traverses legitimate Stage 8), 6 points on Path 2 (traverses malicious Stage 9). Normalized to 0–100%. Single-slip threshold ($\le 2$ penalty points) earns `Demonstrated Strength`.
+  - `UA`: 8 points (Both paths, 4 genuine encounters $\times$ 2 pts max penalty).
+
+### Resumption & Recovery Guarantees:
+1. **Mid-Session Browser Reload**: At Stages 2, 6, and 10 in both Baseline and Final, reloading the browser restores the active session ID, current stage heading, mock interface, decision choices, and unconfirmed signal probe panel state without session duplication or state loss.
+2. **Expired-Session Cache Recovery**: If a client attempts to load `/assessment/baseline` or `/assessment/final` with an expired session in `sessionStorage`, the client and backend transition cleanly, remove the stale key, update status to `abandoned`, and render the initial start briefing without unhandled exceptions.
+3. **Completed Assessment Re-entry**: Returning to `/assessment/baseline` or `/assessment/final` after completion safely renders the completed summary view (`completed_summary`), displays the 6 behavioral habit benchmarks, and prevents duplicate session creation.
+4. **Prerequisite Enforcement**: Attempting to start the Final Assessment (`POST /api/assessments/start` with `scenarioCode: 'final'`) without a completed Baseline session returns HTTP 403 (`PREREQUISITE_NOT_MET`).
+5. **Score Immutability**: Authoritative assessment session scores and encounter opportunities remain 100% frozen across all remediation pathway drills, learning checkpoints, and knowledge practice.
+
+---
+
+## 7. Superseded Values Register `[Historical]`
 
 The following historical parameters, drafts, and specifications have been formally superseded and must not be used in current implementations:
 
@@ -128,7 +154,7 @@ The following historical parameters, drafts, and specifications have been formal
 
 ---
 
-## 7. Canonical Test Suites & Verification Commands `[Current]`
+## 8. Canonical Test Suites & Verification Commands `[Current]`
 
 All tests execute against MongoDB Atlas replica set (`ac-0t3cegi-shard-00`). Outbound network access requires `BypassSandbox: true` on restricted runner environments.
 
@@ -174,5 +200,17 @@ npm run build --prefix client
 
 # 14. Playwright End-to-End Live Browser Smoke Test (10/10 probes across Baseline & Final)
 node scripts/browser_si_smoke_test.js
+
+# 15. Staging & Production Smoke Test Suite (13/13 checks)
+node server/tests/stagingProductionSmoke.test.js
+
+# 16. Comprehensive End-to-End User Journey Audit (12/12 steps)
+node server/tests/e2eUserJourneyAudit.js
+
+# 17. Integrated Assessment Lifecycle Validation Suite (12/12 checks)
+node --test server/tests/aq4_integrated_lifecycle.test.js
+
+# 18. Browser Resumption & Expiration Recovery Smoke Test (Parts A–E, 12 screenshots)
+node scripts/browser_resumption_smoke_test.js
 ```
 

@@ -17,6 +17,23 @@
 import { resolvePathwayTitle } from './evidenceSelectors.js';
 
 /**
+ * Maps a raw scenario stageOrder (1 to 14) to the learner's experienced situation number (1 to 13).
+ * In v2 scenarios, Stages 8 and 9 are mutually exclusive branches, converging at Stage 10.
+ * Therefore, any learner experiences exactly 13 situations.
+ * 
+ * @param {number} stageOrder - The database stageOrder (1-14)
+ * @returns {number} The 1-based experienced situation index (1-13)
+ */
+export function getExperiencedSituationIndex(stageOrder) {
+  const num = Number(stageOrder);
+  if (!Number.isFinite(num) || num <= 1) return 1;
+  if (num <= 8) return num;
+  if (num === 9) return 8; // Stage 9 is Path 2's 8th experienced situation
+  if (num >= 10 && num <= 14) return num - 1; // Stages 10-14 map to 9-13
+  return Math.min(13, num);
+}
+
+/**
  * Determines the authoritative Primary Next Step for the learner dashboard.
  * 
  * Priority Ladder:
@@ -73,13 +90,14 @@ export function selectPrimaryNextAction({
 
   // 1b. Interrupted Final Assessment in Progress (Active Final Resumption)
   if (hasActiveFinal && activeFinalStage) {
-    const stageOrder = activeFinalStage?.stageOrder || 1;
+    const rawStageOrder = activeFinalStage?.stageOrder || 1;
+    const situationIndex = getExperiencedSituationIndex(rawStageOrder);
     return {
       type: 'RESUME_FINAL',
       eyebrow: 'Final Check in Progress',
       title: 'Resume Your Final Safety Check',
-      description: `You have an active evaluation in progress (Situation ${stageOrder} of 5). Complete your decisions to see how your defensive habits improved.`,
-      actionLabel: `Resume Final Check (Step ${stageOrder} of 5) \u2192`,
+      description: `You have an active evaluation in progress (Situation ${situationIndex} of 13). Complete your decisions to see how your defensive habits improved.`,
+      actionLabel: `Resume Final Check (Step ${situationIndex} of 13) \u2192`,
       actionType: 'LINK',
       destination: '/assessment/final',
       targetItem: null,

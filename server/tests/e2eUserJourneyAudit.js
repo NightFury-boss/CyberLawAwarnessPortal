@@ -92,6 +92,7 @@ async function runAudit() {
     // Simulate baseline traversal with some risky decisions (e.g. approving UPI pin, skipping verify)
     let currentStage = startBase.data.stage;
     let baseFinalResult = null;
+    let isFirstBaseStep = true;
     while (currentStage) {
       const stageDecisions = await ScenarioDecision.find({ stageId: currentStage.id });
       // Pick a decision: on stages 2 and 4, choose risky decisions to simulate baseline deficit
@@ -102,11 +103,28 @@ async function runAudit() {
         if (risky) chosenDecision = risky;
       }
 
-      const stepRes = await request('POST', '/api/assessments/submit-step', {
+      const idempotencyKey = `idemp_${baseSessionId}_${currentStage.id}`;
+      const payload = {
         assessmentSessionId: baseSessionId,
         stageId: currentStage.id,
-        decisionId: chosenDecision._id
-      }, token);
+        decisionId: chosenDecision._id,
+        idempotencyKey
+      };
+
+      if (currentStage.hasSignalProbe && currentStage.signalProbes && currentStage.signalProbes.length > 0) {
+        payload.signalProbeDecisionId = currentStage.signalProbes[0].id || currentStage.signalProbes[0]._id;
+      }
+
+      const stepRes = await request('POST', '/api/assessments/submit-step', payload, token);
+      assert.strictEqual(stepRes.status, 200, `Step submission must succeed: ${JSON.stringify(stepRes.data)}`);
+
+      // Verify idempotent retry with identical key on the first stage
+      if (isFirstBaseStep) {
+        const retryRes = await request('POST', '/api/assessments/submit-step', payload, token);
+        assert.strictEqual(retryRes.status, 200, 'Idempotent retry must return HTTP 200');
+        assert.strictEqual(retryRes.data.isRetry, true, 'Idempotent retry must flag isRetry: true');
+        isFirstBaseStep = false;
+      }
 
       if (stepRes.data.isCompleted) {
         baseFinalResult = stepRes.data;
@@ -253,11 +271,20 @@ async function runAudit() {
         || stageDecisions.find(d => d.riskLevel === 'safe')
         || stageDecisions[0];
 
-      const stepRes = await request('POST', '/api/assessments/submit-step', {
+      const idempotencyKey = `idemp_${finalSessionId}_${currentStage.id}`;
+      const payload = {
         assessmentSessionId: finalSessionId,
         stageId: currentStage.id,
-        decisionId: safeDecision._id
-      }, token);
+        decisionId: safeDecision._id,
+        idempotencyKey
+      };
+
+      if (currentStage.hasSignalProbe && currentStage.signalProbes && currentStage.signalProbes.length > 0) {
+        payload.signalProbeDecisionId = currentStage.signalProbes[0].id || currentStage.signalProbes[0]._id;
+      }
+
+      const stepRes = await request('POST', '/api/assessments/submit-step', payload, token);
+      assert.strictEqual(stepRes.status, 200, `Final step submission must succeed: ${JSON.stringify(stepRes.data)}`);
 
       if (stepRes.data.isCompleted) {
         finalResult = stepRes.data;
@@ -418,11 +445,20 @@ async function runAudit() {
         d.optionText.toLowerCase().includes('refuse')
       ) || stageDecisions[0];
 
-      const stepRes = await request('POST', '/api/assessments/submit-step', {
+      const idempotencyKey = `idemp_${reassessSessionId}_${rStage.id}`;
+      const payload = {
         assessmentSessionId: reassessSessionId,
         stageId: rStage.id,
-        decisionId: chosen._id
-      }, token);
+        decisionId: chosen._id,
+        idempotencyKey
+      };
+
+      if (rStage.hasSignalProbe && rStage.signalProbes && rStage.signalProbes.length > 0) {
+        payload.signalProbeDecisionId = rStage.signalProbes[0].id || rStage.signalProbes[0]._id;
+      }
+
+      const stepRes = await request('POST', '/api/assessments/submit-step', payload, token);
+      assert.strictEqual(stepRes.status, 200, `Reassessment step submission must succeed: ${JSON.stringify(stepRes.data)}`);
 
       if (stepRes.data.isCompleted) {
         reassessResult = stepRes.data;

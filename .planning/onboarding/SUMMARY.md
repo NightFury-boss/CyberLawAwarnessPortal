@@ -5,7 +5,7 @@ The **Cyber Law Awareness Portal** has been successfully onboarded into the GSD 
 
 ### Artifacts Generated
 1. **Evidence-Backed Codebase Map** (`.planning/codebase/`):
-   - `STACK.md`: Node.js 24, Express 4, React 18, Vite 8, MongoDB Atlas.
+   - `STACK.md`: Node.js 24, Express 4, React 19, Vite 8, MongoDB Atlas.
    - `ARCHITECTURE.md`: Six-metric Criterion-Referenced Behavioral Diagnostic Rubric model, authoritative backend, adaptive branching graph.
    - `STRUCTURE.md`: Directory layout and entry points.
    - `CONVENTIONS.md`: Golden rules, coding standards, and invariant constraints.

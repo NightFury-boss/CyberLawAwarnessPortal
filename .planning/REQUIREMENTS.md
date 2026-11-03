@@ -55,6 +55,8 @@ All statutory references across the application, diagnostic reveals, and educati
 - **FR-19 (Atomic Signal Probe Submission)**: On stages with `hasSignalProbe: true`, submitting a step without `signalProbeDecisionId` must be atomically rejected with HTTP 400 (`INCOMPLETE_STAGE_SUBMISSION`) with zero database writes.
 - **FR-20 (Client Idempotency Key Persistence)**: The client must persist stage-scoped idempotency keys in `sessionStorage` (`idemp_${sessionId}_${stageId}`) across page reloads and network retries; repeated submission of identical payload returns HTTP 200 (`isRetry: true`), while differing payloads or stage replays return HTTP 409.
 - **FR-21 (Replica-Set ACID Transaction Isolation)**: All stage decision writes and Compare-and-Swap (CAS) stage pointer updates must run inside MongoDB multi-document transactions with automated rollback on concurrency or index conflicts.
+- **FR-22 (Integrated Assessment Lifecycle & Paired Longitudinal Trajectory)**: Full end-to-end validation across Registration, Baseline assessment (both Path 1 and Path 2), 6-dimension behavioral profiling, deficit dimension ranking, 3-step adaptive remediation completion, Final assessment prerequisite enforcement, Final assessment traversal with paired-baseline delta calculation, dashboard journey synchronization, and defensive portfolio generation. Authoritative assessment session scores remain 100% immutable across remediation drills.
+- **FR-23 (Safe Browser Resumption & Expiration Recovery)**: Assessments must support mid-session browser refresh across probe stages, branching stages, and convergence stages (Stages 2, 6, 10) without losing progress, session ID, or active probe state. Expired cached sessions must recover cleanly without unhandled crashes. Completed assessments must render summary screens on re-entry with zero duplicate session creation.
 
 ---
 
@@ -82,7 +84,7 @@ All statutory references across the application, diagnostic reveals, and educati
 - **CJ-5 (Interrupted Final Assessment)**:
   - Destination: `/dashboard`.
   - State: `RESUME_FINAL`.
-  - Primary Action: "Resume Final Safety Check (Step X of 5) \u2192" linking to `/assessment/final`.
+  - Primary Action: "Resume Final Safety Check (Step X of 13) \u2192" linking to `/assessment/final`.
   - Guard: Server validates session unexpired (`expiresAt > now`).
 - **CJ-6 (All Learning Experiences Completed)**:
   - Destination: `/dashboard`.

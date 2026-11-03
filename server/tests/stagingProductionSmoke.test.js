@@ -415,7 +415,7 @@ describe('Release Gate 3: Staging & Production Smoke Test Suite', () => {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${tokenA}`
       },
-      body: JSON.stringify({ scenarioCode: 'baseline', scenarioVersion: 1 })
+      body: JSON.stringify({ scenarioCode: 'baseline', scenarioVersion: 2 })
     });
     assert.equal(startRes.status, 200);
     const startData = await startRes.json();
@@ -427,6 +427,18 @@ describe('Release Gate 3: Staging & Production Smoke Test Suite', () => {
     // Submit Step using exact parameter names expected by controller
     const stageId = startData.stage.id || startData.stage._id;
     const decisionId = (startData.stage.decisions && startData.stage.decisions[0]?.id) || baselineDecision1._id;
+    const idempotencyKey = `idemp_${createdSessionId}_${stageId}`;
+
+    const stepPayload = {
+      assessmentSessionId: createdSessionId,
+      stageId,
+      decisionId,
+      idempotencyKey
+    };
+
+    if (startData.stage.hasSignalProbe && startData.stage.signalProbes && startData.stage.signalProbes.length > 0) {
+      stepPayload.signalProbeDecisionId = startData.stage.signalProbes[0].id || startData.stage.signalProbes[0]._id;
+    }
 
     const submitRes = await fetch(`${baseUrl}/api/assessments/submit-step`, {
       method: 'POST',
@@ -434,15 +446,24 @@ describe('Release Gate 3: Staging & Production Smoke Test Suite', () => {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${tokenA}`
       },
-      body: JSON.stringify({
-        assessmentSessionId: createdSessionId,
-        stageId,
-        decisionId
-      })
+      body: JSON.stringify(stepPayload)
     });
     assert.equal(submitRes.status, 200);
     const submitData = await submitRes.json();
     assert.ok('isCompleted' in submitData || 'stage' in submitData);
+
+    // Verify idempotent retry with identical key and payload: must succeed with 200 and isRetry: true
+    const retryRes = await fetch(`${baseUrl}/api/assessments/submit-step`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${tokenA}`
+      },
+      body: JSON.stringify(stepPayload)
+    });
+    assert.equal(retryRes.status, 200);
+    const retryData = await retryRes.json();
+    assert.equal(retryData.isRetry, true);
 
     // Finalize session as completed with authoritative scores to test remediation
     await AssessmentSession.findByIdAndUpdate(createdSessionId, {

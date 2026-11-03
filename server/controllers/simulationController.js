@@ -7,6 +7,62 @@ const UserProgress = require('../models/UserProgress');
 const assessmentScoringService = require('../services/assessmentScoringService');
 const remediationEngineService = require('../services/remediationEngineService');
 
+function toObjectSafe(val) {
+  if (!val) return {};
+  if (val instanceof Map) return Object.fromEntries(val);
+  return typeof val === 'object' ? val : {};
+}
+
+function computeBehaviourDelta(baselineSession, finalSession) {
+  if (!baselineSession || !finalSession) return { behaviourDelta: null, baselineScores: null, deltaMessage: null };
+  const baseScores = toObjectSafe(baselineSession.behaviourScores);
+  const finalScores = toObjectSafe(finalSession.behaviourScores);
+
+  const metricsList = [
+    { key: 'recognition', label: 'Threat Recognition' },
+    { key: 'signalIdentification', label: 'Signal Identification' },
+    { key: 'verification', label: 'Verification Behaviour' },
+    { key: 'decisionQuality', label: 'Decision Quality' },
+    { key: 'falsePositive', label: 'False Positive Control' },
+    { key: 'unreviewedAcceptance', label: 'Unreviewed Acceptance Control' }
+  ];
+
+  const behaviourDelta = {};
+  const changesNarrative = [];
+
+  for (const m of metricsList) {
+    const baseVal = baseScores[m.key] !== undefined && baseScores[m.key] !== null ? Number(baseScores[m.key]) : null;
+    const finalVal = finalScores[m.key] !== undefined && finalScores[m.key] !== null ? Number(finalScores[m.key]) : null;
+
+    if (baseVal !== null && finalVal !== null) {
+      const deltaVal = finalVal - baseVal;
+      behaviourDelta[m.key] = {
+        baseline: baseVal,
+        final: finalVal,
+        delta: deltaVal
+      };
+      if (deltaVal > 0) {
+        changesNarrative.push(`${m.label} (+${deltaVal}%)`);
+      } else if (deltaVal < 0) {
+        changesNarrative.push(`${m.label} (${deltaVal}%)`);
+      }
+    }
+  }
+
+  let deltaMessage = null;
+  if (changesNarrative.length > 0) {
+    deltaMessage = `Behavioral shifts observed: ${changesNarrative.join(', ')}.`;
+  } else {
+    deltaMessage = 'Consistent behavioral habits demonstrated across baseline and final assessments.';
+  }
+
+  return {
+    behaviourDelta,
+    baselineScores: baseScores,
+    deltaMessage
+  };
+}
+
 async function getWeakestCategory(userId) {
   try {
     const baseline = await AssessmentSession.findOne({
@@ -81,6 +137,7 @@ exports.getScenario = async (req, res) => {
     }
     res.json(scenario);
   } catch (error) {
+    console.error('[getScenarioStatus Error]:', error);
     res.status(500).json({
       success: false,
       error: { code: 'SCENARIO_FETCH_ERROR', message: error.message }
@@ -261,6 +318,7 @@ exports.startAssessment = async (req, res) => {
       }
     });
   } catch (error) {
+    console.error('[getScenarioStatus Error]:', error);
     res.status(500).json({
       success: false,
       error: { code: 'START_ASSESSMENT_ERROR', message: error.message }
@@ -677,60 +735,6 @@ exports.submitStep = async (req, res) => {
         lastActivity: new Date()
       });
 
-function computeBehaviourDelta(baselineSession, finalSession) {
-  if (!baselineSession || !finalSession) return { behaviourDelta: null, baselineScores: null, deltaMessage: null };
-  const baseScores = baselineSession.behaviourScores instanceof Map 
-    ? Object.fromEntries(baselineSession.behaviourScores) 
-    : (baselineSession.behaviourScores || {});
-  const finalScores = finalSession.behaviourScores instanceof Map 
-    ? Object.fromEntries(finalSession.behaviourScores) 
-    : (finalSession.behaviourScores || {});
-
-  const metricsList = [
-    { key: 'recognition', label: 'Threat Recognition' },
-    { key: 'signalIdentification', label: 'Signal Identification' },
-    { key: 'verification', label: 'Verification Behaviour' },
-    { key: 'decisionQuality', label: 'Decision Quality' },
-    { key: 'falsePositive', label: 'False Positive Control' },
-    { key: 'unreviewedAcceptance', label: 'Unreviewed Acceptance Control' }
-  ];
-
-  const behaviourDelta = {};
-  const changesNarrative = [];
-
-  for (const m of metricsList) {
-    const baseVal = baseScores[m.key] !== undefined ? Number(baseScores[m.key]) : null;
-    const finalVal = finalScores[m.key] !== undefined ? Number(finalScores[m.key]) : null;
-
-    if (baseVal !== null && finalVal !== null) {
-      const deltaVal = finalVal - baseVal;
-      behaviourDelta[m.key] = {
-        baseline: baseVal,
-        final: finalVal,
-        delta: deltaVal
-      };
-      if (deltaVal > 0) {
-        changesNarrative.push(`${m.label} (+${deltaVal}%)`);
-      } else if (deltaVal < 0) {
-        changesNarrative.push(`${m.label} (${deltaVal}%)`);
-      }
-    }
-  }
-
-  let deltaMessage = null;
-  if (changesNarrative.length > 0) {
-    deltaMessage = `Behavioral shifts observed: ${changesNarrative.join(', ')}.`;
-  } else {
-    deltaMessage = 'Consistent behavioral habits demonstrated across baseline and final assessments.';
-  }
-
-  return {
-    behaviourDelta,
-    baselineScores: baseScores,
-    deltaMessage
-  };
-}
-
       let deltaMessage = null;
       let improvementDelta = 0;
       let behaviourDelta = null;
@@ -768,9 +772,9 @@ function computeBehaviourDelta(baselineSession, finalSession) {
         sessionId: session._id,
         score: finalScore,
         awarenessLevel: getAwarenessLevel(finalScore),
-        categoryScores: Object.fromEntries(session.categoryScores),
-        behaviourScores: Object.fromEntries(session.behaviourScores),
-        behaviourOpportunities: Object.fromEntries(session.behaviourOpportunities),
+        categoryScores: toObjectSafe(session.categoryScores),
+        behaviourScores: toObjectSafe(session.behaviourScores),
+        behaviourOpportunities: toObjectSafe(session.behaviourOpportunities),
         falsePositivePenaltyPoints: session.falsePositivePenaltyPoints,
         falsePositiveMaxPenaltyPoints: session.falsePositiveMaxPenaltyPoints,
         unreviewedAcceptancePenaltyPoints: session.unreviewedAcceptancePenaltyPoints,
@@ -786,6 +790,7 @@ function computeBehaviourDelta(baselineSession, finalSession) {
       });
     }
   } catch (error) {
+    console.error('[getScenarioStatus Error]:', error);
     res.status(500).json({
       success: false,
       error: { code: 'SUBMIT_STEP_ERROR', message: error.message }
@@ -902,9 +907,9 @@ exports.getSession = async (req, res) => {
         scenarioVersion: session.scenarioVersion || 1,
         score: session.score,
         awarenessLevel: getAwarenessLevel(session.score),
-        categoryScores: session.categoryScores ? Object.fromEntries(session.categoryScores) : {},
-        behaviourScores: session.behaviourScores ? Object.fromEntries(session.behaviourScores) : {},
-        behaviourOpportunities: session.behaviourOpportunities ? Object.fromEntries(session.behaviourOpportunities) : {},
+        categoryScores: toObjectSafe(session.categoryScores),
+        behaviourScores: toObjectSafe(session.behaviourScores),
+        behaviourOpportunities: toObjectSafe(session.behaviourOpportunities),
         falsePositivePenaltyPoints: session.falsePositivePenaltyPoints || 0,
         falsePositiveMaxPenaltyPoints: session.falsePositiveMaxPenaltyPoints || 0,
         unreviewedAcceptancePenaltyPoints: session.unreviewedAcceptancePenaltyPoints || 0,
@@ -924,6 +929,7 @@ exports.getSession = async (req, res) => {
       message: `Session is ${session.status}`
     });
   } catch (error) {
+    console.error('[getScenarioStatus Error]:', error);
     res.status(500).json({
       success: false,
       error: { code: 'GET_SESSION_ERROR', message: error.message }
@@ -1022,9 +1028,9 @@ exports.getScenarioStatus = async (req, res) => {
           scenarioVersion: completedSession.scenarioVersion || 1,
           score: completedSession.score,
           awarenessLevel: getAwarenessLevel(completedSession.score),
-          categoryScores: completedSession.categoryScores ? Object.fromEntries(completedSession.categoryScores) : {},
-          behaviourScores: completedSession.behaviourScores ? Object.fromEntries(completedSession.behaviourScores) : {},
-          behaviourOpportunities: completedSession.behaviourOpportunities ? Object.fromEntries(completedSession.behaviourOpportunities) : {},
+          categoryScores: toObjectSafe(completedSession.categoryScores),
+          behaviourScores: toObjectSafe(completedSession.behaviourScores),
+          behaviourOpportunities: toObjectSafe(completedSession.behaviourOpportunities),
           falsePositivePenaltyPoints: completedSession.falsePositivePenaltyPoints || 0,
           falsePositiveMaxPenaltyPoints: completedSession.falsePositiveMaxPenaltyPoints || 0,
           unreviewedAcceptancePenaltyPoints: completedSession.unreviewedAcceptancePenaltyPoints || 0,
@@ -1076,6 +1082,7 @@ exports.getScenarioStatus = async (req, res) => {
       status: 'none'
     });
   } catch (error) {
+    console.error('[getScenarioStatus Error]:', error);
     res.status(500).json({
       success: false,
       error: { code: 'GET_STATUS_ERROR', message: error.message }

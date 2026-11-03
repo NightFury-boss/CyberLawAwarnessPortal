@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import DigitalAwarenessProfile from '../components/assessment/DigitalAwarenessProfile';
 import { performStateTransition } from '../utils/transitionUtils';
+import { getExperiencedSituationIndex } from '../utils/dashboardJourneySelectors';
 
 function BaselineAssessment({ _user, updateProgressTrigger }) {
   const [session, setSession] = useState(null); // active session ID
@@ -12,7 +13,7 @@ function BaselineAssessment({ _user, updateProgressTrigger }) {
   const [error, setError] = useState('');
   const [completedHistory, setCompletedHistory] = useState(null);
   const stageHeadingRef = useRef(null);
-  
+
   // Custom mock inputs (instantly discarded)
   const [mockUserId, setMockUserId] = useState('');
   const [mockPassword, setMockPassword] = useState('');
@@ -117,8 +118,8 @@ function BaselineAssessment({ _user, updateProgressTrigger }) {
   const handlePhoneAction = async (actionType) => {
     if (submitting || !currentStage) return;
     if (actionType === 'decline') {
-      const declineDecision = currentStage.decisions.find(d => 
-        d.optionText.toLowerCase().includes('hang up') || 
+      const declineDecision = currentStage.decisions.find(d =>
+        d.optionText.toLowerCase().includes('hang up') ||
         d.optionText.toLowerCase().includes('ignore') ||
         d.optionText.toLowerCase().includes('decline')
       );
@@ -126,8 +127,8 @@ function BaselineAssessment({ _user, updateProgressTrigger }) {
         handlePrimaryChoice(declineDecision.id);
       }
     } else if (actionType === 'accept') {
-      const acceptDecision = currentStage.decisions.find(d => 
-        d.optionText.toLowerCase().includes('press 9') || 
+      const acceptDecision = currentStage.decisions.find(d =>
+        d.optionText.toLowerCase().includes('press 9') ||
         d.optionText.toLowerCase().includes('connect') ||
         d.optionText.toLowerCase().includes('accept')
       );
@@ -139,8 +140,8 @@ function BaselineAssessment({ _user, updateProgressTrigger }) {
 
   const handleInlineClick = async () => {
     if (submitting || !currentStage) return;
-    const clickDecision = currentStage.decisions.find(d => 
-      d.optionText.toLowerCase().includes('click') || 
+    const clickDecision = currentStage.decisions.find(d =>
+      d.optionText.toLowerCase().includes('click') ||
       d.optionText.toLowerCase().includes('open link') ||
       d.optionText.toLowerCase().includes('verify account')
     );
@@ -154,8 +155,8 @@ function BaselineAssessment({ _user, updateProgressTrigger }) {
   const handleLoginSubmit = async (e) => {
     e.preventDefault();
     if (submitting || !currentStage) return;
-    const loginDecision = currentStage.decisions.find(d => 
-      d.optionText.toLowerCase().includes('enter simulated login') || 
+    const loginDecision = currentStage.decisions.find(d =>
+      d.optionText.toLowerCase().includes('enter simulated login') ||
       d.optionText.toLowerCase().includes('credentials') ||
       d.optionText.toLowerCase().includes('password')
     );
@@ -178,7 +179,7 @@ function BaselineAssessment({ _user, updateProgressTrigger }) {
 
     try {
       const nextData = await api.submitAssessmentStep(session, currentStage.id, decisionId, probeId, idempotencyKey);
-      
+
       // Cleanup stage idempotency key only after successful server confirmation
       sessionStorage.removeItem(storageKey);
 
@@ -229,7 +230,7 @@ function BaselineAssessment({ _user, updateProgressTrigger }) {
 
           <h1 className="simulation-briefing-title">Your Digital Day</h1>
           <p className="simulation-briefing-lead">
-            Experience 5 everyday digital situations. Make the decisions you would make in real life.
+            Experience 13 everyday digital situations. Make the decisions you would make in real life.
           </p>
 
           <div className="simulation-briefing-points">
@@ -267,14 +268,14 @@ function BaselineAssessment({ _user, updateProgressTrigger }) {
           </div>
 
           <div style={{ marginBottom: '24px', fontSize: '0.82rem', color: 'var(--text-muted)' }}>
-            Takes about <strong>5–7 minutes</strong> • 5 situations • Private &amp; secure
+            Takes about <strong>8–10 minutes</strong> • 13 situations • Private &amp; secure
           </div>
 
           {error && <div className="alert alert-error" style={{ marginBottom: '16px' }} role="alert">{error}</div>}
 
-          <button 
-            onClick={handleStart} 
-            className="btn btn-primary" 
+          <button
+            onClick={handleStart}
+            className="btn btn-primary"
             style={{ padding: '12px 36px', fontSize: '1.05rem', fontWeight: '700' }}
             disabled={loading}
           >
@@ -295,15 +296,15 @@ function BaselineAssessment({ _user, updateProgressTrigger }) {
               <span>FIRST CHECK: YOUR DIGITAL DAY</span>
             </div>
             <div style={{ fontWeight: '700', fontFamily: 'monospace' }}>
-              Situation {currentStage.stageOrder} of 5
+              Situation {getExperiencedSituationIndex(currentStage.stageOrder)} of 13
             </div>
           </div>
 
           {/* Stepper Progress Indicator */}
           <div className="quiz-progress-track" style={{ marginBottom: '18px' }} aria-hidden="true">
-            <div 
-              className="quiz-progress-fill" 
-              style={{ width: `${(currentStage.stageOrder / 5) * 100}%` }}
+            <div
+              className="quiz-progress-fill"
+              style={{ width: `${(getExperiencedSituationIndex(currentStage.stageOrder) / 13) * 100}%` }}
             />
           </div>
 
@@ -363,9 +364,9 @@ function BaselineAssessment({ _user, updateProgressTrigger }) {
                   </div>
                   {currentStage.mockInterfaceData.ctaText && (
                     <div style={{ marginTop: '20px' }}>
-                      <button 
-                        onClick={handleInlineClick} 
-                        className="btn btn-danger" 
+                      <button
+                        onClick={handleInlineClick}
+                        className="btn btn-danger"
                         style={{ fontWeight: '600' }}
                       >
                         {currentStage.mockInterfaceData.ctaText}
@@ -479,7 +480,7 @@ function BaselineAssessment({ _user, updateProgressTrigger }) {
                       {currentStage.mockInterfaceData.bodyText || currentStage.mockInterfaceData.message}
                     </p>
                     {currentStage.mockInterfaceData.ctaText && (
-                      <button 
+                      <button
                         onClick={handleInlineClick}
                         className="btn btn-primary"
                         style={{ fontSize: '0.8rem', padding: '6px 12px' }}
@@ -521,7 +522,7 @@ function BaselineAssessment({ _user, updateProgressTrigger }) {
                 </div>
                 <h3 style={{ fontSize: '1.25rem', margin: '0 0 4px 0', color: '#FCFAF5' }}>{currentStage.mockInterfaceData.callerName || currentStage.mockInterfaceData.callerLabel || 'Incoming Call'}</h3>
                 <span style={{ fontSize: '0.85rem', color: '#94a3b8', display: 'block', marginBottom: '20px' }}>{currentStage.mockInterfaceData.callerNumber}</span>
-                
+
                 <div style={{ border: '1px solid #334155', borderRadius: '8px', padding: '12px', backgroundColor: '#1e293b', fontSize: '0.85rem', lineHeight: '1.4', fontStyle: 'italic', color: '#cbd5e1', marginBottom: '24px', textAlign: 'left', wordBreak: 'break-word', overflowWrap: 'break-word' }}>
                   {currentStage.mockInterfaceData.bodyText || currentStage.mockInterfaceData.body || currentStage.mockInterfaceData.audioPrompt || currentStage.mockInterfaceData.message}
                 </div>
@@ -568,7 +569,7 @@ function BaselineAssessment({ _user, updateProgressTrigger }) {
                 <div style={{ padding: '20px', textAlign: 'center' }}>
                   <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', display: 'block', marginBottom: '4px' }}>Requested by</span>
                   <strong style={{ fontSize: '1.1rem', color: 'var(--text-primary)', display: 'block', marginBottom: '16px' }}>{currentStage.mockInterfaceData.merchantName}</strong>
-                  
+
                   <div style={{ backgroundColor: 'var(--bg-secondary)', padding: '12px', borderRadius: '8px', marginBottom: '16px' }}>
                     <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Amount Request</span>
                     <div style={{ fontSize: '1.8rem', fontWeight: 'bold', color: 'var(--color-error)' }}>₹{currentStage.mockInterfaceData.amount}</div>
@@ -610,14 +611,14 @@ function BaselineAssessment({ _user, updateProgressTrigger }) {
 
             {/* Step 2: Signal Identification Probe (Universal Forensic Cue) */}
             {currentStage.hasSignalProbe && selectedPrimaryDecisionId && (
-              <div 
-                className="signal-probe-panel page-entry" 
-                style={{ 
-                  marginTop: '24px', 
-                  padding: '20px', 
-                  backgroundColor: 'var(--color-surface-card, #FCFAF5)', 
-                  border: '2px solid var(--color-primary, #302B27)', 
-                  borderRadius: '8px' 
+              <div
+                className="signal-probe-panel page-entry"
+                style={{
+                  marginTop: '24px',
+                  padding: '20px',
+                  backgroundColor: 'var(--color-surface-card, #FCFAF5)',
+                  border: '2px solid var(--color-primary, #302B27)',
+                  borderRadius: '8px'
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>

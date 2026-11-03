@@ -1,7 +1,7 @@
 # Cyber Law Awareness Portal — Canonical Development Roadmap
 
 **Governance Principle**: Technical & Educational Foundation First, Broad Visual Redesign Later  
-**Current Milestone Position**: Stage 2 — Assessment Quality & Reliability (AQ-3 Next Priority, Awaiting Authorization)  
+**Current Milestone Position**: Stage 2 — Assessment Quality & Reliability (COMPLETED & VERIFIED)  
 **Historical Baseline**: Milestone 3.3 Learner Experience Structural Freeze Formally Closed  
 
 ---
@@ -21,11 +21,11 @@ The development of the Cyber Law Awareness Portal follows a strict, sequential 6
                                            |
                                            v
 +---------------------------------------------------------------------------------------+
-| STAGE 2: Assessment Quality & Reliability (CURRENT PRIORITY)                          |
+| STAGE 2: Assessment Quality & Reliability (COMPLETED & VERIFIED)                      |
 | • AQ-1: Six-Dimensional Assessment Quality Audit [COMPLETED]                          |
 | • AQ-2: Assessment Refinement Design Proposal v2.5.0 [APPROVED]                       |
-| • AQ-3: Controlled Implementation (3 Waves) [NEXT PRIORITY — AWAITING AUTHORIZATION]  |
-| • AQ-4: Integrated Assessment Validation [PENDING]                                    |
+| • AQ-3: Controlled Implementation (3 Waves) [COMPLETED]                               |
+| • AQ-4: Integrated Assessment Validation [COMPLETED & VERIFIED]                       |
 +---------------------------------------------------------------------------------------+
                                            |
                                            v
@@ -105,13 +105,15 @@ Structural and navigation milestones:
   - *Wave 1: Backend Scoring Foundation*: Schema updates, fail-closed cutover resolution, `calculateScoresV2` with first-class `null` unassessed representation, discrete encounter tracking, and remediation confidence heuristics.
   - *Wave 2: Scenario Calibration & Atomic SI Probes*: Atomic submission validation (HTTP 400 with zero writes on missing probe), partial unique compound index (`{ assessmentSessionId: 1, idempotencyKey: 1 }`), replica-set ACID multi-document transactions with CAS rollback, approved UA decision ($N=4, \text{Max Penalty}=8$), and scenario calibration of Baseline v2 & Final v2 in `scenarios.json` and MongoDB Atlas.
   - *Wave 3: Client Presentation & Test Verification*: 2-step in-place forensic probe UI in `BaselineAssessment.jsx` and `FinalAssessment.jsx`, client `sessionStorage` idempotency key persistence across reloads/retries, penalty scoring transparency blocks in `DigitalAwarenessProfile.jsx`, focused sample badges, standardized terminology ("Criterion-Referenced Behavioral Diagnostic Rubric"), and automated test suites.
-- **AQ-4: Integrated Assessment Validation [NEXT PRIORITY — AWAITING EXPLICIT USER AUTHORIZATION]**:
-  - Full end-to-end integration verification, cross-scenario validation, and formal production cutover readiness sign-off.
+- **AQ-4: Integrated Assessment Validation [COMPLETED & VERIFIED]**:
+  - *Wave 1: Integration Contract Alignment*: Updated `stagingProductionSmoke.test.js` and `e2eUserJourneyAudit.js` to supply valid configured `signalProbeDecisionId` on probe stages, session-and-stage-scoped idempotency keys (`idemp_${sessionId}_${stageId}`), safe retry handling (`isRetry: true`), and verified historical v1 test suites remain 100% valid.
+  - *Wave 2: Integrated Lifecycle Validation*: Implemented and verified `aq4_integrated_lifecycle.test.js` (12/12 passed, 100% pass) covering registration, baseline (both Path 1 and Path 2), 6-dimension behavioral profiling, deficit dimension ranking, 3-step adaptive remediation completion, final assessment prerequisite enforcement, paired-baseline delta calculation, dashboard journey synchronization, and defensive portfolio generation. Confirmed dimension scores remain immutable across drills.
+  - *Wave 3: Browser Resumption & Expiration Recovery*: Implemented and verified `browser_resumption_smoke_test.js` with Playwright Chromium (Parts A–E passed 100%, 12 screenshots captured). Verified exact stage and probe restoration after browser reloads at Stages 2, 6, 10 in both Baseline and Final, clean recovery from expired session caches, and safe completed summary re-entry with zero duplicate sessions created. Fixed `computeBehaviourDelta` scope and defensive `toObjectSafe` serialization on `/api/assessments/status/:scenarioCode`.
 
 ---
 
 ### Stage 3 — Counterfactual Scenario Learning
-**Status**: PENDING (Original Phase 4)
+**Status**: NEXT CANONICAL STAGE (Original Phase 4, Pending Authorization)
 
 Develop educational simulation experiences that demonstrate alternative outcomes based on different learner decisions:
 - Interactive "What happens if...?" exploration:
