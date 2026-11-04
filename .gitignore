@@ -38,3 +38,8 @@ screenshots/
 
 # Custom changes tracking folder
 changes/
+
+# Test outputs
+test-results/
+playwright-report/
+
