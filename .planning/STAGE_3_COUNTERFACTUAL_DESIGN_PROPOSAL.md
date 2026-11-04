@@ -1,76 +1,76 @@
 # Stage 3 Design Proposal: Counterfactual Scenario Learning
 ## Educational "What If?" Exploration Engine for Cyber Law & Digital Defense
 
-**Status**: PROPOSAL `[Proposed]` — PENDING USER APPROVAL  
+**Status**: PROPOSAL `[Proposed]` — REVISED PENDING USER APPROVAL  
 **Author**: Engineering Partner (Antigravity)  
 **Target Milestone**: Stage 3 (Original Phase 4)  
 **Canonical Baseline Revision**: `d54886f767c998482f1b04124059a2e49f71cc63`  
-**Governance Scope**: Architecture Design, Feasibility Audit, Pedagogical Blueprint, and Safety Safeguards (Zero Product Code or Implementation Changes Authorized)
+**Governance Scope**: Architecture Design, Feasibility Audit, Pedagogical Blueprint, and Legal/Safety Safeguards (Strictly Documentation-Only; Implementation Unauthorized)
 
 ---
 
 ## 1. Executive Summary & Educational Objectives
 
 ### The Educational Problem
-In typical cybersecurity training, learners are exposed to static case studies or single-outcome quizzes where mistakes are labeled simply as "incorrect" or "failed." Learners discover what *actually happened* in a historical breach, but rarely experience the divergent paths that their own real-world choices would trigger. 
+In conventional cybersecurity training, learners are typically presented with static case studies or single-outcome quizzes where choices are classified simply as "correct" or "incorrect." Learners read about what *actually occurred* in a historical breach, but rarely experience the divergent paths that their own real-world choices would trigger.
 
-Under real digital pressure (e.g. an urgent midnight SMS from an electricity board, a simulated video call from a "cyber crime officer," or an unrequested reverse-QR code payment), citizens face high-consequence junctions:
-- What happens if they reflexively comply? (Immediate financial loss, account takeover, secondary extortion).
-- What happens if they simply ignore or delete the message? (Temporary safety, but unaddressed persistent vulnerability or uncontained account risk).
-- What happens if they execute active, independent out-of-band verification? (Deception dismantled, zero compromise, immediate defensive reporting).
+Under everyday digital pressure (e.g. an urgent SMS alleging utility disconnection, a video call from an individual claiming to be a law enforcement officer, or an unrequested reverse-QR payment code), citizens encounter consequential decision points:
+- What happens if they comply reflexively out of manufactured panic?
+- What happens if they take passive inaction, deleting or ignoring an alert without addressing potential underlying vulnerabilities?
+- What happens if they execute active, independent out-of-band verification?
 
 ### Core Educational Objectives
-The objective of **Stage 3: Counterfactual Scenario Learning** is to provide an interactive, exploratory sandbox where learners can safely ask: **"What happens if I make this choice instead?"**
+The objective of **Stage 3: Counterfactual Scenario Learning** is to provide an interactive, exploratory sandbox where learners can safely examine: **"What happens if I make this choice instead?"**
 
 Key pedagogical goals:
-1. **Divergent Consequence Modeling**: Enable learners to experience authentic, multi-stage downstream consequences (immediate 5-minute reaction vs. 24-hour escalation) for each available decision path.
-2. **Safe Backtracking & Exploration ("Forking")**: Allow learners to freely rewind to critical inflection points and test alternative actions without penalty, score deduction, or fear of failure.
-3. **Comparative Synthesis**: Provide an unlocked, side-by-side comparison of explored branches, illuminating *why* different actions produce drastically different personal, financial, and legal outcomes.
-4. **Authoritative Statutory Grounding**: Anchor every outcome in verified Indian cyber legislation (Information Technology Act 2000, Bharatiya Nyaya Sanhita 2023, Digital Personal Data Protection Act 2023) and actionable emergency reporting protocols (National Cybercrime Helpline 1930, CFCFRMS, and `cybercrime.gov.in`).
-5. **Absolute Assessment Isolation**: Guarantee that counterfactual exploration is 100% segregated from authoritative diagnostic assessment sessions, behavioral scores, rubrics, and learner portfolios.
+1. **Divergent Consequence Modeling**: Enable learners to experience plausible, multi-stage downstream consequences (immediate reactions vs. potential later escalation) for distinct decision paths.
+2. **Safe Backtracking & Exploration ("Rewinding")**: Allow learners to return freely to critical inflection points and test alternative choices without penalty, score deduction, or fear of failure.
+3. **Comparative Synthesis**: Provide an unlocked, side-by-side comparison of explored branches, illustrating *why* different actions produce different personal, operational, and legal consequences.
+4. **Authoritative Statutory Grounding**: Anchor every scenario in primary Indian digital statutes (Information Technology Act 2000, Bharatiya Nyaya Sanhita 2023, Digital Personal Data Protection Act 2023) and actionable emergency reporting protocols (National Cybercrime Helpline 1930, CFCFRMS, and `cybercrime.gov.in`).
+5. **Architectural Assessment Segregation**: Ensure counterfactual exploration does not import or invoke assessment scoring services, nor create or mutate any records in diagnostic assessment tables.
 
 ---
 
 ## 2. Existing Implementation Audit
 
-We performed an audit of the codebase to identify existing capabilities, reusable patterns, and architectural boundaries across the portal.
+We inspected the codebase to identify existing capabilities, reusable patterns, and architectural boundaries across the portal.
 
 ### A. Assessment and Scenario Engine
 | File / Module | Current Responsibility & Invariants | Reusability Assessment for Counterfactuals |
 | :--- | :--- | :--- |
-| `server/controllers/simulationController.js` | Manages authoritative assessment sessions (`/start`, `/submit-step`, `/status/:code`, `/session/:id`). Enforces Compare-and-Swap (CAS) stage transitions, ACID replica-set transactions, strict `idempotencyKey` checks, and invokes `assessmentScoringService`. | **Do Not Reuse for Counterfactuals.** Tightly coupled to transactional scoring, session timeouts, and immutable evidence records. Modifying this controller risks introducing side-effects into authoritative assessment evaluations. |
+| `server/controllers/simulationController.js` | Manages authoritative assessment sessions (`/start`, `/submit-step`, `/status/:code`, `/session/:id`). Enforces Compare-and-Swap (CAS) stage transitions, ACID replica-set transactions, strict `idempotencyKey` validation, and invokes `assessmentScoringService`. | **Do Not Reuse for Counterfactuals.** Tightly coupled to transactional scoring, session timeouts, and immutable assessment records. Modifying this controller risks introducing unintended side-effects into authoritative assessment evaluations. |
 | `server/routes/simulations.js` | Protected REST routes for assessment simulation (`POST /start`, `POST /submit-step`, etc.). | **Keep Isolated.** Authoritative assessment routes must remain untouched. |
-| `server/models/AssessmentSession.js` | Persistent MongoDB model storing learner assessment state, behavioral metric arrays (`behaviourScores`, `behaviourOpportunities`, `behaviourEncounters`), penalty points (`FP`, `UA`), and scoring versions (`scoringVersion: 1 | 2`). | **Strictly Immutable / Isolated.** Counterfactual exploration must NEVER write to or query this collection. |
-| `server/models/AssessmentDecision.js` | Stores individual assessment choices with compound unique index `{ assessmentSessionId: 1, stageId: 1 }` and partial unique index on `{ assessmentSessionId: 1, idempotencyKey: 1 }`. | **Strictly Immutable / Isolated.** Counterfactual choices must never be stored in this collection. |
+| `server/models/AssessmentSession.js` | Persistent MongoDB model storing learner assessment state, behavioral metric arrays (`behaviourScores`, `behaviourOpportunities`, `behaviourEncounters`), penalty points (`FP`, `UA`), and scoring versions (`scoringVersion: 1 | 2`). | **Strictly Isolated.** Counterfactual exploration must not write to, update, or query this collection. |
+| `server/models/AssessmentDecision.js` | Stores individual assessment choices with compound unique index `{ assessmentSessionId: 1, stageId: 1 }` and partial unique index on `{ assessmentSessionId: 1, idempotencyKey: 1 }`. | **Strictly Isolated.** Counterfactual choices must not be stored in this collection. |
 | `server/models/Scenario.js` | Scenario catalog model defining assessment type (`baseline`, `final`, `practice`), difficulty, domains, and configured scoring weights. Indexed on `{ slug: 1, version: 1 }`. | **Separate Domain.** Authoritative scenarios (`baseline`, `final`) are version-locked for psychometric consistency. |
-| `server/models/ScenarioStage.js` | Defines assessment stages, stage orders (1–14), mock interface types (`email`, `sms`, `messaging`, `browser`), and psychometric tags (`measurementFocus`, `targetSignals`, `hasSignalProbe`). | **Partially Reusable Design Pattern.** The mock interface types and layout structures (`email`, `sms`, `browser`, `phone_call`) are visually excellent, but the stage progression model in `ScenarioStage` is strictly forward-only and linear/convergent. |
-| `server/models/ScenarioDecision.js` | Defines decision options with `scoreChange`, `behaviorEffects`, `riskLevel`, and forward-pointing `nextStageId`. | **Forward-Only Graph.** Cannot support rewinding, branch comparisons, or multiple divergent consequence steps from a single choice. |
+| `server/models/ScenarioStage.js` | Defines assessment stages, stage orders (1–14), mock interface types (`email`, `sms`, `messaging`, `browser`), and psychometric tags (`measurementFocus`, `targetSignals`, `hasSignalProbe`). | **Visual Design Pattern Reusable.** The mock interface types and layout structures (`email`, `sms`, `browser`, `phone_call`) provide a tested visual model, but the stage progression model in `ScenarioStage` is strictly forward-only and convergent. |
+| `server/models/ScenarioDecision.js` | Defines decision options with `scoreChange`, `behaviorEffects`, `riskLevel`, and forward-pointing `nextStageId`. | **Forward-Only Graph.** Cannot model rewinding, branch comparisons, or multiple divergent consequence tiers from a single choice. |
 | `server/config/scenarios.json` | Master seed definitions for 14-stage Baseline v2 and Final v2 assessment scenarios. | **Preserved Baseline.** Must remain untouched to preserve diagnostic calibration. |
 | `server/services/scenarioIntegrityService.js` | Validates graph integrity for assessment scenarios (validating single start node, no self-loops, complete decision coverage). | **Pattern Reference.** Integrity validation concepts can be adapted to validate counterfactual branch graphs. |
-| `server/services/assessmentScoringService.js` | Authoritative v1/v2 scoring resolver enforcing the 6-dimensional rubric (TR: 16, SI: 10, VB: 16, DQ: 4, FP: 8/6, UA: 8). | **Strictly Off-Limits.** Must never be invoked for counterfactual exploration. |
+| `server/services/assessmentScoringService.js` | Authoritative v1/v2 scoring resolver enforcing the 6-dimensional rubric (TR: 16, SI: 10, VB: 16, DQ: 4, FP: 8/6, UA: 8). | **Strictly Off-Limits.** Must never be imported or invoked for counterfactual exploration. |
 
 ### B. Existing Learning and Storytelling Components
 | File / Module | Current Responsibility | Reusability Assessment for Counterfactuals |
 | :--- | :--- | :--- |
-| `server/models/CaseStudy.js` | Models documented real-world incident archives (e.g. Case File 014, Case File 008) with timeline entries, legal context, warning signs, and static single-question `decisionPoints`. | **Reference Content Only.** `CaseStudy` represents historical documented facts. Conflating hypothetical "what if" simulations with documented court/police archives would violate our statutory and forensic integrity rules. |
-| `client/src/pages/Cases.jsx` | Incident Archive viewer. Implements single pause-and-choose decision points (`decisionPoints[0]`), revealing an explanation and unlocking the remainder of the linear narrative. Uses `localStorage` (`completed_cases`). | **Valuable UX Reference.** Shows how to present a case file, but currently only supports single-path linear unlocking. |
+| `server/models/CaseStudy.js` | Models documented real-world incident archives (e.g. Case File 014, Case File 008) with timeline entries, legal context, warning signs, and static single-question `decisionPoints`. | **Reference Content Only.** `CaseStudy` represents historical documented facts. Conflating hypothetical "what if" simulations with documented court/police archives would compromise statutory and forensic integrity. |
+| `client/src/pages/Cases.jsx` | Incident Archive viewer. Implements single pause-and-choose decision points (`decisionPoints[0]`), revealing an explanation and unlocking the remainder of the linear narrative. Uses `localStorage` (`completed_cases`). | **Valuable UX Reference.** Demonstrates how to present an incident file, but currently supports only single-path linear unlocking. |
 | `client/src/pages/BaselineAssessment.jsx` & `FinalAssessment.jsx` | Full-screen simulation runners with simulated mock interfaces (email client, SMS banner, browser URL bar, simulated phone call), stage transitions, and signal probe panels. | **UI Pattern Reusable.** The mock interface rendering primitives (SMS headers, chat bubbles, email sender verification, payment prompts) provide a proven, accessible visual language that can be reused for counterfactual dilemmas. |
-| `client/src/components/common/EditorialScrollStory.jsx` | Desktop sticky contextual navigation + sequential active content on the right, using `IntersectionObserver` with zero RAF loops and WCAG compliance. | **Highly Reusable.** Can anchor a counterfactual incident timeline, allowing learners to scroll through the unfolding consequences of their selected branch while keeping the decision junction visible in the sticky left panel. |
-| `client/src/components/common/ScrollLinkedIncidentCase.jsx` | Production editorial scroll investigation for Case File 014, linking a left-hand Forensic Evidence Docket with right-hand chronological narrative stages. | **Layout Reusable.** Excellent editorial frame for displaying unfolding incident timelines alongside statutory evidence. |
-| `client/src/components/dashboard/DigitalMomentsStorySection.jsx` | Tabbed dashboard story component connecting everyday dilemmas (*Midnight Power Cut SMS*, *₹15 Courier Redirection*, *Digital Arrest Video Call*, *Reverse QR Code*) to statutory provisions. | **Prime Content Seeds.** The four everyday dilemmas in this component represent the ideal curriculum candidates for full counterfactual branch exploration. |
+| `client/src/components/common/EditorialScrollStory.jsx` | Desktop sticky contextual navigation + sequential active content on the right, using `IntersectionObserver` with zero continuous polling loops and WCAG compliance. | **Highly Reusable.** Can anchor a counterfactual incident timeline, allowing learners to view the unfolding consequences of their selected branch while keeping the decision junction accessible. |
+| `client/src/components/common/ScrollLinkedIncidentCase.jsx` | Production editorial scroll investigation for Case File 014, linking a left-hand Forensic Evidence Docket with right-hand chronological narrative stages. | **Layout Reusable.** Clean editorial frame for displaying unfolding incident timelines alongside statutory evidence. |
+| `client/src/components/dashboard/DigitalMomentsStorySection.jsx` | Tabbed dashboard story component connecting everyday dilemmas (*Midnight Power Cut SMS*, *₹15 Courier Redirection*, *Digital Arrest Video Call*, *Reverse QR Code*) to statutory provisions. | **Prime Content Seeds.** The four everyday dilemmas in this component represent suitable curriculum candidates for full counterfactual branch exploration. |
 | `client/src/components/PathwayRunner.jsx` | 3-step structured intervention modal (Incident Learning $\rightarrow$ Practical Defense $\rightarrow$ Checkpoint Quiz). Interacts with `UserProgress`. | **Strict Separation.** Counterfactual exploration must remain an independent experiential sandbox and not be conflated with the remediation pathway runner. |
 
 ---
 
 ## 3. Confirmed Gaps vs. Assumptions
 
-Before proposing architecture, we validated what capabilities genuinely exist versus what is missing:
+Before defining architecture, we confirmed what capabilities exist versus what is missing:
 
 | Domain | Initial Assumption | Confirmed Codebase Reality | Real Gap Identified |
 | :--- | :--- | :--- | :--- |
 | **Branching Graph** | Existing `ScenarioStage` and `ScenarioDecision` can support alternative outcome exploration. | Existing `Scenario` graph is designed solely for *forward progression* through 14 stages (converging at Stage 10) to compute authoritative behavioral scores. It has no mechanism for rewinding to a fork, exploring alternative branches, or comparing outcomes. | Existing scenario models cannot model counterfactual rewinding or side-by-side outcome synthesis. |
 | **Story Progression** | Case studies support interactive decision trees. | In `CaseStudy.js` and `Cases.jsx`, `decisionPoints` are static multiple-choice questions with a single explanation. The story after the choice is identical regardless of the answer. | There is currently **zero alternative-outcome narrative infrastructure** in the portal. |
-| **Session Persistence** | Counterfactual exploration requires a dedicated MongoDB session schema like `AssessmentSession`. | Authoritative assessment requires session persistence because it is an authoritative diagnostic measurement spanning 13 stages with paired baseline/final deltas. Counterfactual exploration is a self-directed, 2-to-3 minute exploratory inquiry where learners test choices immediately. | A heavy database session model is **unnecessary and counterproductive** for exploratory counterfactual learning. |
+| **Session Persistence** | Counterfactual exploration requires a dedicated MongoDB session schema like `AssessmentSession`. | Authoritative assessment requires session persistence because it is a formal diagnostic measurement spanning 13 stages with paired baseline/final deltas. Counterfactual exploration is a self-directed, 2-to-3 minute exploratory inquiry where learners test choices immediately. | A heavy database session model is **unnecessary and counterproductive** for exploratory counterfactual learning. |
 | **Progress Tracking** | Counterfactual choices should be recorded in `UserProgress`. | `UserProgress` tracks formal curriculum modules, pathway checkpoints, and spaced retrieval. Silently recording exploratory counterfactual choices (which intentionally include reckless or curious choices) as learner habit data would distort learner profiles. | Counterfactual exploration must not alter `UserProgress` habit metrics. |
 
 ---
@@ -99,21 +99,21 @@ We systematically evaluated three architectural approaches against strict techni
 
 | Evaluation Dimension | Option A: Content-Driven Client State (Recommended) | Option B: Dedicated Persistence Engine | Option C: Extend Existing Scenario / CaseStudy |
 | :--- | :--- | :--- | :--- |
-| **Assessment Isolation** | **Absolute (100% Guaranteed)**. No database writes; impossible to touch `AssessmentSession` or scoring. | **Moderate Risk**. Requires strict isolation rules across controllers, routes, and services to prevent bleed. | **High Risk**. Reusing `Scenario` or `simulationController` risks accidental score execution or index collisions. |
-| **Learner Experience & Responsiveness** | **Instantaneous (0ms latency)**. Branch switching, rewinding, and comparisons happen smoothly in the client without loading spinners or network hops. | **Sluggish**. Every rewind or branch switch requires an HTTP round-trip, database transaction, and loading state. | **Complex**. Existing assessment screens are not designed for smooth backtracking or comparison. |
+| **Assessment Isolation** | **Complete**. Counterfactual components do not import `assessmentScoringService` and execute zero database writes to `AssessmentSession` or `AssessmentDecision`. | **Moderate Risk**. Requires strict isolation rules across controllers, routes, and services to prevent bleed. | **High Risk**. Reusing `Scenario` or `simulationController` risks accidental score execution or index collisions. |
+| **Learner Experience & Responsiveness** | **In-Memory Client Evaluation**. Branch transitions, rewinding, and comparative views evaluate directly in React state without network latency or round-trip spinners. | **Network Dependent**. Every rewind or branch switch requires an HTTP round-trip, database transaction, and loading state. | **Complex**. Existing assessment screens are not designed for smooth backtracking or comparison. |
 | **System Complexity** | **Minimal**. Clean, declarative data schema; lightweight client state machine; zero new database collections or transactional overhead. | **High**. Requires new Mongoose schemas, indexes, controllers, route handlers, error handlers, and lifecycle cleanup routines. | **High**. Complex migrations of existing scenario/case schemas; tight coupling between disparate features. |
-| **Privacy & Data Minimization** | **Highest**. Exploratory choices (including deliberately unsafe choices made out of curiosity) are never logged to a server. | **Low**. Stores every intermediate click, timestamp, and choice in persistent database records. | **Low**. Would store exploratory actions in shared or adjacent collections. |
-| **Authoring & Content Agility** | **High**. Scenarios are declarative, modular JSON documents containing narrative branches, timeline steps, and statutory cards. | **Low**. Content authoring requires matching complex database IDs and relational references. | **Very Low**. Confuses historical documented court cases with hypothetical "what if" fictional branches. |
-| **Testing & Maintainability** | **Clean & Predictable**. Deterministic component unit tests and Playwright interaction tests; zero database flakiness. | **High Maintenance**. Requires concurrency tests, transaction rollback tests, session expiration tests, and database fixtures. | **High Maintenance**. Risks breaking existing baseline/final assessment regression suites. |
+| **Privacy & Data Minimization** | **Highest**. Exploratory choices (including deliberately unsafe choices made out of curiosity) are never logged to a remote server. | **Low**. Stores every intermediate click, timestamp, and choice in persistent database records. | **Low**. Would store exploratory actions in shared or adjacent collections. |
+| **Authoring & Content Agility** | **High**. Scenarios are declarative, modular documents containing narrative branches, timeline steps, and statutory cards. | **Low**. Content authoring requires matching complex database IDs and relational references. | **Very Low**. Conflates historical documented court cases with hypothetical "what if" fictional branches. |
+| **Testing & Maintainability** | **Clean & Predictable**. Deterministic component unit tests and Playwright interaction tests; zero database state dependencies. | **High Maintenance**. Requires concurrency tests, transaction rollback tests, session expiration tests, and database fixtures. | **High Maintenance**. Risks breaking existing baseline/final assessment regression suites. |
 
 ### Architectural Conclusion
-**Option A (Content-Driven, Client-Side Exploration with a Dedicated Read-Only Catalog)** is overwhelmingly superior across every technical, pedagogical, and security dimension. 
+**Option A (Content-Driven, Client-Side Exploration with a Dedicated Read-Only Catalog)** is recommended across technical, pedagogical, and security dimensions.
 
-It provides **100% physical and logical isolation** from authoritative assessment data, delivers an instantaneous, fluid learner experience for rewinding and comparing branches, and completely avoids database bloat and migration risks.
+It ensures that counterfactual exploration operates without writing to assessment tables, delivers a responsive learner experience for rewinding and comparing branches, and avoids database bloat and migration hazards.
 
 ---
 
-## 5. Recommended Architecture & Data Model
+## 5. Recommended Architecture, Data Model & Lifecycle
 
 ### A. Architectural Overview
 Under Option A, Counterfactual Scenario Learning operates as a self-contained, read-only educational module:
@@ -127,13 +127,13 @@ Under Option A, Counterfactual Scenario Learning operates as a self-contained, r
   │
   ├── 3. Decision Junction (2–3 Actionable Choices: Comply / Inaction / Verify)
   │
-  ├── 4. Branch Consequence Timeline (Immediate 5-Min vs 24-Hr Escalation)
+  ├── 4. Branch Consequence Timeline (Immediate Reactions vs. Potential Escalation)
   │
   ├── 5. "Fork & Rewind" Interaction (Return to Junction to test alternative path)
   │
   ├── 6. Comparative Synthesis Matrix (Unlocked when >= 2 branches explored)
   │
-  └── 7. Statutory Takeaway & 1930 Emergency Reporting Protocol
+  └── 7. Statutory Takeaway & Official Reporting Protocol
 ```
 
 ### B. Declarative Scenario Schema Specification
@@ -152,28 +152,29 @@ export interface CounterfactualScenario {
   // Real-world context
   incidentContext: {
     summary: string;
-    targetVector: string; // e.g., 'Spoofed SMS Header + Urgent Threat of Power Cut'
+    targetVector: string; // e.g., 'Spoofed SMS Header + Urgent Threat of Power Disconnection'
     mockInterfaceType: 'sms' | 'email' | 'messaging' | 'browser' | 'phone_call' | 'qr_code';
-    mockInterfaceData: Record<string, unknown>; // e.g., sender, message text, timestamps
+    mockInterfaceData: Record<string, unknown>; // Uses fictional placeholders only
   };
 
   // The critical decision point
   decisionJunction: {
-    prompt: string; // "What do you do when this message arrives at 16:42 IST?"
+    prompt: string; // "What do you do when this message arrives?"
     choices: CounterfactualChoice[];
   };
 
   // Synthesis & Takeaways
   defensiveTakeaway: {
-    coreRule: string; // Golden Rule for this threat category
+    coreRule: string; // Primary defensive principle for this threat category
     statutoryFramework: {
-      act: string; // 'Information Technology Act, 2000'
-      section: string; // 'Section 66D'
+      act: string; // e.g., 'Information Technology Act, 2000'
+      section: string; // e.g., 'Section 66D'
       status: 'IN_FORCE' | 'ENACTED_FUTURE_COMMENCEMENT';
       plainSummary: string;
+      applicabilityNote?: string; // Explains conditional applicability based on factual elements
     }[];
     officialReportingProtocol: {
-      primaryChannel: '1930' | 'cybercrime.gov.in' | 'Bank Grievance';
+      primaryChannel: '1930' | 'cybercrime.gov.in';
       guidance: string;
     };
   };
@@ -181,49 +182,63 @@ export interface CounterfactualScenario {
 
 export interface CounterfactualChoice {
   id: string; // e.g., 'choice-panic-pay'
-  label: string; // 'Call the Private Mobile Number Immediately'
+  label: string; // 'Call the Private Number Provided in the Message'
   choiceType: 'reflexive-compliance' | 'passive-inaction' | 'active-verification';
-  shortAction: string; // 'Dialed 98112-04918 and paid ₹2,450 arrears via UPI link'
+  shortAction: string; // Brief summary of the specific action taken
   
   // The unfolding consequence chain
   consequence: {
-    immediateTitle: string; // 'T+5 Minutes: The Coerced Transaction'
-    immediateBody: string; // Narrative of what immediately happens
-    escalatedTitle: string; // 'T+24 Hours: Secondary Extraction & Compromise'
-    escalatedBody: string; // Narrative of next-day fallout (e.g. account draining)
+    immediateTitle: string; // e.g., 'Immediate Reaction: The Coerced Interaction'
+    immediateBody: string; // Explains the immediate technical/social engineering mechanism
+    escalatedTitle: string; // e.g., 'Potential Later Escalation: Secondary Risk'
+    escalatedBody: string; // Explains plausible downstream developments without guaranteeing an outcome
     impactAssessment: {
-      financial: 'Zero' | 'Low (Lost Arrears)' | 'Severe (Account Compromise)';
-      accountSafety: 'Compromised' | 'At Risk' | 'Secure';
-      legalPosition: 'Customer-Induced Transfer (Challenging Recovery)' | 'Zero Liability Defended';
+      financialExposure: 'None' | 'Potential loss of paid amount' | 'High risk of credential capture';
+      accountSafety: 'Secure' | 'At Risk' | 'Compromised';
+      legalConsiderations: string; // Objective legal summary; no categorical liability determinations
     };
-    whyItHappened: string; // Forensic explanation of the psychology and technical exploit
+    whyItHappened: string; // Forensic explanation of the psychological and technical dynamics
   };
 }
 ```
 
-### C. Client State Machine (`useCounterfactualSession`)
+### C. Client State Machine & Lifecycle (`useCounterfactualSession`)
 The learner's interaction within a scenario is managed entirely in React component memory:
 
 ```typescript
 interface CounterfactualState {
   currentScenario: CounterfactualScenario;
-  selectedChoiceId: string | null;
-  exploredChoiceIds: string[]; // Set of choices the learner has tested
-  activeView: 'briefing' | 'junction' | 'consequence' | 'comparison' | 'takeaway';
-  isComparisonUnlocked: boolean; // true when exploredChoiceIds.length >= 2
+  activeBranchId: string | null; // Currently selected choice
+  exploredBranchIds: string[]; // Set of choice IDs tested in the current session
+  currentStep: 'briefing' | 'junction' | 'consequence' | 'comparison' | 'takeaway';
+  consequenceStage: 'immediate' | 'escalated'; // View toggle for consequence timeline
+  isComparisonUnlocked: boolean; // Evaluated dynamically: exploredBranchIds.length >= 2
 }
 ```
 
-**State Transitions**:
-1. `ENTER_SCENARIO` $\longrightarrow$ displays `briefing` & simulated incoming alert.
-2. `PROCEED_TO_JUNCTION` $\longrightarrow$ displays `decisionJunction` with all available choices.
-3. `SELECT_CHOICE(id)` $\longrightarrow$ records `id` into `exploredChoiceIds`; sets `selectedChoiceId = id`; transitions to `consequence`.
-4. `REWIND_TO_JUNCTION` $\longrightarrow$ preserves `exploredChoiceIds`; resets `selectedChoiceId = null`; returns to `junction`. If `exploredChoiceIds.length >= 2`, unlocks the "Compare Outcomes" affordance.
-5. `VIEW_COMPARISON` $\longrightarrow$ transitions to `comparison`, rendering side-by-side columns of all explored paths.
-6. `FINISH_SCENARIO` $\longrightarrow$ transitions to `takeaway`, presenting the statutory summary and 1930 helpline guidance.
+#### Lifecycle State Transitions and Behavior
+1. **Switching Scenarios**: Navigating to another scenario completely resets in-memory branch exploration state (`activeBranchId: null`, `exploredBranchIds: []`, `currentStep: 'briefing'`).
+2. **Returning to a Previously Explored Scenario**: Initializes a fresh in-memory exploration session. If the scenario's slug exists in `localStorage`, the UI displays an "Explored" badge in the catalog, allowing the learner to explore alternative paths fresh or review the synthesis.
+3. **Refreshing the Browser**: Component state resets cleanly to `'briefing'` (or `'junction'`). No corrupted session states occur because state is not tied to persistent backend sessions. Any previously earned `localStorage` completion marker remains intact.
+4. **Rewinding to Junction**: Clicking "Rewind to Decision Point" sets `activeBranchId = null` and `currentStep = 'junction'`, while preserving `exploredBranchIds`. The decision junction visually indicates which choices have already been explored and prompts testing an unexamined choice.
+5. **Revisiting an Already-Explored Branch**: The learner can re-click an already-explored choice to re-read its consequence narrative without duplicating IDs in `exploredBranchIds`.
+6. **Resetting a Scenario**: A dedicated "Reset Exploration" button clears `exploredBranchIds` and returns the learner to `'junction'`.
+7. **Leaving Mid-Exploration**: Navigating away leaves zero partial writes on the server. `localStorage` is updated only if the learner reaches the final synthesis step.
 
-### D. Optional Progress Bookmark (Client-Side Only)
-To allow learners to remember which counterfactual scenarios they have explored without touching database records or backend schemas, completion status can be stored in the browser's `localStorage` (`cl_counterfactual_completed_slugs: string[]`). This matches our existing, proven pattern in `client/src/pages/Cases.jsx` (`completed_cases`).
+### D. Client-Side Completion Tracking Decision
+To allow learners to track their self-directed exploration without server persistence, the proposal establishes the following single canonical specification:
+
+- **Canonical Key Name**: `cl_counterfactual_completed_slugs` (stored as a JSON stringified array of scenario slugs in `localStorage`).
+- **Completion Trigger**: A scenario slug is added to `cl_counterfactual_completed_slugs` **only when the learner reaches Step 8 (Statutory Takeaway & Synthesis)** after exploring at least one branch. Merely opening or previewing a scenario does not mark it complete.
+- **Three Discrete UI States**:
+  - `Unstarted`: Slug is not present in `cl_counterfactual_completed_slugs` and `exploredBranchIds.length === 0`.
+  - `In Progress`: Learner is actively testing branches in the current session (`exploredBranchIds.length > 0`), but has not reached the final synthesis.
+  - `Explored`: Slug exists in `cl_counterfactual_completed_slugs`. The catalog renders a clean `Explored` badge with an action to `Explore Again`.
+- **Strict Invariants**:
+  - `cl_counterfactual_completed_slugs` is strictly a local browser convenience marker.
+  - It is **not** verified defensive learning evidence and must **never** be piped into the Verified Defensive Learning Portfolio.
+  - It must **not** modify `UserProgress`, `completedPathways`, `completedModules`, `spacedReviews`, quiz recalls, or behavioral assessment metrics.
+  - No server-side persistence or telemetry collection will be introduced.
 
 ---
 
@@ -232,13 +247,13 @@ To allow learners to remember which counterfactual scenarios they have explored 
 The proposed experience follows a clear, 8-step cognitive arc:
 
 ```
-[ Step 1: Encounter ] ──> Enter everyday digital dilemma (Realistic mock SMS / Email / Call)
+[ Step 1: Encounter ] ──> Enter everyday digital dilemma (Fictional mock SMS / Email / Call)
         │
 [ Step 2: Junction ]  ──> Reach critical decision point with 2–3 actionable choices
         │
-[ Step 3: Selection ] ──> Select one action (e.g. Choice A: Panic Compliance)
+[ Step 3: Selection ] ──> Select one action (e.g. Choice A: Reflexive Compliance)
         │
-[ Step 4: Downstream] ──> Experience hypothetical consequences (T+5 mins & T+24 hrs)
+[ Step 4: Downstream] ──> Experience plausible consequences (Immediate vs. Potential Escalation)
         │
 [ Step 5: Rewind ]    ──> Click "Rewind & Try Another Choice" ──┐
         │                                                       │
@@ -253,77 +268,82 @@ The proposed experience follows a clear, 8-step cognitive arc:
 
 ### Key Interaction Details
 
-#### 1. Authentic Incoming Stimulus (Restrained Editorial Mock)
+#### 1. Simulated Stimulus with Fictional Placeholders
 Learners see a clean, authentic visual mock of the stimulus using the portal's existing restrained design tokens (warm ivory ground `#f8f7f1`, deep navy `#0f2537`, hairline borders `#e6e5e0`).
-- *Example*: A simulated phone screen showing an incoming SMS from `VK-PSPCL-ALRT` threatening disconnection in 5 hours unless a private mobile number is contacted.
+- *Fictional Identifiers*: All phone numbers, links, and accounts use unmistakably fictional placeholders (e.g., `+91-00000-00000`, `alert-utility.example.invalid`, `consumer-account-0000`).
 
 #### 2. The Decision Junction
 The learner is presented with three distinct, relatable choices:
-- **Choice A (Reflexive Compliance)**: Dial the number immediately and follow the "officer's" instructions to clear the ₹2,450 balance.
-- **Choice B (Passive Inaction)**: Delete the message and ignore it, assuming it is spam.
-- **Choice C (Active Independent Verification)**: Open the official state utility portal or app, log in using the registered Consumer Account Number, and check arrears independently.
+- **Choice A (Reflexive Compliance)**: Contact the provided private number or link immediately to address the stated urgency.
+- **Choice B (Passive Inaction)**: Delete or ignore the message without verifying account status.
+- **Choice C (Active Independent Verification)**: Access the official service portal or application via independently known channels using registered account identifiers.
 
-#### 3. Experiencing Downstream Consequences
-Choosing an option immediately unfolds an editorial consequence timeline:
-- **T+5 Minutes**: The caller answers, confirms the "disconnection order," and sends an instant payment link requesting ₹2,450.
-- **T+24 Hours**: The payment link was a phishing gateway. ₹48,000 was debited overnight, and the electricity bill remains unpaid because the utility never received the funds.
-- **Forensic Breakdown**: Explains how artificial urgency suppresses rational skepticism.
+#### 3. Experiencing Downstream Consequences (Plausible Causal Modeling)
+Choosing an option unfolds an editorial consequence timeline that explains *how* technical and psychological factors interact:
+- **Immediate Reaction**: The initial interaction (e.g., caller confirms an alleged disconnection order and provides an unverified payment link).
+- **Potential Later Escalation**: Plausible downstream developments (e.g., unverified payment portals may capture card details, or fake callers may re-contact demanding additional fees).
+- **Forensic Mechanism**: Explains that artificial urgency suppresses critical pauses, prompting instinctive compliance.
+- *Strict Rule*: No arbitrary financial figures or unsupported time durations are asserted as inevitable facts. Any monetary figures are explicitly identified as illustrative examples.
 
 #### 4. The "Rewind & Fork" Affordance
 A prominent, encouraging action bar appears:
-> *"You've seen what happens when you call the number. What would happen if you chose Active Verification instead?"*  
+> *"You have examined the plausible consequences of contacting the provided number. What would happen if you chose Active Verification instead?"*  
 > `[ ↺ Rewind to Decision Point ]`
 
-Clicking returns the learner to the decision junction, visually highlighting that Choice A has already been explored and prompting them to test Choice B or C.
+Clicking returns the learner to the decision junction, visually highlighting that Choice A has already been explored and encouraging testing an alternative path.
 
 #### 5. Unlocked Comparative Synthesis
-Once at least two paths have been explored, a **"Compare Explored Outcomes"** banner unlocks. Clicking it renders a side-by-side comparison table:
-- What happened in Choice A (Panic) vs Choice C (Verification).
-- Financial difference (₹48,000 lost vs ₹0 lost).
-- Time investment (3 hours on phone with police vs 2 minutes on official app).
-- Legal status (Customer-authorized transfer vs Zero customer liability).
+Once at least two paths have been explored, a **"Compare Explored Outcomes"** banner unlocks. Clicking it renders a side-by-side comparison table contrasting:
+- Decision strategy (Compliance vs. Inaction vs. Verification).
+- Plausible operational and financial exposure.
+- Key legal considerations (distinguishing voluntary transfers under deception from unauthorized access).
+- Practical next steps.
 
 #### 6. Practical Defensive Lesson & Statutory Hook
 The experience concludes with a structured takeaway card:
-- **Statutory Hook**: IT Act § 66D (Cheating by Personation) & BNS § 318(4) (Fraud). Explains that statutory utilities never dispatch individual officers with private mobile numbers to demand instantaneous payment.
-- **Action Protocol**: If funds were transferred, dial **1930** within the Golden Hour to trigger CFCFRMS inter-bank hold coordination.
+- **Statutory Framework**: Explains relevant provisions of the IT Act 2000 and BNS 2023 with verified commencement status.
+- **Reporting Protocol**: Guidance on reporting cyber fraud via Helpline **1930** and portal `https://cybercrime.gov.in`.
 
 ---
 
 ## 7. Initial Curriculum: Four High-Frequency Dilemmas
 
-To provide immediate, high-value coverage without content clutter, Stage 3 will introduce four representative scenarios addressing the most common cyber threats in India:
+To provide structured, high-value coverage without content clutter, Stage 3 introduces four representative scenarios addressing common cyber threat patterns in India:
 
-| Scenario Title | Incident Vector | Decision Choices | Primary Statutory Grounding |
+| Scenario Title | Incident Vector & Simulated Stimulus | Decision Choices | Primary Statutory Grounding & Applicability Notes |
 | :--- | :--- | :--- | :--- |
-| **1. The Midnight Power Cut SMS** | SMS spoofing with private mobile contact and artificial 5-hour cutoff. | 1. Call private mobile and pay.<br>2. Delete and ignore.<br>3. Verify on official utility app. | **IT Act § 66D** (Cheating by Personation)<br>**BNS § 318(4)** (Cheating & Deception) |
-| **2. The Nominal ₹15 Parcel Fee** | Delivery exception SMS with a deceptive `.top` domain link for address update. | 1. Enter card details to pay ₹15.<br>2. Wait for delivery boy to arrive.<br>3. Track AWB on official logistics portal. | **IT Act § 66C** (Identity & Credential Theft)<br>**BNS § 319** (Cheating by Personation) |
-| **3. The "Approve Payment" QR Code** | Classified marketplace buyer sends a QR code claiming it "receives funds." | 1. Scan QR and enter UPI PIN.<br>2. Ask buyer for cash on delivery.<br>3. Check bank passbook balance directly. | **IT Act § 43** (Unauthorized Access & Damage)<br>**RBI UPI Security Directives** |
-| **4. The Video Summons "Digital Arrest"** | Skype video call from fake police alleging money laundering and demanding escrow. | 1. Stay on call and transfer funds.<br>2. Hang up and call Helpline 1930.<br>3. Argue with caller on video. | **BNS § 204** (Impersonating Public Servant)<br>**BNS § 308** (Extortion) |
+| **1. The Midnight Power Cut SMS** | SMS purporting to be from an electricity board, using an unofficial private mobile number (`+91-00000-00000`) and an artificial 5-hour cutoff. | 1. Contact private number and follow payment directions.<br>2. Delete and ignore message.<br>3. Verify account balance on official utility portal independently. | **BNS § 318(4)** (Cheating and dishonestly inducing delivery of property) applies to fraudulently obtaining funds.<br>**IT Act § 66D** (Cheating by personation using computer resource) applies conditionally if computer/telecom resources were used to personate a utility official.<br>*Note*: Statutory utilities do not dispatch individual officers with private mobile numbers to demand immediate payment. |
+| **2. The Nominal ₹15 Parcel Fee** | Delivery exception SMS with a deceptive link (`delivery-update.example.invalid`) requesting address update and a nominal ₹15 fee. | 1. Access link and enter card credentials to pay ₹15.<br>2. Wait for delivery courier without checking.<br>3. Track AWB code on official logistics portal directly. | **BNS § 318(4)** / **BNS § 319** (Cheating by personation) applies to fraudulent misrepresentation.<br>**IT Act § 66C** (Identity theft) applies *conditionally* if payment card details, passwords, or unique credentials are harvested and misused. If only money was paid without harvesting identity features, § 66C does not apply. |
+| **3. The "Approve Payment" QR Code** | Classified marketplace buyer sends a QR code claiming it "receives" funds for a listed item. | 1. Scan QR and enter UPI PIN.<br>2. Request cash on delivery or direct bank account transfer.<br>3. Verify account credit directly via banking passbook. | **BNS § 318(4)** (Cheating and dishonestly inducing delivery of property) applies to inducing voluntary payment authorization through deception.<br>**IT Act § 66D** applies conditionally if personation occurred.<br>**RBI UPI Security Directives**: UPI architecture is strictly push-to-pay. Entering a UPI PIN is exclusively an authorization to debit funds.<br>*Correction Note*: IT Act § 43 does **not** apply to voluntary PIN entry on a user's own device; § 43 governs unauthorized system access, extraction, or damage. |
+| **4. The Video Summons "Digital Arrest"** | Video call alleging money laundering, displaying forged police insignia, and demanding fund transfer to a "verification account." | 1. Comply with demands and transfer funds.<br>2. Terminate call immediately and report to Helpline 1930.<br>3. Argue with caller while remaining on video. | **BNS § 204** (Impersonating a public servant).<br>**BNS § 308** (Extortion by putting person in fear of injury/arrest).<br>**BNS § 318(4)** (Cheating).<br>**IT Act § 66D** (Cheating by personation using computer resource).<br>*Statutory Clarification*: "Digital Arrest" has no basis in Indian law. Summons and arrests are governed strictly by CrPC/BNSS statutory procedures. Real law enforcement agencies never conduct video interrogations demanding funds transfer to "safe accounts." |
 
 ---
 
 ## 8. Non-Negotiable Invariants & Safeguards
 
-### A. Absolute Assessment Isolation
-1. **Zero Database Writes**: Counterfactual exploration will not create, update, or delete any records in `AssessmentSession` or `AssessmentDecision`.
-2. **Zero Scoring Execution**: `assessmentScoringService.js` will never be imported or called by counterfactual components.
-3. **Immutable Baseline & Final Scores**: Counterfactual interactions will not alter learner behavioral scores (`TR`, `SI`, `VB`, `DQ`, `FP`, `UA`), radar habit profiles, baseline-final deltas, or diagnostic portfolios.
-4. **No Prerequisite Interference**: Completing or skipping counterfactual scenarios will have zero impact on the prerequisite check for Final Assessment (`403 PREREQUISITE_NOT_MET`).
+### A. Measurable Assessment Isolation
+1. **Zero Scoring Execution**: Counterfactual components must not import or invoke `assessmentScoringService.js`.
+2. **Zero Assessment Writes**: Counterfactual interactions must not create, update, or delete any records in `AssessmentSession` or `AssessmentDecision`.
+3. **Immutable Diagnostic History**: Counterfactual interactions must not modify learner behavioral scores (`TR`, `SI`, `VB`, `DQ`, `FP`, `UA`), radar habit profiles, baseline-final deltas, or diagnostic portfolios.
+4. **No Prerequisite Interference**: Completing or skipping counterfactual scenarios must not alter the prerequisite check for Final Assessment (`403 PREREQUISITE_NOT_MET`).
+5. **No Telemetry Bleed**: No counterfactual decision data may be transmitted to or stored in backend assessment endpoints.
 
 ### B. Learning Separation
-1. **UserProgress Protection**: Counterfactual activity will not modify `UserProgress` collections (`completedPathways`, `completedModules`, `spacedReviews`).
-2. **Portfolio Boundary**: Counterfactual scenarios will not award verified defensive badges or alter formal certification evidence without separate, future user authorization.
+1. **UserProgress Protection**: Counterfactual activity must not write to or mutate `UserProgress` collections (`completedPathways`, `completedModules`, `spacedReviews`).
+2. **Portfolio Boundary**: Counterfactual scenarios do not award verified defensive badges or alter formal certification evidence.
 
-### C. Safety and Privacy
-1. **Zero Credential Capture**: Mock interfaces (simulated banking apps, SMS inputs) will discard all learner keystrokes immediately.
-2. **No Real PII or Financial Identifiers**: All account numbers, UPI IDs, telephone numbers, and addresses are strictly synthetic and invalid (e.g. `98110-XXXXX`, `pspcl-alert.top`).
+### C. Synthetic Data and Mock Safety
+1. **Unmistakably Fictional Placeholders**: All telephone numbers, account numbers, UPI IDs, URLs, and addresses must use unmistakably fictional placeholders (e.g. `+91-00000-00000`, `user@example.invalid`, `portal.example.invalid`).
+2. **No Real PII or Active Payment Destinies**: No functional phishing links, active QR payment codes, or real personal information may be used.
+3. **Zero Credential Capture**: Mock interfaces must not request or retain actual passwords, OTPs, UPI PINs, card numbers, or credentials. Any simulated input fields must discard text immediately.
 
 ### D. Educational and Statutory Integrity
-1. **Clear Scenario Classification**: Scenarios will be explicitly badged as `Educational Simulation: Counterfactual "What If?" Exploration`, cleanly distinguishing them from historical documented police case archives (`CaseStudy`).
-2. **Statutory Accuracy**: All legal references will accurately cite primary statutes (IT Act 2000, BNS 2023, DPDP Act 2023) and explicitly disclose commencement status (`IN_FORCE` vs. `ENACTED_FUTURE_COMMENCEMENT`).
-3. **No Formal Legal Advice Disclaimer**: Standard educational disclaimer will accompany all statutory takeaways.
-4. **Emergency Reporting Protocol**: Directs victims immediately to National Cybercrime Helpline **1930** and portal `cybercrime.gov.in` (including the 2–3 hour Golden Hour and CFCFRMS inter-bank hold coordination) without guaranteeing fund freezes or recovery.
+1. **Clear Scenario Classification**: Every counterfactual scenario must display a clear, prominent disclosure:
+   > *"Educational Simulation: Hypothetical Counterfactual Model. Scenarios and consequence branches are educational models designed to teach causal reasoning and defensive habits. They do not represent specific individuals, documented cases, or guaranteed legal/financial outcomes."*
+2. **Preservation of CaseStudy Distinction**: Counterfactual simulations are strictly decoupled from documented historical incident archives (`CaseStudy`).
+3. **Statutory Accuracy**: All legal references cite primary statutes (IT Act 2000, BNS 2023, DPDP Act 2023) with explicit commencement status (`IN_FORCE` vs. `ENACTED_FUTURE_COMMENCEMENT`). Provisions of the DPDP Act 2023 that are enacted but pending operational commencement (e.g., G.S.R. 843(E)) are explicitly identified as non-operative.
+4. **No Categorical Liability Guarantees**: Educational content must not claim "zero customer liability" or promise specific financial recovery. Content will state that liability and recovery depend on factual circumstances, applicable legal and regulatory rules, bank procedures, and law enforcement findings.
+5. **Emergency Reporting Protocol**: Directs victims immediately to National Cybercrime Helpline **1930** and portal `https://cybercrime.gov.in`. Content will explain that prompt reporting supports coordination through inter-bank mechanisms (CFCFRMS) to hold funds before secondary withdrawal, without guaranteeing fund recovery. Fixed or universal "Golden Hour" time claims must not be asserted.
 
 ### E. Visual Redesign Freeze Adherence
 1. Strictly adheres to the current visual foundation: warm ivory background (`#f8f7f1`), deep institutional navy (`#0f2537`), restrained blue accents (`#2563eb`), hairline borders (`#e6e5e0`), and Inter typography.
@@ -337,39 +357,42 @@ When Stage 3 implementation is authorized, acceptance will be governed by the fo
 
 ### Acceptance Criteria
 - **AC-1 (Catalog Presentation)**: Learners can browse and select from the 4 calibrated counterfactual scenarios in `/workspace/counterfactuals`.
-- **AC-2 (Incident Stimulus)**: Each scenario accurately renders realistic incoming stimuli (SMS, email, video summons, QR code) using responsive, accessible mock interface components.
-- **AC-3 (Multi-Branch Consequence Rendering)**: Learners can select any of the 2–3 available choices and view a multi-stage consequence timeline (Immediate vs. Escalated).
-- **AC-4 (Rewind & Forking)**: Learners can rewind to the decision junction at any time, select alternative paths, and experience alternative consequences without page reload.
-- **AC-5 (Comparative Synthesis)**: Once at least two branches have been explored, a side-by-side comparative matrix is unlocked, contrasting consequences, financial impacts, and legal positions.
-- **AC-6 (Statutory & Reporting Takeaways)**: Each scenario concludes with an accurate statutory card and emergency 1930 reporting guidance.
-- **AC-7 (Absolute Assessment Isolation)**: Automated audit verifies zero writes to `AssessmentSession` or `AssessmentDecision`, zero calls to `assessmentScoringService`, and zero changes to existing diagnostic baseline/final scores.
-- **AC-8 (Clean Build & Responsive Accessibility)**: Clean Vite production build, zero linter warnings, full keyboard navigation (focus states, Escape dismissal), and zero horizontal overflow on mobile viewports ($\le 900\text{px}$).
+- **AC-2 (Incident Stimulus with Fictional Placeholders)**: Each scenario accurately renders realistic incoming stimuli using fictional, non-functional placeholders (`+91-00000-00000`, `example.invalid`) and accessible mock interface components.
+- **AC-3 (Multi-Branch Consequence Rendering)**: Learners can select any of the available choices and view a multi-stage consequence timeline explaining technical and psychological mechanisms without arbitrary figures.
+- **AC-4 (Rewind & Forking)**: Learners can rewind to the decision junction at any time, select alternative paths, and view alternative consequences without network latency or page reloads.
+- **AC-5 (Comparative Synthesis Matrix)**: Exploring at least two branches unlocks a side-by-side comparative matrix contrasting choices, exposure, and objective legal considerations.
+- **AC-6 (Statutory & Reporting Guidance)**: Each scenario concludes with an accurate statutory card disclosing commencement status and Helpline 1930 guidance without categorical liability claims or recovery guarantees.
+- **AC-7 (Measurable Assessment Isolation)**:
+  - Counterfactual components must not import or invoke `assessmentScoringService`.
+  - Counterfactual interactions must perform zero writes to `AssessmentSession` or `AssessmentDecision`.
+  - Automated integration test verifies that `AssessmentSession.countDocuments()` and `AssessmentDecision.countDocuments()` remain unchanged before and after counterfactual traversal.
+  - Existing assessment lifecycle tests (`aq4_integrated_lifecycle.test.js`, `scoring_v2_authoritative.test.js`) continue passing 100% green.
+- **AC-8 (Responsive Accessibility & Clean Build)**: Clean Vite production build, zero linter errors, full keyboard navigation (focus states, Escape dismissal), and zero horizontal overflow on mobile viewports ($\le 900\text{px}$).
 
 ### Validation Strategy
-1. **Automated Component & Contract Tests**: Unit test suites validating graph traversal, state transitions (`useCounterfactualSession`), and comparative unlocking logic.
-2. **Assessment Isolation Test**: Automated integration test confirming that running all counterfactual scenarios leaves `AssessmentSession.countDocuments()` and `AssessmentDecision.countDocuments()` completely unchanged.
-3. **Playwright Live Browser Test**: End-to-end browser smoke test traversing scenario branching, rewinding to test alternative choices, unlocking the comparison matrix, and capturing screenshots.
-4. **Client Production Build**: Verifying 0 errors and sub-second build performance via `npm run build --prefix client`.
+1. **Automated Component & State Tests**: Unit test suites validating graph traversal, state transitions (`useCounterfactualSession`), and comparative unlocking logic.
+2. **Assessment Isolation Integration Test**: Automated integration test confirming that running counterfactual scenarios produces zero writes to `AssessmentSession`, `AssessmentDecision`, or `UserProgress`.
+3. **Playwright Live Browser Smoke Test**: End-to-end browser test traversing scenario branching, rewinding to test alternative choices, unlocking the comparison matrix, and capturing screenshots.
+4. **Client Production Build Verification**: Verifying 0 errors and sub-second build performance via `npm run build --prefix client`.
 
 ---
 
-## 10. Risks, Outstanding Decisions & Next Steps
+## 10. Unresolved Decisions & Next Steps
 
-### Outstanding Decisions for User Review
-1. **Navigation Placement**:
-   - *Option 1 (Recommended)*: Add "Counterfactuals" directly to the Workspace Sidebar under the "Your Learning" section (between Lessons and Quizzes).
-   - *Option 2*: Group Counterfactuals as an interactive tab inside the Case Studies Archive (`/workspace/cases`).
-   - *Recommendation*: Option 1 is superior because counterfactual simulations are active decision-making experiences, distinct from reading historical case dossiers.
-2. **Completion Marker**:
-   - *Decision*: Confirm whether completing a counterfactual scenario should record a lightweight slug in client `localStorage` (`completed_counterfactuals`) to show a clean "Explored" badge in the catalog, without touching server database schemas.
+### Genuinely Unresolved Decisions for User Review
+1. **Navigation IA Confirmation**:
+   - *Proposal*: Place "Counterfactuals" directly in the Workspace Sidebar under the "Your Learning" section (between Lessons and Quizzes) at `/workspace/counterfactuals`.
+   - *User Decision Required*: Confirm whether this placement is approved, or if Counterfactuals should be grouped elsewhere.
+2. **Completion Marker Key Confirmation**:
+   - *Proposal*: Use `cl_counterfactual_completed_slugs` in client `localStorage` as the single canonical key.
+   - *User Decision Required*: Confirm approval of this key name and its trigger event (reaching Step 8 synthesis).
 
 ### Prioritized Next Actions
-1. **User Review**: Review this proposal (`STAGE_3_COUNTERFACTUAL_DESIGN_PROPOSAL.md`).
+1. **User Review**: Review this revised proposal (`STAGE_3_COUNTERFACTUAL_DESIGN_PROPOSAL.md`).
 2. **Formal Authorization**: Await user approval of this design proposal before beginning any implementation work.
-3. **Wave 1 Execution (Upon Approval)**: Define declarative scenario data fixtures and core graph structures.
-4. **Wave 2 Execution (Upon Approval)**: Build responsive client explorer components (`CounterfactualExplorer.jsx`, `DecisionJunction.jsx`, `ConsequenceTimeline.jsx`, `ComparativeMatrix.jsx`).
+3. **Wave 1 Execution (Upon Approval)**: Define declarative scenario data fixtures for the 4 core dilemmas.
+4. **Wave 2 Execution (Upon Approval)**: Implement client components (`CounterfactualExplorer`, `DecisionJunction`, `ConsequenceTimeline`, `ComparativeMatrix`).
 5. **Wave 3 Execution (Upon Approval)**: Conduct end-to-end testing, Playwright verification, and documentation synchronization.
 
 ---
 *Report prepared for formal architectural review. Implementation work remains strictly paused.*
-

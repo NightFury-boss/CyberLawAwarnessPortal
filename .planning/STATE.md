@@ -6,7 +6,7 @@
   - `Stage 2`: Assessment Quality & Reliability — **COMPLETED & FORMALLY CLOSED** (AQ-1, AQ-2, AQ-3, AQ-4 Accepted)
   - `Stage 3`: Counterfactual Scenario Learning — **PLANNING IN PROGRESS**
     - Architecture audit & feasibility evaluation: **COMPLETED**
-    - Formal Design Proposal: **PREPARED** ([`.planning/STAGE_3_COUNTERFACTUAL_DESIGN_PROPOSAL.md`](file:///c:/Users/Asus/Desktop/cyber-law-portal/.planning/STAGE_3_COUNTERFACTUAL_DESIGN_PROPOSAL.md))
+    - Revised Design Proposal (Review Findings Addressed): **PREPARED** ([`.planning/STAGE_3_COUNTERFACTUAL_DESIGN_PROPOSAL.md`](file:///c:/Users/Asus/Desktop/cyber-law-portal/.planning/STAGE_3_COUNTERFACTUAL_DESIGN_PROPOSAL.md))
     - Implementation: **STRICTLY UNAUTHORIZED** (Awaiting user review and approval)
   - `Stage 4`: Digital Rights & Privacy Education (Original Phase 5) — **PENDING**
   - `Stage 5`: Spaced Retrieval & Long-Term Retention (RT-1..4) — **PENDING**
@@ -79,13 +79,13 @@ The following structural specifications remain invariant:
    - `STRUCK_DOWN_HISTORICAL`: IT Act 2000 § 66A struck down in *Shreya Singhal v. Union of India (2015)*.
 5. **Cybercrime Emergency Reporting Principles**:
    - Directs victims immediately to National Cybercrime Helpline **1930** and official portal `https://cybercrime.gov.in`.
-   - Mentions CFCFRMS and Golden Hour reporting without guaranteeing fund recovery.
+   - Explains prompt reporting supports CFCFRMS inter-bank hold coordination without guaranteeing fund recovery, avoiding fixed "Golden Hour" claims.
 
 ---
 
 ## 4. Current Execution Boundary & Immediate Next Action
-- **Current Position**: Stage 3 (Counterfactual Scenario Learning) **PLANNING IN PROGRESS**. Formal design proposal prepared in [`.planning/STAGE_3_COUNTERFACTUAL_DESIGN_PROPOSAL.md`](file:///c:/Users/Asus/Desktop/cyber-law-portal/.planning/STAGE_3_COUNTERFACTUAL_DESIGN_PROPOSAL.md).
-- **Next Canonical Step**: User review and formal decision on the Stage 3 design proposal.
+- **Current Position**: Stage 3 (Counterfactual Scenario Learning) **PLANNING IN PROGRESS**. Revised formal design proposal prepared in [`.planning/STAGE_3_COUNTERFACTUAL_DESIGN_PROPOSAL.md`](file:///c:/Users/Asus/Desktop/cyber-law-portal/.planning/STAGE_3_COUNTERFACTUAL_DESIGN_PROPOSAL.md).
+- **Next Canonical Step**: User review and formal decision on the revised Stage 3 design proposal.
 - **Strict Authorization Boundary**: Stage 3 **implementation remains strictly unauthorized**. Zero product code, database schemas, API routes, scenario seeds, or test suites may be modified until explicit user authorization is provided.
 - **Strict Invariants**: All Stage 1 and Stage 2 assessment scoring invariants, six-dimensional behavioral rubrics, immutable historical assessment sessions, and visual redesign freeze rules remain strictly enforced.
 - **Deferred Workstream**: Post-Development Design Improvement is strictly deferred to [`.planning/DESIGN_IMPROVEMENT_BACKLOG.md`](file:///c:/Users/Asus/Desktop/cyber-law-portal/.planning/DESIGN_IMPROVEMENT_BACKLOG.md).
