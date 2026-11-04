@@ -1,7 +1,7 @@
 # Cyber Law Awareness Portal — Canonical Development Roadmap
 
 **Governance Principle**: Technical & Educational Foundation First, Broad Visual Redesign Later  
-**Current Milestone Position**: Stage 3 — Counterfactual Scenario Learning (Wave 1 Data Fixtures Completed; Wave 2 & 3 Implementation Unauthorized)  
+**Current Milestone Position**: Stage 3 — Counterfactual Scenario Learning (Wave 1 Implemented, Product-Owner Content Acceptance Pending; Wave 2 & 3 Unauthorized)  
 **Historical Baseline**: Milestone 3.3 Learner Experience Structural Freeze Formally Closed; Stage 2 Formally Accepted & Closed  
 
 ---
@@ -30,10 +30,10 @@ The development of the Cyber Law Awareness Portal follows a strict, sequential 6
                                            |
                                            v
 +---------------------------------------------------------------------------------------+
-| STAGE 3: Counterfactual Scenario Learning (IN PROGRESS — Wave 1 Fixtures Completed)   |
+| STAGE 3: Counterfactual Scenario Learning (IN PROGRESS — Wave 1 Acceptance Pending)   |
 | • Educational simulations of alternative decision branches & outcomes                 |
 | • "What happens when...?" exploration without modifying immutable assessment records |
-| • Wave 1: 4 Declarative Scenario Data Fixtures Completed & Tested [COMPLETED]         |
+| • Wave 1: 4 Scenario Data Fixtures Implemented (Content Acceptance Pending)           |
 | • Wave 2 (Components) & Wave 3 (Verification): Unauthorized pending user approval     |
 +---------------------------------------------------------------------------------------+
                                            |
@@ -129,19 +129,18 @@ Structural and navigation milestones:
 ---
 
 ### Stage 3 — Counterfactual Scenario Learning
-**Status**: IN PROGRESS (Wave 1 Data Fixtures Completed; Wave 2 & Wave 3 Unauthorized)
+**Status**: IN PROGRESS (Wave 1 Implemented, Content Acceptance Pending; Wave 2 & Wave 3 Unauthorized)
 
 > [!IMPORTANT]
-> The product owner authorized Wave 1 implementation on 2026-11-04 under Option A (content-driven, client-side exploration).
+> The product owner authorized Wave 1 implementation on 2026-11-04 under Option A (content-driven, client-side exploration). Targeted content and test guardrail corrections were applied on 2026-11-04 following product-owner review.
 > 
-> **Wave 1 Status: COMPLETED**
-> - Authored declarative scenario data fixtures in [`client/src/data/counterfactualScenarios.js`](file:///c:/Users/Asus/Desktop/cyber-law-portal/client/src/data/counterfactualScenarios.js) covering the 4 authorized fictional educational simulations:
+> **Wave 1 Status: IMPLEMENTED (Content Acceptance Pending Review)**
+> - Authored and corrected declarative scenario data fixtures in [`client/src/data/counterfactualScenarios.js`](file:///c:/Users/Asus/Desktop/cyber-law-portal/client/src/data/counterfactualScenarios.js) covering the 4 authorized fictional educational simulations:
 >   1. The Midnight Power Cut SMS (`cf-midnight-power-cut-sms`)
 >   2. The Nominal ₹15 Parcel Fee (`cf-nominal-parcel-fee`)
 >   3. The "Approve Payment" QR Code (`cf-approve-payment-qr`)
 >   4. The Video Summons "Digital Arrest" (`cf-video-summons-digital-arrest`)
-> - Verified with 5 comprehensive test suites in [`server/tests/counterfactualFixtures.test.js`](file:///c:/Users/Asus/Desktop/cyber-law-portal/server/tests/counterfactualFixtures.test.js) (5/5 passed, 100% green).
-> - Factually grounded in verified statutory frameworks (BNS §§ 318(4), 319, 308; IT Act §§ 66D, 66C; BNSS Chapters V & VI § 35(3) with § 531 savings; Electricity Act § 56(1); operative RBI Master Directions).
+> - Verified content guardrails with 5 comprehensive test suites in [`server/tests/counterfactualFixtures.test.js`](file:///c:/Users/Asus/Desktop/cyber-law-portal/server/tests/counterfactualFixtures.test.js) (5/5 passed, 100% green), including recursive deep immutability checks, BNSS Section 530 recognition of legitimate electronic court proceedings, distinguished Chapter V police notice to appear from Chapter VI summons, distinguished customer-authorized deceptive payments from unauthorized debits, and removed unsupported predictions.
 > - Strict multi-tier isolation enforced: 0 imports of backend models or scoring services; zero backend persistence, sessions, or telemetry.
 >
 > **Wave 2 & Wave 3 Implementation Boundary**:
@@ -236,7 +235,7 @@ To eliminate past ambiguity across planning documents, the following table forma
 | :--- | :--- | :--- | :--- |
 | **Stage 1: Core Learner Experience** | Phases 1, 2, 3 / Milestones 3.1, 3.2, 3.3 | **COMPLETED & FROZEN** | Registration, baseline assessment, 6-metric profile, pathways, final assessment, navigation fixes, structural freeze. |
 | **Stage 2: Assessment Quality & Reliability** | "Phase 4.1", "Phase 4.2", "Phase 4.3", "Phase 4.4" / AQ-1..4 | **COMPLETED & FORMALLY CLOSED** | Independent assessment-hardening workstream: AQ-1 (Audit complete), AQ-2 (Design v2.5.0 approved), AQ-3 (Implementation verified), AQ-4 (Integrated validation complete & accepted). Stage 2 closed. |
-| **Stage 3: Counterfactual Scenario Learning** | Original Phase 4 | **IN PROGRESS (Wave 1 Completed)** | Educational alternative-choice simulations ("What happens if...?"). Wave 1 (4 data fixtures) completed & verified in `client/src/data/counterfactualScenarios.js`. Wave 2 & 3 unauthorized. |
+| **Stage 3: Counterfactual Scenario Learning** | Original Phase 4 | **IN PROGRESS (Wave 1 Content Acceptance Pending)** | Educational alternative-choice simulations ("What happens if...?"). Wave 1 (4 data fixtures) implemented in `client/src/data/counterfactualScenarios.js` with targeted content corrections applied; content acceptance pending review. Wave 2 & 3 unauthorized. |
 | **Stage 4: Digital Rights & Privacy Education** | Original Phase 5 | **PENDING** | Curriculum expansion: personal data, consent, privacy, copyright, piracy, malware. |
 | **Stage 5: Spaced Retrieval & Long-Term Retention** | Separate Retention Initiative / RT-1..4 | **PENDING** | Dedicated retention workstream: audit existing recall, propose improvements, implement, and validate. Separate from behavioral scoring. |
 | **Stage 6: Dashboard Integration & Refinement** | Original Phase 6 | **PENDING** | Macro journey integration connecting all assessment, curriculum, counterfactual, and retention streams. |

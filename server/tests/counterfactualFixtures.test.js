@@ -6,22 +6,46 @@
  * 1. Schema conformity across all 4 scenarios.
  * 2. Tri-branch completeness (reflexive-compliance, passive-inaction, active-verification).
  * 3. Causal plausibility and distinct consequence branches.
- * 4. Safety & privacy constraints (.invalid domains, fictional identifiers, no credentials).
- * 5. Legal accuracy:
+ * 4. Safety & privacy constraints across entire fixture content (.invalid domains, fictional identifiers, no credentials).
+ * 5. Content Guardrails & Statutory Framework Assertions:
  *    - BNSS § 35(3) police notice to appear vs Chapter VI court summons.
+ *    - BNSS § 530 electronic proceedings recognition (trials via video conferencing permitted under law).
+ *    - Absence of false claims that police confirmed no warrant exists.
+ *    - Absence of unsupported predictions ("most victims" comply, fixed two-hour escalation, inevitable total loss).
  *    - BNS § 308 extortion conditional statutory elements.
  *    - BNS § 319 cheating by personation conditional applicability.
  *    - IT Act § 66C identity theft conditional applicability.
- *    - UPI PIN debit-only authorization invariant.
+ *    - UPI PIN debit authorization invariant without classifying customer-authorized payments as automatically unauthorized.
  *    - IT Act § 43 inapplicability to voluntary PIN entry.
- *    - Zero liability / fund freezing / recovery non-guarantee.
+ *    - Fact-qualified Electricity Act § 56(1) notice requirement.
+ *    - Master Direction on Customer Service in Banks for cardholder liability, avoiding outdated 2022 conduct directions.
+ *    - Zero liability / fund freezing / recovery non-guarantee (CFCFRMS supports possible holds, not guaranteed freezing).
  *    - No unsupported universal Golden Hour claims.
- * 6. Multi-tier isolation and immutability (frozen objects, zero assessment imports).
+ * 6. Multi-tier isolation and recursive deep immutability (recursive freeze check, zero assessment/server imports).
  */
 
 const assert = require('assert');
 const path = require('path');
 const fs = require('fs');
+
+/**
+ * Recursively verifies that an object and all its nested objects and arrays are frozen.
+ * @param {unknown} item - Target to check
+ * @param {string} currentPath - Breadcrumb path for error diagnostics
+ */
+function assertDeeplyFrozen(item, currentPath = 'root') {
+  if (item === null || typeof item !== 'object') {
+    return;
+  }
+  assert(Object.isFrozen(item), `Object at ${currentPath} must be deeply frozen via Object.freeze`);
+  if (Array.isArray(item)) {
+    item.forEach((elem, idx) => assertDeeplyFrozen(elem, `${currentPath}[${idx}]`));
+  } else {
+    Object.keys(item).forEach(key => {
+      assertDeeplyFrozen(item[key], `${currentPath}.${key}`);
+    });
+  }
+}
 
 async function runCounterfactualFixturesSuite() {
   console.log('\n=============================================================');
@@ -116,53 +140,68 @@ async function runCounterfactualFixturesSuite() {
   console.log('  * PASS: Every scenario contains 3 distinct, causally plausible, and fully articulated consequence branches.');
 
   // -------------------------------------------------------------
-  // TEST 3: Safety & Privacy Constraints
+  // TEST 3: Safety & Privacy Constraints Across Full Content
   // -------------------------------------------------------------
-  console.log('\n[TEST 3] Verifying Safety & Privacy Constraints...');
+  console.log('\n[TEST 3] Verifying Safety & Privacy Constraints Across Full Fixture Content...');
   COUNTERFACTUAL_SCENARIOS.forEach((scenario) => {
     // Disclaimer check
     assert(scenario.disclaimer.includes('Educational Simulation: Hypothetical Counterfactual Model'), `${scenario.id} must have educational simulation disclaimer`);
     assert(scenario.disclaimer.includes('guaranteed legal/financial outcomes'), `${scenario.id} disclaimer must disclaim guaranteed outcomes`);
 
-    // Check mockInterfaceData
-    const mockDataStr = JSON.stringify(scenario.incidentContext.mockInterfaceData);
+    // Entire JSON payload inspection
+    const fullFixtureJson = JSON.stringify(scenario);
     
-    // Check URLs use .invalid
-    const urlMatches = mockDataStr.match(/https?:\/\/[^\s"'\\]+/g) || [];
+    // Check URLs use .invalid, .example, or approved official portals
+    const urlMatches = fullFixtureJson.match(/https?:\/\/[^\s"'\\]+/g) || [];
     urlMatches.forEach(url => {
-      assert(url.includes('.invalid') || url.includes('.example'), `URL ${url} in ${scenario.id} must use reserved .invalid or .example domain`);
+      const isAllowed = url.includes('.invalid') || url.includes('.example') || url.includes('cybercrime.gov.in') || url.includes('sancharsaathi.gov.in');
+      assert(isAllowed, `URL ${url} in ${scenario.id} must be reserved (.invalid/.example) or an authorized official reporting portal`);
     });
 
-    // Check phone numbers are fictional +91-00000-0000X
-    const phoneMatches = mockDataStr.match(/\+91-\d{5}-\d{5}/g) || [];
+    // Check phone numbers are either fictional +91-00000-0000X or emergency 1930
+    const phoneMatches = fullFixtureJson.match(/\+91-\d{5}-\d{5}/g) || [];
     phoneMatches.forEach(phone => {
       assert(phone.startsWith('+91-00000-'), `Phone number ${phone} in ${scenario.id} must be fictional (+91-00000-XXXXX)`);
     });
 
-    // Check no real payment destinations or functional QR codes
-    assert(!mockDataStr.includes('@okaxis') && !mockDataStr.includes('@okhdfcbank') && !mockDataStr.includes('@icici'), `No real UPI VPA domains in ${scenario.id}`);
+    // Check no real payment VPAs or functional QR codes
+    assert(!fullFixtureJson.includes('@okaxis') && !fullFixtureJson.includes('@okhdfcbank') && !fullFixtureJson.includes('@icici'), `No real UPI VPA domains in ${scenario.id}`);
     if (scenario.incidentContext.mockInterfaceType === 'qr_code') {
-      assert(mockDataStr.includes('NON-FUNCTIONAL') || mockDataStr.includes('DO NOT SCAN'), `QR mock must explicitly disclose non-functional placeholder in ${scenario.id}`);
+      assert(fullFixtureJson.includes('NON-FUNCTIONAL') || fullFixtureJson.includes('DO NOT SCAN'), `QR mock must explicitly disclose non-functional placeholder in ${scenario.id}`);
     }
   });
-  console.log('  * PASS: All phone numbers, domains, and mock data strictly adhere to safety and privacy constraints.');
+  console.log('  * PASS: All phone numbers, domains, URLs, and mock data strictly adhere to safety and privacy constraints.');
 
   // -------------------------------------------------------------
-  // TEST 4: Legal Accuracy & Statutory Nuance Verification
+  // TEST 4: Content Guardrails & Statutory Framework Assertions
   // -------------------------------------------------------------
-  console.log('\n[TEST 4] Verifying Legal Accuracy & Statutory Grounding...');
+  console.log('\n[TEST 4] Verifying Content Guardrails & Statutory Framework Assertions...');
 
-  // 4A: Scenario 4 - BNSS § 35(3) vs Chapter VI Court Summons
+  // 4A: Scenario 4 - BNSS § 35(3), § 530 Electronic Proceedings Recognition & Warrant Clarification
   const sc4 = SCENARIO_4_VIDEO_SUMMONS_DIGITAL_ARREST;
+  const rawSc4 = JSON.stringify(sc4);
   const bnssLaw = sc4.defensiveTakeaway.statutoryFramework.find(l => l.act.includes('BNSS') || l.act.includes('Bharatiya Nagarik Suraksha'));
   assert(bnssLaw, 'Scenario 4 must include BNSS statutory framework entry');
   assert(bnssLaw.applicabilityNote.includes('Chapter V') && bnssLaw.applicabilityNote.includes('Sections 35–62'), 'BNSS entry must cite Chapter V (Sections 35–62) for arrest procedures');
   assert(bnssLaw.applicabilityNote.includes('Chapter VI') && bnssLaw.applicabilityNote.includes('Sections 63–93'), 'BNSS entry must cite Chapter VI (Sections 63–93) for processes compelling appearance / summons');
   assert(bnssLaw.applicabilityNote.includes('Section 35(3)'), 'BNSS entry must cite Section 35(3)');
+  assert(bnssLaw.applicabilityNote.includes('Section 530'), 'BNSS entry must cite Section 530 for electronic/video proceedings');
   assert(bnssLaw.applicabilityNote.includes('notice to appear'), 'BNSS entry must identify Section 35(3) as police notice to appear during investigation');
   assert(bnssLaw.applicabilityNote.includes('court summons'), 'BNSS entry must distinguish police notice from court summons under Chapter VI');
   assert(bnssLaw.applicabilityNote.includes('Section 531'), 'BNSS entry must reference Section 531 savings');
-  assert(sc4.defensiveTakeaway.coreRule.includes('do not conduct arrests, trials, or asset verification over video calls'), 'Scenario 4 coreRule must articulate authority boundary');
+  
+  // Guardrail: Must recognize legitimate video proceedings under BNSS 530 while flagging fraudulent arrest claims
+  assert(sc4.defensiveTakeaway.coreRule.includes('BNSS Section 530') || sc4.defensiveTakeaway.coreRule.includes('authorized video-conferencing processes under law'), 'Scenario 4 coreRule must acknowledge legitimate video proceedings');
+  assert(!sc4.defensiveTakeaway.coreRule.includes('do not conduct arrests, trials, or asset verification over video calls'), 'Must not claim judicial trials cannot occur over video conferencing');
+  
+  // Guardrail: Absence of false claims that police confirmed no warrant exists
+  assert(!rawSc4.includes('no warrant exists against you'), 'Must not claim police confirmed no warrant exists against learner');
+  assert(rawSc4.includes('independently contact the relevant police station or official authority'), 'Must advise independent contact via verified sources');
+
+  // Guardrail: Absence of unsupported predictions ("most victims", two-hour claim, inevitable loss)
+  assert(!rawSc4.includes('most victims'), 'Must not claim most victims eventually comply');
+  assert(!rawSc4.includes('After two hours'), 'Must not make fixed two-hour escalation claim');
+  assert(!rawSc4.includes('Catastrophic financial loss (₹50,000 immediate, scaling to total available savings)'), 'Must not imply inevitable total savings loss');
 
   // 4B: Scenario 4 - BNS § 308 Extortion Conditional Elements
   const bns308 = sc4.defensiveTakeaway.statutoryFramework.find(l => l.section === 'Section 308');
@@ -170,8 +209,9 @@ async function runCounterfactualFixturesSuite() {
   assert(bns308.applicabilityNote.includes('fear of injury') && bns308.applicabilityNote.includes('dishonestly inducing'), 'BNS § 308 must explain statutory elements');
   assert(bns308.applicabilityNote.includes('Threats of arrest in cyber scams do not automatically establish extortion in every instance'), 'BNS § 308 must note conditional applicability');
 
-  // 4C: Scenario 2 - BNS § 319 Personation & IT Act § 66C Identity Theft
+  // 4C: Scenario 2 - BNS § 319 Personation & IT Act § 66C Identity Theft & Card Direction Nuance
   const sc2 = SCENARIO_2_NOMINAL_PARCEL_FEE;
+  const rawSc2 = JSON.stringify(sc2);
   const bns319 = sc2.defensiveTakeaway.statutoryFramework.find(l => l.section === 'Section 319');
   assert(bns319, 'Scenario 2 must cite BNS Section 319');
   assert(bns319.applicabilityNote.includes('personates a specific courier representative') || bns319.applicabilityNote.includes('representing oneself to be someone else'), 'BNS § 319 must note personation requirement');
@@ -181,19 +221,38 @@ async function runCounterfactualFixturesSuite() {
   assert(it66c.applicabilityNote.includes('unique identification feature'), 'IT Act § 66C must cite qualifying unique identification features');
   assert(it66c.applicabilityNote.includes('Merely collecting card details on a form does not automatically satisfy § 66C'), 'IT Act § 66C must note that collecting card details alone is insufficient without fraudulent use of qualifying features');
 
-  // 4D: Scenario 3 - UPI PIN Debit-Only Invariant & IT Act § 43 Inapplicability
+  // Card reference check: Must cite Master Direction on Customer Service in Banks for liability, not outdated 2022 issuance directions
+  assert(!rawSc2.includes('RBI Master Direction – Credit Card and Debit Card – Issuance and Conduct Directions, 2022'), 'Must not cite outdated 2022 commercial bank card conduct directions');
+  assert(rawSc2.includes('Master Direction on Customer Service in Banks'), 'Must cite customer liability framework');
+  assert(rawSc2.includes('does not by itself verify') || rawSc2.includes('does not by itself establish'), 'OTP consequence must be qualified');
+
+  // 4D: Scenario 3 - UPI PIN Debit Authorization Invariant & Transaction Terminology
   const sc3 = SCENARIO_3_APPROVE_PAYMENT_QR;
+  const rawSc3 = JSON.stringify(sc3);
   assert.strictEqual(
     sc3.defensiveTakeaway.coreRule,
     'Entering a UPI PIN authorizes a transaction that can debit your account. You do not need to enter your UPI PIN to receive money. Always verify the payee and transaction details before authorizing a payment.',
     'Scenario 3 coreRule must match authoritative UPI guidance exactly'
   );
 
+  // Terminology check: Must NOT describe customer-authorized deceptive UPI payment as an "unauthorized debit" in reporting guidance
+  assert(!sc3.defensiveTakeaway.officialReportingProtocol.guidance.includes('unauthorized debit'), 'Must not describe customer-authorized deceptive UPI payment as an unauthorized debit in reporting guidance');
+  assert(sc3.defensiveTakeaway.officialReportingProtocol.guidance.includes('deceptive payment') || sc3.defensiveTakeaway.officialReportingProtocol.guidance.includes('fraudulent transaction'), 'Must use deceptive payment / fraudulent transaction terminology');
+  assert(!rawSc3.includes('entering a PIN is exclusively an authorization to debit funds from an account'), 'Must not claim PIN is exclusively for one transaction type');
+
   const it43Note = sc3.defensiveTakeaway.statutoryFramework.find(l => l.act.includes('§ 43') || l.section.includes('Section 43'));
   assert(it43Note, 'Scenario 3 must include IT Act § 43 inapplicability clarification');
   assert(it43Note.applicabilityNote.includes('IT Act § 43 does not apply to voluntary PIN entry on a user\'s own mobile device'), 'Must clarify IT Act § 43 inapplicability to voluntary PIN entry');
 
-  // 4E: Non-Guarantee of Zero Liability, Fund Freezing, or Universal Golden Hour
+  // 4E: Scenario 1 - Fact-Qualified Electricity Act § 56(1) Notice Requirement
+  const sc1 = SCENARIO_1_MIDNIGHT_POWER_CUT_SMS;
+  const rawSc1 = JSON.stringify(sc1);
+  const elecLaw = sc1.defensiveTakeaway.statutoryFramework.find(l => l.act.includes('Electricity Act'));
+  assert(elecLaw, 'Scenario 1 must cite Electricity Act Section 56(1)');
+  assert(elecLaw.applicabilityNote.includes('fifteen clear days\' notice in writing'), 'Must explain 15 days statutory written notice');
+  assert(rawSc1.includes('may expose') || rawSc1.includes('Substantial risk'), 'Remote access consequence must be qualified');
+
+  // 4F: Non-Guarantee of Zero Liability, Fund Freezing, or Universal Golden Hour (Across All Scenarios)
   COUNTERFACTUAL_SCENARIOS.forEach((scenario) => {
     const rawContent = JSON.stringify(scenario);
     assert(!rawContent.includes('guaranteed fund recovery'), `Must not promise guaranteed recovery in ${scenario.id}`);
@@ -201,15 +260,16 @@ async function runCounterfactualFixturesSuite() {
     assert(!rawContent.includes('guaranteed account freeze'), `Must not promise guaranteed account freeze in ${scenario.id}`);
     assert(!rawContent.includes('zero customer liability is guaranteed'), `Must not guarantee zero liability in ${scenario.id}`);
     assert(!rawContent.includes('universal Golden Hour'), `Must not make universal Golden Hour claims in ${scenario.id}`);
-    assert(rawContent.includes('not guarantee fund recovery') || rawContent.includes('cannot guarantee fund recovery'), `Must explicitly disclaim fund recovery guarantees in ${scenario.id}`);
+    assert(rawContent.includes('not guarantee fund recovery') || rawContent.includes('cannot guarantee fund recovery') || rawContent.includes('not guarantee that accounts will be frozen'), `Must explicitly disclaim fund recovery/freezing guarantees in ${scenario.id}`);
+    assert(rawContent.includes('possible holds'), `CFCFRMS description must indicate possible holds in ${scenario.id}`);
     assert(rawContent.includes('1930') && rawContent.includes('cybercrime.gov.in'), `Must direct to 1930 and cybercrime.gov.in in ${scenario.id}`);
   });
-  console.log('  * PASS: All statutory and procedural citations (BNSS 35(3), BNS 308/319, IT Act 66C/43, UPI PIN invariant, non-guarantee) verified.');
+  console.log('  * PASS: Content guardrails verified (BNSS 35(3)/530, BNS 308/319, IT Act 66C/43, UPI PIN invariant, banking liability, non-guarantee).');
 
   // -------------------------------------------------------------
-  // TEST 5: Multi-Tier Isolation & Immutability Verification
+  // TEST 5: Multi-Tier Isolation & Recursive Immutability Verification
   // -------------------------------------------------------------
-  console.log('\n[TEST 5] Verifying Multi-Tier Isolation & Immutability...');
+  console.log('\n[TEST 5] Verifying Multi-Tier Isolation & Recursive Immutability...');
   const fixtureCode = fs.readFileSync(fixturePath, 'utf8');
 
   // Static AST / Import boundary checks
@@ -222,20 +282,12 @@ async function runCounterfactualFixturesSuite() {
   assert(!fixtureCode.includes("AssessmentDecision"), 'Must not import AssessmentDecision');
   assert(!fixtureCode.includes("UserProgress"), 'Must not import UserProgress');
 
-  // Object.freeze immutability checks
-  assert(Object.isFrozen(COUNTERFACTUAL_SCENARIOS), 'COUNTERFACTUAL_SCENARIOS array must be frozen');
-  COUNTERFACTUAL_SCENARIOS.forEach(scenario => {
-    assert(Object.isFrozen(scenario), `${scenario.id} object must be frozen`);
-    assert(Object.isFrozen(scenario.incidentContext), `${scenario.id} incidentContext must be frozen`);
-    assert(Object.isFrozen(scenario.decisionJunction), `${scenario.id} decisionJunction must be frozen`);
-    assert(Object.isFrozen(scenario.decisionJunction.choices), `${scenario.id} choices array must be frozen`);
-    scenario.decisionJunction.choices.forEach(c => {
-      assert(Object.isFrozen(c), `${scenario.id} choice ${c.id} must be frozen`);
-      assert(Object.isFrozen(c.consequence), `${scenario.id} choice ${c.id} consequence must be frozen`);
-    });
-    assert(Object.isFrozen(scenario.defensiveTakeaway), `${scenario.id} defensiveTakeaway must be frozen`);
+  // Recursive Object.freeze immutability checks across all nested structures
+  assertDeeplyFrozen(COUNTERFACTUAL_SCENARIOS, 'COUNTERFACTUAL_SCENARIOS');
+  COUNTERFACTUAL_SCENARIOS.forEach((scenario, idx) => {
+    assertDeeplyFrozen(scenario, `scenario[${idx}] (${scenario.id})`);
   });
-  console.log('  * PASS: Zero assessment/server imports; all fixtures and nested structures are deeply frozen.');
+  console.log('  * PASS: Zero assessment/server imports; all fixtures, nested objects, and arrays are recursively deep-frozen.');
 
   console.log('\n=============================================================');
   console.log('ALL COUNTERFACTUAL SCENARIO FIXTURE VALIDATIONS PASSED (5/5)');

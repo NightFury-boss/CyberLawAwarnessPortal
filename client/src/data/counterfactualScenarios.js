@@ -58,16 +58,16 @@ export const SCENARIO_1_MIDNIGHT_POWER_CUT_SMS = Object.freeze({
         shortAction: 'Called the private number and followed verbal directions',
         consequence: Object.freeze({
           immediateTitle: 'Immediate Reaction: Coerced App Installation & Screen Access',
-          immediateBody: 'The individual answering the call poses as an electricity billing supervisor. He confirms your consumer number is flagged for immediate disconnection and claims the discom server failed to reconcile a ₹12 payment fee. To avoid the power cut, he instructs you to install a "Quick Support" app (a remote-access tool) from a link he sends, or enter your card details on an unverified payment page to pay a token ₹10 update fee.',
-          escalatedTitle: 'Potential Later Escalation: Secondary Credential Harvesting & Unauthorized Debits',
-          escalatedBody: 'Granting remote screen access allows the perpetrator to view incoming OTPs or harvest banking credentials. If card or UPI details are entered on the unverified link, unauthorized debits follow. Once a victim complies once, fraudsters often call back demanding further "security deposits" or threaten criminal action for non-payment, escalating financial losses.',
+          immediateBody: 'The individual answering the call poses as an electricity billing supervisor. He confirms your consumer number is flagged for immediate disconnection and claims the discom server failed to reconcile a ₹12 payment fee. To avoid the power cut, he instructs you to install a "Quick Support" app (a remote-access tool) from a link he sends, or enter payment details on an unverified web page to pay a token update fee.',
+          escalatedTitle: 'Potential Later Escalation: Secondary Credential Harvesting & Deceptive Transfers',
+          escalatedBody: 'Granting remote screen access may expose notification banners, displayed two-factor codes, or banking credentials depending on device operating permissions and active app settings. If payment credentials are submitted on an unverified form, a fraudulent transaction or card compromise may follow, though financial impact depends on authentication barriers and rapid cardholder intervention. Fraudsters frequently call back to demand further "security deposits" or threaten penalties to induce additional payments.',
           impactAssessment: Object.freeze({
-            financialExposure: 'High risk of unauthorized payment debits and subsequent secondary extortion attempts.',
+            financialExposure: 'Substantial risk of fraudulent payment debits or subsequent secondary payment demands if remote access is granted or payment credentials are provided.',
             accountSafety: 'Compromised',
-            legalConsiderations: 'Voluntarily installing remote-access applications or entering credentials under social engineering complicates regulatory dispute resolution. Limiting liability rules under RBI directives apply strictly to unauthorized transactions, not automatically to customer-authorized transfers induced by deception.'
+            legalConsiderations: 'Voluntarily installing remote-access applications or entering credentials under social engineering involves transactions induced by deception rather than purely unauthorized access. Limiting liability rules under RBI directives apply strictly to unauthorized transactions, not automatically to customer-authorized transfers induced by deception.'
           }),
           whyItHappened: Object.freeze({
-            technicalFactor: 'Remote desktop or screen-sharing applications grant outsiders visibility of two-factor authentication tokens and device contents without hacking carrier networks.',
+            technicalFactor: 'Remote desktop or screen-sharing applications may grant external viewers visibility of displayed two-factor authentication tokens and screen contents depending on granted OS permissions.',
             psychologicalFactor: 'Manufactured urgency (a 48-minute deadline before power cut) induces panic, intentionally suppressing the critical pause needed to inspect the sender\'s authenticity.'
           })
         })
@@ -146,14 +146,14 @@ export const SCENARIO_1_MIDNIGHT_POWER_CUT_SMS = Object.freeze({
         section: 'Section 56(1)',
         status: 'PROCEDURAL_STATUTE',
         plainSummary: 'Statutory notice requirement for disconnection of supply due to unpaid electricity charges.',
-        applicabilityNote: 'Establishes that electricity distribution licensees must give not less than fifteen clear days\' notice in writing before disconnecting supply for bill default; immediate same-day cutoff over phone/SMS has no statutory basis.'
+        applicabilityNote: 'Section 56(1) of the Electricity Act, 2003 establishes that electricity distribution licensees must give not less than fifteen clear days\' notice in writing before disconnecting supply for non-payment of electricity charges. While local statutory procedures apply to lawful disconnections, immediate same-day disconnection threatened over personal phone calls or SMS messages for minor arrears is inconsistent with this statutory notice framework.'
       })
     ]),
     officialReportingProtocol: Object.freeze({
       primaryChannel: '1930',
       reportingPortalUrl: 'https://cybercrime.gov.in',
-      coordinationMechanism: 'Citizen Financial Cyber Fraud Reporting and Management System (CFCFRMS) facilitates inter-bank hold requests across participating commercial banks, payment aggregators, and wallets.',
-      guidance: 'If funds were transferred or remote apps installed, call National Cybercrime Helpline 1930 immediately to log an incident for CFCFRMS inter-bank hold coordination, uninstall unauthorized applications immediately, and file an incident report at cybercrime.gov.in. Note: Reporting assists inter-bank coordination but does not guarantee fund recovery or account unfreezing.'
+      coordinationMechanism: 'CFCFRMS facilitates inter-bank communication to request possible holds on beneficiary accounts across participating financial entities.',
+      guidance: 'If funds were transferred or remote apps installed, call National Cybercrime Helpline 1930 immediately to log an incident for CFCFRMS hold coordination, uninstall unauthorized applications immediately, and file an incident report at cybercrime.gov.in. Note: Prompt reporting supports coordination and possible beneficiary-account holds; it does not guarantee that accounts will be frozen, funds will be recovered, or transactions will be reversed.'
     })
   })
 });
@@ -193,17 +193,17 @@ export const SCENARIO_2_NOMINAL_PARCEL_FEE = Object.freeze({
         choiceType: 'reflexive-compliance',
         shortAction: 'Accessed the link and entered card details on the form',
         consequence: Object.freeze({
-          immediateTitle: 'Immediate Reaction: Credential Harvesting & OTP Interception',
-          immediateBody: 'The link opens a convincing mock page replicating a national logistics service. After entering your address, a payment gateway page prompts for your 16-digit card number, expiration date, CVV, and mobile number. You submit a ₹15 transaction, and an OTP screen appears. However, the OTP generated by your bank is actually for a larger unauthorized authorization or international wallet registration.',
-          escalatedTitle: 'Potential Later Escalation: High-Value Secondary Fraud & Data Resale',
-          escalatedBody: 'By entering the OTP, you authorize an unexpected transaction far exceeding ₹15. Furthermore, your card details are stored by the phishing kit and may be used for repeated card-not-present debits on international platforms or sold on cybercrime forums. Fraudsters may also call weeks later posing as bank fraud officers claiming to "investigate" the leak to extract further credentials.',
+          immediateTitle: 'Immediate Reaction: Credential Harvesting & OTP Presentation',
+          immediateBody: 'The link opens a deceptive web form mimicking an official parcel delivery portal. After entering an address, a payment page prompts for a 16-digit card number, expiration date, CVV, and mobile number. When submitting the nominal fee, an OTP prompt is displayed on your device. However, entering an OTP does not by itself verify the transaction amount, beneficiary, or purpose; the authentic SMS from your card issuer may actually correspond to an international purchase, e-commerce charge, or merchant tokenization rather than a ₹15 redelivery fee.',
+          escalatedTitle: 'Potential Later Escalation: Risk of Deceptive Transactions & Secondary Exploitation',
+          escalatedBody: 'Submitting payment credentials and completing an authentication step under deception creates substantial exposure. A fraudulent debit exceeding the nominal fee may be executed, or the captured card data may be retained for future card-not-present exploitation across platforms with differing authentication rules. Scammers may also make follow-up calls posing as bank fraud investigators seeking additional codes, compounding the exposure.',
           impactAssessment: Object.freeze({
-            financialExposure: 'High risk of unauthorized card debits and secondary financial exploitation.',
+            financialExposure: 'Substantial risk of fraudulent card debits and subsequent secondary exploitation if card details and authentication codes are submitted.',
             accountSafety: 'Compromised',
-            legalConsiderations: 'Voluntarily entering card credentials and OTP into a third-party phishing interface complicates bank dispute resolution. Under RBI card directions, banks investigate whether customer negligence occurred; zero customer liability is not automatic.'
+            legalConsiderations: 'Submitting card details and authenticating via OTP into a deceptive interface represents a customer-authenticated transaction induced by fraud, distinct from an unauthorized transaction executed without customer involvement. Under bank dispute procedures, customer liability is evaluated based on negligence, notification timelines, and specific facts; zero liability is not automatic.'
           }),
           whyItHappened: Object.freeze({
-            technicalFactor: 'Phishing kits use reverse-proxy techniques to capture credentials and relay real-time OTP requests to banking gateways.',
+            technicalFactor: 'Deceptive payment portals harvest credential fields and present dynamic authentication screens without disclosing the true merchant or debit amount.',
             psychologicalFactor: 'The nominal fee (₹15) falls below the threshold of suspicion, leading victims to treat the transaction as trivial administrative overhead rather than a security event.'
           })
         })
@@ -285,18 +285,18 @@ export const SCENARIO_2_NOMINAL_PARCEL_FEE = Object.freeze({
         applicabilityNote: 'Applies conditionally only where the perpetrator fraudulently or dishonestly makes use of another person\'s electronic signature, password, or any other unique identification feature. Merely collecting card details on a form does not automatically satisfy § 66C until the perpetrator fraudulently makes use of qualifying unique identification features.'
       }),
       Object.freeze({
-        act: 'RBI Master Direction – Credit Card and Debit Card – Issuance and Conduct Directions, 2022',
-        section: 'Chapter VI (Customer Protection)',
+        act: 'RBI Master Direction on Customer Service in Banks',
+        section: 'Customer Liability Framework (Limiting Liability in Electronic Banking Transactions)',
         status: 'PROCEDURAL_STATUTE',
-        plainSummary: 'Regulatory standards for cardholder liability in electronic transactions.',
-        applicabilityNote: 'Operative regulatory protections limiting cardholder liability apply strictly to unauthorised transactions. Where card details and OTPs are shared or entered on third-party sites, banks investigate customer negligence; zero liability is not automatic.'
+        plainSummary: 'Regulatory principles governing customer liability in electronic banking transactions for commercial banks.',
+        applicabilityNote: 'For covered commercial banks, operative regulatory protections limiting customer liability apply strictly to unauthorized transactions (where the customer did not share credentials or authorize the payment). Where card details or OTPs are voluntarily entered into a phishing interface under deception, liability is determined through bank investigation and dispute procedures based on negligence and notification timeliness; zero customer liability is not automatic.'
       })
     ]),
     officialReportingProtocol: Object.freeze({
       primaryChannel: '1930',
       reportingPortalUrl: 'https://cybercrime.gov.in',
-      coordinationMechanism: 'CFCFRMS enables quick inter-bank hold requests across commercial banks and payment gateways upon prompt notification.',
-      guidance: 'If card credentials or OTP were entered, block your card immediately through your bank\'s mobile app or hotline, call Helpline 1930 within the initial hours to request CFCFRMS hold coordination, and file a report on cybercrime.gov.in. Note: Prompt reporting assists inter-bank coordination but does not guarantee fund recovery.'
+      coordinationMechanism: 'CFCFRMS facilitates inter-bank communication to request possible holds on beneficiary accounts across participating financial entities.',
+      guidance: 'If card credentials or OTP were entered, block your card immediately through your bank\'s mobile app or hotline, call Helpline 1930 within the initial hours to request CFCFRMS hold coordination, and file a report on cybercrime.gov.in. Note: Prompt reporting supports coordination and possible beneficiary-account holds; it does not guarantee that accounts will be frozen, funds will be recovered, or transactions will be reversed.'
     })
   })
 });
@@ -338,17 +338,17 @@ export const SCENARIO_3_APPROVE_PAYMENT_QR = Object.freeze({
         choiceType: 'reflexive-compliance',
         shortAction: 'Scanned the QR code and entered UPI PIN on the mobile screen',
         consequence: Object.freeze({
-          immediateTitle: 'Immediate Reaction: Direct Account Debit & Immediate Loss',
-          immediateBody: 'Your UPI application opens a payment approval screen. The screen prominently displays a "PAY" or "COLLECT REQUEST" for ₹8,500 directed to an unknown merchant VPA. By entering your secret UPI PIN, you do not receive funds—instead, you instantly authorize a debit of ₹8,500 from your linked bank account to the fraudster\'s account.',
+          immediateTitle: 'Immediate Reaction: Deceptive Payment Authorization & Account Debit',
+          immediateBody: 'Your UPI application opens a payment approval screen. The screen displays a payment or collect request for ₹8,500 directed to an unknown merchant VPA. By entering your secret UPI PIN, you do not receive funds—instead, you authorize a debit of ₹8,500 from your linked bank account to the recipient account, completing a fraudulent transaction induced by deception.',
           escalatedTitle: 'Potential Later Escalation: Double-Debit "Reversal" Scam',
           escalatedBody: 'When you notice ₹8,500 deducted, the buyer immediately calls back expressing shock, claiming "a server glitch reversed the payout into a debit." He immediately sends a second QR code for ₹17,000, promising that scanning it will "reverse both transactions and refund ₹25,500." Victims trapped in panic often scan again, doubling their losses.',
           impactAssessment: Object.freeze({
             financialExposure: 'Immediate direct debit of ₹8,500 (or ₹25,500+ if secondary reversal scam is accepted).',
             accountSafety: 'At Risk',
-            legalConsiderations: 'Because the debit was authorized with your personal, secret UPI PIN, regulatory zero-liability rules under RBI Master Directions for unauthorized transactions do not automatically apply. Recourse relies on rapid dispute lodging and CFCFRMS inter-bank hold coordination.'
+            legalConsiderations: 'Because the payment was authorized using your secret UPI PIN under deception, it represents a customer-authorized transaction induced by fraud rather than an unauthorized transaction executed without credentials. Regulatory protections and dispute resolutions depend on the factual circumstances and bank investigation; zero liability is not automatic.'
           }),
           whyItHappened: Object.freeze({
-            technicalFactor: 'UPI architecture is structurally asymmetric: entering a PIN is exclusively an authorization to debit funds from an account; receiving funds requires zero user authentication.',
+            technicalFactor: 'In the UPI framework, entering a secret PIN authorizes outgoing payments and debits from your linked bank account; receiving incoming transfers requires no PIN entry or payment approval from the recipient.',
             psychologicalFactor: 'Eagerness to complete a profitable sale combined with confusion about QR code bidirectional capability blinds the seller to the debit warning on the screen.'
           })
         })
@@ -383,7 +383,7 @@ export const SCENARIO_3_APPROVE_PAYMENT_QR = Object.freeze({
         shortAction: 'Stated the core UPI security rule, rejected the QR code, and demanded direct transfer',
         consequence: Object.freeze({
           immediateTitle: 'Immediate Reaction: Scam Collapses & Buyer Flees',
-          immediateBody: 'You inform the buyer: "UPI PIN is only entered to send money, never to receive it. Please send the payment directly to my registered UPI mobile number or bank account via IMPS." Knowing their exploit is unmasked, the scammer immediately disconnects the chat and deletes their profile.',
+          immediateBody: 'You inform the buyer: "Entering a UPI PIN authorizes payments, not receipts. To send money, transfer it directly to my registered UPI mobile number without sending a collect request or QR code." Knowing their exploit is unmasked, the scammer immediately disconnects the chat and deletes their profile.',
           escalatedTitle: 'Potential Later Escalation: Evidence Logged & Community Protected',
           escalatedBody: 'You capture screenshots of the chat, the buyer\'s claimed defense profile, and the fraudulent QR code image. You report the user to the classifieds marketplace safety team and submit the phone number to the Chakshu facility on Sanchar Saathi. Your funds and bank details remain completely secure.',
           impactAssessment: Object.freeze({
@@ -392,8 +392,8 @@ export const SCENARIO_3_APPROVE_PAYMENT_QR = Object.freeze({
             legalConsiderations: 'Active verification prevents fraudulent inducement, preserves evidentiary records, and maintains an uncompromised legal position.'
           }),
           whyItHappened: Object.freeze({
-            technicalFactor: 'UPI transfers to a mobile number or VPA credit the recipient\'s account instantly without requiring recipient intervention.',
-            psychologicalFactor: 'Firm adherence to an invariant rule ("PIN is for paying only") neutralizes even sophisticated social engineering.'
+            technicalFactor: 'UPI transfers to a mobile number or VPA credit the recipient\'s account directly without requiring recipient authentication.',
+            psychologicalFactor: 'Firm adherence to the rule that receiving funds never requires entering a PIN neutralizes deceptive payment requests.'
           })
         })
       })
@@ -435,14 +435,14 @@ export const SCENARIO_3_APPROVE_PAYMENT_QR = Object.freeze({
         section: 'Operative RBI Directions',
         status: 'PROCEDURAL_STATUTE',
         plainSummary: 'Customer protection and dispute reporting guidelines for digital payments.',
-        applicabilityNote: 'Because the customer authorized the transaction using their secret UPI PIN, zero-liability rules for unauthorized transactions do not automatically apply. Immediate reporting to 1930 enables CFCFRMS inter-bank hold coordination, but recovery cannot be guaranteed.'
+        applicabilityNote: 'For commercial banks, operative regulatory guidelines distinguish between unauthorized electronic transactions and customer-authorized transactions induced by deception. Where a customer enters their secret UPI PIN, bank dispute processes examine whether customer negligence contributed to the loss; zero liability cannot be categorically assumed without evaluating the factual circumstances of the payment.'
       })
     ]),
     officialReportingProtocol: Object.freeze({
       primaryChannel: '1930',
       reportingPortalUrl: 'https://cybercrime.gov.in',
-      coordinationMechanism: 'CFCFRMS facilitates inter-bank hold coordination across participating banks to freeze recipient mule accounts before funds are siphoned.',
-      guidance: 'If you entered your UPI PIN and suffered an unauthorized debit, call 1930 immediately within the initial hours to log the transaction reference number (UTR) for CFCFRMS hold coordination, notify your bank to register a dispute, and submit a cybercrime report at cybercrime.gov.in. Note: Inter-bank coordination assists hold requests but cannot guarantee fund recovery.'
+      coordinationMechanism: 'CFCFRMS facilitates inter-bank communication to request possible holds on beneficiary accounts across participating financial entities.',
+      guidance: 'If you entered your UPI PIN and completed a deceptive payment, call 1930 immediately within the initial hours to log transaction details (including the UTR reference number) for CFCFRMS hold coordination, notify your bank to dispute the fraudulent transaction, and submit an incident report at cybercrime.gov.in. Note: Prompt reporting supports coordination and possible beneficiary-account holds; it does not guarantee that accounts will be frozen, funds will be recovered, or transactions will be reversed.'
     })
   })
 });
@@ -484,18 +484,18 @@ export const SCENARIO_4_VIDEO_SUMMONS_DIGITAL_ARREST = Object.freeze({
         choiceType: 'reflexive-compliance',
         shortAction: 'Remained on video and transferred funds to the designated account',
         consequence: Object.freeze({
-          immediateTitle: 'Immediate Reaction: Financial Loss & Intensified Coercion',
-          immediateBody: 'Terrified by the threat of arrest, you transfer ₹50,000 via RTGS. Rather than releasing you, the caller intensifies the intimidation, stating that "further suspicious transactions totaling ₹4,00,000 have been uncovered on your Aadhaar." They order you to keep the video call active overnight and liquidate fixed deposits or borrow from relatives to clear the remaining "verification bond."',
-          escalatedTitle: 'Potential Later Escalation: Severe Financial Ruin & Severe Emotional Trauma',
-          escalatedBody: 'Coercive isolation continues until your financial resources are completely exhausted. Once the fraudsters realize no further money can be extracted, they disconnect the call and block your number. By the time you speak with family or legal counsel, your life savings have been transferred through multiple layers of mule accounts.',
+          immediateTitle: 'Immediate Reaction: Financial Transfer & Escalating Demands',
+          immediateBody: 'Fearing immediate arrest, you execute the requested ₹50,000 transfer. Rather than closing the matter, the caller escalates demands, claiming that further suspicious accounts linked to your identity have been detected and ordering you to remain isolated on video while arranging additional payments.',
+          escalatedTitle: 'Potential Later Escalation: Cumulative Financial Loss & Coercive Isolation',
+          escalatedBody: 'Coercive isolation tactics may continue as long as the perpetrator perceives an ability to extract funds. Once the perpetrator severs contact, recovering transferred funds becomes difficult because payments are rapidly moved across multiple accounts. Contacting family or legal counsel is often delayed by shame and fear.',
           impactAssessment: Object.freeze({
-            financialExposure: 'Catastrophic financial loss (₹50,000 immediate, scaling to total available savings).',
+            financialExposure: 'Immediate loss of transferred funds, with significant risk of further demands if coercion continues.',
             accountSafety: 'Compromised',
-            legalConsiderations: 'Voluntary wire transfer made under severe intimidation. Immediate legal remedy requires filing a formal criminal complaint under BNS and IT Act, but fund recovery depends on immediate inter-bank hold coordination.'
+            legalConsiderations: 'Voluntary fund transfers executed under intimidation represent extortion and cheating by personation under BNS and IT Act. Inter-bank coordination via 1930 may assist hold requests, but fund recovery is not guaranteed.'
           }),
           whyItHappened: Object.freeze({
             technicalFactor: 'Modern VoIP tools, forged letterheads, and video background props allow remote criminals to stage convincing pseudo-governmental environments.',
-            psychologicalFactor: 'Exploitation of deep fear of legal authority, public disgrace, and physical confinement, amplified by coercive isolation that forbids consulting third parties.'
+            psychologicalFactor: 'Exploitation of fear of legal authority, public disgrace, and physical confinement, amplified by coercive isolation that forbids consulting third parties.'
           })
         })
       }),
@@ -506,14 +506,14 @@ export const SCENARIO_4_VIDEO_SUMMONS_DIGITAL_ARREST = Object.freeze({
         choiceType: 'passive-inaction',
         shortAction: 'Remained connected on video pleading innocence without disconnecting or verifying',
         consequence: Object.freeze({
-          immediateTitle: 'Immediate Reaction: Prolonged Psychological Intimidation',
-          immediateBody: 'You remain on the video call trying to convince the caller that your Aadhaar was misused and begging them not to send a police vehicle. The scammer exploits your compliance to show forged "Supreme Court orders" and "arrest warrants" on camera, shouting and threatening to notify your employer and neighbours, wearing down your emotional resistance.',
-          escalatedTitle: 'Potential Later Escalation: Eventual Capitulation Under Exhaustion',
-          escalatedBody: 'Prolonged emotional exhaustion and cognitive overload systematically break down rational defense mechanisms. After two hours of relentless pressure, most victims who stay on the line ultimately yield and execute the requested money transfer out of sheer desperation to end the ordeal.',
+          immediateTitle: 'Immediate Reaction: Prolonged Coercive Intimidation',
+          immediateBody: 'You remain on the video call attempting to convince the caller of your innocence. The caller exploits your ongoing engagement to display forged legal documents and emblems on camera, shouting and threatening to notify employers or local officers, attempting to wear down your emotional resistance.',
+          escalatedTitle: 'Potential Later Escalation: Heightened Risk of Concession Under Duress',
+          escalatedBody: 'Prolonged exposure to intimidation and isolation impairs critical decision-making. Staying on the call allows the perpetrator to escalate pressure tactics, substantially increasing the risk that the learner might eventually yield to fraudulent payment demands to alleviate fear.',
           impactAssessment: Object.freeze({
-            financialExposure: 'Extremely high risk of eventual financial capitulation.',
+            financialExposure: 'Substantial risk of eventual financial transfer if intimidation continues unmitigated.',
             accountSafety: 'At Risk',
-            legalConsiderations: 'Pleading with impersonators confers unearned legitimacy on their threats and maintains the psychological trap.'
+            legalConsiderations: 'Engaging with an impersonator confers practical leverage on fraudulent threats; severing the communication channel is the most effective immediate defense.'
           }),
           whyItHappened: Object.freeze({
             technicalFactor: 'Continuous video presence gives the attacker real-time biometric and emotional feedback to calibrate coercive tactics.',
@@ -528,18 +528,18 @@ export const SCENARIO_4_VIDEO_SUMMONS_DIGITAL_ARREST = Object.freeze({
         choiceType: 'active-verification',
         shortAction: 'Disconnected the call immediately, transferred nothing, and reported to authorities',
         consequence: Object.freeze({
-          immediateTitle: 'Immediate Reaction: Psychological Trap Broken Instantly',
-          immediateBody: 'You remember that legitimate authorities never conduct arrests or demand money transfers via video calls. You hang up the video call. The scammer calls back repeatedly from multiple numbers; you refuse to answer and block them. The immediate terror dissipates as you regain control of your environment.',
-          escalatedTitle: 'Potential Later Escalation: Independent Confirmation & Formal Reporting',
-          escalatedBody: 'You contact your nearest local police station or dial the National Cybercrime Helpline 1930. Officers confirm that "Digital Arrest" is a complete fraud with no standing in Indian law, and that no warrant exists against you. You preserve the call records and video screenshot to support ongoing cybercrime investigations.',
+          immediateTitle: 'Immediate Reaction: Coercive Loop Broken Instantly',
+          immediateBody: 'You recognize that a caller claiming to place you under "Digital Arrest" and demanding transfers to private accounts is not exercising lawful authority. You terminate the video call immediately. The scammer may attempt repeated callbacks from various numbers; you decline and block them, regaining composure.',
+          escalatedTitle: 'Potential Later Escalation: Independent Channel Verification & Reporting',
+          escalatedBody: 'You preserve the call records and screenshots, then independently contact the relevant police station or official authority through contact details obtained from verified government sources (not contact numbers provided by the caller). You report the impersonation attempt to the National Cybercrime Helpline 1930 and cybercrime.gov.in.',
           impactAssessment: Object.freeze({
-            financialExposure: 'Zero. All assets remain fully protected.',
+            financialExposure: 'Zero. No funds or credentials transmitted.',
             accountSafety: 'Secure',
-            legalConsiderations: 'Severing communication terminates the extortion attempt and preserves clean legal status without compromise.'
+            legalConsiderations: 'Terminating the call terminates the coercive attempt. Seeking independent verification through verified official channels preserves safety and legal clarity.'
           }),
           whyItHappened: Object.freeze({
             technicalFactor: 'Hanging up terminates the attacker\'s sole communication and surveillance channel over the victim.',
-            psychologicalFactor: 'Recognizing a structural impossibility under Indian law ("Digital Arrest does not exist") destroys the attacker\'s psychological leverage.'
+            psychologicalFactor: 'Recognizing that "Digital Arrest" and demands for transfers to private "safe" accounts are hallmark scam indicators breaks psychological leverage.'
           })
         })
       })
@@ -547,11 +547,11 @@ export const SCENARIO_4_VIDEO_SUMMONS_DIGITAL_ARREST = Object.freeze({
   }),
 
   defensiveTakeaway: Object.freeze({
-    coreRule: 'Legitimate law enforcement and judicial authorities do not conduct arrests, trials, or asset verification over video calls, nor do they require citizens to transfer money to "safe" or "escrow" accounts to avoid arrest.',
+    coreRule: 'While legitimate judicial proceedings may use authorized video-conferencing processes under law (such as BNSS Section 530), a caller claiming to place you under "Digital Arrest" through a video call is not exercising lawful arrest authority, and demands to transfer money to private verification, safe, or escrow accounts to avoid arrest are unequivocal indicators of fraud.',
     actionableSteps: Object.freeze([
-      'Never transfer money to any account claiming to be a "government verification," "safe," or "court escrow" account.',
-      'Immediately disconnect any video call from individuals claiming to place you under "Digital Arrest."',
-      'Remember that "Digital Arrest" has zero basis in Indian criminal procedure.',
+      'Never transfer money to any account claiming to be a "government verification," "safe," or "court escrow" account to avoid arrest.',
+      'Immediately disconnect any video call from individuals claiming to place you under "Digital Arrest"—this term has no legal basis in Indian law.',
+      'If you need to verify an official inquiry, independently contact the relevant police station or authority through contact details obtained from verified government sources.',
       'Report impersonation attempts immediately to National Cybercrime Helpline 1930 and cybercrime.gov.in.'
     ]),
     statutoryFramework: Object.freeze([
@@ -585,17 +585,17 @@ export const SCENARIO_4_VIDEO_SUMMONS_DIGITAL_ARREST = Object.freeze({
       }),
       Object.freeze({
         act: 'Bharatiya Nagarik Suraksha Sanhita, 2023 (BNSS)',
-        section: 'Chapter V (Sections 35–62) & Chapter VI (Sections 63–93)',
+        section: 'Chapter V (Sections 35–62), Chapter VI (Sections 63–93) & Section 530',
         status: 'PROCEDURAL_STATUTE',
-        plainSummary: 'Statutory criminal procedure governing arrest and processes to compel appearance.',
-        applicabilityNote: '"Digital Arrest" has zero basis in Indian law. Arrest procedures are strictly codified under BNSS Chapter V (Sections 35–62). Under BNSS Section 35(3), a police officer investigating an offense punishable with imprisonment up to seven years may issue a written notice to appear directing the person to appear before the officer; this is an investigative notice under Chapter V, not a court summons under Chapter VI (which governs processes to compel appearance issued by courts under Sections 63–93), with applicable savings under Section 531. Legitimate authorities do not conduct arrests or trials over video calls, nor do they require citizens to transfer money to private "safe" or "verification" accounts to avoid arrest.'
+        plainSummary: 'Statutory criminal procedure governing arrest, processes to compel appearance, and electronic proceedings.',
+        applicabilityNote: '"Digital Arrest" has no basis in Indian law. Arrest procedures are strictly governed by BNSS Chapter V (Sections 35–62). While BNSS Section 530 permits trials, inquiries, and proceedings to be conducted electronically (including by audio-video electronic means) pursuant to court rules, a caller claiming to effect an arrest over a video call is not exercising lawful arrest authority. Furthermore, under BNSS Section 35(3), an investigating police officer may issue a written notice to appear during investigation under Chapter V; this is distinct from a court summons under Chapter VI (Sections 63–93), with applicable savings under Section 531. Demanding transfers to private "safe" or "verification" accounts to avoid arrest is a hallmark fraud indicator.'
       })
     ]),
     officialReportingProtocol: Object.freeze({
       primaryChannel: '1930',
       reportingPortalUrl: 'https://cybercrime.gov.in',
-      coordinationMechanism: 'CFCFRMS enables fast inter-bank hold coordination across participating banks to freeze recipient mule accounts before funds are siphoned.',
-      guidance: 'If money was transferred, call 1930 immediately to log transaction and account details for CFCFRMS hold coordination, notify your bank\'s fraud desk, and lodge an immediate complaint on cybercrime.gov.in. Note: Inter-bank coordination assists hold requests but does not guarantee fund recovery or account unfreezing.'
+      coordinationMechanism: 'CFCFRMS facilitates inter-bank communication to request possible holds on beneficiary accounts across participating financial entities.',
+      guidance: 'If money was transferred, call 1930 immediately to log transaction details for CFCFRMS hold coordination, notify your bank\'s fraud desk, and lodge an immediate complaint on cybercrime.gov.in. Note: Prompt reporting supports coordination and possible beneficiary-account holds; it does not guarantee that accounts will be frozen, funds will be recovered, or transactions will be reversed.'
     })
   })
 });
