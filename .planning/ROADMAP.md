@@ -130,25 +130,26 @@ Structural and navigation milestones:
 ---
 
 ### Stage 3 — Counterfactual Scenario Learning
-**Status**: IN PROGRESS (Wave 1 Accepted, Wave 2 Implemented; Wave 3 Unauthorized)
+**Status**: IN PROGRESS (Wave 1 Accepted, Wave 2 Formally Accepted; Wave 3 Unauthorized)
 
 > [!IMPORTANT]
-> The product owner formally accepted Wave 1 on 2026-11-04 (commit `92f9602e81754ba4ff4eb399100da070cf343c5e`). Implementation of Wave 2 was authorized and executed on 2026-11-04 under Option A (client-side interactive studio).
+> The product owner formally accepted Wave 1 on 2026-11-04 (commit `92f9602e81754ba4ff4eb399100da070cf343c5e`) and formally accepted Wave 2 on 2026-11-04 (commit `bf117c400919923c924aaa75a4ad65052a7606af`).
 > 
 > **Wave 1 Status: COMPLETED & FORMALLY ACCEPTED**
 > - Four declarative scenario data fixtures authored in [`client/src/data/counterfactualScenarios.js`](file:///c:/Users/Asus/Desktop/cyber-law-portal/client/src/data/counterfactualScenarios.js) covering Midnight Power Cut SMS, Nominal ₹15 Parcel Fee, Approve Payment QR, and Video Summons Digital Arrest.
 > - Guardrails verified via [`server/tests/counterfactualFixtures.test.js`](file:///c:/Users/Asus/Desktop/cyber-law-portal/server/tests/counterfactualFixtures.test.js) (5/5 tests green).
 > 
-> **Wave 2 Status: IMPLEMENTED (Verification & Acceptance Pending Review)**
+> **Wave 2 Status: COMPLETED & FORMALLY ACCEPTED**
 > - Interactive Counterfactual Studio implemented across catalog (`/workspace/counterfactuals`) and active scenario explorer (`/workspace/counterfactuals/:slug`).
 > - Components: `CounterfactualCatalog`, `CounterfactualExplorer`, `IncidentStimulusView` (static, zero interactive inputs), `DecisionJunction` (3-way choices with explored tracking), `ConsequenceTimeline` (immediate & escalated phases + rewind affordance), `ComparativeMatrix` (selective projection of explored branches only), and `DefensiveTakeawayCard` (statutory hooks & Helpline 1930 guidance).
 > - Pure state logic engine in [`client/src/utils/counterfactualEngine.js`](file:///c:/Users/Asus/Desktop/cyber-law-portal/client/src/utils/counterfactualEngine.js) and dual-mode storage adapter in [`client/src/utils/counterfactualStorage.js`](file:///c:/Users/Asus/Desktop/cyber-law-portal/client/src/utils/counterfactualStorage.js) (Outcome A persistent vs Outcome B session fallback).
-> - Automated logic test suite verified in [`server/tests/counterfactualEngine.test.js`](file:///c:/Users/Asus/Desktop/cyber-law-portal/server/tests/counterfactualEngine.test.js) (6/6 tests green).
-> - Clean client production build (Vite build passed, code-split chunk generated in ~433ms).
+> - Automated logic test suite verified in [`server/tests/counterfactualEngine.test.js`](file:///c:/Users/Asus/Desktop/cyber-law-portal/server/tests/counterfactualEngine.test.js) (6/6 tests green, all 8 storage adapter resilience subtests passed).
+> - Browser-based automated UI verification harness in [`scripts/verify_counterfactual_ui.js`](file:///c:/Users/Asus/Desktop/cyber-law-portal/scripts/verify_counterfactual_ui.js) (13/13 checkpoints green, 18 screenshot evidence captures).
+> - Clean client production build (Vite build passed, code-split chunk generated in ~487ms, 0 errors).
 > - Multi-tier isolation strictly preserved: zero backend API endpoints, zero DB schemas/writes, zero scoring imports.
 >
 > **Wave 3 Implementation Boundary**:
-> Playwright cross-browser integration verification remains **strictly unauthorized** pending separate explicit authorization.
+> Playwright cross-browser integration verification suite in `e2e/` remains **strictly unauthorized** pending separate explicit authorization.
 
 Develop educational simulation experiences that demonstrate alternative outcomes based on different learner decisions:
 - Interactive "What happens if...?" exploration:

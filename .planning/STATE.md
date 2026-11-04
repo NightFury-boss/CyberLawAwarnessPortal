@@ -1,14 +1,14 @@
 # Project State & Current Position
 
 ## 1. Milestone Status & Position
-- **Active Canonical Stage**: **Stage 3 — Counterfactual Scenario Learning (IN PROGRESS — Wave 2 Implemented, Acceptance Pending)**
+- **Active Canonical Stage**: **Stage 3 — Counterfactual Scenario Learning (IN PROGRESS — Wave 1 & Wave 2 Formally Accepted)**
   - `Stage 1`: Core Learner Experience — **COMPLETED & FROZEN** (Milestone 3.3 Closed)
   - `Stage 2`: Assessment Quality & Reliability — **COMPLETED & FORMALLY CLOSED** (AQ-1, AQ-2, AQ-3, AQ-4 Accepted)
   - `Stage 3`: Counterfactual Scenario Learning — **IN PROGRESS**
     - Architecture audit & feasibility evaluation: **COMPLETED**
     - Final Reconciled Design Proposal: **APPROVED** ([`.planning/STAGE_3_COUNTERFACTUAL_DESIGN_PROPOSAL.md`](file:///c:/Users/Asus/Desktop/cyber-law-portal/.planning/STAGE_3_COUNTERFACTUAL_DESIGN_PROPOSAL.md))
-    - Wave 1 (4 Scenario Data Fixtures): **COMPLETED & FORMALLY ACCEPTED** ([`client/src/data/counterfactualScenarios.js`](file:///c:/Users/Asus/Desktop/cyber-law-portal/client/src/data/counterfactualScenarios.js))
-    - Wave 2 (Studio Components & Local Progress): **IMPLEMENTED (Acceptance Pending Review)**
+    - Wave 1 (4 Scenario Data Fixtures): **COMPLETED & FORMALLY ACCEPTED** (Baseline: `92f9602e81754ba4ff4eb399100da070cf343c5e`)
+    - Wave 2 (Studio Components & Local Progress): **COMPLETED & FORMALLY ACCEPTED** (Commit: `bf117c400919923c924aaa75a4ad65052a7606af`)
     - Wave 3 (Browser & Integration Verification): **UNAUTHORIZED** (Awaiting separate user authorization)
   - `Stage 4`: Digital Rights & Privacy Education (Original Phase 5) — **PENDING**
   - `Stage 5`: Spaced Retrieval & Long-Term Retention (RT-1..4) — **PENDING**
@@ -86,9 +86,9 @@ The following structural specifications remain invariant:
 ---
 
 ## 4. Current Execution Boundary & Immediate Next Action
-- **Current Position**: Stage 3 (Counterfactual Scenario Learning) **IN PROGRESS — Wave 1 Accepted, Wave 2 Implemented**. Counterfactual learning studio implemented across catalog (`/workspace/counterfactuals`) and active scenario explorer (`/workspace/counterfactuals/:slug`), with static stimuli, decision junction, consequence timeline, selective comparative matrix, defensive takeaway, and dual-mode storage adapter (Outcome A persistent vs Outcome B in-memory session fallback).
-- **Next Canonical Step**: Product-owner review and formal acceptance of Wave 2 implementation.
-- **Strict Authorization Boundary**: Wave 3 (cross-browser integration verification) **remains strictly unauthorized**. Zero visual redesign work or dashboard modifications permitted without explicit authorization.
+- **Current Position**: Stage 3 (Counterfactual Scenario Learning) **IN PROGRESS — Wave 1 & Wave 2 Formally Accepted**. The interactive learning studio (`CounterfactualCatalog`, `CounterfactualExplorer`, `IncidentStimulusView`, `DecisionJunction`, `ConsequenceTimeline`, `ComparativeMatrix`, `DefensiveTakeawayCard`), pure state engine (`counterfactualEngine.js`), dual-mode storage adapter (`counterfactualStorage.js`), logic test suite (6/6 green), and browser-based automated verification suite (13/13 green, 18 screenshot evidence captures) have been formally reviewed, verified, and accepted by the product owner (Baseline: `bf117c400919923c924aaa75a4ad65052a7606af`).
+- **Next Canonical Step**: Await user authorization for Stage 3 Wave 3 (Playwright E2E integration test suite in `e2e/counterfactual.spec.js`) or subsequent stage work.
+- **Strict Authorization Boundary**: Wave 3 (cross-browser integration verification) **remains strictly unauthorized** pending explicit user instruction. Zero visual redesign work or dashboard modifications permitted without explicit authorization.
 - **Strict Invariants**: All Stage 1 and Stage 2 assessment scoring invariants, six-dimensional behavioral rubrics, immutable historical assessment sessions, and visual redesign freeze rules remain strictly enforced.
 - **Deferred Workstream**: Post-Development Design Improvement is strictly deferred to [`.planning/DESIGN_IMPROVEMENT_BACKLOG.md`](file:///c:/Users/Asus/Desktop/cyber-law-portal/.planning/DESIGN_IMPROVEMENT_BACKLOG.md).
 
@@ -98,8 +98,9 @@ The following structural specifications remain invariant:
 
 ### Counterfactual Scenario Learning (Stage 3 Wave 1 & Wave 2)
 - `node server/tests/counterfactualFixtures.test.js` -> 100% GREEN (5/5 comprehensive test suites passed covering schema conformance, tri-branch consequence depth, safety & privacy constraints across full fixture content, content guardrails [BNSS § 35(3)/§ 530, BNS §§ 308/319, IT Act §§ 66C/43, UPI PIN invariant, RBI 2025 Responsible Business Conduct Directions Part D / Paragraph 68 customer liability framework, credential sharing non-exclusion nuance, customer-approved UPI vs unauthorised transaction distinction, non-guarantee], and recursive deep immutability with zero server/assessment imports).
-- `node server/tests/counterfactualEngine.test.js` -> 100% GREEN (6/6 comprehensive logic suites passed covering initial state, choice selection, rewind state preservation, comparison gating, selective projection, completion conditions, Outcome B storage fallback, and multi-tier source-string boundaries across all 10 Wave 2 files).
-- `npm run build --prefix client` -> 100% GREEN (92 modules transformed, code-split chunk `Counterfactuals-*.js` created in ~433ms, 0 errors).
+- `node server/tests/counterfactualEngine.test.js` -> 100% GREEN (6/6 comprehensive logic suites passed covering initial state, choice selection, rewind state preservation, comparison gating, selective projection, completion conditions, all 8 storage adapter resilience subtests [Outcome A, append preservation, duplicate prevention, reload read-back, Outcome B fallback, SecurityError, QuotaExceededError, input sanitization], and multi-tier source-string boundaries across all 10 Wave 2 files).
+- `node scripts/verify_counterfactual_ui.js` -> 100% GREEN (13/13 browser-based automated verification checkpoints passed covering desktop catalog, all 4 scenarios, consequence progression, rewind state preservation, comparison matrix gating, takeaway completion, catalog status badge persistence, session reset on reload, computed focus rings & keyboard traversal, mobile 390px zero overflow [0px], invalid-slug recovery round-trip, 4-scenario static stimulus integrity with 0 inputs/textareas, and 0 backend counterfactual requests; 18 screenshot evidence captures generated).
+- `npm run build --prefix client` -> 100% GREEN (92 modules transformed, code-split chunk `Counterfactuals-*.js` created in ~487ms, 0 errors).
 
 ### Integrated Assessment Validation (AQ-4)
 - `node server/tests/stagingProductionSmoke.test.js` -> 100% GREEN (13/13 tests passed, duration: ~6.9s).
