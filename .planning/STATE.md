@@ -1,14 +1,15 @@
 # Project State & Current Position
 
 ## 1. Milestone Status & Position
-- **Active Canonical Stage**: **Stage 3 — Counterfactual Scenario Learning (IN PROGRESS — Wave 1 Content Acceptance Pending)**
+- **Active Canonical Stage**: **Stage 3 — Counterfactual Scenario Learning (IN PROGRESS — Wave 2 Implemented, Acceptance Pending)**
   - `Stage 1`: Core Learner Experience — **COMPLETED & FROZEN** (Milestone 3.3 Closed)
   - `Stage 2`: Assessment Quality & Reliability — **COMPLETED & FORMALLY CLOSED** (AQ-1, AQ-2, AQ-3, AQ-4 Accepted)
   - `Stage 3`: Counterfactual Scenario Learning — **IN PROGRESS**
     - Architecture audit & feasibility evaluation: **COMPLETED**
-    - Final Reconciled Design Proposal: **PREPARED** ([`.planning/STAGE_3_COUNTERFACTUAL_DESIGN_PROPOSAL.md`](file:///c:/Users/Asus/Desktop/cyber-law-portal/.planning/STAGE_3_COUNTERFACTUAL_DESIGN_PROPOSAL.md))
-    - Wave 1 (4 Scenario Data Fixtures): **IMPLEMENTED (Content Acceptance Pending Review)** ([`client/src/data/counterfactualScenarios.js`](file:///c:/Users/Asus/Desktop/cyber-law-portal/client/src/data/counterfactualScenarios.js))
-    - Wave 2 (Components) & Wave 3 (Verification): **STRICTLY UNAUTHORIZED** (Awaiting separate user authorization)
+    - Final Reconciled Design Proposal: **APPROVED** ([`.planning/STAGE_3_COUNTERFACTUAL_DESIGN_PROPOSAL.md`](file:///c:/Users/Asus/Desktop/cyber-law-portal/.planning/STAGE_3_COUNTERFACTUAL_DESIGN_PROPOSAL.md))
+    - Wave 1 (4 Scenario Data Fixtures): **COMPLETED & FORMALLY ACCEPTED** ([`client/src/data/counterfactualScenarios.js`](file:///c:/Users/Asus/Desktop/cyber-law-portal/client/src/data/counterfactualScenarios.js))
+    - Wave 2 (Studio Components & Local Progress): **IMPLEMENTED (Acceptance Pending Review)**
+    - Wave 3 (Browser & Integration Verification): **UNAUTHORIZED** (Awaiting separate user authorization)
   - `Stage 4`: Digital Rights & Privacy Education (Original Phase 5) — **PENDING**
   - `Stage 5`: Spaced Retrieval & Long-Term Retention (RT-1..4) — **PENDING**
   - `Stage 6`: Dashboard Integration & Refinement (Original Phase 6) — **PENDING**
@@ -85,9 +86,9 @@ The following structural specifications remain invariant:
 ---
 
 ## 4. Current Execution Boundary & Immediate Next Action
-- **Current Position**: Stage 3 (Counterfactual Scenario Learning) **IN PROGRESS — Wave 1 Implemented, Content Acceptance Pending**. Targeted content corrections applied across all four fixtures in [`client/src/data/counterfactualScenarios.js`](file:///c:/Users/Asus/Desktop/cyber-law-portal/client/src/data/counterfactualScenarios.js) (including RBI 2025 Responsible Business Conduct Directions Part D / Paragraph 68 citation, conditional customer-negligence loss allocation, and clear distinction between unauthorised electronic transactions and customer-approved UPI push payments) and validated in [`server/tests/counterfactualFixtures.test.js`](file:///c:/Users/Asus/Desktop/cyber-law-portal/server/tests/counterfactualFixtures.test.js).
-- **Next Canonical Step**: Product-owner review and formal content acceptance of Wave 1 scenario fixtures.
-- **Strict Authorization Boundary**: Wave 2 (React components, routing, UI) and Wave 3 (integration tests) **remain strictly unauthorized**. Zero React components, backend routes, database schemas, or assessment engines may be modified without explicit authorization.
+- **Current Position**: Stage 3 (Counterfactual Scenario Learning) **IN PROGRESS — Wave 1 Accepted, Wave 2 Implemented**. Counterfactual learning studio implemented across catalog (`/workspace/counterfactuals`) and active scenario explorer (`/workspace/counterfactuals/:slug`), with static stimuli, decision junction, consequence timeline, selective comparative matrix, defensive takeaway, and dual-mode storage adapter (Outcome A persistent vs Outcome B in-memory session fallback).
+- **Next Canonical Step**: Product-owner review and formal acceptance of Wave 2 implementation.
+- **Strict Authorization Boundary**: Wave 3 (cross-browser integration verification) **remains strictly unauthorized**. Zero visual redesign work or dashboard modifications permitted without explicit authorization.
 - **Strict Invariants**: All Stage 1 and Stage 2 assessment scoring invariants, six-dimensional behavioral rubrics, immutable historical assessment sessions, and visual redesign freeze rules remain strictly enforced.
 - **Deferred Workstream**: Post-Development Design Improvement is strictly deferred to [`.planning/DESIGN_IMPROVEMENT_BACKLOG.md`](file:///c:/Users/Asus/Desktop/cyber-law-portal/.planning/DESIGN_IMPROVEMENT_BACKLOG.md).
 
@@ -95,9 +96,10 @@ The following structural specifications remain invariant:
 
 ## 5. Verification Status Summary
 
-### Counterfactual Scenario Learning (Stage 3 Wave 1)
+### Counterfactual Scenario Learning (Stage 3 Wave 1 & Wave 2)
 - `node server/tests/counterfactualFixtures.test.js` -> 100% GREEN (5/5 comprehensive test suites passed covering schema conformance, tri-branch consequence depth, safety & privacy constraints across full fixture content, content guardrails [BNSS § 35(3)/§ 530, BNS §§ 308/319, IT Act §§ 66C/43, UPI PIN invariant, RBI 2025 Responsible Business Conduct Directions Part D / Paragraph 68 customer liability framework, credential sharing non-exclusion nuance, customer-approved UPI vs unauthorised transaction distinction, non-guarantee], and recursive deep immutability with zero server/assessment imports).
-- `npm run build --prefix client` -> 100% GREEN (81 modules transformed, 0 errors, built in ~426ms).
+- `node server/tests/counterfactualEngine.test.js` -> 100% GREEN (6/6 comprehensive logic suites passed covering initial state, choice selection, rewind state preservation, comparison gating, selective projection, completion conditions, Outcome B storage fallback, and multi-tier source-string boundaries across all 10 Wave 2 files).
+- `npm run build --prefix client` -> 100% GREEN (92 modules transformed, code-split chunk `Counterfactuals-*.js` created in ~433ms, 0 errors).
 
 ### Integrated Assessment Validation (AQ-4)
 - `node server/tests/stagingProductionSmoke.test.js` -> 100% GREEN (13/13 tests passed, duration: ~6.9s).

@@ -169,6 +169,23 @@ function Sidebar({ user, isCollapsed, setIsCollapsed, isOpen, setIsOpen }) {
             <span className="workspace-nav-label">Final Check</span>
           </Link>
 
+          <Link
+            to="/workspace/counterfactuals"
+            className={`workspace-nav-link ${isActive('/workspace/counterfactuals') ? 'active' : ''}`}
+            data-tooltip="Counterfactual Scenarios"
+            onClick={handleLinkClick}
+          >
+            <span className="workspace-nav-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <circle cx="18" cy="18" r="3"></circle>
+                <circle cx="6" cy="6" r="3"></circle>
+                <path d="M13 6h3a2 2 0 0 1 2 2v7"></path>
+                <line x1="6" y1="9" x2="6" y2="21"></line>
+              </svg>
+            </span>
+            <span className="workspace-nav-label">Counterfactual Scenarios</span>
+          </Link>
+
           <div className="workspace-nav-divider" />
           <div className="workspace-nav-section-title">Legal Library</div>
 

@@ -24,6 +24,7 @@ const FinalAssessment = lazy(() => import('./pages/FinalAssessment'));
 const Quizzes = lazy(() => import('./pages/Quizzes'));
 const AdminPanel = lazy(() => import('./pages/AdminPanel'));
 const Modules = lazy(() => import('./pages/Modules'));
+const Counterfactuals = lazy(() => import('./pages/Counterfactuals'));
 
 function PageLoadingFallback() {
   return (
@@ -287,6 +288,14 @@ function AppContent() {
                   <Route 
                     path="/workspace/resources" 
                     element={user ? <Resources /> : <Navigate to="/login" replace />} 
+                  />
+                  <Route 
+                    path="/workspace/counterfactuals" 
+                    element={user ? <Counterfactuals /> : <Navigate to="/login" replace />} 
+                  />
+                  <Route 
+                    path="/workspace/counterfactuals/:slug" 
+                    element={user ? <Counterfactuals /> : <Navigate to="/login" replace />} 
                   />
 
                   {/* Admin Protected Routes */}

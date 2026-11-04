@@ -112,6 +112,7 @@ function Navbar({ user, setUser, isWorkspace, sidebarOpen, setSidebarOpen }) {
     if (path === '/workspace/cases') return 'Real-Life Case Stories';
     if (path === '/workspace/prevention') return 'Prevention Center';
     if (path === '/workspace/resources') return 'Official Legal Resources';
+    if (path.startsWith('/workspace/counterfactuals')) return 'Counterfactual Learning Studio';
     return 'Learning Dashboard';
   };
 
