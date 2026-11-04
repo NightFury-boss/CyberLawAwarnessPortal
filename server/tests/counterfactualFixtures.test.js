@@ -227,6 +227,11 @@ async function runCounterfactualFixturesSuite() {
   assert(rawSc2.includes('Reserve Bank of India (Commercial Banks – Responsible Business Conduct) Directions, 2025'), 'Scenario 2 must cite operative 2025 Responsible Business Conduct Directions');
   assert(rawSc2.includes('Part D') || rawSc2.includes('Paragraph 68'), 'Scenario 2 must cite Part D / Paragraph 68 for customer liability');
 
+  // Guardrail: Scenario 2 retains the correct Paragraph 68 customer-negligence explanation
+  assert(rawSc2.includes('Paragraph 68') && rawSc2.includes('customer negligence'), 'Scenario 2 must retain Paragraph 68 customer negligence explanation');
+  assert(rawSc2.includes('sharing payment credentials'), 'Scenario 2 must cite sharing payment credentials under Paragraph 68');
+  assert(rawSc2.includes('bears the entire loss until reporting') || rawSc2.includes('bears the loss until reporting'), 'Scenario 2 must explain loss allocation until reporting');
+
   // Guardrail: Must NOT claim credential sharing automatically excludes transaction from unauthorised-transaction framework
   assert(!rawSc2.includes('apply strictly to unauthorized transactions (where the customer did not share credentials'), 'Must not claim credential sharing automatically excludes transaction from unauthorised-transaction framework');
   assert(!rawSc2.includes('automatically places the transaction outside'), 'Must not claim credential entry automatically places transaction outside liability framework');
@@ -242,6 +247,13 @@ async function runCounterfactualFixturesSuite() {
     'Scenario 3 coreRule must match authoritative UPI guidance exactly'
   );
 
+  // Guardrail: Scenario 3 distinguishes customer-approved UPI push payments from unauthorised transactions
+  assert(rawSc3.includes('customer-approved UPI push payment'), 'Scenario 3 must explicitly identify customer-approved UPI push payment');
+  assert(rawSc3.includes('unauthorised electronic banking transaction') || rawSc3.includes('unauthorised electronic transaction'), 'Scenario 3 must distinguish unauthorised electronic banking transactions');
+  assert(rawSc3.includes('is not automatically applicable') || rawSc3.includes('not automatically applicable'), 'Scenario 3 must state Part D is not automatically applicable to customer-approved UPI push payments');
+  assert(!rawSc3.includes('Part D automatically determines liability'), 'Scenario 3 must not claim Part D automatically determines liability for a customer-approved UPI payment');
+  assert(!rawSc3.includes('Part D automatically determines reimbursement'), 'Scenario 3 must not claim Part D automatically determines reimbursement for a customer-approved UPI payment');
+
   // Terminology check: Must NOT describe customer-authorized deceptive UPI payment as an "unauthorized debit" in reporting guidance
   assert(!sc3.defensiveTakeaway.officialReportingProtocol.guidance.includes('unauthorized debit'), 'Must not describe customer-authorized deceptive UPI payment as an unauthorized debit in reporting guidance');
   assert(sc3.defensiveTakeaway.officialReportingProtocol.guidance.includes('deceptive payment') || sc3.defensiveTakeaway.officialReportingProtocol.guidance.includes('fraudulent transaction'), 'Must use deceptive payment / fraudulent transaction terminology');
@@ -251,13 +263,15 @@ async function runCounterfactualFixturesSuite() {
   assert(it43Note, 'Scenario 3 must include IT Act § 43 inapplicability clarification');
   assert(it43Note.applicabilityNote.includes('IT Act § 43 does not apply to voluntary PIN entry on a user\'s own mobile device'), 'Must clarify IT Act § 43 inapplicability to voluntary PIN entry');
 
-  // 4E: Scenario 1 - Fact-Qualified Electricity Act § 56(1) Notice Requirement
+  // 4E: Scenario 1 - Fact-Qualified Electricity Act § 56(1) Notice Requirement & Paragraph 68 Conditionality
   const sc1 = SCENARIO_1_MIDNIGHT_POWER_CUT_SMS;
   const rawSc1 = JSON.stringify(sc1);
   const elecLaw = sc1.defensiveTakeaway.statutoryFramework.find(l => l.act.includes('Electricity Act'));
   assert(elecLaw, 'Scenario 1 must cite Electricity Act Section 56(1)');
   assert(elecLaw.applicabilityNote.includes('fifteen clear days\' notice in writing'), 'Must explain 15 days statutory written notice');
   assert(rawSc1.includes('may expose') || rawSc1.includes('Substantial risk'), 'Remote access consequence must be qualified');
+  assert(rawSc1.includes('Paragraph 68'), 'Scenario 1 must cite Paragraph 68');
+  assert(rawSc1.includes('where an unauthorised electronic banking transaction involves customer negligence, such as sharing payment credentials'), 'Scenario 1 Paragraph 68 loss-allocation rule must be explicitly conditional on unauthorised transaction with customer negligence');
 
   // 4F: Non-Guarantee of Zero Liability, Fund Freezing, or Universal Golden Hour (Across All Scenarios)
   COUNTERFACTUAL_SCENARIOS.forEach((scenario) => {

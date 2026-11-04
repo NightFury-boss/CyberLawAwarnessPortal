@@ -85,7 +85,7 @@ The following structural specifications remain invariant:
 ---
 
 ## 4. Current Execution Boundary & Immediate Next Action
-- **Current Position**: Stage 3 (Counterfactual Scenario Learning) **IN PROGRESS — Wave 1 Implemented, Content Acceptance Pending**. Targeted content corrections applied across all four fixtures in [`client/src/data/counterfactualScenarios.js`](file:///c:/Users/Asus/Desktop/cyber-law-portal/client/src/data/counterfactualScenarios.js) (including RBI 2025 Responsible Business Conduct Directions Part D / Paragraph 68 citation and customer negligence / credential-sharing nuance) and validated in [`server/tests/counterfactualFixtures.test.js`](file:///c:/Users/Asus/Desktop/cyber-law-portal/server/tests/counterfactualFixtures.test.js).
+- **Current Position**: Stage 3 (Counterfactual Scenario Learning) **IN PROGRESS — Wave 1 Implemented, Content Acceptance Pending**. Targeted content corrections applied across all four fixtures in [`client/src/data/counterfactualScenarios.js`](file:///c:/Users/Asus/Desktop/cyber-law-portal/client/src/data/counterfactualScenarios.js) (including RBI 2025 Responsible Business Conduct Directions Part D / Paragraph 68 citation, conditional customer-negligence loss allocation, and clear distinction between unauthorised electronic transactions and customer-approved UPI push payments) and validated in [`server/tests/counterfactualFixtures.test.js`](file:///c:/Users/Asus/Desktop/cyber-law-portal/server/tests/counterfactualFixtures.test.js).
 - **Next Canonical Step**: Product-owner review and formal content acceptance of Wave 1 scenario fixtures.
 - **Strict Authorization Boundary**: Wave 2 (React components, routing, UI) and Wave 3 (integration tests) **remain strictly unauthorized**. Zero React components, backend routes, database schemas, or assessment engines may be modified without explicit authorization.
 - **Strict Invariants**: All Stage 1 and Stage 2 assessment scoring invariants, six-dimensional behavioral rubrics, immutable historical assessment sessions, and visual redesign freeze rules remain strictly enforced.
@@ -96,7 +96,7 @@ The following structural specifications remain invariant:
 ## 5. Verification Status Summary
 
 ### Counterfactual Scenario Learning (Stage 3 Wave 1)
-- `node server/tests/counterfactualFixtures.test.js` -> 100% GREEN (5/5 comprehensive test suites passed covering schema conformance, tri-branch consequence depth, safety & privacy constraints across full fixture content, content guardrails [BNSS § 35(3)/§ 530, BNS §§ 308/319, IT Act §§ 66C/43, UPI PIN invariant, RBI 2025 Responsible Business Conduct Directions Part D / Paragraph 68 customer liability framework, credential sharing non-exclusion nuance, non-guarantee], and recursive deep immutability with zero server/assessment imports).
+- `node server/tests/counterfactualFixtures.test.js` -> 100% GREEN (5/5 comprehensive test suites passed covering schema conformance, tri-branch consequence depth, safety & privacy constraints across full fixture content, content guardrails [BNSS § 35(3)/§ 530, BNS §§ 308/319, IT Act §§ 66C/43, UPI PIN invariant, RBI 2025 Responsible Business Conduct Directions Part D / Paragraph 68 customer liability framework, credential sharing non-exclusion nuance, customer-approved UPI vs unauthorised transaction distinction, non-guarantee], and recursive deep immutability with zero server/assessment imports).
 - `npm run build --prefix client` -> 100% GREEN (81 modules transformed, 0 errors, built in ~426ms).
 
 ### Integrated Assessment Validation (AQ-4)
