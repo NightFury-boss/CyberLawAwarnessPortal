@@ -129,10 +129,10 @@ Structural and navigation milestones:
 ---
 
 ### Stage 3 — Counterfactual Scenario Learning
-**Status**: PLANNING IN PROGRESS (Revised Design Proposal Prepared; Implementation Unauthorized)
+**Status**: PLANNING IN PROGRESS (Final Reconciled Design Proposal Prepared; Implementation Unauthorized)
 
 > [!IMPORTANT]
-> Planning and discovery for Stage 3 were authorized by the user on 2026-11-04. The revised design proposal addressing review findings has been prepared in [`.planning/STAGE_3_COUNTERFACTUAL_DESIGN_PROPOSAL.md`](file:///c:/Users/Asus/Desktop/cyber-law-portal/.planning/STAGE_3_COUNTERFACTUAL_DESIGN_PROPOSAL.md).
+> Planning and discovery for Stage 3 were authorized by the user on 2026-11-04. The final reconciled design proposal addressing all legal, regulatory, lifecycle, and isolation review findings has been prepared in [`.planning/STAGE_3_COUNTERFACTUAL_DESIGN_PROPOSAL.md`](file:///c:/Users/Asus/Desktop/cyber-law-portal/.planning/STAGE_3_COUNTERFACTUAL_DESIGN_PROPOSAL.md).
 >
 > **Implementation remains strictly unauthorized.** No product code, database schemas, API routes, scenario seeds, or test suites may be modified until the user explicitly reviews and approves the proposal.
 
@@ -225,7 +225,7 @@ To eliminate past ambiguity across planning documents, the following table forma
 | :--- | :--- | :--- | :--- |
 | **Stage 1: Core Learner Experience** | Phases 1, 2, 3 / Milestones 3.1, 3.2, 3.3 | **COMPLETED & FROZEN** | Registration, baseline assessment, 6-metric profile, pathways, final assessment, navigation fixes, structural freeze. |
 | **Stage 2: Assessment Quality & Reliability** | "Phase 4.1", "Phase 4.2", "Phase 4.3", "Phase 4.4" / AQ-1..4 | **COMPLETED & FORMALLY CLOSED** | Independent assessment-hardening workstream: AQ-1 (Audit complete), AQ-2 (Design v2.5.0 approved), AQ-3 (Implementation verified), AQ-4 (Integrated validation complete & accepted). Stage 2 closed. |
-| **Stage 3: Counterfactual Scenario Learning** | Original Phase 4 | **PLANNING IN PROGRESS** | Educational alternative-choice simulations ("What happens if...?"). Revised design proposal prepared in `.planning/STAGE_3_COUNTERFACTUAL_DESIGN_PROPOSAL.md`. Implementation unauthorized. |
+| **Stage 3: Counterfactual Scenario Learning** | Original Phase 4 | **PLANNING IN PROGRESS** | Educational alternative-choice simulations ("What happens if...?"). Final reconciled design proposal prepared in `.planning/STAGE_3_COUNTERFACTUAL_DESIGN_PROPOSAL.md`. Implementation unauthorized. |
 | **Stage 4: Digital Rights & Privacy Education** | Original Phase 5 | **PENDING** | Curriculum expansion: personal data, consent, privacy, copyright, piracy, malware. |
 | **Stage 5: Spaced Retrieval & Long-Term Retention** | Separate Retention Initiative / RT-1..4 | **PENDING** | Dedicated retention workstream: audit existing recall, propose improvements, implement, and validate. Separate from behavioral scoring. |
 | **Stage 6: Dashboard Integration & Refinement** | Original Phase 6 | **PENDING** | Macro journey integration connecting all assessment, curriculum, counterfactual, and retention streams. |
