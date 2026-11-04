@@ -160,21 +160,188 @@ async function runCounterfactualEngineSuite() {
   // TEST 5: Storage Adapter Resilience (Outcome A vs Outcome B)
   // -------------------------------------------------------------
   console.log('\n[TEST 5] Verifying Storage Adapter Resilience...');
+
+  // Helper to create an isolated mock localStorage
+  function createMockLocalStorage(options = {}) {
+    const store = new Map();
+    return {
+      getItem(key) {
+        if (options.throwOnGet && (options.throwKey === undefined || options.throwKey === key)) {
+          const err = new Error(options.throwMessage || 'Storage get error');
+          err.name = options.errorName || 'Error';
+          throw err;
+        }
+        return store.has(key) ? store.get(key) : null;
+      },
+      setItem(key, value) {
+        if (options.throwOnSet && (options.throwKey === undefined || options.throwKey === key)) {
+          const err = new Error(options.throwMessage || 'Storage set error');
+          err.name = options.errorName || 'Error';
+          throw err;
+        }
+        store.set(key, String(value));
+      },
+      removeItem(key) {
+        if (options.throwOnRemove && (options.throwKey === undefined || options.throwKey === key)) {
+          const err = new Error(options.throwMessage || 'Storage remove error');
+          err.name = options.errorName || 'Error';
+          throw err;
+        }
+        store.delete(key);
+      },
+      clear() {
+        store.clear();
+      },
+      _dump() {
+        return Object.fromEntries(store.entries());
+      }
+    };
+  }
+
+  // 5.1 Outcome A: Successful localStorage availability detection and durable writes
+  console.log('  -> Subtest 5.1: Outcome A availability detection & write...');
+  global.window = { localStorage: createMockLocalStorage() };
   storage._resetInMemoryState();
 
-  // In Node environment without window.localStorage -> Outcome B (In-memory fallback)
-  assert.strictEqual(storage.isStorageAvailable(), false, 'localStorage should not be available in headless Node');
-  
-  const outcomeB_Result = storage.markSlugCompleted(scenario3.slug);
-  assert.strictEqual(outcomeB_Result.success, true, 'Marking completion must succeed even without window.localStorage');
-  assert.strictEqual(outcomeB_Result.persistent, false, 'Outcome B must indicate persistent: false');
-  assert(outcomeB_Result.completedSlugs.includes(scenario3.slug), 'Completed slugs must include marked slug in memory');
-  assert.strictEqual(storage.isScenarioCompleted(scenario3.slug), true, 'isScenarioCompleted must return true for current session');
+  assert.strictEqual(storage.isStorageAvailable(), true, 'isStorageAvailable must return true when localStorage is working');
+  const writeRes1 = storage.markSlugCompleted(scenario1.slug);
+  assert.strictEqual(writeRes1.success, true, 'Writing scenario 1 must return success: true');
+  assert.strictEqual(writeRes1.persistent, true, 'Outcome A must report persistent: true');
+  assert.deepStrictEqual(writeRes1.completedSlugs, [scenario1.slug], 'completedSlugs must contain written slug');
+  assert.strictEqual(storage.isScenarioCompleted(scenario1.slug), true, 'isScenarioCompleted must return true for written slug');
 
-  // Verify safe handling of invalid inputs
-  const invalidResult = storage.markSlugCompleted(null);
-  assert.strictEqual(invalidResult.success, false, 'Marking invalid slug must return success: false without throwing');
-  console.log('  * PASS: Storage adapter Outcome B session fallback verified.');
+  const rawStored1 = JSON.parse(global.window.localStorage.getItem('cl_counterfactual_completed_slugs'));
+  assert.deepStrictEqual(rawStored1, [scenario1.slug], 'localStorage must contain serialized slug array');
+
+  // 5.2 Preservation of existing slugs when adding new ones
+  console.log('  -> Subtest 5.2: Existing slug preservation on append...');
+  const writeRes2 = storage.markSlugCompleted(scenario3.slug);
+  assert.strictEqual(writeRes2.success, true, 'Writing scenario 3 must return success: true');
+  assert.strictEqual(writeRes2.persistent, true, 'Outcome A append must report persistent: true');
+  assert(writeRes2.completedSlugs.includes(scenario1.slug), 'Must preserve existing slug 1');
+  assert(writeRes2.completedSlugs.includes(scenario3.slug), 'Must include new slug 3');
+  assert.strictEqual(writeRes2.completedSlugs.length, 2, 'Must contain exactly 2 unique slugs');
+
+  const rawStored2 = JSON.parse(global.window.localStorage.getItem('cl_counterfactual_completed_slugs'));
+  assert(rawStored2.includes(scenario1.slug) && rawStored2.includes(scenario3.slug), 'localStorage must preserve both slugs');
+
+  // 5.3 Duplicate slug prevention
+  console.log('  -> Subtest 5.3: Duplicate slug prevention...');
+  const dupRes = storage.markSlugCompleted(scenario1.slug);
+  assert.strictEqual(dupRes.success, true);
+  assert.strictEqual(dupRes.persistent, true);
+  assert.strictEqual(
+    dupRes.completedSlugs.filter(s => s === scenario1.slug).length,
+    1,
+    'Slug must not be duplicated in returned completedSlugs'
+  );
+  const rawStoredDup = JSON.parse(global.window.localStorage.getItem('cl_counterfactual_completed_slugs'));
+  assert.strictEqual(
+    rawStoredDup.filter(s => s === scenario1.slug).length,
+    1,
+    'Slug must not be duplicated in raw localStorage'
+  );
+
+  // Trim check: whitespace variations must not duplicate
+  const spaceRes = storage.markSlugCompleted(`  ${scenario1.slug}  `);
+  assert.strictEqual(
+    spaceRes.completedSlugs.filter(s => s === scenario1.slug).length,
+    1,
+    'Trimmed slug must not create duplicate entry'
+  );
+
+  // 5.4 Reading back completion from localStorage after in-memory reset (simulating page reload)
+  console.log('  -> Subtest 5.4: Read back from localStorage across session resets...');
+  storage._resetInMemoryState(); // Simulates page reload (clears in-memory set and tested flag)
+  // Window and localStorage remain populated
+  const readBackSlugs = storage.getCompletedSlugs();
+  assert(readBackSlugs.includes(scenario1.slug), 'Must read back slug 1 from localStorage');
+  assert(readBackSlugs.includes(scenario3.slug), 'Must read back slug 3 from localStorage');
+  assert.strictEqual(storage.isScenarioCompleted(scenario1.slug), true, 'isScenarioCompleted must return true from localStorage read');
+  assert.strictEqual(storage.isScenarioCompleted(scenario3.slug), true, 'isScenarioCompleted must return true from localStorage read');
+  assert.strictEqual(storage.isScenarioCompleted('unvisited-scenario-slug'), false, 'Unvisited slug must return false');
+
+  // 5.5 Outcome B: Unavailable localStorage retains completion in memory for session
+  console.log('  -> Subtest 5.5: Outcome B in-memory session retention...');
+  delete global.window; // Remove window entirely
+  storage._resetInMemoryState();
+
+  assert.strictEqual(storage.isStorageAvailable(), false, 'isStorageAvailable must return false when window is undefined');
+  const outcomeB_Res = storage.markSlugCompleted(scenario1.slug);
+  assert.strictEqual(outcomeB_Res.success, true, 'Outcome B write must succeed in memory');
+  assert.strictEqual(outcomeB_Res.persistent, false, 'Outcome B must report persistent: false');
+  assert(outcomeB_Res.completedSlugs.includes(scenario1.slug), 'In-memory slugs must include written slug');
+  assert.strictEqual(storage.isScenarioCompleted(scenario1.slug), true, 'isScenarioCompleted must be true for current session');
+
+  // Verify memory-only nature: on refresh (_resetInMemoryState), state is wiped
+  storage._resetInMemoryState();
+  assert.strictEqual(storage.isScenarioCompleted(scenario1.slug), false, 'Non-persistent slug must be cleared on simulated refresh');
+
+  // 5.6 Throwing storage operations: SecurityError during availability probe
+  console.log('  -> Subtest 5.6: SecurityError probe exception fallback...');
+  global.window = {
+    localStorage: createMockLocalStorage({
+      throwOnSet: true,
+      throwKey: '__cf_storage_probe__',
+      throwMessage: 'Access is denied for this document.',
+      errorName: 'SecurityError'
+    })
+  };
+  storage._resetInMemoryState();
+
+  assert.strictEqual(storage.isStorageAvailable(), false, 'isStorageAvailable must catch SecurityError and return false');
+  const secRes = storage.markSlugCompleted('security-error-scenario');
+  assert.strictEqual(secRes.success, true, 'Must fall back to in-memory set on security error without crashing');
+  assert.strictEqual(secRes.persistent, false, 'Must report persistent: false when storage throws');
+  assert(secRes.completedSlugs.includes('security-error-scenario'), 'Must retain slug in memory fallback');
+  assert.strictEqual(storage.isScenarioCompleted('security-error-scenario'), true, 'Must return true in session memory');
+
+  // 5.7 Throwing storage operations: QuotaExceededError during markSlugCompleted write
+  console.log('  -> Subtest 5.7: QuotaExceededError write exception fallback...');
+  let quotaHit = false;
+  global.window = {
+    localStorage: {
+      getItem(k) { return null; },
+      setItem(k, v) {
+        if (k === 'cl_counterfactual_completed_slugs') {
+          quotaHit = true;
+          const err = new Error('DOMException: The quota has been exceeded.');
+          err.name = 'QuotaExceededError';
+          throw err;
+        }
+      },
+      removeItem(k) {}
+    }
+  };
+  storage._resetInMemoryState();
+
+  assert.strictEqual(storage.isStorageAvailable(), true, 'Availability probe should succeed before quota hit');
+  const quotaRes = storage.markSlugCompleted('quota-exceeded-scenario');
+  assert.strictEqual(quotaHit, true, 'Quota exception must have been triggered');
+  assert.strictEqual(quotaRes.success, true, 'Must catch QuotaExceededError without throwing');
+  assert.strictEqual(quotaRes.persistent, false, 'CRITICAL: persistent must NEVER be true when write throws');
+  assert(quotaRes.completedSlugs.includes('quota-exceeded-scenario'), 'Must retain slug in memory cache');
+  assert.strictEqual(storage.isScenarioCompleted('quota-exceeded-scenario'), true, 'Must return true for session memory');
+
+  // 5.8 Safe handling of invalid inputs
+  console.log('  -> Subtest 5.8: Safe handling of invalid inputs...');
+  const invalidNull = storage.markSlugCompleted(null);
+  assert.strictEqual(invalidNull.success, false, 'markSlugCompleted(null) must return success: false');
+  assert.strictEqual(invalidNull.persistent, false);
+
+  const invalidEmpty = storage.markSlugCompleted('   ');
+  assert.strictEqual(invalidEmpty.success, false, 'markSlugCompleted("   ") must return success: false');
+
+  const invalidNum = storage.markSlugCompleted(12345);
+  assert.strictEqual(invalidNum.success, false, 'markSlugCompleted(number) must return success: false');
+
+  assert.strictEqual(storage.isScenarioCompleted(null), false, 'isScenarioCompleted(null) must return false');
+  assert.strictEqual(storage.isScenarioCompleted(''), false, 'isScenarioCompleted("") must return false');
+
+  // Clean environment teardown
+  delete global.window;
+  storage._resetInMemoryState();
+  console.log('  * PASS: Storage adapter comprehensive resilience verified across Outcome A, Outcome B, duplicates, reload read-back, SecurityError, and QuotaExceededError.');
 
   // -------------------------------------------------------------
   // TEST 6: Multi-Tier Isolation & Source-String Boundary Checks
@@ -227,3 +394,4 @@ runCounterfactualEngineSuite().catch(err => {
   console.error('\nFAILED COUNTERFACTUAL ENGINE LOGIC TEST:', err);
   process.exit(1);
 });
+
