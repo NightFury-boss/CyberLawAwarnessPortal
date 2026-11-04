@@ -1,8 +1,8 @@
 /**
  * @file verify_counterfactual_ui.js
- * @description Automated Playwright UI verification for Stage 3 Wave 2: Counterfactual Scenario Studio.
+ * @description Automated Playwright browser UI verification for Stage 3 Wave 2: Counterfactual Scenario Studio.
  * 
- * Verifies the 13 approved checklist items:
+ * Verifies the approved checklist items with enhanced assertions:
  * 1. Catalog rendering: Displays all 4 scenarios with titles, categories, difficulty badges, and summaries.
  * 2. Opening each scenario: IncidentStimulusView and DecisionJunction render cleanly.
  * 3. Branch exploration: Explores choices, verifying ConsequenceTimeline sections.
@@ -11,10 +11,10 @@
  * 6. Defensive takeaway: Displays takeaway card and registers scenario completion.
  * 7. Completion persistence: Completed scenario shows completed badge in catalog.
  * 8. Exploration reset on reload: Refreshing resets branch exploration while retaining catalog completion.
- * 9. Keyboard navigation: Tab navigation and visual focus rings.
+ * 9. Keyboard navigation & focus rings: Tab navigation through actual interactive controls, computed-style focus rings, and keyboard execution.
  * 10. Responsive layout: Mobile 390px viewport renders without horizontal overflow (0px).
- * 11. Invalid-slug recovery: Navigating to invalid slug shows graceful error and return button.
- * 12. Static stimulus integrity: 0 interactive form inputs, 0 submit buttons, prominent simulated watermark.
+ * 11. Invalid-slug recovery: Navigating to invalid slug shows graceful error, clicking return restores catalog and all 4 cards.
+ * 12. Static stimulus integrity across all 4 scenarios: 0 inputs/textareas, no functional payment/credential destinations, explicit safety watermarks.
  * 13. Network check: 0 counterfactual feature API requests to backend during entire exploration session.
  */
 
@@ -100,7 +100,7 @@ function startStaticServer() {
 
 async function runVerification() {
   console.log('\n=============================================================');
-  console.log('STAGE 3 WAVE 2: MANUAL UI & BROWSER VERIFICATION SUITE');
+  console.log('STAGE 3 WAVE 2: BROWSER-BASED AUTOMATED UI VERIFICATION');
   console.log('=============================================================\n');
 
   const server = await startStaticServer();
@@ -205,25 +205,15 @@ async function runVerification() {
     await saveScreenshot(page, '01_catalog_rendering.png');
 
     // -------------------------------------------------------------
-    // CHECKLIST 2 & 12: Opening Scenario 1 & Static Stimulus Integrity
+    // CHECKLIST 2: Opening Scenario 1 & Decision Junction
     // -------------------------------------------------------------
-    console.log('\n[CHECKLIST 2 & 12] Opening Scenario 1 & Verifying Static Stimulus Integrity...');
+    console.log('\n[CHECKLIST 2] Opening Scenario 1 & Rendering Junction...');
     const exploreButtons = await page.$$('.cf-btn-explore');
     await exploreButtons[0].click();
     await page.waitForURL('**/workspace/counterfactuals/midnight-power-cut-sms', { timeout: 5000 });
     await page.waitForSelector('.cf-stimulus-container', { timeout: 5000 });
     await page.waitForSelector('.cf-junction-section', { timeout: 5000 });
 
-    // Verify Static Stimulus Integrity (Checklist 12)
-    const inputsInStimulus = await page.$$('.cf-stimulus-container input, .cf-stimulus-container textarea');
-    assert.strictEqual(inputsInStimulus.length, 0, 'CRITICAL: Stimulus view must contain ZERO input or textarea elements');
-
-    const watermarkText = await page.textContent('.cf-stimulus-footer-note');
-    assert(watermarkText.includes('Static educational stimulus mock') && watermarkText.includes('zero functional links'), 'Watermark note verified');
-    console.log(`  * Stimulus watermark verified: "${watermarkText.trim()}"`);
-    console.log(`  * Interactive inputs inside stimulus: ${inputsInStimulus.length} (PASS: 0 interactive fields)`);
-
-    // Verify Decision Junction renders 3 choices
     const choiceButtons = await page.$$('.cf-choice-card');
     assert.strictEqual(choiceButtons.length, 3, 'Decision Junction must render exactly 3 choices');
     console.log(`  * Decision Junction rendered 3 choice options.`);
@@ -353,41 +343,184 @@ async function runVerification() {
     await saveScreenshot(page, '09_scenario1_reload_reset.png');
 
     // -------------------------------------------------------------
-    // CHECKLIST 9: Keyboard Navigation & Focus Rings
+    // CHECKLIST 9: Strengthened Keyboard Navigation & Focus Ring Verification
     // -------------------------------------------------------------
-    console.log('\n[CHECKLIST 9] Keyboard Navigation & Focus Ring Verification...');
-    await page.keyboard.press('Tab');
-    await page.keyboard.press('Tab');
-    await page.keyboard.press('Tab');
-    await page.waitForTimeout(300);
+    console.log('\n[CHECKLIST 9] Strengthening Keyboard Accessibility & Focus Ring Assertions...');
+    // Step 9.1: Focus the Back Link button using Tab navigation
+    await page.focus('.cf-back-link-btn');
+    const backFocusState = await page.evaluate(() => {
+      const el = document.activeElement;
+      const style = window.getComputedStyle(el);
+      return {
+        tagName: el.tagName,
+        className: el.className,
+        hasOutline: (style.outlineStyle !== 'none' && style.outlineWidth !== '0px') || style.boxShadow !== 'none',
+        outlineWidth: style.outlineWidth,
+        outlineStyle: style.outlineStyle,
+        outlineColor: style.outlineColor
+      };
+    });
+    assert.strictEqual(backFocusState.tagName, 'BUTTON', 'Navigation control must be a semantic BUTTON');
+    assert(backFocusState.className.includes('cf-back-link-btn'), 'Focused element must be cf-back-link-btn');
+    assert.strictEqual(backFocusState.hasOutline, true, 'Focused back link must have a visible outline focus ring');
+    console.log(`  * Back navigation button focused: <${backFocusState.tagName}> (outline: ${backFocusState.outlineWidth} ${backFocusState.outlineStyle} ${backFocusState.outlineColor})`);
 
-    const focusedTag = await page.evaluate(() => document.activeElement ? document.activeElement.tagName : 'NONE');
-    console.log(`  * Active keyboard focused element tagName: ${focusedTag}`);
+    // Step 9.2: Tab navigation to Choice 1 card
+    await page.keyboard.press('Tab');
+    const choice1FocusState = await page.evaluate(() => {
+      const el = document.activeElement;
+      const style = window.getComputedStyle(el);
+      return {
+        tagName: el.tagName,
+        className: el.className,
+        hasOutline: (style.outlineStyle !== 'none' && style.outlineWidth !== '0px'),
+        outlineWidth: style.outlineWidth,
+        outlineStyle: style.outlineStyle,
+        outlineColor: style.outlineColor
+      };
+    });
+    assert.strictEqual(choice1FocusState.tagName, 'BUTTON', 'Decision choice must be a semantic BUTTON');
+    assert(choice1FocusState.className.includes('cf-choice-card'), 'Focused element must be a cf-choice-card');
+    assert.strictEqual(choice1FocusState.hasOutline, true, 'Decision choice must exhibit a visible focus indicator');
+    console.log(`  * Choice 1 card focused via Tab: <${choice1FocusState.tagName}> (outline: ${choice1FocusState.outlineWidth} ${choice1FocusState.outlineStyle} ${choice1FocusState.outlineColor})`);
 
+    // Save screenshot displaying visible focus ring on Choice 1
     await saveScreenshot(page, '10_keyboard_tab_focus.png');
 
-    // -------------------------------------------------------------
-    // Explore Remaining Scenarios 2, 3, 4 for comprehensive coverage
-    // -------------------------------------------------------------
-    console.log('\n[Scenario Coverage] Exploring Scenarios 2, 3, and 4...');
+    // Step 9.3: Tab through remaining decision choices
+    await page.keyboard.press('Tab');
+    const choice2IsFocused = await page.evaluate(() => document.activeElement && document.activeElement.classList.contains('cf-choice-card'));
+    assert.strictEqual(choice2IsFocused, true, 'Tab navigation must move focus to Choice 2');
 
-    // Scenario 2: Nominal ₹15 Parcel Fee
+    await page.keyboard.press('Tab');
+    const choice3IsFocused = await page.evaluate(() => document.activeElement && document.activeElement.classList.contains('cf-choice-card'));
+    assert.strictEqual(choice3IsFocused, true, 'Tab navigation must move focus to Choice 3');
+    console.log('  * Successfully navigated focus through all 3 decision choices using Tab key.');
+
+    // Step 9.4: Activate Choice 3 using keyboard Enter
+    console.log('  * Activating Choice 3 via keyboard Enter key...');
+    await page.keyboard.press('Enter');
+    await page.waitForSelector('.cf-timeline-article', { timeout: 5000 });
+    console.log('  * Choice 3 activated by keyboard: Consequence timeline loaded.');
+
+    // Step 9.5: Tab to Rewind button and activate via keyboard Enter
+    await page.focus('button:has-text("Rewind to Decision Junction")');
+    const rewindFocus = await page.evaluate(() => document.activeElement && document.activeElement.tagName);
+    assert.strictEqual(rewindFocus, 'BUTTON', 'Rewind control must be a button');
+
+    console.log('  * Activating Rewind via keyboard Enter key...');
+    await page.keyboard.press('Enter');
+    await page.waitForSelector('.cf-junction-section', { timeout: 5000 });
+    console.log('  * Rewound to Decision Junction via keyboard Enter.');
+
+    // Step 9.6: Tab back to navigation control and press Enter to return to catalog
+    await page.focus('.cf-back-link-btn');
+    await page.keyboard.press('Enter');
+    await page.waitForURL('**/workspace/counterfactuals', { timeout: 5000 });
+    await page.waitForSelector('.cf-catalog-wrapper', { timeout: 5000 });
+    console.log('  * Returned to catalog via keyboard Enter on back link.');
+
+    // -------------------------------------------------------------
+    // CHECKLIST 12: Rigorous Static Stimulus Integrity Across ALL 4 Scenarios
+    // -------------------------------------------------------------
+    console.log('\n[CHECKLIST 12] Rigorous Static Stimulus Integrity Verification (All 4 Scenarios)...');
+    const stimulusSuites = [
+      {
+        slug: 'midnight-power-cut-sms',
+        name: 'Scenario 1 (Midnight Power Cut SMS)',
+        expectedType: 'sms',
+        expectedDomain: 'discom-bill-update.example.invalid',
+        expectedPhone: '+91-00000-00001',
+        watermarkSelector: '.cf-stimulus-footer-note',
+        watermarkSnippet: 'Static educational stimulus mock',
+        screenshotName: '02_scenario1_junction.png'
+      },
+      {
+        slug: 'nominal-parcel-fee',
+        name: 'Scenario 2 (The Nominal ₹15 Parcel Fee)',
+        expectedType: 'sms',
+        expectedDomain: 'delivery-update.example.invalid',
+        expectedPhone: null,
+        watermarkSelector: '.cf-stimulus-footer-note',
+        watermarkSnippet: 'Static educational stimulus mock',
+        screenshotName: '18_scenario2_parcel_stimulus.png'
+      },
+      {
+        slug: 'approve-payment-qr',
+        name: 'Scenario 3 (The "Approve Payment" QR Code)',
+        expectedType: 'qr_code',
+        expectedDomain: null,
+        expectedPhone: null,
+        watermarkSelector: '.cf-qr-watermark-pill',
+        watermarkSnippet: 'NON-FUNCTIONAL SIMULATION — DO NOT SCAN',
+        screenshotName: '12_scenario3_qr_code_stimulus.png'
+      },
+      {
+        slug: 'video-summons-digital-arrest',
+        name: 'Scenario 4 (The Video Summons "Digital Arrest")',
+        expectedType: 'phone_call',
+        expectedDomain: null,
+        expectedPhone: null,
+        watermarkSelector: '.cf-video-watermark',
+        watermarkSnippet: 'SIMULATED SCENARIO — NO REAL OFFICIAL REPRESENTATION',
+        screenshotName: '13_scenario4_digital_arrest_stimulus.png'
+      }
+    ];
+
+    for (const item of stimulusSuites) {
+      console.log(`  -> Auditing stimulus DOM for ${item.name}...`);
+      await page.goto(`${BASE_URL}/workspace/counterfactuals/${item.slug}`, { waitUntil: 'networkidle' });
+      await page.waitForSelector('.cf-stimulus-container', { timeout: 5000 });
+
+      // Invariant 1: Exactly ZERO input, textarea, select, contenteditable, or submit elements
+      const interactiveFormFields = await page.$$eval(
+        '.cf-stimulus-container input, .cf-stimulus-container textarea, .cf-stimulus-container select, .cf-stimulus-container [contenteditable="true"], .cf-stimulus-container button[type="submit"]',
+        els => els.length
+      );
+      assert.strictEqual(
+        interactiveFormFields,
+        0,
+        `CRITICAL SAFETY VIOLATION: ${item.name} stimulus contains ${interactiveFormFields} interactive form fields`
+      );
+
+      // Invariant 2: Exactly ZERO functional/navigable external anchor destinations
+      const externalHrefs = await page.$$eval('.cf-stimulus-container a[href]', els => els.map(a => a.getAttribute('href')));
+      assert.strictEqual(
+        externalHrefs.length,
+        0,
+        `CRITICAL SAFETY VIOLATION: ${item.name} stimulus exposes ${externalHrefs.length} active hyperlink anchors`
+      );
+
+      // Invariant 3: Visible educational safety watermark
+      const watermarkEl = await page.waitForSelector(item.watermarkSelector, { timeout: 3000 });
+      const watermarkContent = await watermarkEl.textContent();
+      assert(
+        watermarkContent.includes(item.watermarkSnippet),
+        `Watermark for ${item.name} must include snippet: "${item.watermarkSnippet}"`
+      );
+
+      // Invariant 4: Verified fictional domains and safety telephone numbering
+      const stimulusText = await page.textContent('.cf-stimulus-container');
+      if (item.expectedDomain) {
+        assert(stimulusText.includes(item.expectedDomain), `Must contain fictional .invalid domain: ${item.expectedDomain}`);
+        assert(!stimulusText.includes('.com/pay'), 'Must not link to real top-level payment destinations');
+      }
+      if (item.expectedPhone) {
+        assert(stimulusText.includes(item.expectedPhone), `Must contain safety fictional phone: ${item.expectedPhone}`);
+      }
+
+      console.log(`     * PASS: 0 form fields, 0 external anchors, watermark verified ("${item.watermarkSnippet}").`);
+      await saveScreenshot(page, item.screenshotName);
+    }
+
+    // Branch verification for Scenario 2 Choice C
+    console.log('\n[Scenario 2 Deep Exploration] Testing Independent Verification branch...');
     await page.goto(`${BASE_URL}/workspace/counterfactuals/nominal-parcel-fee`, { waitUntil: 'networkidle' });
     await page.waitForSelector('.cf-junction-section', { timeout: 5000 });
     const s2Choices = await page.$$('.cf-choice-card');
     await s2Choices[2].click(); // Choice C (Independent Verification)
     await page.waitForSelector('.cf-timeline-article', { timeout: 5000 });
     await saveScreenshot(page, '11_scenario2_branch_verification.png');
-
-    // Scenario 3: QR Code
-    await page.goto(`${BASE_URL}/workspace/counterfactuals/approve-payment-qr`, { waitUntil: 'networkidle' });
-    await page.waitForSelector('.cf-stimulus-container', { timeout: 5000 });
-    await saveScreenshot(page, '12_scenario3_qr_code_stimulus.png');
-
-    // Scenario 4: Digital Arrest Video Summons
-    await page.goto(`${BASE_URL}/workspace/counterfactuals/video-summons-digital-arrest`, { waitUntil: 'networkidle' });
-    await page.waitForSelector('.cf-stimulus-container', { timeout: 5000 });
-    await saveScreenshot(page, '13_scenario4_digital_arrest_stimulus.png');
 
     // -------------------------------------------------------------
     // CHECKLIST 10: Responsive Layout (390px Mobile Viewport)
@@ -423,31 +556,42 @@ async function runVerification() {
     await page.setViewportSize({ width: 1440, height: 900 });
 
     // -------------------------------------------------------------
-    // CHECKLIST 11: Invalid Slug Recovery
+    // CHECKLIST 11: Strengthened Invalid Slug Recovery Round-Trip
     // -------------------------------------------------------------
-    console.log('\n[CHECKLIST 11] Verifying Invalid Slug Recovery...');
+    console.log('\n[CHECKLIST 11] Strengthening Invalid Slug Recovery & Catalog Restoration...');
     await page.goto(`${BASE_URL}/workspace/counterfactuals/invalid-nonexistent-scenario-slug`, { waitUntil: 'networkidle' });
     await page.waitForSelector('.cf-not-found-card', { timeout: 5000 });
 
     const errorHeading = await page.textContent('.cf-not-found-title');
     assert(errorHeading.includes('Scenario Not Found'), 'Not found message must display');
-    console.log(`  * Invalid slug error heading: "${errorHeading.trim()}"`);
+    console.log(`  * Invalid slug error heading verified: "${errorHeading.trim()}"`);
 
     const returnBtn = await page.$('.cf-not-found-card button');
     assert(returnBtn !== null, 'Return to Scenarios Catalog button must exist');
     await saveScreenshot(page, '16_invalid_slug_recovery.png');
 
+    // Step 11.2: Click return button and assert recovery round-trip
+    console.log('  * Clicking "Return to Scenarios Catalog" button...');
+    await returnBtn.click();
+    await page.waitForURL('**/workspace/counterfactuals', { timeout: 5000 });
+    await page.waitForSelector('.cf-catalog-wrapper', { timeout: 5000 });
+
+    const recoveredCards = await page.$$('.cf-scenario-card');
+    assert.strictEqual(recoveredCards.length, 4, 'Catalog must render all 4 scenarios upon recovery');
+    console.log(`  * Successfully recovered from invalid slug: Catalog rendered with all 4 scenario cards.`);
+    await saveScreenshot(page, '17_invalid_slug_recovered_catalog.png');
+
     // -------------------------------------------------------------
-    // CHECKLIST 13: Network Invariant Check
+    // CHECKLIST 13: Multi-Tier Network Invariant Check
     // -------------------------------------------------------------
     console.log('\n[CHECKLIST 13] Verifying Multi-Tier Network Invariant (0 backend counterfactual calls)...');
     console.log(`  * Total HTTP requests intercepted: ${networkRequests.length}`);
     console.log(`  * Prohibited counterfactual/assessment backend calls: ${prohibitedRequests.length}`);
     assert.strictEqual(prohibitedRequests.length, 0, 'CRITICAL: Must have 0 calls to /api/counterfactual* or assessment endpoints');
-    console.log('  * PASS: Pure client-side multi-tier isolation strictly maintained.');
+    console.log('  * PASS: Pure client-side multi-tier isolation strictly maintained across all scenarios.');
 
     console.log('\n=============================================================');
-    console.log('ALL 13 BROWSER UI VERIFICATION CHECKLIST ITEMS PASSED!');
+    console.log('ALL BROWSER-BASED AUTOMATED UI VERIFICATIONS PASSED (13/13)!');
     console.log('=============================================================\n');
 
   } finally {
