@@ -158,10 +158,16 @@ async function runAudit() {
       if (r.legalReferences) {
         r.legalReferences.forEach(ref => {
           assert(!ref.educationalContext.toLowerCase().includes('you violated'), 'Must not accuse user of statutory violation');
-          if (ref.act.includes('Digital Personal Data Protection Act') && ref.section.includes('Section 6')) {
-            assert.strictEqual(ref.status, 'ENACTED_FUTURE_COMMENCEMENT', 'DPDP §6 must be ENACTED_FUTURE_COMMENCEMENT');
-            assert(ref.commencementNote.toLowerCase().includes('not in force') && ref.commencementNote.includes('G.S.R. 843(E)'), 'Must display future commencement note citing G.S.R. 843(E)');
-            console.log('    -> Verified DPDP §6 accurately marked as ENACTED_FUTURE_COMMENCEMENT');
+          if (ref.act.includes('Digital Personal Data Protection Act') && (/\bsection\s*6\b/i.test(ref.section) || /\b6\(/i.test(ref.section))) {
+            const is6_9 = ref.section.includes('6(9)');
+            const is6_9InForce = Date.now() >= new Date('2026-11-13T00:00:00.000Z').getTime();
+            const isGeneralInForce = Date.now() >= new Date('2027-05-13T00:00:00.000Z').getTime();
+            const expectedStatus = is6_9
+              ? (is6_9InForce ? 'IN_FORCE' : 'ENACTED_FUTURE_COMMENCEMENT')
+              : (isGeneralInForce ? 'IN_FORCE' : 'ENACTED_FUTURE_COMMENCEMENT');
+            assert.strictEqual(ref.status, expectedStatus, `DPDP §6 must be ${expectedStatus}`);
+            assert(ref.commencementNote.includes('G.S.R. 843(E)'), 'Must display commencement note citing G.S.R. 843(E)');
+            console.log(`    -> Verified DPDP §6 accurately marked as ${expectedStatus}`);
           }
         });
       }

@@ -41,21 +41,21 @@ const SIGNAL_PROBES = {
   ],
   stage3: [
     {
-      optionText: 'The recruiter demands an upfront refundable security deposit/registration fee before assigning work.',
+      optionText: 'Unsolicited recruitment offering disproportionate daily compensation (INR 1,800/hr) paired with an immediate push to an unverified WhatsApp desk.',
       isCorrect: true,
-      explanation: 'Legitimate employers and platforms never require job applicants to pay registration, training, or deposit fees.',
-      identifiedSignal: 'unexpected_payment_request'
-    },
-    {
-      optionText: 'The message contains casual emoji in the opening greeting.',
-      isCorrect: false,
-      explanation: 'Tone and informal language are subjective and do not constitute definitive forensic proof of cyber fraud.',
+      explanation: 'Unsolicited offers with inflated compensation requiring applicants to move off-platform to private WhatsApp or messaging desks are standard recruitment funnels for task fraud.',
       identifiedSignal: 'unusual_contact_method'
     },
     {
-      optionText: 'The outreach was sent through an instant messaging channel rather than email.',
+      optionText: 'The outreach message uses a corporate recruitment title in the sender display handle (@ApexTalentLead).',
       isCorrect: false,
-      explanation: 'Many legitimate recruiters initiate first contact on messaging platforms; the fee demand is the decisive indicator.',
+      explanation: 'Display handles and executive job titles are freely self-assigned and do not verify authentic institutional affiliation.',
+      identifiedSignal: 'authority_impersonation'
+    },
+    {
+      optionText: 'The outreach was sent through an instant messaging channel rather than corporate email.',
+      isCorrect: false,
+      explanation: 'Many legitimate recruiters initiate first contact on messaging platforms; the disproportionate wage and off-platform push are the decisive indicators.',
       identifiedSignal: 'unusual_contact_method'
     },
     {
@@ -131,9 +131,9 @@ const SIGNAL_PROBES = {
       identifiedSignal: 'unusual_contact_method'
     },
     {
-      optionText: 'The requested amount is rounded to an exact ten thousand rupees.',
+      optionText: 'The requested emergency transfer is rounded to an even thousands figure.',
       isCorrect: false,
-      explanation: 'Rounded amounts are common in both genuine emergencies and scams; evasive contact is the forensic cue.',
+      explanation: 'Rounded amounts are common in both genuine emergencies and scams; unverified payment VPAs and evasive contact are the forensic cues.',
       identifiedSignal: 'unexpected_payment_request'
     },
     {

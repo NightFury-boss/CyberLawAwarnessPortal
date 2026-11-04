@@ -14,6 +14,7 @@ function FinalAssessment({ _user, updateProgressTrigger }) {
   const [completedHistory, setCompletedHistory] = useState(null);
   const [hasMetPrerequisite, setHasMetPrerequisite] = useState(true);
   const stageHeadingRef = useRef(null);
+  const probeHeadingRef = useRef(null);
   
   // Custom mock inputs (instantly discarded)
   const [mockUserId, setMockUserId] = useState('');
@@ -28,6 +29,15 @@ function FinalAssessment({ _user, updateProgressTrigger }) {
   const [submitting, setSubmitting] = useState(false);
 
   const navigate = useNavigate();
+
+  // Focus signal probe heading when probe panel mounts
+  useEffect(() => {
+    if (selectedPrimaryDecisionId && currentStage?.hasSignalProbe) {
+      setTimeout(() => {
+        probeHeadingRef.current?.focus();
+      }, 50);
+    }
+  }, [selectedPrimaryDecisionId, currentStage?.hasSignalProbe]);
 
   // Detect active or completed session on mount for safe resumption
   useEffect(() => {
@@ -120,7 +130,7 @@ function FinalAssessment({ _user, updateProgressTrigger }) {
         setTimeout(() => stageHeadingRef.current?.focus(), 50);
       });
     } catch (err) {
-      if (err.message && err.message.toLowerCase().includes('prerequisite')) {
+      if (err.code === 'PREREQUISITE_NOT_MET' || (err.message && err.message.toLowerCase().includes('prerequisite'))) {
         setHasMetPrerequisite(false);
       }
       setError(err.message || 'Failed to start final assessment.');
@@ -282,7 +292,7 @@ function FinalAssessment({ _user, updateProgressTrigger }) {
               <span className="simulation-point-icon">1</span>
               <div>
                 <h4 className="simulation-point-title">Calibrate Baseline</h4>
-                <p className="simulation-point-desc">Take the 5-minute First Check to measure your instinctive responses across 6 core safety dimensions.</p>
+                <p className="simulation-point-desc">Take the 8–10 minute First Check to measure your instinctive responses across 6 core safety dimensions.</p>
               </div>
             </div>
             <div className="simulation-point-item">
@@ -829,13 +839,17 @@ function FinalAssessment({ _user, updateProgressTrigger }) {
             <h3 className="decision-station-title">
               {currentStage.hasSignalProbe ? 'Step 1: Choose Your Primary Defensive Action' : 'What would you do?'}
             </h3>
-            <div className="decision-cards-list">
+            <div className="decision-cards-list" role="radiogroup" aria-label="Available decisions">
               {currentStage.decisions.map((opt, idx) => {
                 const isSelected = selectedPrimaryDecisionId === opt.id;
                 return (
                   <button
                     key={opt.id}
                     type="button"
+                    role="radio"
+                    aria-checked={isSelected}
+                    aria-pressed={isSelected}
+                    tabIndex={0}
                     onClick={() => handlePrimaryChoice(opt.id)}
                     className={`decision-action-card ${isSelected ? 'selected-decision' : ''}`}
                     style={isSelected ? { borderColor: 'var(--color-primary, #302B27)', backgroundColor: 'var(--color-surface-secondary, #EFE8DC)', boxShadow: '0 0 0 2px var(--color-primary, #302B27)' } : {}}
@@ -865,21 +879,30 @@ function FinalAssessment({ _user, updateProgressTrigger }) {
                   <span style={{ fontSize: '0.72rem', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '0.08em', backgroundColor: 'var(--color-primary, #302B27)', color: '#fff', padding: '2px 8px', borderRadius: '4px' }}>
                     Step 2 of 2
                   </span>
-                  <strong style={{ fontSize: '0.95rem', color: 'var(--color-text-primary, #302B27)' }}>
+                  <h4
+                    id="final-probe-heading"
+                    ref={probeHeadingRef}
+                    tabIndex="-1"
+                    style={{ fontSize: '0.95rem', fontWeight: '700', color: 'var(--color-text-primary, #302B27)', margin: 0, outline: 'none' }}
+                  >
                     Signal Identification &amp; Technical Cue Detection
-                  </strong>
+                  </h4>
                 </div>
                 <p style={{ fontSize: '0.88rem', color: 'var(--text-secondary)', marginBottom: '16px', lineHeight: '1.4' }}>
                   What specific technical cue, sender anomaly, or deceptive warning sign in this situation guided your choice?
                 </p>
 
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                <div className="signal-probe-options" role="radiogroup" aria-labelledby="final-probe-heading" style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                   {(currentStage.signalProbes || []).map((probe) => {
                     const isProbeSelected = selectedProbeId === probe.id;
                     return (
                       <button
                         key={probe.id}
                         type="button"
+                        role="radio"
+                        aria-checked={isProbeSelected}
+                        aria-pressed={isProbeSelected}
+                        tabIndex={0}
                         onClick={() => setSelectedProbeId(probe.id)}
                         className={`decision-action-card ${isProbeSelected ? 'selected-probe' : ''}`}
                         style={{

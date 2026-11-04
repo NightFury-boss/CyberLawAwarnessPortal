@@ -255,22 +255,42 @@ function buildEvidenceGroundedExplanation(pathway, metricInfo, session, decision
   const metricKey = pathway.metricKey;
   const relevantDecisions = [];
 
+  const METRIC_TO_FOCUS_TAG = {
+    recognition: 'THREAT_RECOGNITION',
+    signalIdentification: 'SIGNAL_IDENTIFICATION',
+    verification: 'VERIFICATION',
+    decisionQuality: 'DECISION_QUALITY',
+    falsePositive: 'FALSE_POSITIVE',
+    unreviewedAcceptance: 'UNREVIEWED_ACCEPTANCE'
+  };
+  const focusTag = METRIC_TO_FOCUS_TAG[metricKey];
+
   for (const d of decisionEvidence) {
     const effects = d.behaviorEffects || {};
     const hasEffect = effects[metricKey] !== undefined && effects[metricKey] !== null;
-    const isFocus = Array.isArray(d.measurementFocus) && d.measurementFocus.includes(metricKey);
+    const isFocus = Array.isArray(d.measurementFocus) && (d.measurementFocus.includes(metricKey) || (focusTag && d.measurementFocus.includes(focusTag)));
 
     if (metricKey === 'unreviewedAcceptance' || metricKey === 'falsePositive') {
-      // Penalty metrics: positive number indicates penalty incurred
-      if (effects[metricKey] > 0 || (d.isCriticalMistake && ['high-risk', 'critical'].includes(d.riskLevel))) {
+      // Penalty metrics: strictly require positive penalty effect incurred
+      if (effects[metricKey] > 0) {
         relevantDecisions.push({
           decision: d,
-          severity: d.riskLevel === 'critical' ? 3 : d.riskLevel === 'high-risk' ? 2 : 1
+          severity: effects[metricKey] >= 2 ? 3 : 2
+        });
+      }
+    } else if (metricKey === 'signalIdentification') {
+      // Signal identification: evaluated through probe outcome or signal identification effect
+      const missedProbe = d.signalProbeDecisionId && d.probeCorrect === false;
+      const missedEffect = hasEffect && effects.signalIdentification === 0;
+      if (missedProbe || (isFocus && missedEffect)) {
+        relevantDecisions.push({
+          decision: d,
+          severity: missedProbe ? 3 : 2
         });
       }
     } else {
-      // Positive scoring metrics: 0 points or high risk indicates vulnerability
-      if ((hasEffect && effects[metricKey] === 0) || (isFocus && ['medium-risk', 'high-risk', 'critical'].includes(d.riskLevel)) || d.isCriticalMistake) {
+      // Positive scoring metrics: 0 points or elevated risk indicates vulnerability
+      if ((hasEffect && effects[metricKey] === 0) || (isFocus && ['medium-risk', 'high-risk', 'critical'].includes(d.riskLevel)) || (isFocus && d.isCriticalMistake)) {
         relevantDecisions.push({
           decision: d,
           severity: d.isCriticalMistake ? 3 : d.riskLevel === 'critical' ? 3 : d.riskLevel === 'high-risk' ? 2 : 1

@@ -2926,6 +2926,15 @@ async function seed(isReset = false) {
         stageOrder: stageData.stageOrder
       });
       if (existing) {
+        if (existing.signalProbes && existing.signalProbes.length > 0 && stageData.signalProbes && stageData.signalProbes.length > 0) {
+          stageData.signalProbes = stageData.signalProbes.map(sp => {
+            const match = existing.signalProbes.find(esp => esp.optionText === sp.optionText);
+            if (match && match._id) {
+              return { ...sp, _id: match._id };
+            }
+            return sp;
+          });
+        }
         await ScenarioStage.updateOne({ _id: existing._id }, stageData);
         return ScenarioStage.findById(existing._id);
       }

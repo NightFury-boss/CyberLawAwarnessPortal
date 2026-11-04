@@ -13,13 +13,14 @@ function validateCutoverConfiguration(rawCutover = process.env.SCORING_V2_CUTOVE
   }
 
   const parsedDate = new Date(rawCutover);
-  if (isNaN(parsedDate.getTime())) {
+  const timeMs = parsedDate.getTime();
+  if (isNaN(timeMs)) {
     const err = new Error(`FATAL_DEPLOYMENT_ERROR: SCORING_V2_CUTOVER_DATE contains invalid ISO string: "${rawCutover}"`);
     err.code = 'CONFIG_CUTOVER_INVALID';
     throw err;
   }
 
-  return Object.freeze(parsedDate);
+  return timeMs;
 }
 
 let deploymentTimestamp;
@@ -29,7 +30,7 @@ try {
   // If running in development without env, or during test harnesses that set process.env lazily,
   // allow test harnesses to re-invoke validateCutoverConfiguration.
   if (process.env.NODE_ENV === 'test' && !process.env.SCORING_V2_CUTOVER_DATE) {
-    deploymentTimestamp = Object.freeze(new Date('2026-11-04T00:00:00.000Z'));
+    deploymentTimestamp = new Date('2026-11-04T00:00:00.000Z').getTime();
   } else {
     throw err;
   }

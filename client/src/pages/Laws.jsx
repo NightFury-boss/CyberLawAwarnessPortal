@@ -438,7 +438,7 @@ function Laws() {
             'A general website footer notice stating that user analytics cookies are collected.'
           ],
           correctIdx: 1,
-          explanation: 'DPDP Act Section 6 mandates that consent given by a Data Principal must be free, specific, informed, unconditional, and unambiguous with a clear affirmative action, limited to necessary processing. Pre-ticked checkboxes and bundled consents do not meet this standard. (Statutory Status: Under Notification G.S.R. 843(E) dated 13 November 2025, commencement is staggered: Section 6(9) is scheduled one year post-publication [13 November 2026], while Section 6(1)–(8) and Section 6(10) are scheduled eighteen months post-publication [13 May 2027]. As of 2 November 2026, neither provision group is in force. Section 43A of the IT Act remains operative in the interim).'
+          explanation: 'DPDP Act Section 6 mandates that consent given by a Data Principal must be free, specific, informed, unconditional, and unambiguous with a clear affirmative action, limited to necessary processing. Pre-ticked checkboxes and bundled consents do not meet this standard. (Statutory Status: Under Notification G.S.R. 843(E) dated 13 November 2025, commencement is staggered: Section 6(9) [Consent Manager registration] commences 13 November 2026, while Section 6(1)–(8) and Section 6(10) [Consent standards] commence 13 May 2027. Section 43A of the IT Act remains operative in the interim).'
         };
       case 'DPDP Section 11':
         return {

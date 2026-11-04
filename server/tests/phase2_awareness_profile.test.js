@@ -234,7 +234,8 @@ async function runTests() {
     // 1. Eighteen-month group: Section 6(1)–(8) & 6(10) -> 13 May 2027
     const ref18m = dpdpRefs.find(r => r.section.includes('6(1)–(8)'));
     assert.ok(ref18m, 'Section 6(1)–(8) & 6(10) reference must exist');
-    assert.strictEqual(ref18m.status, 'ENACTED_FUTURE_COMMENCEMENT', 'Must be marked ENACTED_FUTURE_COMMENCEMENT');
+    const is18mInForce = Date.now() >= new Date('2027-05-13T00:00:00.000Z').getTime();
+    assert.strictEqual(ref18m.status, is18mInForce ? 'IN_FORCE' : 'ENACTED_FUTURE_COMMENCEMENT', 'Must match statutory commencement');
     assert.ok(ref18m.commencementNote.includes('G.S.R. 843(E)'), 'Commencement note must cite G.S.R. 843(E)');
     assert.ok(!ref18m.commencementNote.includes('S.O. 4932(E)'), 'Must not cite obsolete S.O. 4932(E)');
     assert.ok(ref18m.commencementNote.includes('eighteen months') || ref18m.commencementNote.includes('18 months') || ref18m.commencementNote.includes('13 May 2027'), 'Must specify 18-month timeline');
@@ -243,7 +244,8 @@ async function runTests() {
     // 2. One-year group: Section 6(9) -> 13 November 2026
     const ref1y = dpdpRefs.find(r => r.section.includes('6(9)'));
     assert.ok(ref1y, 'Section 6(9) reference must exist');
-    assert.strictEqual(ref1y.status, 'ENACTED_FUTURE_COMMENCEMENT', 'Must be marked ENACTED_FUTURE_COMMENCEMENT');
+    const is1yInForce = Date.now() >= new Date('2026-11-13T00:00:00.000Z').getTime();
+    assert.strictEqual(ref1y.status, is1yInForce ? 'IN_FORCE' : 'ENACTED_FUTURE_COMMENCEMENT', 'Must match statutory commencement');
     assert.ok(ref1y.commencementNote.includes('G.S.R. 843(E)'), 'Commencement note must cite G.S.R. 843(E)');
     assert.ok(!ref1y.commencementNote.includes('S.O. 4932(E)'), 'Must not cite obsolete S.O. 4932(E)');
     assert.ok(ref1y.commencementNote.includes('one year') || ref1y.commencementNote.includes('1 year') || ref1y.commencementNote.includes('13 November 2026'), 'Must specify 1-year timeline');

@@ -108,9 +108,16 @@ function validateCatalogStructure(catalog) {
       }
 
       // Specific DPDP Act Section 6 status enforcement under Notification G.S.R. 843(E)
-      if (ref.act.includes('Digital Personal Data Protection') && ref.section.includes('6')) {
-        if (ref.status !== 'ENACTED_FUTURE_COMMENCEMENT') {
-          throw new Error(`DPDP Act Section 6 must be marked ENACTED_FUTURE_COMMENCEMENT`);
+      if (ref.act.includes('Digital Personal Data Protection') && (/\bsection\s*6\b/i.test(ref.section) || /\b6\(/i.test(ref.section))) {
+        const is6_9 = ref.section.includes('6(9)');
+        const is6_9InForce = Date.now() >= new Date('2026-11-13T00:00:00.000Z').getTime();
+        const isGeneralInForce = Date.now() >= new Date('2027-05-13T00:00:00.000Z').getTime();
+        const expectedStatus = is6_9
+          ? (is6_9InForce ? 'IN_FORCE' : 'ENACTED_FUTURE_COMMENCEMENT')
+          : (isGeneralInForce ? 'IN_FORCE' : 'ENACTED_FUTURE_COMMENCEMENT');
+
+        if (ref.status !== expectedStatus) {
+          throw new Error(`DPDP Act Section 6 must be marked ${expectedStatus}, found: ${ref.status}`);
         }
         if (!ref.commencementNote || !ref.commencementNote.includes('G.S.R. 843(E)')) {
           throw new Error(`DPDP Act Section 6 must cite Notification G.S.R. 843(E)`);
@@ -118,7 +125,7 @@ function validateCatalogStructure(catalog) {
         if (ref.commencementNote.includes('S.O. 4932(E)')) {
           throw new Error(`DPDP Act Section 6 must not retain obsolete S.O. 4932(E)`);
         }
-        if (ref.section.includes('6(9)')) {
+        if (is6_9) {
           if (!ref.commencementNote.includes('one year') && !ref.commencementNote.includes('1 year') && !ref.commencementNote.includes('13 November 2026')) {
             throw new Error(`DPDP Act Section 6(9) must specify one-year commencement timeline`);
           }

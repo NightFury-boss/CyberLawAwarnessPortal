@@ -42,13 +42,21 @@ async function fetchWithTimeout(url, options = {}, timeoutMs = 10000) {
 async function handleResponse(response) {
   if (!response.ok) {
     let errMsg = 'Something went wrong';
+    let errCode = null;
+    let errDetails = null;
     try {
       const data = await response.json();
       errMsg = data.error?.message || data.message || errMsg;
+      errCode = data.error?.code || data.code || null;
+      errDetails = data.error?.details || data.details || null;
     } catch (_e) {
       // JSON parse failed
     }
-    throw new Error(errMsg);
+    const error = new Error(errMsg);
+    error.status = response.status;
+    if (errCode) error.code = errCode;
+    if (errDetails) error.details = errDetails;
+    throw error;
   }
   return response.json();
 }

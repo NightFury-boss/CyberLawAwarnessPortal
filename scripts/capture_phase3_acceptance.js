@@ -20,14 +20,20 @@ const User = require('../server/models/User');
 const UserProgress = require('../server/models/UserProgress');
 
 const SHOT_DIR = path.join(__dirname, '../screenshots/phase3-acceptance');
-const ARTIFACT_DIR = 'C:\\Users\\Asus\\.gemini\\antigravity\\brain\\2a38735a-7985-4d0c-9744-999cb0b89167\\screenshots\\phase3-acceptance';
+const ARTIFACT_DIR = process.env.ARTIFACT_DIR
+  ? path.join(process.env.ARTIFACT_DIR, 'screenshots', 'phase3-acceptance')
+  : SHOT_DIR;
 
 fs.mkdirSync(SHOT_DIR, { recursive: true });
-fs.mkdirSync(ARTIFACT_DIR, { recursive: true });
+if (ARTIFACT_DIR !== SHOT_DIR) {
+  fs.mkdirSync(ARTIFACT_DIR, { recursive: true });
+}
 
 function copyToArtifact(srcPath, filename) {
-  const destPath = path.join(ARTIFACT_DIR, filename);
-  fs.copyFileSync(srcPath, destPath);
+  if (ARTIFACT_DIR !== SHOT_DIR) {
+    const destPath = path.join(ARTIFACT_DIR, filename);
+    fs.copyFileSync(srcPath, destPath);
+  }
 }
 
 async function startServer() {
@@ -57,14 +63,18 @@ async function run() {
 
   let serverObj;
   let browser;
+  let demoUser = null;
+  let originalCompletedPathways = undefined;
 
   try {
     const { server, port } = await startServer();
     serverObj = server;
 
-    // Reset demo user's pathway completion state so interactive journey runs from Step 1 cleanly
-    const demoUser = await User.findOne({ email: 'demo.returning@cyberlawportal.in' });
+    // Save and reset demo user's pathway completion state so interactive journey runs from Step 1 cleanly
+    demoUser = await User.findOne({ email: 'demo.returning@cyberlawportal.in' });
     if (demoUser) {
+      const demoProgress = await UserProgress.findOne({ userId: demoUser._id });
+      originalCompletedPathways = demoProgress ? demoProgress.completedPathways : [];
       await UserProgress.updateOne(
         { userId: demoUser._id },
         { $pull: { completedPathways: { pathwayId: 'pathway-ua-upi-consent' } } }
@@ -249,6 +259,17 @@ async function run() {
     console.error('Visual acceptance failed:', err);
     process.exitCode = 1;
   } finally {
+    if (demoUser && originalCompletedPathways !== undefined) {
+      try {
+        await UserProgress.updateOne(
+          { userId: demoUser._id },
+          { $set: { completedPathways: originalCompletedPathways } }
+        );
+        console.log('  * Restored demo user pathway progress.');
+      } catch (restoreErr) {
+        console.error('Failed to restore demo user progress:', restoreErr);
+      }
+    }
     if (browser) await browser.close();
     if (serverObj) {
       await new Promise((resolve) => serverObj.close(resolve));

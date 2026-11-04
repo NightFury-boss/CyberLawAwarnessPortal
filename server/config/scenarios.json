@@ -912,7 +912,7 @@
               "verification": 0,
               "decisionQuality": 0,
               "falsePositive": 0,
-              "unreviewedAcceptance": 2
+              "unreviewedAcceptance": 0
             },
             "riskLevel": "medium-risk",
             "isCriticalMistake": false,
@@ -924,21 +924,21 @@
         "hasSignalProbe": true,
         "signalProbes": [
           {
-            "optionText": "The recruiter demands an upfront refundable security deposit/registration fee before assigning work.",
+            "optionText": "Unsolicited recruitment offering disproportionate daily compensation (INR 1,800/hr) paired with an immediate push to an unverified WhatsApp desk.",
             "isCorrect": true,
-            "explanation": "Legitimate employers and platforms never require job applicants to pay registration, training, or deposit fees.",
-            "identifiedSignal": "unexpected_payment_request"
-          },
-          {
-            "optionText": "The message contains casual emoji in the opening greeting.",
-            "isCorrect": false,
-            "explanation": "Tone and informal language are subjective and do not constitute definitive forensic proof of cyber fraud.",
+            "explanation": "Unsolicited offers with inflated compensation requiring applicants to move off-platform to private WhatsApp or messaging desks are standard recruitment funnels for task fraud.",
             "identifiedSignal": "unusual_contact_method"
           },
           {
-            "optionText": "The outreach was sent through an instant messaging channel rather than email.",
+            "optionText": "The outreach message uses a corporate recruitment title in the sender display handle (@ApexTalentLead).",
             "isCorrect": false,
-            "explanation": "Many legitimate recruiters initiate first contact on messaging platforms; the fee demand is the decisive indicator.",
+            "explanation": "Display handles and executive job titles are freely self-assigned and do not verify authentic institutional affiliation.",
+            "identifiedSignal": "authority_impersonation"
+          },
+          {
+            "optionText": "The outreach was sent through an instant messaging channel rather than corporate email.",
+            "isCorrect": false,
+            "explanation": "Many legitimate recruiters initiate first contact on messaging platforms; the disproportionate wage and off-platform push are the decisive indicators.",
             "identifiedSignal": "unusual_contact_method"
           },
           {
@@ -1586,25 +1586,25 @@
         "hasSignalProbe": true,
         "signalProbes": [
           {
-            "optionText": "The sender email address uses an unverified third-party domain rather than the official institutional portal.",
+            "optionText": "The embedded web link directs to an unverified lookalike domain ('incometax-gov-efiling.top') rather than the official government portal ('incometax.gov.in').",
             "isCorrect": true,
-            "explanation": "Phishing lures impersonate tax and subscription authorities but cannot send from verified institutional root domains.",
+            "explanation": "Phishing lures impersonate tax and government departments using lookalike domain extensions like .top or hyphenated names, rather than legitimate .gov.in domains.",
             "identifiedSignal": "unexpected_domain"
           },
           {
-            "optionText": "The notification was marked with normal rather than high priority.",
+            "optionText": "The SMS originated from a personal 10-digit mobile number rather than a recognized government SMS sender ID header.",
             "isCorrect": false,
-            "explanation": "Email priority flags are arbitrary metadata easily manipulated by any sender.",
-            "identifiedSignal": "unrequested_account_action"
-          },
-          {
-            "optionText": "The message body does not address the recipient by full legal surname.",
-            "isCorrect": false,
-            "explanation": "Many legitimate automated mailers use partial names or generic greetings.",
+            "explanation": "While SMS sender headers can indicate authenticity, cybercriminals often spoof sender IDs; verifying the destination domain name is the definitive technical check.",
             "identifiedSignal": "unusual_contact_method"
           },
           {
-            "optionText": "I did not identify a specific technical anomaly in this email.",
+            "optionText": "The notification promised an exact refund amount (INR 18,420) ending in zero.",
+            "isCorrect": false,
+            "explanation": "Tax refund calculations commonly result in specific figures; the deceptive lookalike domain is the conclusive forensic cue.",
+            "identifiedSignal": "unexpected_payment_request"
+          },
+          {
+            "optionText": "I did not identify a specific technical anomaly in this notification.",
             "isCorrect": false,
             "explanation": "Admitting cue absence is honest but reflects missed signal identification.",
             "identifiedSignal": ""
@@ -1716,9 +1716,9 @@
             "identifiedSignal": "unusual_contact_method"
           },
           {
-            "optionText": "The requested amount is rounded to an exact ten thousand rupees.",
+            "optionText": "The requested emergency transfer is rounded to an even thousands figure.",
             "isCorrect": false,
-            "explanation": "Rounded amounts are common in both genuine emergencies and scams; evasive contact is the forensic cue.",
+            "explanation": "Rounded amounts are common in both genuine emergencies and scams; unverified payment VPAs and evasive contact are the forensic cues.",
             "identifiedSignal": "unexpected_payment_request"
           },
           {
@@ -2123,21 +2123,21 @@
         "hasSignalProbe": true,
         "signalProbes": [
           {
-            "optionText": "The recruiter demands an upfront refundable security deposit/registration fee before assigning work.",
+            "optionText": "The recruiter demands an upfront registration fee (₹499) before activating the position and training materials.",
             "isCorrect": true,
-            "explanation": "Legitimate employers and platforms never require job applicants to pay registration, training, or deposit fees.",
+            "explanation": "Legitimate employers never require candidates to pay upfront onboarding, starter-pack, or registration fees.",
             "identifiedSignal": "unexpected_payment_request"
           },
           {
-            "optionText": "The message contains casual emoji in the opening greeting.",
+            "optionText": "The message was sent via direct mobile messaging rather than corporate email.",
             "isCorrect": false,
-            "explanation": "Tone and informal language are subjective and do not constitute definitive forensic proof of cyber fraud.",
+            "explanation": "Initial recruiter contact can occur across various channels; demanding an upfront fee is the decisive forensic cue.",
             "identifiedSignal": "unusual_contact_method"
           },
           {
-            "optionText": "The outreach was sent through an instant messaging channel rather than email.",
+            "optionText": "The position specifies reviewing mobile applications rather than desktop software.",
             "isCorrect": false,
-            "explanation": "Many legitimate recruiters initiate first contact on messaging platforms; the fee demand is the decisive indicator.",
+            "explanation": "App reviewer jobs exist legitimately; the upfront payment demand is the definitive indicator of recruitment fraud.",
             "identifiedSignal": "unusual_contact_method"
           },
           {
@@ -2362,7 +2362,7 @@
               "verification": 0,
               "decisionQuality": 0,
               "falsePositive": 0,
-              "unreviewedAcceptance": 2
+              "unreviewedAcceptance": 0
             },
             "riskLevel": "safe",
             "isCriticalMistake": false,
@@ -2435,7 +2435,7 @@
             "behaviorEffects": {
               "recognition": 4,
               "signalIdentification": 0,
-              "verification": 2,
+              "verification": 0,
               "decisionQuality": 0,
               "falsePositive": 0,
               "unreviewedAcceptance": 0
@@ -2673,7 +2673,7 @@
               "verification": 0,
               "decisionQuality": 0,
               "falsePositive": 0,
-              "unreviewedAcceptance": 2
+              "unreviewedAcceptance": 0
             },
             "riskLevel": "low-risk",
             "isCriticalMistake": false,
@@ -2925,9 +2925,9 @@
             "identifiedSignal": "unusual_contact_method"
           },
           {
-            "optionText": "The requested amount is rounded to an exact ten thousand rupees.",
+            "optionText": "The requested emergency transfer is rounded to an even thousands figure.",
             "isCorrect": false,
-            "explanation": "Rounded amounts are common in both genuine emergencies and scams; evasive contact is the forensic cue.",
+            "explanation": "Rounded amounts are common in both genuine emergencies and scams; unverified payment VPAs and evasive contact are the forensic cues.",
             "identifiedSignal": "unexpected_payment_request"
           },
           {

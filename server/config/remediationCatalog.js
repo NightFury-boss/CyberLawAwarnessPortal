@@ -66,8 +66,8 @@ const remediationCatalog = [
         act: 'Digital Personal Data Protection Act, 2023',
         section: 'Section 6(1)–(8) & 6(10)',
         officialTitle: 'Consent Standards & Withdrawal Obligations',
-        status: 'ENACTED_FUTURE_COMMENCEMENT',
-        commencementNote: 'Enacted August 2023. Notification G.S.R. 843(E) dated 13 November 2025 appoints commencement eighteen months after publication (13 May 2027). As of 2 November 2026, not in force.',
+        status: Date.now() >= new Date('2027-05-13T00:00:00.000Z').getTime() ? 'IN_FORCE' : 'ENACTED_FUTURE_COMMENCEMENT',
+        commencementNote: 'Enacted August 2023. Notification G.S.R. 843(E) dated 13 November 2025 appoints commencement eighteen months after publication (13 May 2027).',
         relationshipType: 'CONTEXTUAL',
         attribution: 'Imposes statutory obligations upon the Data Fiduciary (the service provider) to request only specific, informed, and necessary consent without bundled permissions.',
         educationalContext: 'Sections 6(1)–(8) and 6(10) of the DPDP Act establish the upcoming legislative standard requiring service providers to seek clear, informed consent. Understanding this principle helps users identify when applications request access beyond legitimate service needs.'
@@ -75,12 +75,12 @@ const remediationCatalog = [
       {
         act: 'Digital Personal Data Protection Act, 2023',
         section: 'Section 6(9)',
-        officialTitle: 'Data Protection Officer Contact Notice',
-        status: 'ENACTED_FUTURE_COMMENCEMENT',
-        commencementNote: 'Enacted August 2023. Notification G.S.R. 843(E) dated 13 November 2025 appoints commencement one year after publication (13 November 2026). As of 2 November 2026, not in force.',
+        officialTitle: 'Registration and Standards of Consent Managers',
+        status: Date.now() >= new Date('2026-11-13T00:00:00.000Z').getTime() ? 'IN_FORCE' : 'ENACTED_FUTURE_COMMENCEMENT',
+        commencementNote: 'Enacted August 2023. Notification G.S.R. 843(E) dated 13 November 2025 appoints commencement one year after publication (13 November 2026).',
         relationshipType: 'CONTEXTUAL',
-        attribution: 'Requires data fiduciaries to publish or provide contact details of an authorized officer or Data Protection Officer for user inquiries.',
-        educationalContext: 'Section 6(9) of the DPDP Act establishes accountability channels for digital users to contact data fiduciaries regarding their personal data and consent withdrawal.'
+        attribution: 'Requires every Consent Manager to be registered with the Data Protection Board of India and adhere to prescribed technical, operational, and interoperability conditions.',
+        educationalContext: 'Section 6(9) of the DPDP Act establishes statutory registration standards for Consent Managers, empowering citizens to manage, review, and withdraw consent across multiple digital services through authorized, accountable entities.'
       }
     ],
     actionLabel: 'Review UPI Scam Case Study',

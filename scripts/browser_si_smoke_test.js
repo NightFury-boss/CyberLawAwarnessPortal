@@ -26,14 +26,20 @@ const AssessmentSession = require('../server/models/AssessmentSession');
 const AssessmentDecision = require('../server/models/AssessmentDecision');
 
 const SHOT_DIR = path.join(__dirname, '../screenshots/browser-smoke-test');
-const ARTIFACT_DIR = 'C:\\Users\\Asus\\.gemini\\antigravity\\brain\\2a38735a-7985-4d0c-9744-999cb0b89167\\screenshots\\browser-smoke-test';
+const ARTIFACT_DIR = process.env.ARTIFACT_DIR
+  ? path.join(process.env.ARTIFACT_DIR, 'screenshots', 'browser-smoke-test')
+  : SHOT_DIR;
 
 fs.mkdirSync(SHOT_DIR, { recursive: true });
-fs.mkdirSync(ARTIFACT_DIR, { recursive: true });
+if (ARTIFACT_DIR !== SHOT_DIR) {
+  fs.mkdirSync(ARTIFACT_DIR, { recursive: true });
+}
 
 function copyToArtifact(srcPath, filename) {
-  const destPath = path.join(ARTIFACT_DIR, filename);
-  fs.copyFileSync(srcPath, destPath);
+  if (ARTIFACT_DIR !== SHOT_DIR) {
+    const destPath = path.join(ARTIFACT_DIR, filename);
+    fs.copyFileSync(srcPath, destPath);
+  }
 }
 
 const BASE_URL = 'http://localhost:5173';
@@ -50,7 +56,15 @@ async function run() {
   await mongoose.connect(process.env.MONGODB_URI);
   console.log('[Setup] MongoDB Atlas connected.');
 
-  await User.deleteOne({ email: TEST_EMAIL });
+  const existingOldUser = await User.findOne({ email: TEST_EMAIL });
+  if (existingOldUser) {
+    const oldSessions = await AssessmentSession.find({ userId: existingOldUser._id }).select('_id');
+    const oldSessionIds = oldSessions.map(s => s._id);
+    await AssessmentDecision.deleteMany({ assessmentSessionId: { $in: oldSessionIds } });
+    await AssessmentSession.deleteMany({ userId: existingOldUser._id });
+    await User.deleteOne({ _id: existingOldUser._id });
+  }
+
   const user = await User.create({
     fullName: 'SI Browser Smoke User',
     email: TEST_EMAIL,
@@ -59,10 +73,6 @@ async function run() {
     isActive: true
   });
   console.log(`[Setup] Created test user: ${user.email} (ID: ${user._id})`);
-
-  // Clean all previous assessment records for this test user
-  await AssessmentSession.deleteMany({ userId: user._id });
-  console.log('[Setup] Cleared previous sessions.');
 
   // 2. Launch Browser
   console.log('\n[Browser] Launching Playwright Chromium (1440x900)...');

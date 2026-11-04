@@ -98,19 +98,19 @@ const STATUTORY_REFERENCES = [
     act: 'Digital Personal Data Protection Act, 2023',
     section: 'Section 6(1)–(8) & 6(10)',
     officialTitle: 'Consent standards and withdrawal obligations',
-    status: 'ENACTED_FUTURE_COMMENCEMENT',
-    statusLabel: 'Enacted • Commencement 13 May 2027',
+    status: Date.now() >= new Date('2027-05-13T00:00:00.000Z').getTime() ? 'IN_FORCE' : 'ENACTED_FUTURE_COMMENCEMENT',
+    statusLabel: Date.now() >= new Date('2027-05-13T00:00:00.000Z').getTime() ? 'In Force' : 'Enacted • Commencement 13 May 2027',
     summary: 'Establishes clear statutory requirements that consent must be free, specific, informed, unconditional, and unambiguous with clear affirmative action. Data fiduciaries cannot bundle non-essential permissions or deny service for withholding non-necessary data.',
-    practicalContext: 'Enacted August 2023. Notification G.S.R. 843(E) (dated 13 November 2025) appoints commencement eighteen months post-publication (13 May 2027). As of 2 November 2026, not yet in force. Clarifies defensive reflexes against overreaching permission requests.'
+    practicalContext: 'Enacted August 2023. Notification G.S.R. 843(E) (dated 13 November 2025) appoints commencement eighteen months post-publication (13 May 2027). Clarifies defensive reflexes against overreaching permission requests.'
   },
   {
     act: 'Digital Personal Data Protection Act, 2023',
     section: 'Section 6(9)',
-    officialTitle: 'Notice of Data Protection Officer contact details',
-    status: 'ENACTED_FUTURE_COMMENCEMENT',
-    statusLabel: 'Enacted • Commencement 13 Nov 2026',
-    summary: 'Requires data fiduciaries to provide or make available contact details of a Data Protection Officer or person authorized to respond to communication from Data Principals.',
-    practicalContext: 'Enacted August 2023. Notification G.S.R. 843(E) (dated 13 November 2025) appoints commencement one year post-publication (13 November 2026). As of 2 November 2026, not yet in force. Establishes institutional accountability channels for personal data inquiries.'
+    officialTitle: 'Registration and Standards of Consent Managers',
+    status: Date.now() >= new Date('2026-11-13T00:00:00.000Z').getTime() ? 'IN_FORCE' : 'ENACTED_FUTURE_COMMENCEMENT',
+    statusLabel: Date.now() >= new Date('2026-11-13T00:00:00.000Z').getTime() ? 'In Force' : 'Enacted • Commencement 13 Nov 2026',
+    summary: 'Establishes statutory registration and operational standards for Consent Managers under the Data Protection Board of India, giving Data Principals unified control to give, manage, review, and withdraw consent.',
+    practicalContext: 'Enacted August 2023. Notification G.S.R. 843(E) (dated 13 November 2025) appoints commencement one year post-publication (13 November 2026). Establishes institutional accountability, interoperability, and technical standards for registered Consent Managers through whom citizens manage digital consents.'
   }
 ];
 

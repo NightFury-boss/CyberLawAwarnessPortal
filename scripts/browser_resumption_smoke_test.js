@@ -25,14 +25,20 @@ const Scenario = require('../server/models/Scenario');
 const ScenarioStage = require('../server/models/ScenarioStage');
 
 const SHOT_DIR = path.join(__dirname, '../screenshots/browser-smoke-test');
-const ARTIFACT_DIR = 'C:\\Users\\Asus\\.gemini\\antigravity\\brain\\2a38735a-7985-4d0c-9744-999cb0b89167\\screenshots\\browser-smoke-test';
+const ARTIFACT_DIR = process.env.ARTIFACT_DIR
+  ? path.join(process.env.ARTIFACT_DIR, 'screenshots', 'browser-smoke-test')
+  : SHOT_DIR;
 
 fs.mkdirSync(SHOT_DIR, { recursive: true });
-fs.mkdirSync(ARTIFACT_DIR, { recursive: true });
+if (ARTIFACT_DIR !== SHOT_DIR) {
+  fs.mkdirSync(ARTIFACT_DIR, { recursive: true });
+}
 
 function copyToArtifact(srcPath, filename) {
-  const destPath = path.join(ARTIFACT_DIR, filename);
-  fs.copyFileSync(srcPath, destPath);
+  if (ARTIFACT_DIR !== SHOT_DIR) {
+    const destPath = path.join(ARTIFACT_DIR, filename);
+    fs.copyFileSync(srcPath, destPath);
+  }
 }
 
 const BASE_URL = 'http://localhost:5173';
@@ -55,8 +61,10 @@ async function run() {
 
   const existingUser = await User.findOne({ email: TEST_EMAIL });
   if (existingUser) {
+    const userSessions = await AssessmentSession.find({ userId: existingUser._id }).select('_id');
+    const userSessionIds = userSessions.map(s => s._id);
+    await AssessmentDecision.deleteMany({ assessmentSessionId: { $in: userSessionIds } });
     await AssessmentSession.deleteMany({ userId: existingUser._id });
-    await AssessmentDecision.deleteMany({ userId: existingUser._id });
     const UserProgress = require('../server/models/UserProgress');
     await UserProgress.deleteMany({ userId: existingUser._id });
     await User.deleteOne({ _id: existingUser._id });

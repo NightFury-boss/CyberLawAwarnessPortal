@@ -39,8 +39,8 @@ const AssessmentDecision = require('../models/AssessmentDecision');
 const simulationRoutes = require('../routes/simulations');
 const authRoutes = require('../routes/auth');
 
-const TEST_PORT = 5993;
-const BASE_URL = `http://localhost:${TEST_PORT}/api`;
+let TEST_PORT;
+let BASE_URL;
 
 let server;
 let testUser;
@@ -55,8 +55,10 @@ async function setup() {
   app.use('/api/assessments', simulationRoutes);
 
   await new Promise((resolve) => {
-    server = app.listen(TEST_PORT, () => {
-      console.log(`[Test Server] Listening on port ${TEST_PORT}`);
+    server = app.listen(0, '127.0.0.1', () => {
+      TEST_PORT = server.address().port;
+      BASE_URL = `http://127.0.0.1:${TEST_PORT}/api`;
+      console.log(`[Test Server] Listening on dynamic port ${TEST_PORT}`);
       resolve();
     });
   });
@@ -244,7 +246,7 @@ async function runTests() {
       assert.deepStrictEqual(statuses, [200, 200], 'Both requests must resolve successfully with HTTP 200');
 
       const isRetryCount = (res1.data.isRetry ? 1 : 0) + (res2.data.isRetry ? 1 : 0);
-      const normalCount = (res1.data.stage ? 1 : 0) + (res2.data.stage ? 1 : 0);
+      const normalCount = (!res1.data.isRetry && res1.data.stage ? 1 : 0) + (!res2.data.isRetry && res2.data.stage ? 1 : 0);
 
       assert.strictEqual(normalCount, 1, 'Exactly one request should advance the stage');
       assert.strictEqual(isRetryCount, 1, 'Exactly one request should be acknowledged as an idempotent retry');

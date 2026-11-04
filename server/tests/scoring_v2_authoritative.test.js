@@ -100,9 +100,15 @@ async function runTests() {
   });
 
   test('Resolves pre-cutover unversioned sessions to v1', () => {
-    const preCutoverDate = new Date(SCORING_V2_DEPLOYMENT_TIMESTAMP.getTime() - 86400000);
+    const preCutoverDate = new Date(Number(SCORING_V2_DEPLOYMENT_TIMESTAMP) - 86400000);
     const session = { createdAt: preCutoverDate };
     assert.strictEqual(resolveSessionScoringVersion(session), 1);
+  });
+
+  test('Resolves post-cutover unversioned sessions to v2', () => {
+    const postCutoverDate = new Date(Number(SCORING_V2_DEPLOYMENT_TIMESTAMP) + 86400000);
+    const session = { createdAt: postCutoverDate };
+    assert.strictEqual(resolveSessionScoringVersion(session), 2);
   });
 
   test('Resolves legacy fixtures lacking createdAt safely to v1', () => {

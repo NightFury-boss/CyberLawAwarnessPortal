@@ -1250,7 +1250,7 @@ function Quizzes({ user, updateProgressTrigger }) {
                       return (
                         <Link key={idx} to={linkUrl} className="quiz-recommended-card">
                           <span className="quiz-recommended-type">
-                            {item.type === 'learning_module' ? 'Structured Lesson' : 'Court Case Study'}
+                            {isModule ? 'Structured Module' : 'Court Case Study'}
                           </span>
                           <h5 className="quiz-recommended-title">{item.title}</h5>
                           <p className="quiz-recommended-summary">{item.summary}</p>

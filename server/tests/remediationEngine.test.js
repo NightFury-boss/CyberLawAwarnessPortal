@@ -502,9 +502,15 @@ async function runTests() {
             `Invalid relationshipType in ${pathway.pathwayId}`);
 
           // DPDP Section 6 Rule
-          if (ref.act.includes('Digital Personal Data Protection') && ref.section.includes('6')) {
-            assert.strictEqual(ref.status, 'ENACTED_FUTURE_COMMENCEMENT',
-              'DPDP Act Section 6 must be marked ENACTED_FUTURE_COMMENCEMENT');
+          if (ref.act.includes('Digital Personal Data Protection') && (/\bsection\s*6\b/i.test(ref.section) || /\b6\(/i.test(ref.section))) {
+            const is6_9 = ref.section.includes('6(9)');
+            const is6_9InForce = Date.now() >= new Date('2026-11-13T00:00:00.000Z').getTime();
+            const isGeneralInForce = Date.now() >= new Date('2027-05-13T00:00:00.000Z').getTime();
+            const expectedStatus = is6_9
+              ? (is6_9InForce ? 'IN_FORCE' : 'ENACTED_FUTURE_COMMENCEMENT')
+              : (isGeneralInForce ? 'IN_FORCE' : 'ENACTED_FUTURE_COMMENCEMENT');
+            assert.strictEqual(ref.status, expectedStatus,
+              `DPDP Act Section 6 must be marked ${expectedStatus}`);
             assert(ref.commencementNote && ref.commencementNote.includes('G.S.R. 843(E)'),
               'DPDP Section 6 must cite Notification G.S.R. 843(E)');
             assert(!ref.commencementNote.includes('S.O. 4932(E)'),

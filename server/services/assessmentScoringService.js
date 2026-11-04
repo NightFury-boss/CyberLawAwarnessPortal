@@ -41,11 +41,11 @@ function resolveSessionScoringVersion(session) {
     return numericVersion;
   }
 
-  // Guard 2: Pre-cutover unversioned sessions (completed or in-progress) resolve to v1
+  // Guard 2: Unversioned sessions: pre-cutover resolve to v1, post-cutover resolve to v2
   if (session.createdAt) {
-    const createdDate = new Date(session.createdAt);
-    if (!isNaN(createdDate.getTime()) && createdDate < SCORING_V2_DEPLOYMENT_TIMESTAMP) {
-      return 1;
+    const createdTime = new Date(session.createdAt).getTime();
+    if (!isNaN(createdTime)) {
+      return createdTime < SCORING_V2_DEPLOYMENT_TIMESTAMP ? 1 : 2;
     }
   }
 

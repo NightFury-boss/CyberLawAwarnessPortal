@@ -1,3 +1,4 @@
+const mongoose = require('mongoose');
 const Scenario = require('../models/Scenario');
 const ScenarioStage = require('../models/ScenarioStage');
 const ScenarioDecision = require('../models/ScenarioDecision');
@@ -123,6 +124,30 @@ async function getSessionDecisionEvidence(sessionId) {
     console.error('Failed to populate decision evidence for session:', err);
     return [];
   }
+}
+
+async function serializeStage(stageId) {
+  if (!stageId) return null;
+  const stage = await ScenarioStage.findById(stageId);
+  if (!stage) return null;
+  const decisions = await ScenarioDecision.find({ stageId: stage._id });
+  return {
+    id: stage._id,
+    title: stage.title,
+    description: stage.description,
+    stageOrder: stage.stageOrder,
+    mockInterfaceType: stage.mockInterfaceType,
+    mockInterfaceData: stage.mockInterfaceData,
+    hasSignalProbe: Boolean(stage.hasSignalProbe),
+    signalProbes: (stage.signalProbes || []).map(p => ({
+      id: p._id,
+      optionText: p.optionText
+    })),
+    decisions: decisions.map(d => ({
+      id: d._id,
+      optionText: d.optionText
+    }))
+  };
 }
 
 exports.getScenario = async (req, res) => {
@@ -269,7 +294,7 @@ exports.startAssessment = async (req, res) => {
       userId,
       scenarioId: scenario._id,
       scenarioVersion: scenario.version,
-      scoringVersion: 2,
+      scoringVersion: (scenario.version || 1) >= 2 ? 2 : 1,
       scenarioCode,
       status: 'in-progress',
       currentStageId: firstStage._id,
@@ -335,6 +360,18 @@ exports.submitStep = async (req, res) => {
       return res.status(400).json({
         success: false,
         error: { code: 'INVALID_PARAMETERS', message: 'assessmentSessionId, stageId, and decisionId are required' }
+      });
+    }
+
+    if (
+      !mongoose.isValidObjectId(assessmentSessionId) ||
+      !mongoose.isValidObjectId(stageId) ||
+      !mongoose.isValidObjectId(decisionId) ||
+      (signalProbeDecisionId && !mongoose.isValidObjectId(signalProbeDecisionId))
+    ) {
+      return res.status(400).json({
+        success: false,
+        error: { code: 'INVALID_ID_FORMAT', message: 'One or more provided identifiers are not valid ObjectIds' }
       });
     }
 
@@ -418,10 +455,27 @@ exports.submitStep = async (req, res) => {
 
       // 1. Same key + same payload: Idempotent retry
       if (isSameKey && isSameStage && isSamePrimary && isSameProbe) {
+        const currentSession = await AssessmentSession.findById(assessmentSessionId);
+        if (currentSession && currentSession.status === 'completed') {
+          const decisionEvidence = await getSessionDecisionEvidence(currentSession._id);
+          return res.json({
+            success: true,
+            isRetry: true,
+            isCompleted: true,
+            message: 'Decision already recorded for this stage (Idempotent retry).',
+            score: currentSession.score,
+            behaviourScores: currentSession.behaviourScores,
+            behaviourOpportunities: currentSession.behaviourOpportunities,
+            decisionEvidence
+          });
+        }
+        const stageData = currentSession ? await serializeStage(currentSession.currentStageId) : null;
         return res.json({
           success: true,
           isRetry: true,
-          message: 'Decision already recorded for this stage (Idempotent retry).'
+          isCompleted: false,
+          message: 'Decision already recorded for this stage (Idempotent retry).',
+          stage: stageData
         });
       }
 
@@ -551,9 +605,13 @@ exports.submitStep = async (req, res) => {
     let mongoSession = null;
     let useTransaction = false;
     try {
-      mongoSession = await mongoose.startSession();
-      mongoSession.startTransaction();
-      useTransaction = true;
+      const topologyType = mongoose.connection?.client?.topology?.description?.type;
+      const isReplicaSet = topologyType === 'ReplicaSetWithPrimary' || topologyType === 'Sharded';
+      if (isReplicaSet || !topologyType) {
+        mongoSession = await mongoose.startSession();
+        mongoSession.startTransaction();
+        useTransaction = true;
+      }
     } catch (sessionErr) {
       if (mongoSession) {
         try { await mongoSession.endSession(); } catch (e) {}
@@ -563,14 +621,16 @@ exports.submitStep = async (req, res) => {
     }
 
     let session = null;
+    let createdDecisionId = null;
     try {
-      await AssessmentDecision.create([{
+      const createdDecisions = await AssessmentDecision.create([{
         assessmentSessionId,
         stageId,
         decisionId,
         signalProbeDecisionId: signalProbeDecisionId || undefined,
         idempotencyKey: sanitizedKey || undefined
       }], useTransaction ? { session: mongoSession } : {});
+      createdDecisionId = createdDecisions[0]?._id;
 
       // Execute atomic Compare-and-Swap state update
       session = await AssessmentSession.findOneAndUpdate(
@@ -592,7 +652,11 @@ exports.submitStep = async (req, res) => {
       );
 
       if (!session) {
-        if (useTransaction) await mongoSession.abortTransaction();
+        if (useTransaction) {
+          await mongoSession.abortTransaction();
+        } else if (createdDecisionId) {
+          await AssessmentDecision.deleteOne({ _id: createdDecisionId });
+        }
         return res.status(409).json({
           success: false,
           error: { code: 'STAGE_DECISION_ALREADY_COMMITTED', message: 'Concurrent modification conflict: stage already advanced.' }
@@ -605,8 +669,15 @@ exports.submitStep = async (req, res) => {
     } catch (dbErr) {
       if (useTransaction) {
         try { await mongoSession.abortTransaction(); } catch (e) {}
+      } else if (createdDecisionId && dbErr.code !== 11000) {
+        try { await AssessmentDecision.deleteOne({ _id: createdDecisionId }); } catch (e) {}
       }
-      if (dbErr.code === 11000) {
+      const isRaceConflict = dbErr.code === 11000 ||
+        dbErr.code === 112 ||
+        dbErr.codeName === 'WriteConflict' ||
+        (typeof dbErr.hasErrorLabel === 'function' && dbErr.hasErrorLabel('TransientTransactionError'));
+
+      if (isRaceConflict) {
         const racedDecision = await AssessmentDecision.findOne({
           assessmentSessionId,
           $or: [
@@ -622,10 +693,27 @@ exports.submitStep = async (req, res) => {
           const isSameKey = racedDecision.idempotencyKey && sanitizedKey && racedDecision.idempotencyKey === sanitizedKey;
 
           if (isSameKey && isSameStage && isSamePrimary && isSameProbe) {
+            const currentSession = await AssessmentSession.findById(assessmentSessionId);
+            if (currentSession && currentSession.status === 'completed') {
+              const decisionEvidence = await getSessionDecisionEvidence(currentSession._id);
+              return res.json({
+                success: true,
+                isRetry: true,
+                isCompleted: true,
+                message: 'Concurrent duplicate submission resolved idempotently.',
+                score: currentSession.score,
+                behaviourScores: currentSession.behaviourScores,
+                behaviourOpportunities: currentSession.behaviourOpportunities,
+                decisionEvidence
+              });
+            }
+            const stageData = currentSession ? await serializeStage(currentSession.currentStageId) : null;
             return res.json({
               success: true,
               isRetry: true,
-              message: 'Concurrent duplicate submission resolved idempotently.'
+              isCompleted: false,
+              message: 'Concurrent duplicate submission resolved idempotently.',
+              stage: stageData
             });
           }
           if (isSameKey) {
