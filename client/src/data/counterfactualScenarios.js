@@ -64,7 +64,7 @@ export const SCENARIO_1_MIDNIGHT_POWER_CUT_SMS = Object.freeze({
           impactAssessment: Object.freeze({
             financialExposure: 'Substantial risk of fraudulent payment debits or subsequent secondary payment demands if remote access is granted or payment credentials are provided.',
             accountSafety: 'Compromised',
-            legalConsiderations: 'Voluntarily installing remote-access applications or entering credentials under social engineering involves transactions induced by deception rather than purely unauthorized access. Limiting liability rules under RBI directives apply strictly to unauthorized transactions, not automatically to customer-authorized transfers induced by deception.'
+            legalConsiderations: 'Installing remote-access applications or submitting payment details under social engineering may facilitate unauthorized transactions or fraudulent transfers. For covered commercial banks, Part D of the RBI (Commercial Banks – Responsible Business Conduct) Directions, 2025 addresses customer liability involving credential sharing or customer negligence, where the customer bears the loss until the incident is reported to the bank, after which subsequent loss is borne by the bank. Prompt reporting is essential, but zero liability cannot be assumed.'
           }),
           whyItHappened: Object.freeze({
             technicalFactor: 'Remote desktop or screen-sharing applications may grant external viewers visibility of displayed two-factor authentication tokens and screen contents depending on granted OS permissions.',
@@ -200,7 +200,7 @@ export const SCENARIO_2_NOMINAL_PARCEL_FEE = Object.freeze({
           impactAssessment: Object.freeze({
             financialExposure: 'Substantial risk of fraudulent card debits and subsequent secondary exploitation if card details and authentication codes are submitted.',
             accountSafety: 'Compromised',
-            legalConsiderations: 'Submitting card details and authenticating via OTP into a deceptive interface represents a customer-authenticated transaction induced by fraud, distinct from an unauthorized transaction executed without customer involvement. Under bank dispute procedures, customer liability is evaluated based on negligence, notification timelines, and specific facts; zero liability is not automatic.'
+            legalConsiderations: 'Entering card details or an OTP on a deceptive web form does not by itself establish legal authorization of a disputed charge, nor does credential sharing automatically place a transaction outside regulatory liability protections. For covered commercial banks, customer liability is governed by Part D of the RBI (Commercial Banks – Responsible Business Conduct) Directions, 2025; under Paragraph 68, where an unauthorised transaction involves customer negligence such as sharing payment credentials, the customer bears the loss until reporting the transaction to the bank, after which any subsequent loss is borne by the bank. Applicable liability depends on the issuer-specific regulatory framework, transaction facts, negligence determinations, and reporting timelines; zero liability or guaranteed reimbursement cannot be promised.'
           }),
           whyItHappened: Object.freeze({
             technicalFactor: 'Deceptive payment portals harvest credential fields and present dynamic authentication screens without disclosing the true merchant or debit amount.',
@@ -285,11 +285,11 @@ export const SCENARIO_2_NOMINAL_PARCEL_FEE = Object.freeze({
         applicabilityNote: 'Applies conditionally only where the perpetrator fraudulently or dishonestly makes use of another person\'s electronic signature, password, or any other unique identification feature. Merely collecting card details on a form does not automatically satisfy § 66C until the perpetrator fraudulently makes use of qualifying unique identification features.'
       }),
       Object.freeze({
-        act: 'RBI Master Direction on Customer Service in Banks',
-        section: 'Customer Liability Framework (Limiting Liability in Electronic Banking Transactions)',
+        act: 'Reserve Bank of India (Commercial Banks – Responsible Business Conduct) Directions, 2025',
+        section: 'Part D: Limiting Liability of Customers in Unauthorised Electronic Banking Transactions (Paragraph 68)',
         status: 'PROCEDURAL_STATUTE',
-        plainSummary: 'Regulatory principles governing customer liability in electronic banking transactions for commercial banks.',
-        applicabilityNote: 'For covered commercial banks, operative regulatory protections limiting customer liability apply strictly to unauthorized transactions (where the customer did not share credentials or authorize the payment). Where card details or OTPs are voluntarily entered into a phishing interface under deception, liability is determined through bank investigation and dispute procedures based on negligence and notification timeliness; zero customer liability is not automatic.'
+        plainSummary: 'Operative regulatory framework governing customer liability in electronic banking transactions for covered commercial banks.',
+        applicabilityNote: 'For covered commercial banks, Part D establishes customer liability rules in electronic transactions. Entering card details or an OTP on a deceptive form does not automatically establish lawful authorization of an unexpected transaction, nor does sharing credentials automatically exclude a transaction from the unauthorised-transaction framework; under Paragraph 68, where an unauthorised transaction involves customer negligence such as sharing payment credentials, the customer bears the entire loss until reporting the transaction to the bank, after which subsequent losses are borne by the bank. For non-bank card issuers or other financial institutions, respective issuer-specific regulations apply. Liability determinations depend on transaction facts, negligence findings, and prompt reporting; zero liability or reimbursement is not guaranteed.'
       })
     ]),
     officialReportingProtocol: Object.freeze({
@@ -345,7 +345,7 @@ export const SCENARIO_3_APPROVE_PAYMENT_QR = Object.freeze({
           impactAssessment: Object.freeze({
             financialExposure: 'Immediate direct debit of ₹8,500 (or ₹25,500+ if secondary reversal scam is accepted).',
             accountSafety: 'At Risk',
-            legalConsiderations: 'Because the payment was authorized using your secret UPI PIN under deception, it represents a customer-authorized transaction induced by fraud rather than an unauthorized transaction executed without credentials. Regulatory protections and dispute resolutions depend on the factual circumstances and bank investigation; zero liability is not automatic.'
+            legalConsiderations: 'A payment authenticated and approved by entering a secret UPI PIN under social-engineering deception is a customer-authorized transfer induced by fraud, distinct from an unauthorised transaction executed without customer credentials. Liability and dispute outcomes depend on the applicable regulatory framework (such as Part D of the RBI Commercial Banks – Responsible Business Conduct Directions, 2025 for covered commercial banks, or relevant non-bank guidelines), factual circumstances, and reporting timelines; dispute resolution does not guarantee reimbursement or zero liability.'
           }),
           whyItHappened: Object.freeze({
             technicalFactor: 'In the UPI framework, entering a secret PIN authorizes outgoing payments and debits from your linked bank account; receiving incoming transfers requires no PIN entry or payment approval from the recipient.',
@@ -431,11 +431,11 @@ export const SCENARIO_3_APPROVE_PAYMENT_QR = Object.freeze({
         applicabilityNote: 'IT Act § 43 does not apply to voluntary PIN entry on a user\'s own mobile device; § 43 governs unauthorized system access, data extraction, or network damage.'
       }),
       Object.freeze({
-        act: 'Master Direction on Customer Service in Banks & Digital Payment Security Controls',
-        section: 'Operative RBI Directions',
+        act: 'Reserve Bank of India (Commercial Banks – Responsible Business Conduct) Directions, 2025',
+        section: 'Part D: Limiting Liability of Customers in Unauthorised Electronic Banking Transactions & Digital Payment Controls',
         status: 'PROCEDURAL_STATUTE',
-        plainSummary: 'Customer protection and dispute reporting guidelines for digital payments.',
-        applicabilityNote: 'For commercial banks, operative regulatory guidelines distinguish between unauthorized electronic transactions and customer-authorized transactions induced by deception. Where a customer enters their secret UPI PIN, bank dispute processes examine whether customer negligence contributed to the loss; zero liability cannot be categorically assumed without evaluating the factual circumstances of the payment.'
+        plainSummary: 'Operative regulatory guidelines on electronic banking transaction liability for covered commercial banks.',
+        applicabilityNote: 'For covered commercial banks, Part D sets forth the electronic banking liability framework. In UPI push scams where a customer enters their secret PIN to approve a payment under deception, the payment is factually customer-authorized through social engineering rather than an unauthorized transaction executed without credentials. Dispute evaluations consider the specific transaction mechanics, applicable issuer framework, customer negligence, and reporting timelines. Zero liability cannot be assumed, and prompt notification to 1930 and the bank supports possible beneficiary-account hold coordination without guaranteeing reimbursement.'
       })
     ]),
     officialReportingProtocol: Object.freeze({

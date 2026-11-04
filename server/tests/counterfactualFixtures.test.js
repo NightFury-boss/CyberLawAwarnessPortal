@@ -18,7 +18,7 @@
  *    - UPI PIN debit authorization invariant without classifying customer-authorized payments as automatically unauthorized.
  *    - IT Act § 43 inapplicability to voluntary PIN entry.
  *    - Fact-qualified Electricity Act § 56(1) notice requirement.
- *    - Master Direction on Customer Service in Banks for cardholder liability, avoiding outdated 2022 conduct directions.
+ *    - Reserve Bank of India (Commercial Banks – Responsible Business Conduct) Directions, 2025 (Part D / Paragraph 68) for customer liability in unauthorised electronic transactions, avoiding outdated circulars or issuance directions.
  *    - Zero liability / fund freezing / recovery non-guarantee (CFCFRMS supports possible holds, not guaranteed freezing).
  *    - No unsupported universal Golden Hour claims.
  * 6. Multi-tier isolation and recursive deep immutability (recursive freeze check, zero assessment/server imports).
@@ -221,14 +221,21 @@ async function runCounterfactualFixturesSuite() {
   assert(it66c.applicabilityNote.includes('unique identification feature'), 'IT Act § 66C must cite qualifying unique identification features');
   assert(it66c.applicabilityNote.includes('Merely collecting card details on a form does not automatically satisfy § 66C'), 'IT Act § 66C must note that collecting card details alone is insufficient without fraudulent use of qualifying features');
 
-  // Card reference check: Must cite Master Direction on Customer Service in Banks for liability, not outdated 2022 issuance directions
+  // Card and electronic banking liability reference check: Must cite 2025 Responsible Business Conduct Directions (Part D / Paragraph 68)
   assert(!rawSc2.includes('RBI Master Direction – Credit Card and Debit Card – Issuance and Conduct Directions, 2022'), 'Must not cite outdated 2022 commercial bank card conduct directions');
-  assert(rawSc2.includes('Master Direction on Customer Service in Banks'), 'Must cite customer liability framework');
+  assert(!rawSc2.includes('Master Direction on Customer Service in Banks'), 'Must not cite outdated Customer Service Master Direction');
+  assert(rawSc2.includes('Reserve Bank of India (Commercial Banks – Responsible Business Conduct) Directions, 2025'), 'Scenario 2 must cite operative 2025 Responsible Business Conduct Directions');
+  assert(rawSc2.includes('Part D') || rawSc2.includes('Paragraph 68'), 'Scenario 2 must cite Part D / Paragraph 68 for customer liability');
+
+  // Guardrail: Must NOT claim credential sharing automatically excludes transaction from unauthorised-transaction framework
+  assert(!rawSc2.includes('apply strictly to unauthorized transactions (where the customer did not share credentials'), 'Must not claim credential sharing automatically excludes transaction from unauthorised-transaction framework');
+  assert(!rawSc2.includes('automatically places the transaction outside'), 'Must not claim credential entry automatically places transaction outside liability framework');
   assert(rawSc2.includes('does not by itself verify') || rawSc2.includes('does not by itself establish'), 'OTP consequence must be qualified');
 
   // 4D: Scenario 3 - UPI PIN Debit Authorization Invariant & Transaction Terminology
   const sc3 = SCENARIO_3_APPROVE_PAYMENT_QR;
   const rawSc3 = JSON.stringify(sc3);
+  assert(rawSc3.includes('Reserve Bank of India (Commercial Banks – Responsible Business Conduct) Directions, 2025'), 'Scenario 3 must cite operative 2025 Responsible Business Conduct Directions');
   assert.strictEqual(
     sc3.defensiveTakeaway.coreRule,
     'Entering a UPI PIN authorizes a transaction that can debit your account. You do not need to enter your UPI PIN to receive money. Always verify the payee and transaction details before authorizing a payment.',
@@ -272,7 +279,7 @@ async function runCounterfactualFixturesSuite() {
   console.log('\n[TEST 5] Verifying Multi-Tier Isolation & Recursive Immutability...');
   const fixtureCode = fs.readFileSync(fixturePath, 'utf8');
 
-  // Static AST / Import boundary checks
+  // Source-string import-boundary checks (verifying no backend or assessment module imports)
   assert(!fixtureCode.includes("from '../models"), 'Must not import from models');
   assert(!fixtureCode.includes("from '../../models"), 'Must not import from models');
   assert(!fixtureCode.includes("from '../controllers"), 'Must not import from controllers');
