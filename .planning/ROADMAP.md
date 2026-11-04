@@ -1,8 +1,8 @@
 # Cyber Law Awareness Portal — Canonical Development Roadmap
 
 **Governance Principle**: Technical & Educational Foundation First, Broad Visual Redesign Later  
-**Current Milestone Position**: Stage 2 — Assessment Quality & Reliability (COMPLETED & FORMALLY CLOSED)  
-**Historical Baseline**: Milestone 3.3 Learner Experience Structural Freeze Formally Closed  
+**Current Milestone Position**: Stage 3 — Counterfactual Scenario Learning (PLANNING IN PROGRESS; Implementation Unauthorized)  
+**Historical Baseline**: Milestone 3.3 Learner Experience Structural Freeze Formally Closed; Stage 2 Formally Accepted & Closed  
 
 ---
 
@@ -30,9 +30,11 @@ The development of the Cyber Law Awareness Portal follows a strict, sequential 6
                                            |
                                            v
 +---------------------------------------------------------------------------------------+
-| STAGE 3: Counterfactual Scenario Learning (Original Phase 4 — PENDING)                |
+| STAGE 3: Counterfactual Scenario Learning (PLANNING IN PROGRESS)                      |
 | • Educational simulations of alternative decision branches & outcomes                 |
 | • "What happens when...?" exploration without modifying immutable assessment records |
+| • Design proposal prepared in STAGE_3_COUNTERFACTUAL_DESIGN_PROPOSAL.md               |
+| • Implementation strictly unauthorized pending explicit proposal approval             |
 +---------------------------------------------------------------------------------------+
                                            |
                                            v
@@ -127,10 +129,12 @@ Structural and navigation milestones:
 ---
 
 ### Stage 3 — Counterfactual Scenario Learning
-**Status**: NEXT CANONICAL STAGE (Original Phase 4, Pending Authorization)
+**Status**: PLANNING IN PROGRESS (Design Proposal Prepared; Implementation Unauthorized)
 
 > [!IMPORTANT]
-> Formal closure of Stage 2 does **not** authorize Stage 3 planning or implementation. Work remains paused at this boundary until explicit user authorization is provided.
+> Planning and discovery for Stage 3 were authorized by the user on 2026-11-04. The formal design proposal has been prepared in [`.planning/STAGE_3_COUNTERFACTUAL_DESIGN_PROPOSAL.md`](file:///c:/Users/Asus/Desktop/cyber-law-portal/.planning/STAGE_3_COUNTERFACTUAL_DESIGN_PROPOSAL.md).
+>
+> **Implementation remains strictly unauthorized.** No product code, database schemas, API routes, scenario seeds, or test suites may be modified until the user explicitly reviews and approves the proposal.
 
 Develop educational simulation experiences that demonstrate alternative outcomes based on different learner decisions:
 - Interactive "What happens if...?" exploration:
@@ -221,7 +225,7 @@ To eliminate past ambiguity across planning documents, the following table forma
 | :--- | :--- | :--- | :--- |
 | **Stage 1: Core Learner Experience** | Phases 1, 2, 3 / Milestones 3.1, 3.2, 3.3 | **COMPLETED & FROZEN** | Registration, baseline assessment, 6-metric profile, pathways, final assessment, navigation fixes, structural freeze. |
 | **Stage 2: Assessment Quality & Reliability** | "Phase 4.1", "Phase 4.2", "Phase 4.3", "Phase 4.4" / AQ-1..4 | **COMPLETED & FORMALLY CLOSED** | Independent assessment-hardening workstream: AQ-1 (Audit complete), AQ-2 (Design v2.5.0 approved), AQ-3 (Implementation verified), AQ-4 (Integrated validation complete & accepted). Stage 2 closed. |
-| **Stage 3: Counterfactual Scenario Learning** | Original Phase 4 | **PENDING** | Educational alternative-choice simulations ("What happens if...?"). Does not modify historical assessment records. |
+| **Stage 3: Counterfactual Scenario Learning** | Original Phase 4 | **PLANNING IN PROGRESS** | Educational alternative-choice simulations ("What happens if...?"). Design proposal prepared in `.planning/STAGE_3_COUNTERFACTUAL_DESIGN_PROPOSAL.md`. Implementation unauthorized. |
 | **Stage 4: Digital Rights & Privacy Education** | Original Phase 5 | **PENDING** | Curriculum expansion: personal data, consent, privacy, copyright, piracy, malware. |
 | **Stage 5: Spaced Retrieval & Long-Term Retention** | Separate Retention Initiative / RT-1..4 | **PENDING** | Dedicated retention workstream: audit existing recall, propose improvements, implement, and validate. Separate from behavioral scoring. |
 | **Stage 6: Dashboard Integration & Refinement** | Original Phase 6 | **PENDING** | Macro journey integration connecting all assessment, curriculum, counterfactual, and retention streams. |
