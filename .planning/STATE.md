@@ -1,21 +1,34 @@
 # Project State & Current Position
 
 ## 1. Milestone Status & Position
-- **Active Canonical Stage**: **Stage 2 — Assessment Quality & Reliability**
+- **Active Canonical Stage**: **Stage 2 — Assessment Quality & Reliability (COMPLETED & FORMALLY CLOSED)**
   - `AQ-1`: Six-Dimensional Assessment Quality Audit — **COMPLETED**
   - `AQ-2`: Assessment Refinement Design Proposal v2.5.0 — **APPROVED**
   - `AQ-3`: Controlled Implementation (3 Waves) & Verification — **COMPLETED**
-  - `AQ-4`: Integrated Assessment Validation — **COMPLETED & VERIFIED (WAVES 1, 2, 3 100% GREEN)**
+  - `AQ-4`: Integrated Assessment Validation — **COMPLETED & FORMALLY ACCEPTED**
 - **Canonical Development Roadmap Position**:
   - `Stage 1`: Core Learner Experience — **COMPLETED & FROZEN** (Milestone 3.3 Closed)
-  - `Stage 2`: Assessment Quality & Reliability — **COMPLETED & VERIFIED**
+  - `Stage 2`: Assessment Quality & Reliability — **COMPLETED & FORMALLY CLOSED**
   - `Stage 3`: Counterfactual Scenario Learning (Original Phase 4) — **NEXT CANONICAL STAGE (PENDING AUTHORIZATION)**
   - `Stage 4`: Digital Rights & Privacy Education (Original Phase 5) — **PENDING**
   - `Stage 5`: Spaced Retrieval & Long-Term Retention (RT-1..4) — **PENDING**
   - `Stage 6`: Dashboard Integration & Refinement (Original Phase 6) — **PENDING**
+- **Preserved Verified Baseline Revisions**:
+  - Implementation Revision: `a196c34acefde13fa6898745fd39ae8f1242a3a8`
+  - Documentation Alignment Revision: `72b7f5ca155681ce2fc18ae676ff38a8ca4695eb`
+  - Review Audit Fix Revision: `5fcf9ee1fe9d6076e66e01333f7e3a1553fa6b8c`
+- **Environment Distinction**:
+  - Locally verified application readiness across all integration and lifecycle suites connected to MongoDB Atlas replica set.
+  - No hosted cloud production deployment (e.g. AWS/Vercel/Render hosting) has been evaluated or established.
+  - The portal is ready for deployment, not production-deployed.
+- **Outstanding Engineering Considerations (Future Non-Blockers)**:
+  - Redis-backed distributed rate limiting (for horizontal multi-instance scaling).
+  - Cloud hosting infrastructure-as-code and automated deployment pipelines.
+  - Production TLS/SSL termination at the ingress or reverse proxy boundary.
+  - Background-tab mobile browser visibilitychange eviction and cache refresh handling.
 - **Separate Deferred Workstream**:
   - `Post-Development Design Improvement`: **DEFERRED** (Tracked in [`.planning/DESIGN_IMPROVEMENT_BACKLOG.md`](file:///c:/Users/Asus/Desktop/cyber-law-portal/.planning/DESIGN_IMPROVEMENT_BACKLOG.md); initiates only after Stages 1–6 complete).
-- **System Health**: All automated test suites pass 100% with 0 errors. Client Vite production build succeeds with 0 errors (built in ~530ms). MongoDB Atlas cluster healthy and accessible.
+- **System Health**: All automated test suites pass 100% with 0 errors. Client Vite production build succeeds with 0 errors (built in ~446ms). MongoDB Atlas cluster healthy and accessible.
 - **Authoritative Model**: Six-Dimensional Behavioral Model (`TR`, `SI`, `VB`, `DQ`, `FP`, `UA`) authoritative, server-enforced, and immutably versioned. Standardized to "Criterion-Referenced Behavioral Diagnostic Rubric".
 
 ---
@@ -73,9 +86,10 @@ The following structural specifications remain invariant:
 ---
 
 ## 4. Current Execution Boundary & Immediate Next Action
-- **Current Position**: Stage 2 (AQ-1, AQ-2, AQ-3, AQ-4) is **COMPLETED & VERIFIED**.
+- **Current Position**: Stage 2 (AQ-1, AQ-2, AQ-3, AQ-4) is **COMPLETED & FORMALLY CLOSED**.
 - **Next Canonical Step**: **Stage 3 — Counterfactual Scenario Learning** (Original Phase 4), awaiting explicit user authorization.
-- **Strict Boundary**: Zero product code, styling, schemas, scoring rules, or historical records may be altered without explicit user authorization.
+- **Strict Authorization Boundary**: Formal closure and acceptance of Stage 2 does **not** authorize Stage 3 planning or implementation. Work remains strictly paused at this boundary until explicit user authorization is provided.
+- **Strict Invariants**: Zero product code, styling, schemas, scoring rules, or historical records may be altered without explicit user authorization.
 - **Deferred Workstream**: Post-Development Design Improvement is strictly deferred to [`.planning/DESIGN_IMPROVEMENT_BACKLOG.md`](file:///c:/Users/Asus/Desktop/cyber-law-portal/.planning/DESIGN_IMPROVEMENT_BACKLOG.md).
 
 ---

@@ -1,7 +1,7 @@
 # Cyber Law Awareness Portal — Canonical Development Roadmap
 
 **Governance Principle**: Technical & Educational Foundation First, Broad Visual Redesign Later  
-**Current Milestone Position**: Stage 2 — Assessment Quality & Reliability (COMPLETED & VERIFIED)  
+**Current Milestone Position**: Stage 2 — Assessment Quality & Reliability (COMPLETED & FORMALLY CLOSED)  
 **Historical Baseline**: Milestone 3.3 Learner Experience Structural Freeze Formally Closed  
 
 ---
@@ -21,11 +21,11 @@ The development of the Cyber Law Awareness Portal follows a strict, sequential 6
                                            |
                                            v
 +---------------------------------------------------------------------------------------+
-| STAGE 2: Assessment Quality & Reliability (COMPLETED & VERIFIED)                      |
+| STAGE 2: Assessment Quality & Reliability (COMPLETED & FORMALLY CLOSED)               |
 | • AQ-1: Six-Dimensional Assessment Quality Audit [COMPLETED]                          |
 | • AQ-2: Assessment Refinement Design Proposal v2.5.0 [APPROVED]                       |
 | • AQ-3: Controlled Implementation (3 Waves) [COMPLETED]                               |
-| • AQ-4: Integrated Assessment Validation [COMPLETED & VERIFIED]                       |
+| • AQ-4: Integrated Assessment Validation [COMPLETED & FORMALLY ACCEPTED]              |
 +---------------------------------------------------------------------------------------+
                                            |
                                            v
@@ -87,10 +87,24 @@ Structural and navigation milestones:
 ---
 
 ### Stage 2 — Assessment Quality & Reliability
-**Status**: CURRENT PRIORITY (Engineering Initiative)
+**Status**: COMPLETED & FORMALLY CLOSED (AQ-4 Formally Accepted)
 
 > [!NOTE]
-> This is an independent assessment-hardening engineering initiative. Its internal workstream identifiers (`AQ-1` through `AQ-4`) must not be confused with the original learner-experience phase numbers.
+> This independent assessment-hardening engineering initiative is formally complete and closed. Its internal workstream identifiers (`AQ-1` through `AQ-4`) must not be confused with the original learner-experience phase numbers.
+>
+> **Preserved Verified Baseline Revisions**:
+> - Implementation Revision: `a196c34acefde13fa6898745fd39ae8f1242a3a8`
+> - Documentation Alignment Revision: `72b7f5ca155681ce2fc18ae676ff38a8ca4695eb`
+> - Review Audit Fix Revision: `5fcf9ee1fe9d6076e66e01333f7e3a1553fa6b8c`
+>
+> **Environment Distinction**:
+> Application readiness has been verified across all integration and lifecycle suites in the local runtime environment connected to MongoDB Atlas. The application is not yet deployed to cloud hosting infrastructure. The portal is ready for deployment, not production-deployed.
+>
+> **Outstanding Engineering Considerations (Future Non-Blockers)**:
+> 1. Redis-backed distributed rate limiting (for horizontal scaling across multiple node instances).
+> 2. Cloud hosting infrastructure-as-code configuration and automated deployment pipelines.
+> 3. Production TLS/SSL termination at the ingress or reverse proxy boundary.
+> 4. Background-tab mobile browser eviction and visibilitychange refresh handling.
 
 - **AQ-1: Six-Dimensional Assessment Quality Audit [COMPLETED]**:
   - Comprehensive empirical audit of the existing six behavioral dimensions across construct validity, denominator arithmetic, scoring fairness, and path equivalence.
@@ -105,7 +119,7 @@ Structural and navigation milestones:
   - *Wave 1: Backend Scoring Foundation*: Schema updates, fail-closed cutover resolution, `calculateScoresV2` with first-class `null` unassessed representation, discrete encounter tracking, and remediation confidence heuristics.
   - *Wave 2: Scenario Calibration & Atomic SI Probes*: Atomic submission validation (HTTP 400 with zero writes on missing probe), partial unique compound index (`{ assessmentSessionId: 1, idempotencyKey: 1 }`), replica-set ACID multi-document transactions with CAS rollback, approved UA decision ($N=4, \text{Max Penalty}=8$), and scenario calibration of Baseline v2 & Final v2 in `scenarios.json` and MongoDB Atlas.
   - *Wave 3: Client Presentation & Test Verification*: 2-step in-place forensic probe UI in `BaselineAssessment.jsx` and `FinalAssessment.jsx`, client `sessionStorage` idempotency key persistence across reloads/retries, penalty scoring transparency blocks in `DigitalAwarenessProfile.jsx`, focused sample badges, standardized terminology ("Criterion-Referenced Behavioral Diagnostic Rubric"), and automated test suites.
-- **AQ-4: Integrated Assessment Validation [COMPLETED & VERIFIED]**:
+- **AQ-4: Integrated Assessment Validation [COMPLETED & FORMALLY ACCEPTED]**:
   - *Wave 1: Integration Contract Alignment*: Updated `stagingProductionSmoke.test.js` and `e2eUserJourneyAudit.js` to supply valid configured `signalProbeDecisionId` on probe stages, session-and-stage-scoped idempotency keys (`idemp_${sessionId}_${stageId}`), safe retry handling (`isRetry: true`), and verified historical v1 test suites remain 100% valid.
   - *Wave 2: Integrated Lifecycle Validation*: Implemented and verified `aq4_integrated_lifecycle.test.js` (12/12 passed, 100% pass) covering registration, baseline (both Path 1 and Path 2), 6-dimension behavioral profiling, deficit dimension ranking, 3-step adaptive remediation completion, final assessment prerequisite enforcement, paired-baseline delta calculation, dashboard journey synchronization, and defensive portfolio generation. Confirmed dimension scores remain immutable across drills.
   - *Wave 3: Browser Resumption & Expiration Recovery*: Implemented and verified `browser_resumption_smoke_test.js` with Playwright Chromium (Parts A–E passed 100%, 12 screenshots captured). Verified exact stage and probe restoration after browser reloads at Stages 2, 6, 10 in both Baseline and Final, clean recovery from expired session caches, and safe completed summary re-entry with zero duplicate sessions created. Fixed `computeBehaviourDelta` scope and defensive `toObjectSafe` serialization on `/api/assessments/status/:scenarioCode`.
@@ -114,6 +128,9 @@ Structural and navigation milestones:
 
 ### Stage 3 — Counterfactual Scenario Learning
 **Status**: NEXT CANONICAL STAGE (Original Phase 4, Pending Authorization)
+
+> [!IMPORTANT]
+> Formal closure of Stage 2 does **not** authorize Stage 3 planning or implementation. Work remains paused at this boundary until explicit user authorization is provided.
 
 Develop educational simulation experiences that demonstrate alternative outcomes based on different learner decisions:
 - Interactive "What happens if...?" exploration:
@@ -203,7 +220,7 @@ To eliminate past ambiguity across planning documents, the following table forma
 | Canonical Stage & Workstream | Historical / Informal Identifier | Status | Scope & Definition |
 | :--- | :--- | :--- | :--- |
 | **Stage 1: Core Learner Experience** | Phases 1, 2, 3 / Milestones 3.1, 3.2, 3.3 | **COMPLETED & FROZEN** | Registration, baseline assessment, 6-metric profile, pathways, final assessment, navigation fixes, structural freeze. |
-| **Stage 2: Assessment Quality & Reliability** | "Phase 4.1", "Phase 4.2", "Phase 4.3" / AQ-1..4 | **CURRENT PRIORITY** | Independent assessment-hardening workstream: AQ-1 (Audit complete), AQ-2 (Design v2.5.0 approved), AQ-3 (Implementation next), AQ-4 (Validation pending). |
+| **Stage 2: Assessment Quality & Reliability** | "Phase 4.1", "Phase 4.2", "Phase 4.3", "Phase 4.4" / AQ-1..4 | **COMPLETED & FORMALLY CLOSED** | Independent assessment-hardening workstream: AQ-1 (Audit complete), AQ-2 (Design v2.5.0 approved), AQ-3 (Implementation verified), AQ-4 (Integrated validation complete & accepted). Stage 2 closed. |
 | **Stage 3: Counterfactual Scenario Learning** | Original Phase 4 | **PENDING** | Educational alternative-choice simulations ("What happens if...?"). Does not modify historical assessment records. |
 | **Stage 4: Digital Rights & Privacy Education** | Original Phase 5 | **PENDING** | Curriculum expansion: personal data, consent, privacy, copyright, piracy, malware. |
 | **Stage 5: Spaced Retrieval & Long-Term Retention** | Separate Retention Initiative / RT-1..4 | **PENDING** | Dedicated retention workstream: audit existing recall, propose improvements, implement, and validate. Separate from behavioral scoring. |

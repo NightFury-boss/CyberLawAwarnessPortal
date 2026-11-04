@@ -214,3 +214,30 @@ node --test server/tests/aq4_integrated_lifecycle.test.js
 node scripts/browser_resumption_smoke_test.js
 ```
 
+---
+
+## 9. Stage 2 Formal Closure & Operational Deployment Boundaries `[Current]`
+
+### Milestone Closure:
+- **Stage 2 (Assessment Quality & Reliability)** is formally accepted and closed following successful completion of `AQ-1`, `AQ-2`, `AQ-3`, and `AQ-4`.
+- **Preserved Verified Baseline Revisions**:
+  - Implementation Revision: `a196c34acefde13fa6898745fd39ae8f1242a3a8`
+  - Documentation Alignment Revision: `72b7f5ca155681ce2fc18ae676ff38a8ca4695eb`
+  - Review Audit Fix Revision: `5fcf9ee1fe9d6076e66e01333f7e3a1553fa6b8c`
+
+### Operational Deployment Boundary:
+- **Locally Verified Application Readiness**:
+  - Validated across all end-to-end user journeys, transactional CAS, schema validation, and multi-document rollbacks in the local runtime environment connected to the live MongoDB Atlas replica set.
+- **Hosted Cloud Production Deployment Distinction**:
+  - Hosted cloud infrastructure (e.g. AWS, Render, Vercel) has not yet been provisioned or evaluated.
+  - The application is **ready for production deployment**, but must **never be described as production-deployed**.
+
+### Outstanding Engineering Considerations (Future Non-Blockers):
+1. **Distributed Rate Limiting**: Migrate in-memory rate limiting to Redis for multi-instance horizontal scalability.
+2. **Cloud Infrastructure Provisioning**: Infrastructure-as-code and automated CI/CD deployment pipelines.
+3. **TLS/SSL Termination**: Ingress / reverse proxy SSL termination for encrypted transit.
+4. **Mobile Tab Eviction**: Client-side handling for background-tab evictions and stale sessionStorage on low-memory mobile viewports.
+
+### Authorization Boundary:
+- Formal acceptance of Stage 2 does **not** authorize Stage 3 planning or implementation. Work remains strictly paused at this boundary until explicit user authorization is provided.
+
