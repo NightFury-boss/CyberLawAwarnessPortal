@@ -7,6 +7,11 @@ const LawSectionSchema = new mongoose.Schema({
     unique: true,
     trim: true
   },
+  slug: {
+    type: String,
+    sparse: true,
+    trim: true
+  },
   actName: {
     type: String,
     default: 'Information Technology Act, 2000'

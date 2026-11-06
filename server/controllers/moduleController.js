@@ -185,8 +185,11 @@ exports.getModuleBySlug = async (req, res) => {
     let relatedLaws = [];
     if (Array.isArray(moduleDoc.relatedLawSections) && moduleDoc.relatedLawSections.length > 0) {
       relatedLaws = await LawSection.find({
-        sectionNumber: { $in: moduleDoc.relatedLawSections }
-      }).select('sectionNumber officialTitle actName plainLanguageExplanation whyItMatters penaltyOrLegalEffect legalStatus');
+        $or: [
+          { sectionNumber: { $in: moduleDoc.relatedLawSections } },
+          { slug: { $in: moduleDoc.relatedLawSections } }
+        ]
+      }).select('sectionNumber slug officialTitle actName plainLanguageExplanation whyItMatters penaltyOrLegalEffect legalStatus');
     }
 
     // Populate cross-referenced cybercrimes
