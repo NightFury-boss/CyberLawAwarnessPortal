@@ -1,6 +1,11 @@
 const mongoose = require('mongoose');
 
-const MONGODB_URI = process.env.MONGODB_URI || process.env.MONGO_URI || 'mongodb://localhost:27017/cyber_law_portal';
+const getDatabaseUri = () => {
+  if (process.env.NODE_ENV === 'test' && process.env.MONGO_URI_TEST) {
+    return process.env.MONGO_URI_TEST;
+  }
+  return process.env.MONGODB_URI || process.env.MONGO_URI || 'mongodb://localhost:27017/cyber_law_portal';
+};
 
 // Helper to safely obfuscate connection string secrets for logging
 const getObfuscatedURI = (uri) => {
@@ -17,7 +22,11 @@ const getObfuscatedURI = (uri) => {
 };
 
 const connectDB = async () => {
-  console.log(`[Database] Attempting connection to target host: ${getObfuscatedURI(MONGODB_URI)}`);
+  if (mongoose.connection.readyState === 1) {
+    return mongoose.connection;
+  }
+  const targetUri = getDatabaseUri();
+  console.log(`[Database] Attempting connection to target host: ${getObfuscatedURI(targetUri)}`);
 
   // Event Listeners for robust monitoring
   mongoose.connection.on('connected', () => {
@@ -37,7 +46,7 @@ const connectDB = async () => {
   });
 
   try {
-    const conn = await mongoose.connect(MONGODB_URI, {
+    const conn = await mongoose.connect(targetUri, {
       family: 4 // Force IPv4 resolution to prevent DNS issues on modern dual-stack networks
     });
     console.log(`[Database] MongoDB Connected: ${conn.connection.host}`);
