@@ -344,6 +344,11 @@ async function runRealDatabaseIsolationTest() {
     console.log('[Connection] Successfully connected to dedicated test MongoDB instance.');
   } catch (connErr) {
     console.log(`\n[DATABASE CONNECTION ERROR] Could not connect to dedicated test database at ${sanitizedUri}: ${connErr.message}`);
+    if (allowSkip) {
+      console.log('[STATUS: SKIPPED / INSTANCE UNAVAILABLE] Local run allowed skip.');
+      console.log('[STATUS: EXPLICITLY PENDING] Database integration acceptance remains pending until an isolated test MongoDB instance is running.\n');
+      return { status: 'SKIPPED', reason: connErr.message };
+    }
     console.log('[STATUS: FAILED / INSTANCE UNAVAILABLE] Genuine MongoDB integration test cannot complete.');
     console.log('[STATUS: EXPLICITLY PENDING] Database integration acceptance remains pending.\n');
     throw new Error(`Real MongoDB instance unavailable at ${sanitizedUri}: ${connErr.message}`);
