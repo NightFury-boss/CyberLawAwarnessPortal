@@ -615,11 +615,106 @@ for (let i = 1; i <= 25; i++) {
     });
   } else {
     const aiThreats = [
-      { sub: 'LLM Phishing Scalability', text: 'How do malicious generative LLMs enhance phishing attacks compared to traditional manual scam emails?' },
-      { sub: 'Prompt Injection Defense', text: 'What is a Prompt Injection attack against customer-service AI chatbots in digital banking?' },
-      { sub: 'Model Theft and Copyright', text: 'Does scraping private copyrighted data to train commercial AI models violate Indian IP and Section 43 IT Act provisions?' },
-      { sub: 'Synthetic Identity Theft', text: 'What is "Synthetic Identity Theft" where fraudsters combine real Aadhaar numbers with AI-generated faces?' },
-      { sub: 'MeitY Deepfake Advisories', text: 'What due diligence advisory did MeitY issue to social media platforms in 2023 regarding deepfakes under Rule 3(1)(b)?' }
+      {
+        sub: 'LLM Phishing Scalability',
+        text: 'How do malicious generative LLMs enhance phishing attacks compared to traditional manual scam emails?',
+        options: [
+          'By generating grammatically flawless, highly personalized spear-phishing messages at massive scale',
+          'By physically hacking the recipient\'s router with an AI antenna',
+          'By automatically printing paper letters for physical postal delivery',
+          'By directly calling the local police station to report victims'
+        ],
+        correctOptionIndex: 0,
+        explanation: 'Generative AI allows threat actors to eliminate spelling errors and synthesize contextually convincing messages at massive scale.',
+        optionExplanations: [
+          'Correct. Generative AI enables hyper-realistic, personalized spear-phishing without traditional grammatical tells.',
+          'Incorrect. LLMs do not use physical antennas or hardware taps.',
+          'Incorrect. Paper printing is not an AI digital phishing threat.',
+          'Incorrect. Malicious LLMs are deployed against targeted victims, not law enforcement.'
+        ],
+        whyIncorrect: 'Assuming scam emails will always have bad grammar is no longer true; AI writes fluent, persuasive text.',
+        practicalTakeaway: 'Remember: Flawless grammar and polite tone do not mean an email is safe. AI tools write perfect English for scammers.'
+      },
+      {
+        sub: 'Prompt Injection Defense',
+        text: 'What is a Prompt Injection attack against customer-service AI chatbots in digital banking?',
+        options: [
+          'Crafting adversarial user inputs that override the chatbot\'s system instructions to leak internal data or execute unauthorized actions',
+          'Physically opening the banking server case to inject malicious soldering wires',
+          'Injecting liquid nitrogen into the bank\'s automated teller machine',
+          'Sending an unencrypted SMS directly to a telecom cellular tower'
+        ],
+        correctOptionIndex: 0,
+        explanation: 'Prompt injection tricks an LLM into ignoring system safety guardrails by treating untrusted user input as authoritative system instructions.',
+        optionExplanations: [
+          'Correct. Adversarial prompt injection coerces LLM agents into violating programmed constraints or tool boundaries.',
+          'Incorrect. This describes physical hardware tampering, not prompt injection.',
+          'Incorrect. Liquid nitrogen attacks target physical ATMs, not AI software.',
+          'Incorrect. Cellular SMS transmission is unrelated to LLM prompt manipulation.'
+        ],
+        whyIncorrect: 'Prompt injection operates entirely at the application logic layer by manipulating the context window of LLM-powered services.',
+        practicalTakeaway: 'Remember: Banks must implement strict input validation, tool privilege separation, and never rely solely on conversational AI for fund transfers.'
+      },
+      {
+        sub: 'Model Theft and Copyright',
+        text: 'Does scraping private copyrighted data to train commercial AI models violate Indian IP and Section 43 IT Act provisions?',
+        options: [
+          'Yes; unauthorized extraction of data from a computer system violates Section 43(a) of the IT Act, and commercial copying without a license infringes Copyright Act Section 51',
+          'No; scraping public or private data for any AI training is completely exempt under Section 52 of the Copyright Act',
+          'No; Indian law explicitly permits commercial model training on all copyrighted databases without permission',
+          'Yes, but only if the AI model physically crashes the original server host'
+        ],
+        correctOptionIndex: 0,
+        explanation: 'Extracting digital databases without authorization triggers civil liability under IT Act Section 43(a), while commercial reproduction without license or applicable statutory exception constitutes copyright infringement under Section 51.',
+        optionExplanations: [
+          'Correct. Unauthorized data harvesting breaches Section 43(a) of the IT Act, and commercial dataset creation without owner licensing violates Copyright Act Section 51.',
+          'Incorrect. Section 52 fair dealing exceptions do not provide a blanket commercial text and data mining exemption under Indian law.',
+          'Incorrect. Indian copyright law contains no statutory safe harbor allowing commercial AI training on unlicensed private works.',
+          'Incorrect. Physical or server crashes are not required to establish copyright infringement or unauthorized data extraction.'
+        ],
+        whyIncorrect: 'Indian copyright law does not recognize broad US-style fair use; statutory exceptions under Section 52 are specifically enumerated.',
+        practicalTakeaway: 'Remember: Commercial AI developers must verify dataset licenses and respect terms of service and access controls under the IT Act.'
+      },
+      {
+        sub: 'Synthetic Identity Theft',
+        text: 'What is "Synthetic Identity Theft" where fraudsters combine real Aadhaar numbers with AI-generated faces?',
+        options: [
+          'Fabricating a completely new composite identity by blending legitimate stolen identifiers with AI-generated biometric or facial images to defraud KYC systems',
+          'Forging physical paper currency notes using high-speed laser copiers',
+          'Cloning a subscriber SIM card by duplicating physical SIM chip contacts',
+          'Filing an RTI query under a fictitious postal name'
+        ],
+        correctOptionIndex: 0,
+        explanation: 'Synthetic identity theft combines real identity credentials (like valid Aadhaar numbers) with AI-synthesized biometrics to open fraudulent bank accounts or obtain credit lines.',
+        optionExplanations: [
+          'Correct. Fraudsters create hybrid personas that deceive automated e-KYC checks while avoiding immediate detection by the real credential owner.',
+          'Incorrect. Counterfeiting physical banknotes is governed by IPC/BNS provisions on currency, not synthetic identity theft.',
+          'Incorrect. SIM swap or cloning duplicates an existing subscriber line rather than constructing a synthetic composite identity.',
+          'Incorrect. Fictitious RTI applications are unrelated to financial e-KYC synthetic fraud.'
+        ],
+        whyIncorrect: 'Synthetic identity theft is unique because no single actual human victim is entirely impersonated; instead, a fabricated identity is born from fragmented real and artificial elements.',
+        practicalTakeaway: 'Remember: Lock your Aadhaar biometrics using the official UIDAI portal and regularly review your CIBIL credit report for unauthorized inquiries.'
+      },
+      {
+        sub: 'MeitY Deepfake Advisories',
+        text: 'What due diligence advisory did MeitY issue to social media platforms in 2023 regarding deepfakes under Rule 3(1)(b)?',
+        options: [
+          'Intermediaries must clearly identify prohibited synthetic content (Rule 3(1)(b)) and remove reported non-consensual deepfakes within 24 to 36 hours',
+          'Platforms are mandated to ban all generative AI tools and photo editing software completely',
+          'Platforms must pay monetary compensation directly to all users who view synthetic videos',
+          'Users must obtain a High Court injunction before reporting deepfake impersonation to platforms'
+        ],
+        correctOptionIndex: 0,
+        explanation: 'MeitY advisories directed intermediaries to strictly enforce IT Rules 2021 Rule 3(1)(b), clearly communicate prohibited synthetic content to users, and act promptly on non-consensual intimate imagery and impersonation.',
+        optionExplanations: [
+          'Correct. Intermediaries must maintain diligence under Rule 3(1)(b) and act within statutory timelines for impersonation and deepfake harms.',
+          'Incorrect. MeitY did not ban generative AI tools; it enforced regulatory due diligence and content moderation standards.',
+          'Incorrect. Intermediaries do not pay direct statutory viewer bounties for synthetic media exposure.',
+          'Incorrect. Under Rule 3(2)(b), victims can complain directly to grievance officers without prior court orders.'
+        ],
+        whyIncorrect: 'Intermediary safe harbor under IT Act Section 79 is conditional on observing diligence rules and expeditious takedown of prohibited deepfakes.',
+        practicalTakeaway: 'Remember: You can report deepfake impersonation directly to the platform\'s Grievance Officer, who is obligated to act swiftly under the IT Rules.'
+      }
     ];
     const t = aiThreats[(i - 4) % aiThreats.length];
     addQ({
@@ -631,22 +726,12 @@ for (let i = 1; i <= 25; i++) {
       cognitiveLevel: 'Level 3',
       questionType: 'knowledge',
       questionText: `${t.text} (Emerging Threat Context ${pad})`,
-      options: [
-        'By generating grammatically flawless, highly personalized spear-phishing messages at massive scale',
-        'By physically hacking the recipient\'s router with an AI antenna',
-        'By printing paper letters automatically',
-        'By calling the local police station'
-      ],
-      correctOptionIndex: 0,
-      explanation: 'Generative AI allows threat actors to eliminate spelling errors and synthesize contextually convincing messages at massive scale.',
-      optionExplanations: [
-        'Correct. Generative AI enables hyper-realistic, personalized spear-phishing without traditional grammatical tells.',
-        'Incorrect. LLMs do not use physical antennas.',
-        'Incorrect. Paper printing is not an AI digital threat.',
-        'Incorrect. Malicious LLMs are deployed against victims, not police.'
-      ],
-      whyIncorrect: 'Assuming scam emails will always have bad grammar is no longer true; AI writes fluent, persuasive text.',
-      practicalTakeaway: 'Remember: Flawless grammar and polite tone do not mean an email is safe. AI tools write perfect English for scammers.'
+      options: t.options,
+      correctOptionIndex: t.correctOptionIndex,
+      explanation: t.explanation,
+      optionExplanations: t.optionExplanations,
+      whyIncorrect: t.whyIncorrect,
+      practicalTakeaway: t.practicalTakeaway
     });
   }
 }

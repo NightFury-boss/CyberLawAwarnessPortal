@@ -12110,8 +12110,8 @@ main > .container,
 
 .cf-pill-time {
   background: transparent;
-  color: #64748b;
-  font-weight: 500;
+  color: #475569;
+  font-weight: 600;
   text-transform: none;
 }
 
@@ -12475,10 +12475,11 @@ main > .container,
 
 .cf-stimulus-footer-note {
   font-size: 0.75rem;
-  color: #94a3b8;
+  color: #475569;
   text-align: center;
   margin-top: 14px;
   font-style: italic;
+  font-weight: 500;
 }
 
 /* Decision Junction */
@@ -12600,7 +12601,7 @@ main > .container,
 .cf-choice-number {
   font-size: 1.1rem;
   font-weight: 700;
-  color: #94a3b8;
+  color: #475569;
   line-height: 1.2;
 }
 

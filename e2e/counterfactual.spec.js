@@ -12,7 +12,7 @@ const ALL_SCENARIOS = [
 /**
  * Strengthened implementation-independent focus indicator verification.
  * Verifies:
- * 1. Element has active DOM focus with :focus-visible modality enabled.
+ * 1. Element has active DOM focus achieved via natural keyboard interaction.
  * 2. Element matches :focus-visible pseudo-class.
  * 3. Element is rendered and visible in viewport with non-zero dimensions.
  * 4. Element is not obscured by an overlay (elementFromPoint check).
@@ -20,18 +20,6 @@ const ALL_SCENARIOS = [
  *    NOTE: Ordinary default borders are strictly rejected as focus indicators.
  */
 async function assertRobustFocusIndicator(locator) {
-  // Ensure element has focus with keyboard-equivalent focusVisible modality
-  await locator.evaluate((node) => {
-    if (typeof node.focus === 'function') {
-      try {
-        if (typeof node.blur === 'function') node.blur();
-        node.focus({ focusVisible: true });
-      } catch (e) {
-        node.focus();
-      }
-    }
-  });
-
   await expect(locator).toBeFocused();
   await expect(locator).toBeVisible();
 
@@ -70,8 +58,8 @@ async function assertRobustFocusIndicator(locator) {
     };
   });
 
-  // Explicit assertion: Must match :focus-visible
-  expect(visualCheck.isFocusVisible, 'Target control must match :focus-visible pseudo-class').toBe(true);
+  // Explicit assertion: Naturally matches :focus-visible under keyboard navigation
+  expect(visualCheck.isFocusVisible, 'Target control must match :focus-visible pseudo-class under keyboard navigation').toBe(true);
 
   // Geometric & visibility assertions
   expect(visualCheck.hasDimensions, 'Target control must possess positive bounding-box dimensions').toBe(true);
@@ -86,42 +74,26 @@ async function assertRobustFocusIndicator(locator) {
 
 /**
  * Executes an automated axe-core accessibility scan on the current page state.
- * Evaluates full WCAG 2.1 AA rules across all states.
- * 
- * Contrast Verification Strategy:
- * - View 1 (Catalog) & View 6 (Invalid Route): color-contrast fully asserted (0 violations).
- * - Views 2–5: All structural WCAG rules (ARIA, landmarks, labels, headings, tables) must have 0 violations.
- *   Contrast violations are verified to be strictly confined to documented non-interactive watermark/decorative
- *   elements (.cf-stimulus-footer-note, .cf-pill-time, .cf-choice-number), with 0 violations on interactive controls.
+ * Evaluates full WCAG 2.1 AA rules across all states, including color contrast.
  */
 async function runAxeScan(page, viewName) {
   const results = await new AxeBuilder({ page })
     .withTags(['wcag2a', 'wcag2aa', 'wcag21aa'])
     .analyze();
 
-  const structuralViolations = results.violations.filter(v => v.id !== 'color-contrast' && v.id !== 'scrollable-region-focusable');
+  const structuralViolations = results.violations.filter(
+    v => v.id !== 'color-contrast' && v.id !== 'scrollable-region-focusable'
+  );
   expect(
     structuralViolations,
     `Structural accessibility violations in ${viewName}: ${JSON.stringify(structuralViolations.map(v => ({ id: v.id, impact: v.impact, description: v.description })), null, 2)}`
   ).toEqual([]);
 
   const contrastViolations = results.violations.filter(v => v.id === 'color-contrast');
-  if (viewName.includes('Catalog') || viewName.includes('Invalid Route')) {
-    // Contrast must be 100% compliant on catalog and error recovery
-    expect(contrastViolations, `Color contrast violations in ${viewName}`).toEqual([]);
-  } else if (contrastViolations.length > 0) {
-    // Verify that contrast violations are strictly confined to known educational watermark/pill elements
-    const allowedTargets = ['.cf-stimulus-footer-note', '.cf-pill-time', '.cf-choice-number'];
-    for (const v of contrastViolations) {
-      for (const node of v.nodes) {
-        const isAllowed = node.target.some(t => allowedTargets.some(allowed => t.includes(allowed)));
-        expect(
-          isAllowed,
-          `Unexpected color-contrast violation on non-watermark element in ${viewName}: ${JSON.stringify(node.target)} - ${node.html}`
-        ).toBe(true);
-      }
-    }
-  }
+  expect(
+    contrastViolations,
+    `Color contrast violations in ${viewName}: ${JSON.stringify(contrastViolations.map(v => ({ id: v.id, impact: v.impact, nodes: v.nodes.map(n => n.target) })), null, 2)}`
+  ).toEqual([]);
 }
 
 test.describe('Counterfactual Scenarios E2E Suite', () => {
@@ -233,13 +205,29 @@ test.describe('Counterfactual Scenarios E2E Suite', () => {
     // Axe Scan View 2: Stimulus & Decision Junction
     await runAxeScan(page, 'Stimulus & Decision Junction View');
 
-    // Keyboard navigation to first decision choice
+    // Natural keyboard navigation: Tab to Back Link, Tab to Choice 1, Choice 2, and Shift+Tab back
+    const backBtn = page.locator('.cf-back-link-btn');
+    await backBtn.focus();
+    await page.keyboard.press('Shift+Tab');
+    await page.keyboard.press('Tab');
+    await assertRobustFocusIndicator(backBtn);
+
+    // Tab to Choice 1 (Choice A)
+    await page.keyboard.press('Tab');
     const branchAChoice = page.locator('.cf-choice-card').first();
-    await branchAChoice.focus();
     await assertRobustFocusIndicator(branchAChoice);
 
-    // Select Choice A
-    await branchAChoice.click();
+    // Tab to Choice 2 (Choice B)
+    await page.keyboard.press('Tab');
+    const branchBChoice = page.locator('.cf-choice-card').nth(1);
+    await assertRobustFocusIndicator(branchBChoice);
+
+    // Shift+Tab back to Choice 1
+    await page.keyboard.press('Shift+Tab');
+    await assertRobustFocusIndicator(branchAChoice);
+
+    // Activate Choice A via keyboard Enter
+    await page.keyboard.press('Enter');
     await page.waitForSelector('.cf-timeline-article', { timeout: 5000 });
 
     // Axe Scan View 3: Consequence Timeline
@@ -250,11 +238,13 @@ test.describe('Counterfactual Scenarios E2E Suite', () => {
     await expect(timeline).toBeVisible();
     await expect(timeline).toContainText('Immediate Reaction');
 
-    // Rewind back to junction
+    // Keyboard Tab to Rewind button and assert natural focus
     const rewindBtn = page.locator('.cf-timeline-actions-bar button:has-text("Rewind")');
     await rewindBtn.focus();
+    await page.keyboard.press('Shift+Tab');
+    await page.keyboard.press('Tab');
     await assertRobustFocusIndicator(rewindBtn);
-    await rewindBtn.click();
+    await page.keyboard.press('Enter');
 
     // Verify Explored badge on Choice A
     await page.waitForSelector('.cf-junction-section', { timeout: 5000 });
@@ -262,8 +252,7 @@ test.describe('Counterfactual Scenarios E2E Suite', () => {
     await expect(badgeA).toBeVisible();
 
     // Select Choice B
-    const branchBChoice = page.locator('.cf-choice-card').nth(1);
-    await branchBChoice.click();
+    await page.locator('.cf-choice-card').nth(1).click();
     await page.waitForSelector('.cf-timeline-article', { timeout: 5000 });
 
     // Rewind back to junction
@@ -275,14 +264,16 @@ test.describe('Counterfactual Scenarios E2E Suite', () => {
     await branchCChoice.click();
     await page.waitForSelector('.cf-timeline-article', { timeout: 5000 });
 
-    // Matrix button should now be available
+    // Matrix button should now be available - navigate focus and verify
     const matrixToggle = page.locator('.cf-timeline-actions-bar button:has-text("Compare")');
     await expect(matrixToggle).toBeVisible();
     await matrixToggle.focus();
+    await page.keyboard.press('Shift+Tab');
+    await page.keyboard.press('Tab');
     await assertRobustFocusIndicator(matrixToggle);
 
-    // Open Comparative Matrix
-    await matrixToggle.click();
+    // Open Comparative Matrix via keyboard Enter
+    await page.keyboard.press('Enter');
     await page.waitForSelector('.cf-matrix-section', { timeout: 5000 });
 
     // Axe Scan View 4: Cross-Branch Comparative Matrix
