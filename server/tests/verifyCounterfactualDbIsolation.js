@@ -317,11 +317,34 @@ async function runRealDatabaseIsolationTest() {
 
   const allowSkip = process.argv.includes('--allow-skip') || process.env.ALLOW_TEST_SKIP === 'true';
 
+  let ephemeralServer = null;
+
+  // Auto-provision disposable local MongoDB instance if not already provided
+  if (!process.env.MONGO_URI_TEST && process.env.NODE_ENV === 'test') {
+    try {
+      const { MongoMemoryServer } = require('mongodb-memory-server');
+      console.log('[Ephemeral MongoDB] Provisioning disposable test instance on 127.0.0.1...');
+      ephemeralServer = await MongoMemoryServer.create({
+        instance: {
+          dbName: 'cyber_law_test_isolated',
+          ip: '127.0.0.1'
+        }
+      });
+      process.env.MONGO_URI_TEST = ephemeralServer.getUri('cyber_law_test_isolated');
+      console.log(`[Ephemeral MongoDB] Disposable test instance ready at ${sanitizeMongoUri(process.env.MONGO_URI_TEST)}`);
+    } catch (ephemErr) {
+      console.log(`[Ephemeral MongoDB] Could not auto-provision instance: ${ephemErr.message}`);
+    }
+  }
+
   // Enforce strict environment guards
   let testUri;
   try {
     testUri = validateTestEnvironment();
   } catch (err) {
+    if (ephemeralServer) {
+      await ephemeralServer.stop();
+    }
     console.log(`[ISOLATION GUARD ABORT] ${err.message}`);
     if (allowSkip) {
       console.log('[STATUS: SKIPPED / CONFIGURATION PENDING] Local run allowed skip.');
@@ -388,6 +411,12 @@ async function runRealDatabaseIsolationTest() {
   } finally {
     if (connection) {
       await connection.close();
+      console.log('[Connection] Test database connection closed.');
+    }
+    if (ephemeralServer) {
+      console.log('[Ephemeral MongoDB] Stopping and tearing down disposable test instance...');
+      await ephemeralServer.stop();
+      console.log('[Ephemeral MongoDB] Disposable test instance terminated and cleaned up.');
     }
   }
 }
