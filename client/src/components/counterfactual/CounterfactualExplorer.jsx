@@ -49,6 +49,7 @@ export default function CounterfactualExplorer({
   const handleRewind = () => {
     const next = rewindToJunction(explorationState);
     setExplorationState(next);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleOpenComparison = () => {
