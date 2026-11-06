@@ -657,23 +657,23 @@ for (let i = 1; i <= 25; i++) {
       },
       {
         sub: 'Model Theft and Copyright',
-        text: 'Does scraping private copyrighted data to train commercial AI models violate Indian IP and Section 43 IT Act provisions?',
+        text: 'Under Indian law, how are unauthorized data scraping and commercial AI model training evaluated under the IT Act and Copyright Act?',
         options: [
-          'Yes; unauthorized extraction of data from a computer system violates Section 43(a) of the IT Act, and commercial copying without a license infringes Copyright Act Section 51',
-          'No; scraping public or private data for any AI training is completely exempt under Section 52 of the Copyright Act',
-          'No; Indian law explicitly permits commercial model training on all copyrighted databases without permission',
-          'Yes, but only if the AI model physically crashes the original server host'
+          'Legality depends on facts and authorization: extracting data without owner permission breaches IT Act Section 43(a), while commercial reproduction may infringe Copyright Act Section 51 unless an enumerated Section 52 exception applies',
+          'All web scraping and commercial AI training are automatically exempt from liability under Section 52 fair dealing provisions',
+          'AI model training is strictly illegal under Indian law regardless of authorization, public availability, or licensing',
+          'Liability only arises if the scraping activity physically damages the underlying hardware server hosting the data'
         ],
         correctOptionIndex: 0,
-        explanation: 'Extracting digital databases without authorization triggers civil liability under IT Act Section 43(a), while commercial reproduction without license or applicable statutory exception constitutes copyright infringement under Section 51.',
+        explanation: 'Under Indian jurisprudence, liability is fact-specific: Section 43(a) of the IT Act requires unauthorized extraction or copying of data from a computer system, while Copyright Act Section 51 evaluates whether exclusive rights of reproduction were infringed without license or coverage under enumerated Section 52 statutory exceptions.',
         optionExplanations: [
-          'Correct. Unauthorized data harvesting breaches Section 43(a) of the IT Act, and commercial dataset creation without owner licensing violates Copyright Act Section 51.',
-          'Incorrect. Section 52 fair dealing exceptions do not provide a blanket commercial text and data mining exemption under Indian law.',
-          'Incorrect. Indian copyright law contains no statutory safe harbor allowing commercial AI training on unlicensed private works.',
-          'Incorrect. Physical or server crashes are not required to establish copyright infringement or unauthorized data extraction.'
+          'Correct. Legal liability depends on authorization under Section 43(a) of the IT Act and whether the copying implicates exclusive rights under Copyright Act Section 51 without an applicable Section 52 statutory exception.',
+          'Incorrect. Section 52 provides specifically enumerated statutory exceptions, not an automatic blanket exemption for all commercial text and data mining.',
+          'Incorrect. AI training on authorized, licensed, or appropriately attributed public domain datasets is lawful.',
+          'Incorrect. Physical hardware damage is not required to establish civil liability for unauthorized extraction or copyright infringement.'
         ],
-        whyIncorrect: 'Indian copyright law does not recognize broad US-style fair use; statutory exceptions under Section 52 are specifically enumerated.',
-        practicalTakeaway: 'Remember: Commercial AI developers must verify dataset licenses and respect terms of service and access controls under the IT Act.'
+        whyIncorrect: 'Neither blanket immunity nor automatic illegality applies; evaluation requires assessing authorization, terms of access, and statutory fair dealing boundaries.',
+        practicalTakeaway: 'Remember: Assess whether data access was authorized, check applicable website terms of service and access policies, and verify whether training datasets rely on valid copyright licenses.'
       },
       {
         sub: 'Synthetic Identity Theft',

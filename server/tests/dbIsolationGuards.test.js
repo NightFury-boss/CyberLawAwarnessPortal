@@ -54,7 +54,7 @@ test('Database Isolation Guards: Fail-closed validation rules & DB allowlist', (
     process.env.MONGO_URI_TEST = 'mongodb+srv://admin:pass@cluster0.mongodb.net/cyber_prod';
     assert.throws(() => validateTestEnvironment(), /forbidden production keyword/);
 
-    // 5. Must fail if database name in MONGO_URI_TEST is not allowlisted or lacks test suffix
+    // 5. Must fail if database name in MONGO_URI_TEST is not in the explicit allowlist
     delete process.env.MONGO_URI;
     process.env.MONGO_URI_TEST = 'mongodb://127.0.0.1:27017/cyber_law_main';
     assert.throws(() => validateTestEnvironment(), /not in the approved test database allowlist/);
@@ -62,19 +62,30 @@ test('Database Isolation Guards: Fail-closed validation rules & DB allowlist', (
     process.env.MONGO_URI_TEST = 'mongodb://127.0.0.1:27017/admin';
     assert.throws(() => validateTestEnvironment(), /not in the approved test database allowlist/);
 
-    // 6. Must pass with allowlisted database names
+    // Suffix-only names must be strictly rejected
+    process.env.MONGO_URI_TEST = 'mongodb://127.0.0.1:27017/ephemeral_unit_test';
+    assert.throws(() => validateTestEnvironment(), /Suffix-based arbitrary database names are strictly rejected/);
+
+    process.env.MONGO_URI_TEST = 'mongodb://127.0.0.1:27017/custom_run_isolated';
+    assert.throws(() => validateTestEnvironment(), /Suffix-based arbitrary database names are strictly rejected/);
+
+    // 6. Must fail if host is not loopback / localhost
+    process.env.MONGO_URI_TEST = 'mongodb://192.168.1.100:27017/cyber_law_test';
+    assert.throws(() => validateTestEnvironment(), /not in the approved test host allowlist/);
+
+    process.env.MONGO_URI_TEST = 'mongodb://remote-db.example.com:27017/cyber_law_test';
+    assert.throws(() => validateTestEnvironment(), /not in the approved test host allowlist/);
+
+    // 7. Must pass strictly with allowlisted database names on approved loopback hosts
     for (const approvedName of APPROVED_TEST_DB_NAMES) {
       process.env.MONGO_URI_TEST = `mongodb://127.0.0.1:27017/${approvedName}`;
-      const valid = validateTestEnvironment();
-      assert.strictEqual(valid, `mongodb://127.0.0.1:27017/${approvedName}`);
+      const valid1 = validateTestEnvironment();
+      assert.strictEqual(valid1, `mongodb://127.0.0.1:27017/${approvedName}`);
+
+      process.env.MONGO_URI_TEST = `mongodb://localhost:27017/${approvedName}`;
+      const valid2 = validateTestEnvironment();
+      assert.strictEqual(valid2, `mongodb://localhost:27017/${approvedName}`);
     }
-
-    // 7. Must pass with valid test suffix conventions (_test, _test_isolated)
-    process.env.MONGO_URI_TEST = 'mongodb://127.0.0.1:27017/ephemeral_unit_test';
-    assert.strictEqual(validateTestEnvironment(), 'mongodb://127.0.0.1:27017/ephemeral_unit_test');
-
-    process.env.MONGO_URI_TEST = 'mongodb://127.0.0.1:27017/staging_run_isolated';
-    assert.strictEqual(validateTestEnvironment(), 'mongodb://127.0.0.1:27017/staging_run_isolated');
 
     // 8. Sanitization check: Credential redaction
     const secretUri = 'mongodb://app_user:super_secret_pw@127.0.0.1:27017/cyber_law_test';

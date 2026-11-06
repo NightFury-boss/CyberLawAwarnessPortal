@@ -7,18 +7,24 @@
 const crypto = require('crypto');
 
 /**
- * Approved test database name allowlist and naming conventions.
- * Safety Assumption:
- * Production and staging databases are named without test suffixes (e.g. cyber_law_prod, cyber_law).
- * Only databases explicitly ending in '_test', '_test_isolated', or in the approved allowlist
- * are permitted for test suite execution.
+ * Strict approved test database name allowlist.
+ * Suffix-based arbitrary database naming is strictly rejected.
+ * Only explicitly listed, vetted test database names are permitted.
  */
-const APPROVED_TEST_DB_NAMES = [
+const APPROVED_TEST_DB_NAMES = Object.freeze([
   'cyber_law_test_isolated',
-  'cyber_law_test',
-  'cyberlaw_test',
-  'cyber_portal_test'
-];
+  'cyber_law_test'
+]);
+
+/**
+ * Approved isolated test hosts.
+ * Tests must execute only against local loopback daemons.
+ * Remote clusters, cloud databases, and staging IPs are strictly prohibited.
+ */
+const APPROVED_TEST_HOSTS = Object.freeze([
+  '127.0.0.1',
+  'localhost'
+]);
 
 /**
  * Sanitizes a MongoDB connection URI for safe logging by redacting credentials.
@@ -38,13 +44,31 @@ function sanitizeMongoUri(uri) {
 function extractDatabaseName(uri) {
   if (!uri || typeof uri !== 'string') return '';
   try {
-    // Handle standard mongodb:// or mongodb+srv://
     const withoutProtocol = uri.replace(/^mongodb(\+srv)?:\/\//, '');
     const slashIdx = withoutProtocol.indexOf('/');
     if (slashIdx === -1) return '';
     const afterSlash = withoutProtocol.slice(slashIdx + 1);
     const questionIdx = afterSlash.indexOf('?');
     return questionIdx !== -1 ? afterSlash.slice(0, questionIdx).trim() : afterSlash.trim();
+  } catch {
+    return '';
+  }
+}
+
+/**
+ * Extracts the host from a standard or SRV MongoDB connection URI.
+ * @param {string} uri 
+ * @returns {string} Host string or empty string
+ */
+function extractHost(uri) {
+  if (!uri || typeof uri !== 'string') return '';
+  try {
+    const withoutProtocol = uri.replace(/^mongodb(\+srv)?:\/\//, '');
+    const withoutAuth = withoutProtocol.replace(/^[^:]+:[^@]+@/, '');
+    const slashIdx = withoutAuth.indexOf('/');
+    const hostPort = slashIdx !== -1 ? withoutAuth.slice(0, slashIdx) : withoutAuth;
+    const colonIdx = hostPort.indexOf(':');
+    return colonIdx !== -1 ? hostPort.slice(0, colonIdx).trim() : hostPort.trim();
   } catch {
     return '';
   }
@@ -125,8 +149,10 @@ function calculateCollectionHash(documents) {
  * 1. NODE_ENV !== 'test'.
  * 2. MONGO_URI_TEST is missing or empty.
  * 3. MONGO_URI_TEST matches MONGO_URI (production collision).
- * 4. MONGO_URI_TEST contains forbidden production cluster keywords.
- * 5. Database name in MONGO_URI_TEST is not in the approved allowlist or does not match test suffixes (*_test, *_isolated).
+ * 4. MONGO_URI_TEST contains forbidden production/staging keywords.
+ * 5. Host is not in the approved test host allowlist (127.0.0.1, localhost).
+ * 6. Database name is not in the strict APPROVED_TEST_DB_NAMES allowlist.
+ *    (Suffix-only arbitrary database naming is strictly rejected).
  * 
  * @returns {string} Validated test URI
  */
@@ -148,11 +174,18 @@ function validateTestEnvironment() {
     throw new Error('FAIL-CLOSED ISOLATION VIOLATION: MONGO_URI_TEST must not match MONGO_URI.');
   }
 
-  const forbiddenProductionKeywords = ['cluster0', 'mongodb.net/cyber_law_prod', 'prod', 'production', 'live'];
+  const forbiddenProductionKeywords = ['cluster0', 'mongodb.net', 'prod', 'production', 'live', 'staging'];
   for (const keyword of forbiddenProductionKeywords) {
     if (trimmedTestUri.toLowerCase().includes(keyword) && !trimmedTestUri.toLowerCase().includes('test')) {
       throw new Error(`FAIL-CLOSED ISOLATION VIOLATION: MONGO_URI_TEST contains forbidden production keyword: '${keyword}'`);
     }
+  }
+
+  const host = extractHost(trimmedTestUri);
+  if (!host || !APPROVED_TEST_HOSTS.includes(host.toLowerCase())) {
+    throw new Error(
+      `FAIL-CLOSED ISOLATION VIOLATION: MONGO_URI_TEST host "${host}" is not in the approved test host allowlist (${APPROVED_TEST_HOSTS.join(', ')}). Remote clusters and unvetted hosts are strictly prohibited.`
+    );
   }
 
   const dbName = extractDatabaseName(trimmedTestUri);
@@ -160,12 +193,9 @@ function validateTestEnvironment() {
     throw new Error('FAIL-CLOSED ISOLATION VIOLATION: Could not parse database name from MONGO_URI_TEST.');
   }
 
-  const isAllowlisted = APPROVED_TEST_DB_NAMES.includes(dbName.toLowerCase());
-  const hasValidSuffix = /(_test|_test_isolated|_isolated)$/i.test(dbName);
-
-  if (!isAllowlisted && !hasValidSuffix) {
+  if (!APPROVED_TEST_DB_NAMES.includes(dbName.toLowerCase())) {
     throw new Error(
-      `FAIL-CLOSED ISOLATION VIOLATION: Database name "${dbName}" in MONGO_URI_TEST is not in the approved test database allowlist (${APPROVED_TEST_DB_NAMES.join(', ')}) or test suffix convention (*_test, *_test_isolated).`
+      `FAIL-CLOSED ISOLATION VIOLATION: Database name "${dbName}" in MONGO_URI_TEST is not in the approved test database allowlist (${APPROVED_TEST_DB_NAMES.join(', ')}). Suffix-based arbitrary database names are strictly rejected.`
     );
   }
 
@@ -178,5 +208,7 @@ module.exports = {
   validateTestEnvironment,
   sanitizeMongoUri,
   extractDatabaseName,
-  APPROVED_TEST_DB_NAMES
+  extractHost,
+  APPROVED_TEST_DB_NAMES,
+  APPROVED_TEST_HOSTS
 };
