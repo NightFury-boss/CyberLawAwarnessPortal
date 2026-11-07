@@ -91,9 +91,10 @@ function Dashboard({ user, progressTrigger }) {
       setQuizHistoryData(quizHistRes);
       setDueQuizRecalls(quizRecallRes?.dueItems || []);
 
-      if (prog?.latestSessionId) {
+      const sessionForRemediation = prog?.latestSessionId || baseStatus?.sessionId;
+      if (sessionForRemediation) {
         try {
-          const rem = await api.getAssessmentRemediation(prog.latestSessionId);
+          const rem = await api.getAssessmentRemediation(sessionForRemediation);
           setRemediationData(rem);
         } catch (_re) {
           // Non-blocking: recommendations may be pending completion of diagnostic
@@ -141,7 +142,28 @@ function Dashboard({ user, progressTrigger }) {
           textAlign: 'center',
           boxShadow: '0 4px 16px rgba(12, 29, 46, 0.04)'
         }}>
-          <div style={{ fontSize: '2rem', marginBottom: '16px' }} aria-hidden="true">📡</div>
+          <div style={{ marginBottom: '16px', display: 'flex', justifyContent: 'center' }} aria-hidden="true">
+            <div style={{
+              width: '48px',
+              height: '48px',
+              borderRadius: '50%',
+              backgroundColor: 'rgba(12, 29, 46, 0.05)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: '#52606d'
+            }}>
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="1" y1="1" x2="23" y2="23"></line>
+                <path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55"></path>
+                <path d="M5 12.55a10.94 10.94 0 0 1 5.17-2.39"></path>
+                <path d="M10.71 5.05A16 16 0 0 1 22.58 9"></path>
+                <path d="M1.42 9a15.91 15.91 0 0 1 4.7-2.88"></path>
+                <path d="M8.53 16.11a6 6 0 0 1 6.95 0"></path>
+                <line x1="12" y1="20" x2="12.01" y2="20"></line>
+              </svg>
+            </div>
+          </div>
           <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#7a8898', textTransform: 'uppercase', letterSpacing: '0.08em', display: 'block', marginBottom: '8px' }}>
             Connection Interruption • {learnerName}
           </span>
@@ -218,7 +240,7 @@ function Dashboard({ user, progressTrigger }) {
     const isReinforced = Boolean(reinforcementRecord);
     const shiftState = rec.habitShiftState || rec.state;
     const isReinforcementEligible = hasFinal && (shiftState === 'continued_practice' || shiftState === 'emerging_gap');
-    const isSpacedRetrievalDue = dueSpacedReviews.some(dr => dr.pathwayId === rec.pathwayId);
+    const isSpacedRetrievalDue = false;
 
     return {
       rec,
@@ -242,8 +264,8 @@ function Dashboard({ user, progressTrigger }) {
     progress
   });
 
-  // Total due recall count combines due quiz recalls and due spaced reviews
-  const totalDueRecallCount = (dueQuizRecalls?.length || 0) + (dueSpacedReviews?.length || 0);
+  // Optional concept recall count for missed quiz provisions
+  const totalDueRecallCount = dueQuizRecalls?.length || 0;
 
   // Next Action Selection based strictly on authoritative state
   const nextIncompletePathway = pathwaysWithStatus.find(p => !p.isFullyCompleted);

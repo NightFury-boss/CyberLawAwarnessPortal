@@ -123,7 +123,11 @@ export default function DashboardQuizPractice({
             className="atelier-mode-card mode-quick"
             aria-label="Start Quick Practice: 5 short questions untimed"
           >
-            <div className="atelier-mode-badge-icon" aria-hidden="true">⚡</div>
+            <div className="atelier-mode-badge-icon" aria-hidden="true">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+              </svg>
+            </div>
             <div className="atelier-mode-info">
               <span className="atelier-mode-name">Quick Practice</span>
               <span className="atelier-mode-desc">5 short questions • Instant explanations</span>
@@ -137,7 +141,12 @@ export default function DashboardQuizPractice({
             className="atelier-mode-card mode-topic"
             aria-label="Start Topic-wise Practice across 10 statutory categories"
           >
-            <div className="atelier-mode-badge-icon" aria-hidden="true">📚</div>
+            <div className="atelier-mode-badge-icon" aria-hidden="true">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
+                <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
+              </svg>
+            </div>
             <div className="atelier-mode-info">
               <span className="atelier-mode-name">Topic Practice</span>
               <span className="atelier-mode-desc">10 topics • Difficulty &amp; statute selection</span>
@@ -151,7 +160,12 @@ export default function DashboardQuizPractice({
             className="atelier-mode-card mode-scenario"
             aria-label="Start Real-world Scenarios: 8 situational decision problems"
           >
-            <div className="atelier-mode-badge-icon" aria-hidden="true">🔍</div>
+            <div className="atelier-mode-badge-icon" aria-hidden="true">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"></polygon>
+              </svg>
+            </div>
             <div className="atelier-mode-info">
               <span className="atelier-mode-name">Real-World Scenarios</span>
               <span className="atelier-mode-desc">8 situational dilemmas • Indicator detection</span>
@@ -165,7 +179,12 @@ export default function DashboardQuizPractice({
             className="atelier-mode-card mode-challenge"
             aria-label="Start Speed and Depth Challenge: 15 questions with 10 minute timer"
           >
-            <div className="atelier-mode-badge-icon" aria-hidden="true">⏱</div>
+            <div className="atelier-mode-badge-icon" aria-hidden="true">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <polyline points="12 6 12 12 16 14"></polyline>
+              </svg>
+            </div>
             <div className="atelier-mode-info">
               <span className="atelier-mode-name">Timed Challenge Quiz</span>
               <span className="atelier-mode-desc">15 mixed questions • 10m countdown timer</span>
@@ -179,7 +198,15 @@ export default function DashboardQuizPractice({
             className="atelier-mode-card mode-legal"
             aria-label="Start Case-based and Legal Application: BSA Section 63 and BNS court cases"
           >
-            <div className="atelier-mode-badge-icon" aria-hidden="true">⚖️</div>
+            <div className="atelier-mode-badge-icon" aria-hidden="true">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"></path>
+                <path d="m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"></path>
+                <path d="M7 21h10"></path>
+                <path d="M12 3v18"></path>
+                <path d="M3 7h18"></path>
+              </svg>
+            </div>
             <div className="atelier-mode-info">
               <span className="atelier-mode-name">Case Law &amp; Digital Evidence</span>
               <span className="atelier-mode-desc">BSA §63 evidence rules &amp; court rulings</span>

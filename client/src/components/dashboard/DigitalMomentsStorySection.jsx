@@ -17,7 +17,7 @@ import { Link } from 'react-router-dom';
 const SCENARIOS = [
   {
     id: 'power-cut',
-    tabLabel: '⚡ Utility Urgency',
+    tabLabel: 'Utility Urgency',
     title: 'The Midnight Power Cut SMS',
     channel: 'SMS: VK-PSPCL-ALRT • 16:42 IST',
     sender: 'Power Distribution Billing System',
@@ -31,7 +31,7 @@ const SCENARIOS = [
   },
   {
     id: 'parcel-fee',
-    tabLabel: '📦 Courier Re-Route',
+    tabLabel: 'Courier Re-Route',
     title: 'The Nominal ₹15 Redirection Fee',
     channel: 'SMS: DELHIVERY-TRACK • 11:18 IST',
     sender: 'Logistics Exception Desk',
@@ -45,7 +45,7 @@ const SCENARIOS = [
   },
   {
     id: 'digital-arrest',
-    tabLabel: '🚨 Digital Arrest',
+    tabLabel: 'Digital Arrest',
     title: 'The Video Summons & Coercion',
     channel: 'WhatsApp Video / Skype • 14:05 IST',
     sender: 'Cyber Crime Investigation Cell',
@@ -59,7 +59,7 @@ const SCENARIOS = [
   },
   {
     id: 'qr-scam',
-    tabLabel: '📲 Reverse QR Code',
+    tabLabel: 'Reverse QR Code',
     title: 'The "Approve Payment" QR Code',
     channel: 'UPI Payment Link / Marketplace Chat',
     sender: 'Classifieds Buyer Inquiry',
@@ -126,7 +126,15 @@ export default function DigitalMomentsStorySection() {
               {activeScenario.message}
             </div>
             <div className="story-deceptive-highlight">
-              <strong>⚠ Deceptive Signal:</strong> {activeScenario.deceptiveSignal}
+              <strong style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#d97706" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path>
+                  <line x1="12" y1="9" x2="12" y2="13"></line>
+                  <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                </svg>
+                Deceptive Signal:
+              </strong>{' '}
+              {activeScenario.deceptiveSignal}
             </div>
           </div>
         </div>
@@ -144,8 +152,11 @@ export default function DigitalMomentsStorySection() {
               {activeScenario.statuteRule}
             </p>
             <div style={{ backgroundColor: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '6px', padding: '10px 14px', marginBottom: '16px' }}>
-              <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#166534', display: 'block', marginBottom: '2px' }}>
-                🛡️ Defensive Verification Protocol:
+              <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#166534', display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '3px' }}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#166534" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                </svg>
+                Defensive Verification Protocol:
               </span>
               <span style={{ fontSize: '0.8rem', color: '#14532d', lineHeight: 1.45 }}>
                 {activeScenario.verificationProtocol}

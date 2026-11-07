@@ -55,8 +55,8 @@ export default function AtelierMasthead({
         return { status: 'current', label: 'Active' };
       case 'retention':
         if (hasTrajectoryReassessment) return { status: 'done', label: 'Longitudinal' };
-        if (dueRecallCount > 0) return { status: 'current', label: `${dueRecallCount} Due` };
-        return { status: 'upcoming', label: 'Monitoring' };
+        if (completedRecallCount > 0) return { status: 'done', label: `${completedRecallCount} Completed` };
+        return { status: 'current', label: 'Active' };
       default:
         return { status: 'upcoming', label: 'Pending' };
     }
@@ -69,7 +69,7 @@ export default function AtelierMasthead({
   const mRetention = getMilestoneState('retention');
 
   const getStageTagClass = () => {
-    if (!hasBaseline || dueRecallCount > 0) return 'atelier-stage-pill attention';
+    if (!hasBaseline) return 'atelier-stage-pill attention';
     if (hasFinal) return 'atelier-stage-pill complete';
     return 'atelier-stage-pill';
   };
@@ -187,25 +187,33 @@ export default function AtelierMasthead({
         <div className="ledger-column">
           <span className="ledger-label">Curriculum Lessons</span>
           <span className="ledger-value">
-            {lessonsCompletedCount} {totalLessonsCount > 0 && <span style={{ fontSize: '0.9rem', color: 'var(--color-text-muted, #8A8075)', fontWeight: 500 }}>/ {totalLessonsCount}</span>}
+            {totalLessonsCount > 0 ? (
+              <>
+                {lessonsCompletedCount} <span style={{ fontSize: '0.9rem', color: 'var(--color-text-muted, #8A8075)', fontWeight: 500 }}>/ {totalLessonsCount}</span>
+              </>
+            ) : (
+              <span style={{ fontSize: '1rem', color: 'var(--color-text-muted, #8A8075)' }}>—</span>
+            )}
           </span>
           <span className="ledger-sub">
-            {totalLessonsCount > 0 && lessonsCompletedCount >= totalLessonsCount
-              ? 'All chapters read'
-              : (totalLessonsCount > 0
-                  ? `${totalLessonsCount - lessonsCompletedCount} chapters remaining`
-                  : `${lessonsCompletedCount} chapters read`)}
+            {totalLessonsCount > 0
+              ? (lessonsCompletedCount >= totalLessonsCount
+                  ? 'All chapters read'
+                  : `${totalLessonsCount - lessonsCompletedCount} chapters remaining`)
+              : 'Synchronizing catalog…'}
           </span>
         </div>
 
         <div className="ledger-column">
           <span className="ledger-label">Targeted Pathways</span>
           <span className="ledger-value">
-            {hasBaseline ? `${completedFocusCount} / ${totalFocusCount}` : '—'}
+            {hasBaseline ? (totalFocusCount > 0 ? `${completedFocusCount} / ${totalFocusCount}` : '—') : '—'}
           </span>
           <span className="ledger-sub">
             {hasBaseline 
-              ? (completedFocusCount >= totalFocusCount && totalFocusCount > 0 ? 'All pathways completed' : 'Personalized coaching')
+              ? (totalFocusCount > 0
+                  ? (completedFocusCount >= totalFocusCount ? 'All pathways completed' : 'Personalized coaching')
+                  : 'Curating pathways…')
               : 'Requires First Check'}
           </span>
         </div>
@@ -221,20 +229,16 @@ export default function AtelierMasthead({
         </div>
 
         <div className="ledger-column">
-          <span className="ledger-label">Retention Reviews</span>
+          <span className="ledger-label">Practice Reviews</span>
           <span className="ledger-value">
-            {dueRecallCount > 0 ? (
-              <span style={{ color: 'var(--color-warning, #B17A38)' }}>{dueRecallCount} Due</span>
+            {completedRecallCount > 0 ? (
+              <span>{completedRecallCount} <span style={{ fontSize: '0.9rem', color: 'var(--color-text-muted, #8A8075)', fontWeight: 500 }}>completed</span></span>
             ) : (
-              <span style={{ color: 'var(--color-success, #536F61)', fontSize: '1.25rem' }}>All Current</span>
+              <span style={{ color: 'var(--color-success, #536F61)', fontSize: '1.15rem' }}>Up to date</span>
             )}
           </span>
           <span className="ledger-sub">
-            {completedRecallCount > 0 ? (
-              <span>{completedRecallCount} follow-ups completed</span>
-            ) : (
-              <span>All reviews up to date</span>
-            )}
+            {passedRecallCount > 0 ? `${passedRecallCount} passed checks` : 'Optional self-paced review'}
           </span>
         </div>
       </div>

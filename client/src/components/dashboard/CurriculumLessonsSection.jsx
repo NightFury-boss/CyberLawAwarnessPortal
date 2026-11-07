@@ -46,10 +46,10 @@ export default function CurriculumLessonsSection({
         </div>
         <div style={{ textAlign: 'right', flexShrink: 0 }}>
           <span style={{ fontSize: '0.88rem', fontWeight: 800, color: 'var(--color-text-primary, #302B27)' }}>
-            {completedCount} of {totalPublished}
+            {totalPublished > 0 ? `${completedCount} of ${totalPublished}` : '—'}
           </span>
           <span style={{ fontSize: '0.72rem', color: 'var(--color-text-muted, #8A8075)', display: 'block' }}>
-            Chapters Read
+            {totalPublished > 0 ? 'Chapters Read' : 'Synchronizing…'}
           </span>
         </div>
       </div>
@@ -63,14 +63,14 @@ export default function CurriculumLessonsSection({
       </div>
       <div className="codex-progress-meta">
         <span>
-          {totalPublished > 0 && completedCount >= totalPublished
-            ? `All ${totalPublished} curriculum chapters read`
-            : (totalPublished > 0
-                ? `${totalPublished - completedCount} chapters remaining`
-                : `${completedCount} chapters read`)}
+          {totalPublished > 0
+            ? (completedCount >= totalPublished
+                ? `All ${totalPublished} curriculum chapters read`
+                : `${totalPublished - completedCount} chapters remaining`)
+            : 'Synchronizing curriculum catalog…'}
         </span>
         <span style={{ fontWeight: 700, color: 'var(--color-text-primary, #302B27)' }}>
-          {progressPercent}% Complete
+          {totalPublished > 0 ? `${progressPercent}% Complete` : '—'}
         </span>
       </div>
 
@@ -99,7 +99,11 @@ export default function CurriculumLessonsSection({
 
             <div className="codex-chapter-cta-row">
               <span className="codex-read-time">
-                ⏱ ~{recentlyAccessed.estimatedMinutes || 6} min read • {recentlyAccessed.difficulty || 'Beginner'}
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ verticalAlign: '-1px', marginRight: '4px' }}>
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <polyline points="12 6 12 12 16 14"></polyline>
+                </svg>
+                ~{recentlyAccessed.estimatedMinutes || 6} min read • {recentlyAccessed.difficulty || 'Beginner'}
               </span>
               <Link
                 to={getContextPath(`/modules/${recentlyAccessed.slug}`)}
@@ -129,7 +133,11 @@ export default function CurriculumLessonsSection({
 
             <div className="codex-chapter-cta-row">
               <span className="codex-read-time">
-                ⏱ ~6 min read • Beginner
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ verticalAlign: '-1px', marginRight: '4px' }}>
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <polyline points="12 6 12 12 16 14"></polyline>
+                </svg>
+                ~6 min read • Beginner
               </span>
               <Link
                 to={getContextPath('/modules/digital-identity-foundations')}

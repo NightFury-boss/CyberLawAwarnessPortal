@@ -113,9 +113,9 @@ async function runDashboardLearningJourneySuite() {
   console.log(`✓ In-progress step 2 resumes with: "${resStep2.actionLabel}"`);
 
   // -------------------------------------------------------------------------
-  // TEST 2C: State 2C — Active In-Progress Resumption takes priority over Due Spaced Review
+  // TEST 2C: State 2C — Active In-Progress Resumption takes priority over reviews
   // -------------------------------------------------------------------------
-  console.log('\n[TEST 2C] Testing Momentum Protection: In-Progress Resumption > Due Spaced Review...');
+  console.log('\n[TEST 2C] Testing Momentum Protection: In-Progress Resumption maintains priority...');
   const dueReview = {
     pathwayId: 'pathway-cyber-stalking',
     habitTitle: 'Responding to Digital Harassment and Cyberstalking',
@@ -134,13 +134,13 @@ async function runDashboardLearningJourneySuite() {
   // Learner is in the middle of a lesson; completing it maintains momentum before doing reviews
   assert.strictEqual(resMomentum.type, 'RESUME_PATHWAY');
   assert.strictEqual(resMomentum.actionLabel, 'Read Practical Defense Rule →');
-  console.log('✓ Active in-progress lesson protected from interruption by spaced review');
+  console.log('✓ Active in-progress lesson protected from interruption');
 
   // -------------------------------------------------------------------------
-  // TEST 3: State 3 — Due Spaced Retrieval Review (When no in-progress lesson)
+  // TEST 3: State 3 — Learner Independence: DUE_SPACED_REVIEW Removed
   // -------------------------------------------------------------------------
-  console.log('\n[TEST 3] Testing Due Spaced Retrieval Review (Plain Language & Priority)...');
-  const resSpaced = selectPrimaryNextAction({
+  console.log('\n[TEST 3] Testing Learner Independence: No scheduled spaced-review interruption of lessons...');
+  const resNoSpaced = selectPrimaryNextAction({
     hasBaseline: true,
     hasFinal: false,
     pathwaysWithStatus: [
@@ -155,13 +155,25 @@ async function runDashboardLearningJourneySuite() {
     totalFocusCount: 2
   });
 
-  assert.strictEqual(resSpaced.type, 'DUE_SPACED_REVIEW');
-  assert.strictEqual(resSpaced.actionType, 'SPACED_MODAL');
-  assert.strictEqual(resSpaced.eyebrow, 'A Review is Ready (~2 min)');
-  assert.strictEqual(resSpaced.actionLabel, 'Start Quick Review →');
-  assert.strictEqual(resSpaced.estimatedMinutes, 2);
-  assert.ok(resSpaced.title.startsWith('Quick Review:'), 'Title uses friendly plain English "Quick Review:"');
-  console.log(`✓ Due spaced review uses plain language: "${resSpaced.eyebrow}" -> "${resSpaced.title}"`);
+  // Must start the next lesson; no DUE_SPACED_REVIEW obligation
+  assert.strictEqual(resNoSpaced.type, 'START_PATHWAY');
+  assert.strictEqual(resNoSpaced.actionType, 'RUNNER');
+  assert.strictEqual(resNoSpaced.actionLabel, 'Start Lesson →');
+  console.log('✓ DUE_SPACED_REVIEW is unreachable; next lesson starts directly without return obligations');
+
+  // -------------------------------------------------------------------------
+  // TEST 3B: State 3B — Optional Missed Concept Recall (DUE_QUIZ_RECALL)
+  // -------------------------------------------------------------------------
+  console.log('\n[TEST 3B] Testing Optional Concept Recall (DUE_QUIZ_RECALL)...');
+  const resQuizRecall = selectPrimaryNextAction({
+    hasBaseline: true,
+    hasFinal: true,
+    dueQuizRecalls: [{ category: 'DPDP and privacy' }]
+  });
+  assert.strictEqual(resQuizRecall.type, 'DUE_QUIZ_RECALL');
+  assert.strictEqual(resQuizRecall.actionType, 'QUIZ_RECALL_MODAL');
+  assert.strictEqual(resQuizRecall.actionLabel, 'Review Missed Concept →');
+  console.log('✓ Optional concept revision remains accessible via DUE_QUIZ_RECALL');
 
   // -------------------------------------------------------------------------
   // TEST 4: State 4 — Start Next Recommended Pathway
@@ -411,11 +423,11 @@ async function runDashboardLearningJourneySuite() {
       expectedActionLabel: 'Read Practical Defense Rule →'
     },
     {
-      stateName: 'Review Ready (Stage 2)',
-      input: { hasBaseline: true, hasFinal: false, pathwaysWithStatus: [nextLesson], dueSpacedReviews: [dueReview], totalFocusCount: 2, completedFocusCount: 0 },
+      stateName: 'Unstarted Pathway (Stage 2)',
+      input: { hasBaseline: true, hasFinal: false, pathwaysWithStatus: [nextLesson], totalFocusCount: 2, completedFocusCount: 0 },
       expectedStage: 'Stage 2 of 4: Lessons & Practice',
-      expectedActionType: 'DUE_SPACED_REVIEW',
-      expectedActionLabel: 'Start Quick Review →'
+      expectedActionType: 'START_PATHWAY',
+      expectedActionLabel: 'Start Lesson →'
     },
     {
       stateName: 'Ready for Final Check',
