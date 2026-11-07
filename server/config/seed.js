@@ -3187,6 +3187,7 @@ async function seed(isReset = false) {
 
     const quizQuestionsData = [...qPart1, ...qPart2, ...qPart3, ...stage4Questions];
 
+    const authoredQuestionIds = new Set();
     let questionIdx = 1;
     for (let qData of quizQuestionsData) {
       let targetCategory = qData.category;
@@ -3202,7 +3203,9 @@ async function seed(isReset = false) {
       }
       qData.quizId = dbQuiz._id;
       const hasAuthoredId = Boolean(qData.questionId);
-      if (!qData.questionId) {
+      if (hasAuthoredId) {
+        authoredQuestionIds.add(qData.questionId);
+      } else {
         const catPrefix = qData.category.replace(/[^A-Za-z]/g, '').substring(0, 5).toUpperCase();
         qData.questionId = `QZ-${catPrefix}-${String(questionIdx).padStart(3, '0')}`;
       }
@@ -3233,9 +3236,9 @@ async function seed(isReset = false) {
       );
     }
 
-    // Synchronize questions: remove legacy questions whose questionText and questionId are no longer in the fixture bank
+    // Synchronize questions: protect authored IDs by questionId, and generated-ID questions strictly by questionText
     const activeQuestionTexts = new Set(quizQuestionsData.map(q => q.questionText));
-    const activeQuestionIds = new Set(quizQuestionsData.filter(q => q.questionId).map(q => q.questionId));
+    const activeQuestionIds = authoredQuestionIds;
     await QuizQuestion.deleteMany({
       $and: [
         { questionText: { $nin: Array.from(activeQuestionTexts) } },

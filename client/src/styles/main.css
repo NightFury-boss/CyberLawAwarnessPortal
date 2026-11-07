@@ -13392,5 +13392,18 @@ main > .container,
   }
 }
 
+/* Stage 5 Quiz Recall Accessible Controls & Focus Ring */
+.quiz-recall-option-label:focus-within {
+  outline: 2px solid var(--color-focus, #81551F);
+  outline-offset: 2px;
+}
+
+.quiz-matching-select:focus-visible,
+.quiz-ordering-btn:focus-visible,
+.quiz-indicator-token:focus-visible {
+  outline: 2px solid var(--color-focus, #81551F);
+  outline-offset: 2px;
+}
+
 
 

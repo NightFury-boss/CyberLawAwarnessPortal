@@ -130,7 +130,7 @@ function Modules({ user, isWorkspace = false }) {
             setSelectedOptions(restoredSelected);
             setSubmittedChecks(restoredSubmitted);
             setKnowledgeCheckResults(restoredResults);
-          } else if (mod.knowledgeCheckStatus && mod.knowledgeCheckStatus !== 'not_attempted') {
+          } else if (mod.knowledgeCheckStatus && ['passed', 'failed', 'attempted'].includes(mod.knowledgeCheckStatus)) {
             const lastAns = typeof mod.lastAnswerIndex === 'number' ? mod.lastAnswerIndex : null;
             if (lastAns !== null) {
               setSelectedOptions({ 0: lastAns });

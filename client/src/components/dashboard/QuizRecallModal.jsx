@@ -208,7 +208,7 @@ function QuizRecallModal({
         )}
 
         {/* Question Prompt */}
-        <p style={{ fontSize: '1.02rem', fontWeight: 600, color: 'var(--text-primary)', lineHeight: 1.5, marginBottom: '16px' }}>
+        <p id="recall-modal-prompt" style={{ fontSize: '1.02rem', fontWeight: 600, color: 'var(--text-primary)', lineHeight: 1.5, marginBottom: '16px' }}>
           {q?.questionText}
         </p>
 
@@ -216,42 +216,53 @@ function QuizRecallModal({
         {/* Format 1: Single Choice / True-False / Scenario Decision / Legal Application */}
         {/* ----------------------------------------------------------------- */}
         {['single_choice', 'true_false', 'scenario_decision', 'legal_application'].includes(format) && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '20px' }} role="radiogroup" aria-label="Question options">
+          <div
+            style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '20px' }}
+            role="radiogroup"
+            aria-labelledby="recall-modal-prompt"
+          >
             {q?.options?.map((opt, idx) => {
               const isSelected = selectedOption === idx;
               const letter = optionLetters[idx] || String.fromCharCode(65 + idx);
               return (
-                <div
+                <label
                   key={idx}
-                  onClick={() => handleSingleChoiceSelect(idx)}
-                  role="radio"
-                  aria-checked={isSelected}
-                  tabIndex={0}
-                  onKeyDown={(e) => {
-                    if (e.key === ' ' || e.key === 'Enter') {
-                      e.preventDefault();
-                      handleSingleChoiceSelect(idx);
-                    }
-                  }}
                   style={{
                     padding: '10px 14px',
                     borderRadius: '6px',
                     border: '1.5px solid var(--color-border)',
                     backgroundColor: isSelected ? 'var(--color-gold-light, #FAF4EA)' : 'var(--color-surface-card, #FCFAF5)',
-                    borderColor: isSelected ? 'var(--color-accent-gold, #B18A55)' : 'var(--color-border)',
+                    borderColor: isSelected ? 'var(--color-text-primary, #302B27)' : 'var(--color-border)',
                     cursor: evalResult ? 'default' : 'pointer',
                     display: 'flex',
                     alignItems: 'center',
                     gap: '10px',
                     transition: 'all 0.15s ease'
                   }}
+                  className={`quiz-recall-option-label ${isSelected ? 'selected' : ''}`}
                 >
+                  <input
+                    type="radio"
+                    name={`quiz-recall-${currentItem?.questionId || 'opt'}`}
+                    value={idx}
+                    checked={isSelected}
+                    disabled={Boolean(evalResult)}
+                    onChange={() => handleSingleChoiceSelect(idx)}
+                    role="radio"
+                    aria-checked={isSelected}
+                    style={{
+                      accentColor: 'var(--color-accent-terracotta, #9A503A)',
+                      width: '18px',
+                      height: '18px',
+                      cursor: evalResult ? 'default' : 'pointer'
+                    }}
+                  />
                   <span style={{
                     width: '24px',
                     height: '24px',
                     borderRadius: '4px',
-                    backgroundColor: isSelected ? 'var(--color-accent-gold, #B18A55)' : 'var(--color-surface-secondary, #EFE8DC)',
-                    color: isSelected ? '#FCFAF5' : 'var(--color-text-secondary, #635B53)',
+                    backgroundColor: isSelected ? 'var(--color-text-primary, #302B27)' : 'var(--color-surface-secondary, #EFE8DC)',
+                    color: isSelected ? '#FCFAF5' : 'var(--color-text-primary, #302B27)',
                     fontSize: '0.78rem',
                     fontWeight: 700,
                     display: 'flex',
@@ -262,7 +273,7 @@ function QuizRecallModal({
                     {letter}
                   </span>
                   <span style={{ fontSize: '0.9rem', color: 'var(--text-primary)' }}>{opt}</span>
-                </div>
+                </label>
               );
             })}
           </div>
@@ -273,44 +284,50 @@ function QuizRecallModal({
         {/* ----------------------------------------------------------------- */}
         {format === 'multiple_choice' && (
           <div style={{ marginBottom: '20px' }}>
-            <div style={{ fontSize: '0.78rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--color-accent-terracotta, #A65F45)', marginBottom: '8px' }}>
+            <div id="multi-choice-heading" style={{ fontSize: '0.78rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--color-accent-terracotta, #A65F45)', marginBottom: '8px' }}>
               ☑ Select all options that apply
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }} role="group" aria-labelledby="multi-choice-heading">
               {q?.options?.map((opt, idx) => {
                 const isSelected = selectedOptionIndices.includes(idx);
                 return (
-                  <div
+                  <label
                     key={idx}
-                    onClick={() => handleMultipleChoiceToggle(idx)}
-                    role="checkbox"
-                    aria-checked={isSelected}
-                    tabIndex={0}
-                    onKeyDown={(e) => {
-                      if (e.key === ' ' || e.key === 'Enter') {
-                        e.preventDefault();
-                        handleMultipleChoiceToggle(idx);
-                      }
-                    }}
                     style={{
                       padding: '10px 14px',
                       borderRadius: '6px',
                       border: '1.5px solid var(--color-border)',
                       backgroundColor: isSelected ? 'var(--color-gold-light, #FAF4EA)' : 'var(--color-surface-card, #FCFAF5)',
-                      borderColor: isSelected ? 'var(--color-accent-gold, #B18A55)' : 'var(--color-border)',
+                      borderColor: isSelected ? 'var(--color-text-primary, #302B27)' : 'var(--color-border)',
                       cursor: evalResult ? 'default' : 'pointer',
                       display: 'flex',
                       alignItems: 'center',
                       gap: '10px',
                       transition: 'all 0.15s ease'
                     }}
+                    className={`quiz-recall-option-label ${isSelected ? 'selected' : ''}`}
                   >
+                    <input
+                      type="checkbox"
+                      value={idx}
+                      checked={isSelected}
+                      disabled={Boolean(evalResult)}
+                      onChange={() => handleMultipleChoiceToggle(idx)}
+                      role="checkbox"
+                      aria-checked={isSelected}
+                      style={{
+                        accentColor: 'var(--color-accent-terracotta, #9A503A)',
+                        width: '18px',
+                        height: '18px',
+                        cursor: evalResult ? 'default' : 'pointer'
+                      }}
+                    />
                     <div style={{
                       width: '20px',
                       height: '20px',
                       borderRadius: '4px',
                       border: '1.5px solid var(--color-border)',
-                      backgroundColor: isSelected ? 'var(--color-accent-gold, #B18A55)' : 'var(--color-surface-secondary, #EFE8DC)',
+                      backgroundColor: isSelected ? 'var(--color-text-primary, #302B27)' : 'var(--color-surface-secondary, #EFE8DC)',
                       color: '#FCFAF5',
                       fontSize: '0.85rem',
                       fontWeight: 800,
@@ -322,7 +339,7 @@ function QuizRecallModal({
                       {isSelected ? '✓' : ''}
                     </div>
                     <span style={{ fontSize: '0.9rem', color: 'var(--text-primary)' }}>{opt}</span>
-                  </div>
+                  </label>
                 );
               })}
             </div>
@@ -347,6 +364,8 @@ function QuizRecallModal({
                   </div>
                   <div>
                     <select
+                      id={`matching-select-${idx}`}
+                      aria-label={`Matching definition for ${left}`}
                       value={chosenRight}
                       disabled={Boolean(evalResult)}
                       onChange={(e) => handleMatchingPairChange(left, e.target.value)}
@@ -400,6 +419,7 @@ function QuizRecallModal({
                       type="button"
                       onClick={() => handleOrderingShift(idx, 'up')}
                       disabled={idx === 0}
+                      aria-label={`Move "${itemText}" up`}
                       className="quiz-ordering-btn"
                       style={{ padding: '4px 8px', fontSize: '0.75rem', cursor: idx === 0 ? 'not-allowed' : 'pointer' }}
                     >
@@ -409,6 +429,7 @@ function QuizRecallModal({
                       type="button"
                       onClick={() => handleOrderingShift(idx, 'down')}
                       disabled={idx === selectedSequence.length - 1}
+                      aria-label={`Move "${itemText}" down`}
                       className="quiz-ordering-btn"
                       style={{ padding: '4px 8px', fontSize: '0.75rem', cursor: idx === selectedSequence.length - 1 ? 'not-allowed' : 'pointer' }}
                     >
@@ -453,6 +474,7 @@ function QuizRecallModal({
                     key={ind.id}
                     type="button"
                     disabled={Boolean(evalResult)}
+                    aria-pressed={isFlagged}
                     onClick={() => handleIndicatorToggle(ind.id)}
                     className={`quiz-indicator-token ${isFlagged ? 'flagged' : ''}`}
                     style={{
@@ -582,7 +604,13 @@ function QuizRecallModal({
             {Array.isArray(evalResult.legalReferences) && evalResult.legalReferences.length > 0 && (
               <div style={{ fontSize: '0.78rem', color: 'var(--color-text-muted, #797066)', marginTop: '6px' }}>
                 <strong>Statutory references:</strong>{' '}
-                {evalResult.legalReferences.map(r => (typeof r === 'object' ? `${r.act || ''} ${r.section || ''}`.trim() || r.title : r)).join('; ')}
+                {evalResult.legalReferences.map(r => {
+                  if (typeof r !== 'object' || !r) return String(r || '');
+                  const act = r.actName || r.act || '';
+                  const section = r.sectionNumber || r.section || '';
+                  const citation = `${act} ${section}`.trim();
+                  return citation || r.title || '';
+                }).filter(Boolean).join('; ')}
               </div>
             )}
           </div>

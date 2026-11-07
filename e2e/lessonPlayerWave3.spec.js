@@ -142,7 +142,7 @@ test.describe('Stage 4 Wave 3: Lesson Player & Multi-QuickCheck E2E Suite', () =
                 explanation: 'All statutory elements of Section 72A of the IT Act, 2000 are satisfied.'
               },
               status: 'in_progress',
-              knowledgeCheckStatus: 'not_attempted'
+              knowledgeCheckStatus: 'unattempted'
             }
           })
         });
@@ -202,7 +202,7 @@ test.describe('Stage 4 Wave 3: Lesson Player & Multi-QuickCheck E2E Suite', () =
                 explanation: 'Section 3A of the IT Act provides for electronic signatures.'
               },
               status: 'in_progress',
-              knowledgeCheckStatus: 'not_attempted'
+              knowledgeCheckStatus: 'unattempted'
             }
           })
         });

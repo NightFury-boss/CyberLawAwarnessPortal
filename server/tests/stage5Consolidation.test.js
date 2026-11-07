@@ -29,6 +29,7 @@ const QuizQuestion = require('../models/QuizQuestion');
 const QuizAttempt = require('../models/QuizAttempt');
 const AssessmentSession = require('../models/AssessmentSession');
 const quizController = require('../controllers/quizController');
+const { sanitizeQuestionForClient } = require('../services/questionSelectionService');
 
 let passedTests = 0;
 let totalTests = 0;
@@ -328,6 +329,22 @@ async function runStage5ConsolidationSuite() {
     assert(resDue1.data.dueItems[0].question.questionId === 'Q-STAGE5-SINGLE', 'Sanitized question served to client');
     assert(resDue1.data.dueItems[0].question.correctOptionIndex === undefined, 'Zero answer key leakage: correctOptionIndex stripped');
 
+    // Extended Sanitizer Coverage across multi-format questions
+    const sanitizedMatching = sanitizeQuestionForClient(qMatching);
+    assert(sanitizedMatching.matchingPairs === undefined, 'Sanitizer: matchingPairs stripped to prevent answer leakage');
+    assert(Array.isArray(sanitizedMatching.leftItems) && sanitizedMatching.leftItems.length === 3, 'Sanitizer: matching leftItems preserved');
+    assert(Array.isArray(sanitizedMatching.rightItems) && sanitizedMatching.rightItems.length === 3, 'Sanitizer: matching rightItems preserved');
+
+    const sanitizedOrdering = sanitizeQuestionForClient(qOrdering);
+    assert(sanitizedOrdering.explanation === undefined, 'Sanitizer: ordering explanation stripped');
+    assert(Array.isArray(sanitizedOrdering.sequenceItems) && sanitizedOrdering.sequenceItems.length === 4, 'Sanitizer: ordering sequenceItems preserved');
+
+    const sanitizedMulti = sanitizeQuestionForClient(qMulti);
+    assert(sanitizedMulti.correctOptionIndices === undefined, 'Sanitizer: multiple choice correctOptionIndices stripped');
+
+    const sanitizedInd = sanitizeQuestionForClient(qIndicator);
+    assert(sanitizedInd.indicators.every(ind => ind.isSuspicious === undefined), 'Sanitizer: indicator isSuspicious flags stripped');
+
     // -------------------------------------------------------------------------
     // STEP 5: Bidirectional Resolution Sync via Regular Practice
     // -------------------------------------------------------------------------
@@ -410,6 +427,7 @@ async function runStage5ConsolidationSuite() {
     }, resRecallSingleRight);
     assert(resRecallSingleRight.data.isCorrect === true, 'single_choice: correct answer returns isCorrect: true');
     assert(resRecallSingleRight.data.isResolved === true, 'single_choice: isResolved is true');
+    assert(resRecallSingleRight.data.solution === undefined, 'single_choice: solution is omitted on correct submission');
 
     // 6.2 Multiple Choice (Multi-Select) Evaluation & Payload Hardening
     await stageQuestionForRecall(qMulti);
@@ -734,6 +752,7 @@ async function runStage5ConsolidationSuite() {
     const progCapped = await UserProgress.findOne({ userId: testUser._id });
     const singleItemCapped = progCapped.quizRecallItems.find(it => it.questionId.toString() === qSingle._id.toString());
     assert(singleItemCapped.reviewHistory.length === 10, 'reviewHistory is strictly capped to the last 10 entries');
+    assert(singleItemCapped.reviewHistory[0].selectedAnswer?.selectedOptionIndex === 0, 'reviewHistory: selectedAnswer is normalized to safe format-specific shape');
     assert(singleItemCapped.missedCount >= 12, 'missedCount accurately reflects cumulative practice repetitions');
     assert(singleItemCapped.isResolved === false, 'Item remains unresolved after wrong attempts');
     // Verify immediate review availability (no 3-day penalty lockout)
@@ -760,9 +779,14 @@ async function runStage5ConsolidationSuite() {
     assert(getScore('falsePositive') === 90, 'Behavioral dimension FP strictly preserved (90)');
     assert(getScore('unreviewedAcceptance') === 88, 'Behavioral dimension UA strictly preserved (88)');
 
+    const failedTests = totalTests - passedTests;
     console.log('\n======================================================================');
-    console.log(`TEST SUITE RESULTS: ${passedTests} PASSED, 0 FAILED (out of ${totalTests} checks)`);
+    console.log(`TEST SUITE RESULTS: ${passedTests} PASSED, ${failedTests} FAILED (out of ${totalTests} checks)`);
     console.log('======================================================================\n');
+
+    if (failedTests > 0) {
+      process.exitCode = 1;
+    }
 
   } catch (err) {
     console.error('Fatal error during Stage 5 consolidation test suite execution:', err);

@@ -106,48 +106,10 @@ export function selectPrimaryNextAction({
     };
   }
 
-  // 2. Due Pathway Spaced Retrieval (Time-sensitive retention check)
-  if (Array.isArray(dueSpacedReviews) && dueSpacedReviews.length > 0 && dueSpacedReviews[0]) {
-    const dueItem = dueSpacedReviews[0];
-    const habitTitle = resolvePathwayTitle(dueItem.pathwayId, dueItem.habitTitle);
-
-    return {
-      type: 'DUE_SPACED_REVIEW',
-      eyebrow: 'Follow-Up Review Due (~2 min)',
-      title: `Quick Review: ${habitTitle}`,
-      description: 'A short retention check is ready. Checking what you remember helps safe habits stay second nature.',
-      actionLabel: 'Start Quick Review \u2192',
-      actionType: 'SPACED_MODAL',
-      destination: null,
-      targetItem: dueItem,
-      estimatedMinutes: 2,
-      steps: null
-    };
-  }
-
-  // 3. Optional Missed Quiz Concept Review (~2 min concept review)
-  if (Array.isArray(dueQuizRecalls) && dueQuizRecalls.length > 0 && dueQuizRecalls[0]) {
-    const recallItem = dueQuizRecalls[0];
-    const categoryName = recallItem.category || recallItem.question?.category || 'Cyber Law';
-
-    return {
-      type: 'DUE_QUIZ_RECALL',
-      eyebrow: 'Optional Concept Practice (~2 min)',
-      title: `Clarify Missed Concept: ${categoryName}`,
-      description: `Revisit this question on ${categoryName} at your convenience to explore statutory explanations and strengthen your legal awareness.`,
-      actionLabel: 'Review Missed Concept \u2192',
-      actionType: 'QUIZ_RECALL_MODAL',
-      destination: null,
-      targetItem: recallItem,
-      estimatedMinutes: 2,
-      steps: null
-    };
-  }
-
   // Find active in-progress pathway (Step 1 or 2 complete, but not Step 3)
   const inProgressItem = (pathwaysWithStatus || []).find(p => p && p.isInProgress && p.rec && p.rec.pathwayId);
 
-  // 4. Resume Pathway (Active in-progress lesson has highest momentum)
+  // 2. Resume Pathway (Active in-progress lesson has highest momentum)
   if (!hasFinal && inProgressItem && inProgressItem.rec) {
     const rec = inProgressItem.rec;
     const completedRecord = inProgressItem.completedRecord;
@@ -186,26 +148,10 @@ export function selectPrimaryNextAction({
     };
   }
 
-  // 5. Resume In-Progress Curriculum Lesson
-  if (inProgressLesson && inProgressLesson.slug) {
-    return {
-      type: 'RESUME_LESSON',
-      eyebrow: 'Curriculum Lesson in Progress',
-      title: `Resume: ${inProgressLesson.title || 'Curriculum Lesson'}`,
-      description: inProgressLesson.summary || 'Pick up where you left off in your structured study of Indian cyber law provisions.',
-      actionLabel: 'Continue Reading \u2192',
-      actionType: 'LINK',
-      destination: `/modules/${inProgressLesson.slug}`,
-      targetItem: inProgressLesson,
-      estimatedMinutes: 5,
-      steps: null
-    };
-  }
-
   // Find next unstarted recommended pathway
   const nextIncompleteItem = (pathwaysWithStatus || []).find(p => p && !p.isFullyCompleted && p.rec && p.rec.pathwayId);
 
-  // 6. Ready for Final Assessment (All recommended lessons complete, but Final Check not taken)
+  // 4. Ready for Final Assessment (All recommended lessons complete, but Final Check not taken)
   const allFocusComplete = safeTotal > 0 && safeCompleted >= safeTotal;
   if (!hasFinal && (allFocusComplete || (!nextIncompleteItem && (pathwaysWithStatus || []).length > 0))) {
     return {
@@ -217,6 +163,41 @@ export function selectPrimaryNextAction({
       actionType: 'LINK',
       destination: '/assessment/final',
       targetItem: null,
+      estimatedMinutes: 5,
+      steps: null
+    };
+  }
+
+  // 5. Due Pathway Spaced Retrieval (Time-sensitive retention check)
+  if (Array.isArray(dueSpacedReviews) && dueSpacedReviews.length > 0 && dueSpacedReviews[0]) {
+    const dueItem = dueSpacedReviews[0];
+    const habitTitle = resolvePathwayTitle(dueItem.pathwayId, dueItem.habitTitle);
+
+    return {
+      type: 'DUE_SPACED_REVIEW',
+      eyebrow: 'A Review is Ready (~2 min)',
+      title: `Quick Review: ${habitTitle}`,
+      description: 'A short retention check is ready. Checking what you remember helps safe habits stay second nature.',
+      actionLabel: 'Start Quick Review \u2192',
+      actionType: 'SPACED_MODAL',
+      destination: null,
+      targetItem: dueItem,
+      estimatedMinutes: 2,
+      steps: null
+    };
+  }
+
+  // 6. Resume In-Progress Curriculum Lesson
+  if (inProgressLesson && inProgressLesson.slug) {
+    return {
+      type: 'RESUME_LESSON',
+      eyebrow: 'Curriculum Lesson in Progress',
+      title: `Resume: ${inProgressLesson.title || 'Curriculum Lesson'}`,
+      description: inProgressLesson.summary || 'Pick up where you left off in your structured study of Indian cyber law provisions.',
+      actionLabel: 'Continue Reading \u2192',
+      actionType: 'LINK',
+      destination: `/modules/${inProgressLesson.slug}`,
+      targetItem: inProgressLesson,
       estimatedMinutes: 5,
       steps: null
     };
@@ -245,7 +226,7 @@ export function selectPrimaryNextAction({
     };
   }
 
-  // 8. Start Recommended Curriculum Lesson
+  // 7. Start Recommended Curriculum Lesson
   if (recommendedLesson && recommendedLesson.slug) {
     return {
       type: 'START_LESSON',
@@ -257,6 +238,26 @@ export function selectPrimaryNextAction({
       destination: `/modules/${recommendedLesson.slug}`,
       targetItem: recommendedLesson,
       estimatedMinutes: 6,
+      steps: null
+    };
+  }
+
+  // 8. Optional Missed Quiz Concept Review (~2 min concept review)
+  // Kept below required core journey steps (resumption, final readiness, and unstarted lessons)
+  if (Array.isArray(dueQuizRecalls) && dueQuizRecalls.length > 0 && dueQuizRecalls[0]) {
+    const recallItem = dueQuizRecalls[0];
+    const categoryName = recallItem.category || recallItem.question?.category || 'Cyber Law';
+
+    return {
+      type: 'DUE_QUIZ_RECALL',
+      eyebrow: 'Optional Concept Practice (~2 min)',
+      title: `Clarify Missed Concept: ${categoryName}`,
+      description: `Revisit this question on ${categoryName} at your convenience to explore statutory explanations and strengthen your legal awareness.`,
+      actionLabel: 'Review Missed Concept \u2192',
+      actionType: 'QUIZ_RECALL_MODAL',
+      destination: null,
+      targetItem: recallItem,
+      estimatedMinutes: 2,
       steps: null
     };
   }

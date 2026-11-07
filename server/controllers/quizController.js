@@ -451,15 +451,21 @@ exports.submitQuiz = async (req, res) => {
       else if (format === 'ordering') {
         const submittedSeq = Array.isArray(ans.selectedSequence) ? ans.selectedSequence : [];
         const authSeq = q.sequenceItems || [];
+        const authSet = new Set(authSeq);
+        const hasDuplicates = new Set(submittedSeq).size !== submittedSeq.length;
+        const allValid = submittedSeq.every(item => typeof item === 'string' && authSet.has(item));
 
         humanUserAnswer = submittedSeq.join(' → ');
         humanCorrectAnswer = authSeq.join(' → ');
 
         if (submittedSeq.length === 0) {
           unansweredCount++;
+        } else if (hasDuplicates || !allValid || submittedSeq.length !== authSeq.length) {
+          incorrectCount++;
+          specificWhyIncorrect = 'Ordering sequence contained invalid, duplicate, or incomplete steps.';
         } else {
           let correctPositions = 0;
-          for (let sIdx = 0; sIdx < Math.min(submittedSeq.length, authSeq.length); sIdx++) {
+          for (let sIdx = 0; sIdx < authSeq.length; sIdx++) {
             if (submittedSeq[sIdx] === authSeq[sIdx]) correctPositions++;
           }
 
@@ -1032,10 +1038,44 @@ exports.submitQuizRecall = async (req, res) => {
       if (!Array.isArray(it.reviewHistory)) {
         it.reviewHistory = [];
       }
+
+      // Normalize selectedAnswer to format-specific structure preventing arbitrary payload retention
+      let normalizedAnswer = null;
+      let selectedOptIdx = null;
+
+      if (['single_choice', 'true_false', 'scenario_decision', 'legal_application'].includes(format)) {
+        const selected = typeof answer === 'object' ? answer?.selectedOptionIndex : answer;
+        const validIndex = Number.isInteger(selected) && selected >= 0 && selected < (question.options?.length || 0);
+        selectedOptIdx = validIndex ? selected : null;
+        normalizedAnswer = { selectedOptionIndex: selectedOptIdx };
+      } else if (format === 'multiple_choice') {
+        const rawIndices = Array.isArray(answer?.selectedOptionIndices) ? answer.selectedOptionIndices : [];
+        const numOptions = question.options?.length || 0;
+        const validIntegers = rawIndices.every(idx => Number.isInteger(idx) && idx >= 0 && idx < numOptions);
+        const uniqueIndices = new Set(rawIndices);
+        const hasDuplicates = uniqueIndices.size !== rawIndices.length;
+        const safeIndices = (!hasDuplicates && validIntegers) ? [...rawIndices].sort((a, b) => a - b) : [];
+        normalizedAnswer = { selectedOptionIndices: safeIndices };
+      } else if (format === 'matching') {
+        const submittedPairs = Array.isArray(answer?.selectedPairs) ? answer.selectedPairs : [];
+        const safePairs = submittedPairs
+          .filter(p => p && typeof p.left === 'string' && typeof p.right === 'string')
+          .map(p => ({ left: p.left, right: p.right }));
+        normalizedAnswer = { selectedPairs: safePairs };
+      } else if (format === 'ordering') {
+        const submittedSeq = Array.isArray(answer?.selectedSequence) ? answer.selectedSequence : [];
+        const safeSeq = submittedSeq.filter(item => typeof item === 'string');
+        normalizedAnswer = { selectedSequence: safeSeq };
+      } else if (format === 'indicator_identification') {
+        const rawIds = Array.isArray(answer?.selectedIndicatorIds) ? answer.selectedIndicatorIds : [];
+        const safeIds = rawIds.filter(id => typeof id === 'string');
+        normalizedAnswer = { selectedIndicatorIds: safeIds };
+      }
+
       it.reviewHistory.push({
         reviewedAt: new Date(),
-        selectedOptionIndex: typeof answer === 'object' ? (answer?.selectedOptionIndex ?? null) : (typeof answer === 'number' ? answer : null),
-        selectedAnswer: answer,
+        selectedOptionIndex: selectedOptIdx,
+        selectedAnswer: normalizedAnswer,
         isCorrect
       });
 
@@ -1047,15 +1087,11 @@ exports.submitQuizRecall = async (req, res) => {
       await progress.save();
     }
 
-    const solutionDetails = {
-      correctOptionIndex: question.correctOptionIndex,
-      correctOptionIndices: question.correctOptionIndices || [],
-      matchingPairs: question.matchingPairs || [],
-      sequenceItems: question.sequenceItems || [],
-      indicators: question.indicators || []
-    };
+    const hasRecallItem = itemIdx !== -1;
+    const isPublished = question.published !== false;
+    const shouldIncludeSolution = !isCorrect && hasRecallItem && isPublished;
 
-    res.json({
+    const responsePayload = {
       success: true,
       isCorrect,
       mastered: isCorrect,
@@ -1063,9 +1099,20 @@ exports.submitQuizRecall = async (req, res) => {
       explanation: question.explanation,
       whyIncorrect: isCorrect ? null : (question.whyIncorrect || 'This choice does not align with the established statutory rule.'),
       practicalTakeaway: question.practicalTakeaway || 'Always verify digital communications through trusted independent channels.',
-      legalReferences: question.legalReferences || [],
-      solution: solutionDetails
-    });
+      legalReferences: question.legalReferences || []
+    };
+
+    if (shouldIncludeSolution) {
+      responsePayload.solution = {
+        correctOptionIndex: question.correctOptionIndex,
+        correctOptionIndices: question.correctOptionIndices || [],
+        matchingPairs: question.matchingPairs || [],
+        sequenceItems: question.sequenceItems || [],
+        indicators: question.indicators || []
+      };
+    }
+
+    res.json(responsePayload);
   } catch (error) {
     res.status(500).json({
       success: false,

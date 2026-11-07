@@ -312,8 +312,28 @@ exports.recordModuleProgress = async (req, res) => {
         return res.status(400).json({ success: false, message: 'No knowledge check found for this module' });
       }
 
+      const optionsCount = Array.isArray(targetCheck.options) ? targetCheck.options.length : 0;
+      const isIntegerIndex = typeof selectedIndex === 'number'
+        ? Number.isInteger(selectedIndex)
+        : (typeof selectedIndex === 'string' && selectedIndex.trim() !== '' && Number.isInteger(Number(selectedIndex)));
+      const parsedIndex = Number(selectedIndex);
+
+      if (
+        selectedIndex === undefined ||
+        selectedIndex === null ||
+        typeof selectedIndex === 'boolean' ||
+        !isIntegerIndex ||
+        parsedIndex < 0 ||
+        (optionsCount > 0 && parsedIndex >= optionsCount)
+      ) {
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid selectedIndex: must be an integer within target check options range'
+        });
+      }
+
       const correctIndex = targetCheck.correctIndex ?? targetCheck.correctOptionIndex ?? 0;
-      const isCorrect = Number(selectedIndex) === Number(correctIndex);
+      const isCorrect = parsedIndex === Number(correctIndex);
 
       // Initialize checkResults if not present
       if (!Array.isArray(entry.checkResults)) {
@@ -323,7 +343,7 @@ exports.recordModuleProgress = async (req, res) => {
       // Update only the selected check's result
       let existingCheckResult = entry.checkResults.find(cr => cr.checkIndex === checkIdx);
       if (existingCheckResult) {
-        existingCheckResult.lastAnswerIndex = Number(selectedIndex);
+        existingCheckResult.lastAnswerIndex = parsedIndex;
         existingCheckResult.isCorrect = isCorrect;
         existingCheckResult.checkId = targetCheck.id || `check-${checkIdx + 1}`;
         existingCheckResult.attemptedAt = new Date();
@@ -331,13 +351,13 @@ exports.recordModuleProgress = async (req, res) => {
         entry.checkResults.push({
           checkIndex: checkIdx,
           checkId: targetCheck.id || `check-${checkIdx + 1}`,
-          lastAnswerIndex: Number(selectedIndex),
+          lastAnswerIndex: parsedIndex,
           isCorrect: isCorrect,
           attemptedAt: new Date()
         });
       }
 
-      entry.lastAnswerIndex = Number(selectedIndex);
+      entry.lastAnswerIndex = parsedIndex;
 
       // Derive lesson's passed status only when every configured check has passed
       const totalChecks = Math.max(1, activeChecks.length);
