@@ -153,7 +153,7 @@ function Dashboard({ user, progressTrigger }) {
           <div style={{ display: 'flex', justifyContent: 'center', gap: '14px', flexWrap: 'wrap' }}>
             <button
               type="button"
-              onClick={fetchDashboardData}
+              onClick={() => fetchDashboardData()}
               className="first-visit-primary-btn"
               style={{ padding: '10px 24px', minHeight: '42px', fontSize: '0.92rem', cursor: 'pointer' }}
             >

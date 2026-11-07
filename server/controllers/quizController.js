@@ -935,6 +935,7 @@ exports.submitQuizRecall = async (req, res) => {
       const correctSet = new Set(correctIndices);
 
       isCorrect = (
+        correctIndices.length > 0 &&
         validIntegers &&
         !hasDuplicates &&
         rawIndices.length === correctIndices.length &&

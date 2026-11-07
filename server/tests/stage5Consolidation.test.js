@@ -431,11 +431,11 @@ async function runStage5ConsolidationSuite() {
 
     // 6.2 Multiple Choice (Multi-Select) Evaluation & Payload Hardening
     await stageQuestionForRecall(qMulti);
-    // Duplicate indices rejection
+    // Duplicate indices rejection: expected length 3, valid values, only duplicate validation rejects
     const resMultiDup = createMockRes();
     await quizController.submitQuizRecall({
       user: { _id: testUser._id },
-      body: { questionId: qMulti._id, answer: { selectedOptionIndices: [0, 0, 1, 3] } }
+      body: { questionId: qMulti._id, answer: { selectedOptionIndices: [0, 0, 1] } }
     }, resMultiDup);
     assert(resMultiDup.data.isCorrect === false, 'multiple_choice: duplicate indices in payload rejected as isCorrect: false');
 
@@ -471,10 +471,29 @@ async function runStage5ConsolidationSuite() {
     }, resMultiRight);
     assert(resMultiRight.data.isCorrect === true, 'multiple_choice: exact match returns isCorrect: true');
 
+    // Empty answer key rejection: empty correctOptionIndices cannot produce isCorrect: true
+    const qMultiEmptyKeys = await QuizQuestion.create({
+      questionId: 'Q-STAGE5-MULTI-EMPTY',
+      questionText: 'Test question with empty answer key',
+      category: 'DPDP and privacy',
+      difficulty: 'Beginner',
+      format: 'multiple_choice',
+      options: ['Option A', 'Option B'],
+      correctOptionIndices: [],
+      explanation: 'Empty keys test'
+    });
+    await stageQuestionForRecall(qMultiEmptyKeys);
+    const resMultiEmptyKey = createMockRes();
+    await quizController.submitQuizRecall({
+      user: { _id: testUser._id },
+      body: { questionId: qMultiEmptyKeys._id, answer: { selectedOptionIndices: [] } }
+    }, resMultiEmptyKey);
+    assert(resMultiEmptyKey.data.isCorrect === false, 'multiple_choice: empty answer key cannot produce isCorrect: true');
+
     // 6.3 Matching Evaluation & Payload Hardening (Complete, Unique, Bijective Mapping)
     await stageQuestionForRecall(qMatching);
 
-    // Duplicate left mapping rejection
+    // Duplicate left mapping rejection: expected length 3, otherwise-valid pairs, only duplicate validation rejects
     const resMatchDupLeft = createMockRes();
     await quizController.submitQuizRecall({
       user: { _id: testUser._id },
@@ -483,7 +502,7 @@ async function runStage5ConsolidationSuite() {
         answer: {
           selectedPairs: [
             { left: 'IT Act Section 66C', right: 'Identity theft using digital signature or password' },
-            { left: 'IT Act Section 66C', right: 'Cheating by personation using computer resource' },
+            { left: 'IT Act Section 66C', right: 'Identity theft using digital signature or password' },
             { left: 'IT Act Section 72A', right: 'Disclosure of personal information in breach of lawful contract' }
           ]
         }
@@ -652,13 +671,13 @@ async function runStage5ConsolidationSuite() {
     // 6.5 Indicator Identification Evaluation & Hardening
     await stageQuestionForRecall(qIndicator);
 
-    // Duplicate indicator IDs rejection
+    // Duplicate indicator IDs rejection: expected length 3, valid values, only duplicate validation rejects
     const resIndDup = createMockRes();
     await quizController.submitQuizRecall({
       user: { _id: testUser._id },
       body: {
         questionId: qIndicator._id,
-        answer: { selectedIndicatorIds: ['ind_urgency', 'ind_urgency', 'ind_phone', 'ind_apk'] }
+        answer: { selectedIndicatorIds: ['ind_urgency', 'ind_urgency', 'ind_phone'] }
       }
     }, resIndDup);
     assert(resIndDup.data.isCorrect === false, 'indicator_identification: duplicate IDs rejected as isCorrect: false');
