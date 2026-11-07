@@ -467,8 +467,39 @@ async function runDashboardLearningJourneySuite() {
   assert.strictEqual(resolveRetentionStatusLabel(null, false), 'Awaiting final check');
   console.log('✓ All retention states map cleanly to human-readable, unclipped display labels');
 
+  // -------------------------------------------------------------------------
+  // TEST 12: Stage 6 Plain Language & Quiz Deep-Link Verification
+  // -------------------------------------------------------------------------
+  console.log('\n[TEST 12] Testing Stage 6 Plain Language, UA title, & Quiz Studio Deep-Link...');
+  const { AUTHORITATIVE_PATHWAY_TITLES } = await import('../../client/src/utils/evidenceSelectors.js');
+  assert.strictEqual(
+    AUTHORITATIVE_PATHWAY_TITLES['pathway-ua-upi-consent'],
+    'Unreviewed Acceptance & UPI PIN Safety',
+    'UA pathway must use plain-language "Unreviewed Acceptance", not "Autopilot Control"'
+  );
+  assert.strictEqual(
+    resolvePathwayTitle('pathway-ua-upi-consent'),
+    'Unreviewed Acceptance & UPI PIN Safety'
+  );
+
+  const weakTopicAction = selectPrimaryNextAction({
+    hasBaseline: true,
+    hasFinal: true,
+    frequentlyMissedQuizTopic: { topic: 'UPI, banking and financial fraud', accuracy: 45 }
+  });
+  assert.strictEqual(weakTopicAction.type, 'PRACTICE_WEAK_QUIZ');
+  assert.ok(
+    weakTopicAction.destination.includes('/quizzes?mode=topic_wise'),
+    `Expected deep-link to include /quizzes?mode=topic_wise, got ${weakTopicAction.destination}`
+  );
+  assert.ok(
+    weakTopicAction.destination.includes(encodeURIComponent('UPI, banking and financial fraud')),
+    `Expected deep-link to encode topic param, got ${weakTopicAction.destination}`
+  );
+  console.log('✓ UA title resolved accurately and weak topic generates verified Quiz Studio deep-link');
+
   console.log('\n=============================================================');
-  console.log('ALL 11 LEARNING JOURNEY CONSISTENCY TESTS PASSED (100% GREEN)');
+  console.log('ALL 12 LEARNING JOURNEY CONSISTENCY TESTS PASSED (100% GREEN)');
   console.log('=============================================================\n');
 }
 

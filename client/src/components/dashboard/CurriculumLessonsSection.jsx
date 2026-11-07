@@ -15,7 +15,7 @@ export default function CurriculumLessonsSection({
 }) {
   const completedCount = lessonsData?.completedCount ?? 0;
   const inProgressCount = lessonsData?.inProgressCount ?? 0;
-  const totalPublished = lessonsData?.totalPublished ?? 12;
+  const totalPublished = lessonsData?.totalPublished || 0;
   const recentlyAccessed = lessonsData?.recentlyAccessed ?? null;
 
   const progressPercent = totalPublished > 0 ? Math.round((completedCount / totalPublished) * 100) : 0;
@@ -38,7 +38,7 @@ export default function CurriculumLessonsSection({
         <div>
           <span className="atelier-section-eyebrow">Structured Knowledge Base</span>
           <h2 id="curriculum-heading" className="atelier-section-title">
-            Indian Cyber Law Codex
+            Indian Cyber Law Lessons
           </h2>
           <p className="atelier-section-sub">
             Authoritative, plain-language lessons on digital rights, evidence rules, and primary legislation.
@@ -63,7 +63,11 @@ export default function CurriculumLessonsSection({
       </div>
       <div className="codex-progress-meta">
         <span>
-          {completedCount === totalPublished ? 'All 12 curriculum chapters read' : `${totalPublished - completedCount} chapters remaining`}
+          {totalPublished > 0 && completedCount >= totalPublished
+            ? `All ${totalPublished} curriculum chapters read`
+            : (totalPublished > 0
+                ? `${totalPublished - completedCount} chapters remaining`
+                : `${completedCount} chapters read`)}
         </span>
         <span style={{ fontWeight: 700, color: 'var(--color-text-primary, #302B27)' }}>
           {progressPercent}% Complete
@@ -149,7 +153,7 @@ export default function CurriculumLessonsSection({
             to={getContextPath('/modules')}
             style={{ fontSize: '0.78rem', color: 'var(--color-accent-terracotta, #A65F45)', fontWeight: 700, textDecoration: 'none' }}
           >
-            All 12 Chapters &rarr;
+            {totalPublished > 0 ? `All ${totalPublished} Chapters` : 'All Chapters'} &rarr;
           </Link>
         </div>
         <div className="codex-constellation-grid">

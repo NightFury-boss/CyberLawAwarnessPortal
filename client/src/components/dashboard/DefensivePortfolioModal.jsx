@@ -277,7 +277,7 @@ export default function DefensivePortfolioModal({
               <div className="portfolio-subentry-header">
                 <h3 className="portfolio-subentry-title">Practice Again Later (Follow-Up Reviews)</h3>
                 <p className="portfolio-subentry-desc">
-                  Short follow-up checks taken days later to make sure key safety rules and laws stay fresh in your memory.
+                  Short follow-up checks taken at your own pace to make sure key safety rules and laws stay fresh in your memory.
                 </p>
               </div>
 
@@ -285,7 +285,7 @@ export default function DefensivePortfolioModal({
                 <div className="portfolio-empty-subbox">
                   <p>No follow-up reviews completed yet.</p>
                   <span className="portfolio-empty-hint">
-                    Completed lessons become eligible for a quick review 7 days later.
+                    Follow-up reviews become available after completing safety lessons.
                   </span>
                 </div>
               ) : (

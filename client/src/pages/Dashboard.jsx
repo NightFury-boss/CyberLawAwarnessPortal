@@ -43,6 +43,7 @@ function Dashboard({ user, progressTrigger }) {
   const [showFullStudio, setShowFullStudio] = useState(false);
   const [loadState, setLoadState] = useState('LOADING'); // 'LOADING' | 'RESOLVED' | 'ERROR'
   const [errorMessage, setErrorMessage] = useState('');
+  const [actionNotice, setActionNotice] = useState(null);
   const [activePathwayForRunner, setActivePathwayForRunner] = useState(null);
   const [activeSpacedModal, setActiveSpacedModal] = useState(null);
   const [isPortfolioModalOpen, setIsPortfolioModalOpen] = useState(false);
@@ -260,14 +261,15 @@ function Dashboard({ user, progressTrigger }) {
 
   const handleLaunchRunner = (pathwayItem, isReinforce = false) => {
     if (!progress?.latestSessionId) {
-      setError('To start a pathway, please complete your First Check first so we can personalize your learning.');
+      setActionNotice('To start a pathway, please complete your First Check first so we can personalize your learning.');
       return;
     }
     if (!pathwayItem?.rec?.pathwayId) {
-      setError('This lesson could not be opened right now. Please refresh the page or try again in a moment.');
+      setActionNotice('This lesson could not be opened right now. Please refresh the page or try again in a moment.');
       return;
     }
 
+    setActionNotice(null);
     setActivePathwayForRunner({
       pathway: pathwayItem.rec,
       sourceSessionId: progress.latestSessionId,
@@ -286,6 +288,45 @@ function Dashboard({ user, progressTrigger }) {
 
   return (
     <div className="atelier-dashboard-canvas desk-space-redesign page-entry">
+
+      {actionNotice && (
+        <div
+          role="alert"
+          style={{
+            maxWidth: '1200px',
+            margin: '0 auto 20px auto',
+            backgroundColor: '#eff6ff',
+            border: '1px solid #bfdbfe',
+            borderRadius: '8px',
+            padding: '12px 18px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: '12px',
+            boxShadow: '0 2px 8px rgba(37, 99, 235, 0.08)'
+          }}
+        >
+          <span style={{ fontSize: '0.88rem', color: '#1e40af', fontWeight: 500 }}>
+            {actionNotice}
+          </span>
+          <button
+            type="button"
+            onClick={() => setActionNotice(null)}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: '#1e40af',
+              fontWeight: 700,
+              cursor: 'pointer',
+              fontSize: '0.82rem',
+              padding: '4px 8px'
+            }}
+            aria-label="Dismiss notice"
+          >
+            Dismiss
+          </button>
+        </div>
+      )}
 
       {/* ========================================================================= */}
       {/* 1. DIVERGENT EXPERIENCE: FIRST-TIME LEARNER ORIENTATION VS. ESTABLISHED   */}
@@ -330,7 +371,7 @@ function Dashboard({ user, progressTrigger }) {
                 completedFocusCount={completedFocusCount}
                 totalFocusCount={totalFocusCount}
                 lessonsCompletedCount={progress?.lessons?.completedCount ?? (progress?.completedModules?.length || 0)}
-                totalLessonsCount={progress?.lessons?.totalPublished ?? 12}
+                totalLessonsCount={progress?.lessons?.totalPublished ?? 0}
                 quizAttemptsCount={quizAttemptsList.length}
                 completedRecallCount={completedRecallCount}
                 passedRecallCount={passedRecallCount}
@@ -402,7 +443,7 @@ displayName={firstName}
             completedFocusCount={completedFocusCount}
             totalFocusCount={totalFocusCount}
             lessonsCompletedCount={progress?.lessons?.completedCount ?? (progress?.completedModules?.length || 0)}
-            totalLessonsCount={progress?.lessons?.totalPublished ?? 12}
+            totalLessonsCount={progress?.lessons?.totalPublished ?? 0}
             quizAttemptsCount={quizAttemptsList.length}
             completedRecallCount={completedRecallCount}
             passedRecallCount={passedRecallCount}

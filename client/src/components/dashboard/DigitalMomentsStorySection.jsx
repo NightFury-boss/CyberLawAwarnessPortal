@@ -26,7 +26,7 @@ const SCENARIOS = [
     statutePill: 'IT Act § 66D • Cheating by Personation',
     statuteRule: 'Statutory bodies never dispatch individual officers with private mobile numbers to demand instantaneous payment.',
     verificationProtocol: 'Login solely to the verified state power distribution portal (e.g., pspcl.in) using your registered 10-digit Consumer Account Number.',
-    destination: '/cases',
+    destination: '/workspace/cases',
     ctaText: 'Examine Case Study →'
   },
   {
@@ -40,7 +40,7 @@ const SCENARIOS = [
     statutePill: 'IT Act § 66C • Identity & Credential Theft',
     statuteRule: 'The small payment is a pretext. The genuine objective is capturing primary payment credentials on an unauthorized server.',
     verificationProtocol: 'Validate AWB #IN-883921 solely inside the official logistics mobile application or verified domain.',
-    destination: '/prevention',
+    destination: '/workspace/prevention',
     ctaText: 'Read Prevention Protocol →'
   },
   {
@@ -54,7 +54,7 @@ const SCENARIOS = [
     statutePill: 'BNS § 204 & § 318(4) • Public Impersonation & Fraud',
     statuteRule: 'Statutory law permits arrest only under due CrPC/BNSS process. Real officers never conduct video interrogations for fund escrow.',
     verificationProtocol: 'Disconnect call immediately. Call National Cybercrime Helpline 1930 to trigger Golden Hour inter-bank hold coordination.',
-    destination: '/crimes',
+    destination: '/workspace/crimes',
     ctaText: 'Explore Threat Pattern →'
   },
   {
@@ -68,7 +68,7 @@ const SCENARIOS = [
     statutePill: 'IT Act § 43 & RBI Digital Directives',
     statuteRule: 'UPI protocols are strictly push-to-pay. Entering a security PIN authorizes an outgoing transaction, never an incoming credit.',
     verificationProtocol: 'Never enter a PIN to receive incoming credits. Check transaction credit directly in your banking passbook.',
-    destination: '/quizzes',
+    destination: '/quizzes?mode=scenario',
     ctaText: 'Test UPI Knowledge in Quiz →'
   }
 ];
@@ -81,9 +81,9 @@ export default function DigitalMomentsStorySection() {
     <section className="story-atelier-section" aria-labelledby="storytelling-heading">
       <div className="story-section-header">
         <div>
-          <span className="story-eyebrow">Interactive Threat Deconstruction</span>
+          <span className="story-eyebrow">Practical Online Safety</span>
           <h2 id="storytelling-heading" className="story-title">
-            Deconstructing Everyday Digital Deceptions
+            How Common Online Scams Work
           </h2>
           <p className="story-sub">
             How statutory awareness and critical pause turn ordinary high-pressure situations into safe, defensible outcomes.

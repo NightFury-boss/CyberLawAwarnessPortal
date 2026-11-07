@@ -139,7 +139,7 @@ export function formatRecallSummaryLabel(completedCount = 0, passedCount = 0) {
  * Derived directly from server/config/remediationCatalog.js.
  */
 export const AUTHORITATIVE_PATHWAY_TITLES = {
-  'pathway-ua-upi-consent': 'Autopilot Control & UPI PIN Safety',
+  'pathway-ua-upi-consent': 'Unreviewed Acceptance & UPI PIN Safety',
   'pathway-vb-out-of-band': 'Independent Out-of-Band Verification',
   'pathway-tr-lure-detection': 'Threat Lure Spotting in Routine Contacts',
   'pathway-si-syntax-analysis': 'Technical Signal & Domain Inspection',

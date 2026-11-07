@@ -112,7 +112,8 @@ const scoreTestEvents = formatRecentActivityEvents({
   ]
 });
 
-const uaEvent = scoreTestEvents.find(e => e.title === 'Autopilot Control & UPI PIN Safety');
+const uaEvent = scoreTestEvents.find(e => e.title === 'Unreviewed Acceptance & UPI PIN Safety');
+assert.ok(uaEvent, 'Expected to find UA event titled "Unreviewed Acceptance & UPI PIN Safety"');
 assert.strictEqual(uaEvent.result, 'Score: 100%', 'Expected explicit "Score: 100%"');
 
 const vbEvent = scoreTestEvents.find(e => e.title === 'Independent Out-of-Band Verification');

@@ -293,7 +293,7 @@ export function selectPrimaryNextAction({
       description: `Your accuracy in this domain is currently ${frequentlyMissedQuizTopic.accuracy}%. A short topic-wise quiz will help cement key provisions and evidence standards.`,
       actionLabel: 'Practice Subject \u2192',
       actionType: 'LINK',
-      destination: '/quizzes',
+      destination: `/quizzes?mode=topic_wise&topic=${encodeURIComponent(frequentlyMissedQuizTopic.topic)}`,
       targetItem: frequentlyMissedQuizTopic,
       estimatedMinutes: 4,
       steps: null

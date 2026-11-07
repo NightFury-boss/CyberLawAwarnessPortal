@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import api from '../services/api';
 import WorkspaceBreadcrumb from '../components/WorkspaceBreadcrumb';
 import EditorialPageHeader from '../components/common/EditorialPageHeader';
@@ -67,6 +67,9 @@ const DEFAULT_MODES = [
 ];
 
 function Quizzes({ user, updateProgressTrigger }) {
+  const [searchParams] = useSearchParams();
+  const hasHandledQueryModeRef = useRef(false);
+
   // Navigation & View Mode
   const [activeTab, setActiveTab] = useState('modes'); // 'modes' or 'catalog'
   const [quizzes, setQuizzes] = useState([]);
@@ -208,16 +211,17 @@ function Quizzes({ user, updateProgressTrigger }) {
   };
 
   // 1. Start Mode-Aware Session
-  const handleStartModeSession = async (modeObj) => {
+  const handleStartModeSession = async (modeObj, topicOverride = null) => {
     setLoading(true);
     setError('');
     try {
+      const activeTopic = topicOverride || selectedTopic;
       const payload = {
         mode: modeObj.id,
         difficulty: selectedDifficulty
       };
       if (modeObj.id === 'topic_wise') {
-        payload.topic = selectedTopic;
+        payload.topic = activeTopic;
       }
 
       const res = await api.startQuizSession(payload);
@@ -230,7 +234,7 @@ function Quizzes({ user, updateProgressTrigger }) {
         mode: modeObj.id,
         title: modeObj.title,
         badge: modeObj.badge,
-        category: modeObj.id === 'topic_wise' ? selectedTopic : 'Multi-Subject Practice',
+        category: modeObj.id === 'topic_wise' ? activeTopic : 'Multi-Subject Practice',
         difficulty: selectedDifficulty,
         questions: res.questions,
         timed: modeObj.timed,
@@ -242,6 +246,25 @@ function Quizzes({ user, updateProgressTrigger }) {
       setLoading(false);
     }
   };
+
+  // 1b. Handle query parameter mode deep-linking (?mode=...&topic=...)
+  useEffect(() => {
+    if (!loading && !activeQuiz && !hasHandledQueryModeRef.current) {
+      const modeParam = searchParams.get('mode');
+      const topicParam = searchParams.get('topic');
+      if (modeParam) {
+        const targetMode = (modesList && modesList.length > 0 ? modesList : DEFAULT_MODES).find(m => m.id === modeParam) || DEFAULT_MODES.find(m => m.id === modeParam);
+        if (targetMode) {
+          hasHandledQueryModeRef.current = true;
+          setSavedSessionToResume(null);
+          if (topicParam) {
+            setSelectedTopic(topicParam);
+          }
+          handleStartModeSession(targetMode, topicParam);
+        }
+      }
+    }
+  }, [loading, activeQuiz, searchParams, modesList]);
 
   // 2. Start Catalog Quiz
   const handleSelectCatalogQuiz = async (quiz) => {

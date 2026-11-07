@@ -439,7 +439,7 @@ test.describe('Stage 5: Multi-Format Concept Recall & Learner Independence E2E S
     await page.goto('/dashboard');
 
     // 1. Verify dashboard practice card shows optional non-coercive concept review
-    const practiceHeading = page.locator('h2:has-text("Practice Atelier")');
+    const practiceHeading = page.locator('h2:has-text("Practice Center"), h2:has-text("Practice Atelier")');
     await expect(practiceHeading).toBeVisible({ timeout: 15000 });
 
     const recallTag = page.locator('.atelier-recall-tag');

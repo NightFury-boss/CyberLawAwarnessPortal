@@ -30,7 +30,7 @@ export default function DashboardQuizPractice({
         <div>
           <span className="atelier-section-eyebrow">Interactive Testing</span>
           <h2 id="practice-atelier-heading" className="atelier-section-title">
-            Practice Atelier
+            Practice Center
           </h2>
           <p className="atelier-section-sub">
             Strengthen your statutory recall across five dedicated learning formats.
@@ -102,7 +102,7 @@ export default function DashboardQuizPractice({
             <strong>Subject priority:</strong> {topWeakTopic.topic} ({topWeakTopic.accuracy}% accuracy).
           </span>
           <Link
-            to="/quizzes"
+            to={`/quizzes?mode=topic_wise&topic=${encodeURIComponent(topWeakTopic.topic)}`}
             className="atelier-weak-link"
             aria-label={`Practice weak topic: ${topWeakTopic.topic}`}
           >
@@ -119,13 +119,13 @@ export default function DashboardQuizPractice({
         <div className="atelier-mode-stack">
           {/* Mode 1: Quick Practice */}
           <Link
-            to="/quizzes"
+            to="/quizzes?mode=quick_practice"
             className="atelier-mode-card mode-quick"
             aria-label="Start Quick Practice: 5 short questions untimed"
           >
             <div className="atelier-mode-badge-icon" aria-hidden="true">⚡</div>
             <div className="atelier-mode-info">
-              <span className="atelier-mode-name">Rapid Quick Practice</span>
+              <span className="atelier-mode-name">Quick Practice</span>
               <span className="atelier-mode-desc">5 short questions • Instant explanations</span>
             </div>
             <span className="atelier-mode-arrow" aria-hidden="true">&rarr;</span>
@@ -133,21 +133,21 @@ export default function DashboardQuizPractice({
 
           {/* Mode 2: Topic Drill */}
           <Link
-            to="/quizzes"
+            to="/quizzes?mode=topic_wise"
             className="atelier-mode-card mode-topic"
             aria-label="Start Topic-wise Practice across 10 statutory categories"
           >
             <div className="atelier-mode-badge-icon" aria-hidden="true">📚</div>
             <div className="atelier-mode-info">
-              <span className="atelier-mode-name">Subject Mastery Drill</span>
-              <span className="atelier-mode-desc">10 topics • Difficulty & statute selection</span>
+              <span className="atelier-mode-name">Topic Practice</span>
+              <span className="atelier-mode-desc">10 topics • Difficulty &amp; statute selection</span>
             </div>
             <span className="atelier-mode-arrow" aria-hidden="true">&rarr;</span>
           </Link>
 
           {/* Mode 3: Real-World Scenarios */}
           <Link
-            to="/quizzes"
+            to="/quizzes?mode=scenario"
             className="atelier-mode-card mode-scenario"
             aria-label="Start Real-world Scenarios: 8 situational decision problems"
           >
@@ -161,7 +161,7 @@ export default function DashboardQuizPractice({
 
           {/* Mode 4: Speed Challenge */}
           <Link
-            to="/quizzes"
+            to="/quizzes?mode=challenge"
             className="atelier-mode-card mode-challenge"
             aria-label="Start Speed and Depth Challenge: 15 questions with 10 minute timer"
           >
@@ -175,7 +175,7 @@ export default function DashboardQuizPractice({
 
           {/* Mode 5: Case Law & Evidence */}
           <Link
-            to="/quizzes"
+            to="/quizzes?mode=case_based"
             className="atelier-mode-card mode-legal"
             aria-label="Start Case-based and Legal Application: BSA Section 63 and BNS court cases"
           >

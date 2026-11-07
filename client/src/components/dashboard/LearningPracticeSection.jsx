@@ -61,7 +61,7 @@ export function TargetedInterventionsPanel({
           </div>
         ) : (
           <div style={{ fontSize: '0.76rem', color: 'var(--color-text-muted, #8A8075)', marginTop: '6px', marginBottom: '14px' }}>
-            ✓ Follow-up reviews: All scheduled checks are up to date (opens 7 days post-completion).
+            ✓ Follow-up reviews: All checks are up to date. Practice anytime at your own pace.
           </div>
         )
       )}

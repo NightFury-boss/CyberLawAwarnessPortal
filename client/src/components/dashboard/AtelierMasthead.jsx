@@ -19,7 +19,7 @@ export default function AtelierMasthead({
   completedFocusCount = 0,
   totalFocusCount = 0,
   lessonsCompletedCount = 0,
-  totalLessonsCount = 12,
+  totalLessonsCount = 0,
   quizAttemptsCount = 0,
   completedRecallCount = 0,
   passedRecallCount = 0,
@@ -42,8 +42,9 @@ export default function AtelierMasthead({
         return hasBaseline ? { status: 'done', label: 'Completed' } : { status: 'current', label: 'First Step' };
       case 'lessons':
         if (!hasBaseline) return { status: 'upcoming', label: 'Upcoming' };
-        if (lessonsCompletedCount >= totalLessonsCount) return { status: 'done', label: 'Completed' };
-        return { status: 'current', label: `${lessonsCompletedCount}/${totalLessonsCount} Read` };
+        if (totalLessonsCount > 0 && lessonsCompletedCount >= totalLessonsCount) return { status: 'done', label: 'Completed' };
+        if (totalLessonsCount > 0) return { status: 'current', label: `${lessonsCompletedCount}/${totalLessonsCount} Read` };
+        return { status: 'current', label: `${lessonsCompletedCount} Read` };
       case 'final':
         if (!hasBaseline) return { status: 'upcoming', label: 'Locked' };
         if (hasFinal) return { status: 'done', label: 'Completed' };
@@ -80,7 +81,7 @@ export default function AtelierMasthead({
         <div className="atelier-edition-badge">
           <span>Cyber Law Awareness Portal</span>
           <span className="edition-dot" aria-hidden="true">•</span>
-          <span>Personal Study Journal</span>
+          <span>Personal Learning Workspace</span>
           <span className="edition-dot" aria-hidden="true">•</span>
           <span>Indian Statutory Defense</span>
         </div>
@@ -141,7 +142,9 @@ export default function AtelierMasthead({
               <div className="milestone-icon-bubble">2</div>
               <div className="milestone-node-info">
                 <span className="milestone-node-title">Core Curriculum Lessons</span>
-                <span className="milestone-node-sub">12 plain-language statutory chapters</span>
+                <span className="milestone-node-sub">
+                  {totalLessonsCount > 0 ? `${totalLessonsCount} plain-language statutory chapters` : 'Plain-language statutory chapters'}
+                </span>
               </div>
               <span className="milestone-node-badge">{mLessons.label}</span>
             </div>
@@ -171,7 +174,7 @@ export default function AtelierMasthead({
               <div className="milestone-icon-bubble">5</div>
               <div className="milestone-node-info">
                 <span className="milestone-node-title">Habits Over Time</span>
-                <span className="milestone-node-sub">Spaced recall & 6-dimension trajectory</span>
+                <span className="milestone-node-sub">Follow-up review &amp; 6-dimension trajectory</span>
               </div>
               <span className="milestone-node-badge">{mRetention.label}</span>
             </div>
@@ -184,10 +187,14 @@ export default function AtelierMasthead({
         <div className="ledger-column">
           <span className="ledger-label">Curriculum Lessons</span>
           <span className="ledger-value">
-            {lessonsCompletedCount} <span style={{ fontSize: '0.9rem', color: 'var(--color-text-muted, #8A8075)', fontWeight: 500 }}>/ {totalLessonsCount}</span>
+            {lessonsCompletedCount} {totalLessonsCount > 0 && <span style={{ fontSize: '0.9rem', color: 'var(--color-text-muted, #8A8075)', fontWeight: 500 }}>/ {totalLessonsCount}</span>}
           </span>
           <span className="ledger-sub">
-            {lessonsCompletedCount === totalLessonsCount ? 'All chapters read' : `${totalLessonsCount - lessonsCompletedCount} chapters remaining`}
+            {totalLessonsCount > 0 && lessonsCompletedCount >= totalLessonsCount
+              ? 'All chapters read'
+              : (totalLessonsCount > 0
+                  ? `${totalLessonsCount - lessonsCompletedCount} chapters remaining`
+                  : `${lessonsCompletedCount} chapters read`)}
           </span>
         </div>
 
@@ -226,7 +233,7 @@ export default function AtelierMasthead({
             {completedRecallCount > 0 ? (
               <span>{completedRecallCount} follow-ups completed</span>
             ) : (
-              <span>7-day spaced recall active</span>
+              <span>All reviews up to date</span>
             )}
           </span>
         </div>

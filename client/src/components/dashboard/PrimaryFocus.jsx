@@ -132,7 +132,7 @@ export default function PrimaryFocus({
   };
 
   return (
-    <section aria-labelledby="dossier-heading">
+    <section aria-labelledby="primary-focus-heading">
       <div className={getDossierClass()}>
         {/* Eyebrow & Estimated Duration */}
         <div className="atelier-dossier-top">
@@ -149,7 +149,7 @@ export default function PrimaryFocus({
         {/* Content & Action Row */}
         <div className="atelier-dossier-body">
           <div className="atelier-dossier-copy">
-            <h2 id="dossier-heading" className="atelier-dossier-title">
+            <h2 id="primary-focus-heading" className="atelier-dossier-title">
               {action.title}
             </h2>
             <p className="atelier-dossier-desc">
