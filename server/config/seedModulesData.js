@@ -470,7 +470,7 @@ const learningModulesData = [
       },
       {
         "title": "3. Video Deepfakes: Face Swapping and Lip Sync",
-        "content": "Beyond audio, deepfake video technology allows attackers to map a person's facial features onto another actor's face in real-time video calls. These are deployed in:\n- **Corporate Executive Impersonation**: Tricking finance managers into wiring corporate funds during a video conference.\n- **Non-Consensual Intimate Imagery (NCII)**: Superimposing a victim's face onto explicit content to extort money. Under Rule 3(2)(b) of the IT Intermediary Rules, 2021, platforms must remove such content within 24 hours of notification."
+        "content": "Beyond audio, deepfake video technology allows attackers to map a person's facial features onto another actor's face in real-time video calls. These are deployed in:\n- **Corporate Executive Impersonation**: Tricking finance managers into wiring corporate funds during a video conference.\n- **Non-Consensual Intimate Imagery (NCII)**: Superimposing a victim's face onto explicit content to extort money. Under Rule 3(2)(b) of the IT Intermediary Rules, 2021 (as amended by G.S.R. 120(E)), platforms must remove such content within two hours of notification and take reasonable and practicable measures to prevent its recurrence."
       },
       {
         "title": "4. Defensive Countermeasures: The Family Safe Word",
@@ -675,7 +675,7 @@ const learningModulesData = [
       "The DPDP Act establishes individuals as \"Data Principals\" and organizations processing data as \"Data Fiduciaries\".",
       "Consent must be free, specific, informed, unconditional, and withdrawable with clear notice in English and 22 scheduled Indian languages.",
       "Significant penalties of up to ₹250 crore can be levied by the Data Protection Board of India for failing to prevent personal data breaches.",
-      "Section 43A of the IT Act remains currently operative until the corresponding DPDP rules and commencement provisions under Section 1(2) are officially gazetted."
+      "Section 43A of the IT Act remains currently operative until Section 44(2) of the DPDP Act commences on 13 May 2027 (18 months post-notification under G.S.R. 843(E))."
     ],
     "sections": [
       {
@@ -692,19 +692,19 @@ const learningModulesData = [
       },
       {
         "title": "4. The Section 43A Transition and Staggered Commencement",
-        "content": "A critical legal point often misunderstood:\n- Under Section 1(2) of the DPDP Act, provisions come into force on dates appointed by Central Government gazette notifications.\n- While the Act received Presidential assent in August 2023, the full operationalization of the Data Protection Board and specific implementation rules are subject to phased gazetting.\n- **Section 44(2)** of the DPDP Act slates Section 43A of the IT Act, 2000 (and the SPDI Rules 2011) for omission. **However, until the DPDP provisions are formally commenced via official gazette, Section 43A remains active and operative law** governing corporate liability for failing to protect sensitive personal data."
+        "content": "A critical legal point often misunderstood:\n- Under Section 1(2) of the DPDP Act, provisions come into force on dates appointed by Central Government gazette notifications.\n- Under Notification G.S.R. 843(E) dated 13 November 2025, Section 44(2) of the DPDP Act (which omits Section 43A of the IT Act, 2000 and the SPDI Rules, 2011) commences 18 months post-notification on **13 May 2027**.\n- **Consequently, on the 6 November 2026 baseline and until 13 May 2027, Section 43A remains active and operative law** governing corporate liability for failing to protect sensitive personal data."
       }
     ],
     "quickCheck": {
-      "question": "What is the current legal relationship between Section 43A of the IT Act and the DPDP Act, 2023?",
+      "question": "What is the legal status and relationship between Section 43A of the IT Act and the DPDP Act, 2023 on the 6 November 2026 baseline?",
       "options": [
-        "Section 43A remains operative law until the relevant DPDP Act commencement notifications under Section 1(2) are officially gazetted",
+        "Section 43A remains operative law until Section 44(2) of the DPDP Act commences on 13 May 2027 (18 months post-notification under G.S.R. 843(E))",
         "Section 43A was completely abolished with retroactive effect to 2000",
         "The DPDP Act was rejected by Parliament and never passed",
         "Section 43A only applies to foreign multinational corporations"
       ],
       "correctIndex": 0,
-      "explanation": "Under Section 1(2) of the DPDP Act, 2023, provisions take effect through appointed gazette dates. Although Section 44(2) slates Section 43A for omission, Section 43A and its SPDI Rules remain in force as the active transitional liability regime until the corresponding DPDP sections are commenced."
+      "explanation": "Under Notification G.S.R. 843(E) dated 13 November 2025, Section 44(2) of the DPDP Act (omitting Section 43A of the IT Act, 2000) commences 18 months post-notification on 13 May 2027. Consequently, Section 43A and its SPDI Rules remain in force as the active corporate negligence liability regime on the 6 November 2026 baseline."
     },
     "actionSteps": [
       "Review privacy policies when signing up for services to understand what personal data is collected and shared.",
@@ -927,6 +927,24 @@ const learningModulesData = [
       "correctIndex": 1,
       "explanation": "All five statutory conditions of Section 43A of the IT Act, 2000 are satisfied: an incorporated body corporate; possessing sensitive personal data (SPDI); in an owned/operated computer resource; negligent in maintaining reasonable security practices; causing wrongful loss. Because Section 44(2) of the DPDP Act (omitting Section 43A) does not commence until 18 months post-notification (13 May 2027), Section 43A remains fully in force on 6 November 2026."
     },
+    "quickChecks": [
+      {
+        "id": "QC-P1-01",
+        "pillar": "PILLAR 1: PERSONAL DATA AND DIGITAL IDENTITY",
+        "scenario": "An incorporated healthcare analytics company (body corporate) stores medical diagnostic reports and patient biometric records (sensitive personal data) on its internal cloud database. The company fails to implement multi-factor authentication or standard encryption controls prescribed under the SPDI Rules, 2011. Due to this negligence, an external hacker exfiltrates patient diagnosis files and sells them on a darknet forum, directly causing financial loss and extortion to an affected patient.",
+        "question": "On 6 November 2026, under which statutory provision is the company liable to pay compensation to the victim?",
+        "options": [
+          "Section 33 of the DPDP Act, 2023, because data protection penalties are currently operative.",
+          "Section 43A of the Information Technology Act, 2000, because the body corporate was negligent in implementing reasonable security practices handling sensitive personal data, resulting in wrongful loss.",
+          "Section 66A of the IT Act, 2000.",
+          "No compensation is payable because corporate data breaches are strictly exempt until 13 May 2027."
+        ],
+        "correctIndex": 1,
+        "correctOptionIndex": 1,
+        "correctKey": "B",
+        "explanation": "All five statutory conditions of Section 43A of the IT Act, 2000 are satisfied: an incorporated body corporate; possessing sensitive personal data (SPDI); in an owned/operated computer resource; negligent in maintaining reasonable security practices; causing wrongful loss. Because Section 44(2) of the DPDP Act (omitting Section 43A) does not commence until 18 months post-notification (13 May 2027), Section 43A remains fully in force on 6 November 2026."
+      }
+    ],
     "actionSteps": [
       "Audit and minimize the personal and biometric data shared with commercial mobile apps and websites.",
       "Enable multi-factor authentication (MFA) using hardware keys or authenticator apps rather than plain SMS OTPs where available.",
@@ -939,19 +957,19 @@ const learningModulesData = [
     "relatedCyberCrimes": [
       "identity-theft",
       "phishing",
-      "data-breach"
+      "credential-theft"
     ],
     "relatedScenarios": [
       "baseline",
       "final"
     ],
     "relatedCaseStudies": [
-      "aadhaar-data-leak",
-      "biometric-cloning-case"
+      "phishing-credential-takeover",
+      "aeps-biometric-theft"
     ],
     "relatedResources": [
       "https://meity.gov.in",
-      "https://dpdi.gov.in"
+      "https://cybercrime.gov.in"
     ],
     "published": true
   },
@@ -1000,6 +1018,24 @@ const learningModulesData = [
       "correctIndex": 1,
       "explanation": "Rule 12 and Part A of the Fourth Schedule to the DPDP Rules, 2025 exempt educational institutions from Section 9(3) tracking and monitoring strictly where undertaken for the educational activities of the institution or ensuring child safety. Commercial advertising and marketing profiling are not covered by the exemption."
     },
+    "quickChecks": [
+      {
+        "id": "QC-P2-01",
+        "pillar": "PILLAR 2: DATA PRINCIPAL RIGHTS",
+        "scenario": "An online educational school app tracks the real-time keystroke rhythm, app session duration, and navigation patterns of 13-year-old enrolled students. The app uses these behavioral metrics to deliver commercial advertisements for external fashion brands and soft drinks. The school claims it is exempt from Section 9(3) under Rule 12 and Part A of the Fourth Schedule to the DPDP Rules, 2025.",
+        "question": "Upon the scheduled commencement of the DPDP Act and Rules on 13 May 2027, does the Fourth Schedule exempt the school's advertising?",
+        "options": [
+          "Yes, because recognized educational institutions have a blanket exemption from all child data obligations under Section 9.",
+          "No; under Rule 12 and Part A of the Fourth Schedule, the exemption for educational institutions permits tracking solely for the educational activities of the institution or the safety of enrolled children; commercial behavioral advertising remains non-exempt.",
+          "Yes, provided parental consent was obtained during school admission.",
+          "No, because educational institutions are only covered under Part B."
+        ],
+        "correctIndex": 1,
+        "correctOptionIndex": 1,
+        "correctKey": "B",
+        "explanation": "Rule 12 and Part A of the Fourth Schedule to the DPDP Rules, 2025 exempt educational institutions from Section 9(3) tracking and monitoring strictly where undertaken for the educational activities of the institution or ensuring child safety. Commercial advertising and marketing profiling are not covered by the exemption."
+      }
+    ],
     "actionSteps": [
       "Review online platform account settings to prepare for asserting Section 11–14 rights once commenced.",
       "Designate a trusted digital nominee under Section 14 to manage digital assets in case of death or incapacity.",
@@ -1010,20 +1046,20 @@ const learningModulesData = [
       "in-dpdp-child-safety"
     ],
     "relatedCyberCrimes": [
-      "child-predation-profiling",
-      "data-broker-harvesting"
+      "identity-theft",
+      "spyware"
     ],
     "relatedScenarios": [
       "baseline",
       "final"
     ],
     "relatedCaseStudies": [
-      "edtech-surveillance-case",
-      "minor-data-leak-case"
+      "sim-swap-compromise",
+      "aeps-biometric-theft"
     ],
     "relatedResources": [
-      "https://dpdi.gov.in",
-      "https://meity.gov.in"
+      "https://meity.gov.in",
+      "https://cybercrime.gov.in"
     ],
     "published": true
   },
@@ -1072,6 +1108,24 @@ const learningModulesData = [
       "correctIndex": 1,
       "explanation": "Under Section 6(1) of the DPDP Act, 2023, consent must be free, specific, informed, unconditional, and unambiguous. Conditioning the provision of a basic service on consent to collect personal data unnecessary for that service vitiates consent."
     },
+    "quickChecks": [
+      {
+        "id": "QC-P3-01",
+        "pillar": "PILLAR 3: CONSENT AND DATA FIDUCIARY OBLIGATIONS",
+        "scenario": "A user installs a basic offline torch/flashlight utility app on an Android device. The app presents a terms-of-service screen requiring the user to consent to the continuous harvesting of their contact book, GPS location, and microphone audio before the torch toggle will function.",
+        "question": "Under the prospective statutory principles enacted in Section 6(1) of the DPDP Act, 2023, what is the legal validity of this consent?",
+        "options": [
+          "Valid, because consent was clicked prior to app usage.",
+          "Invalid, because consent cannot be made conditional on granting access to personal data that is not necessary for the performance of that service.",
+          "Valid, provided the app developer maintains a registered office in India.",
+          "Invalid only if the user is a senior citizen."
+        ],
+        "correctIndex": 1,
+        "correctOptionIndex": 1,
+        "correctKey": "B",
+        "explanation": "Under Section 6(1) of the DPDP Act, 2023, consent must be free, specific, informed, unconditional, and unambiguous. Conditioning the provision of a basic service on consent to collect personal data unnecessary for that service vitiates consent."
+      }
+    ],
     "actionSteps": [
       "Refuse bundled consent prompts in mobile applications that request permissions unrelated to core functionality.",
       "Check whether digital services provide statutory notice in your preferred Eighth Schedule language.",
@@ -1082,20 +1136,20 @@ const learningModulesData = [
       "in-dpdp-fiduciary-duties"
     ],
     "relatedCyberCrimes": [
-      "dark-patterns-consent",
-      "data-breach-unauthorized-access"
+      "fake-login-pages",
+      "credential-theft"
     ],
     "relatedScenarios": [
       "baseline",
       "final"
     ],
     "relatedCaseStudies": [
-      "bundled-consent-enforcement",
-      "telecom-breach-notification"
+      "phishing-credential-takeover",
+      "sim-swap-compromise"
     ],
     "relatedResources": [
-      "https://dpdi.gov.in",
-      "https://meity.gov.in"
+      "https://meity.gov.in",
+      "https://cybercrime.gov.in"
     ],
     "published": true
   },
@@ -1149,6 +1203,24 @@ const learningModulesData = [
       "correctIndex": 1,
       "explanation": "Under Rule 3(2)(b) of the IT Rules, 2021 as amended by G.S.R. 120(E), intermediaries must remove or disable access to non-consensual intimate imagery within two hours of receipt of a grievance, and take reasonable and practicable measures to prevent its re-uploading or recurrence."
     },
+    "quickChecks": [
+      {
+        "id": "QC-P4-01",
+        "pillar": "PILLAR 4: GRIEVANCE REDRESSAL AND DIGITAL GOVERNANCE",
+        "scenario": "A college student discovers that an ex-partner has uploaded intimate, non-consensual sexually explicit photographs to an online content-sharing platform. The victim submits an urgent grievance to the platform's Resident Grievance Officer with direct links.",
+        "question": "What is the platform's mandatory statutory removal timeline under Rule 3(2)(b) of the IT Rules, 2021 (as amended February 2026)?",
+        "options": [
+          "Within 24 hours of receiving the grievance.",
+          "Within two hours of receiving the grievance, and taking reasonable and practicable measures to prevent recurrence.",
+          "Within 36 hours under the expedited grievance track.",
+          "Within 7 days after the victim obtains a formal court injunction."
+        ],
+        "correctIndex": 1,
+        "correctOptionIndex": 1,
+        "correctKey": "B",
+        "explanation": "Under Rule 3(2)(b) of the IT Rules, 2021 as amended by G.S.R. 120(E), intermediaries must remove or disable access to non-consensual intimate imagery within two hours of receipt of a grievance, and take reasonable and practicable measures to prevent its re-uploading or recurrence."
+      }
+    ],
     "actionSteps": [
       "When reporting NCII to social media platforms, explicitly invoke Rule 3(2)(b) of the IT Rules, 2021 to activate the mandatory two-hour removal timeline.",
       "Verify whether AI-generated images or audio carry clear visual or metadata labels identifying them as synthetically generated.",
@@ -1159,17 +1231,17 @@ const learningModulesData = [
       "in-it-rules-takedowns"
     ],
     "relatedCyberCrimes": [
-      "deepfake-defamation",
-      "non-consensual-intimate-imagery",
-      "platform-harassment"
+      "ncii-image-abuse",
+      "deepfake-ai-impersonation",
+      "cyberstalking-doxxing"
     ],
     "relatedScenarios": [
       "baseline",
       "final"
     ],
     "relatedCaseStudies": [
-      "deepfake-celebrity-case",
-      "safe-harbour-forfeiture-case"
+      "ai-voice-cloning-family-emergency",
+      "instant-loan-app-harassment"
     ],
     "relatedResources": [
       "https://gac.gov.in",
@@ -1227,6 +1299,24 @@ const learningModulesData = [
       "correctIndex": 0,
       "explanation": "Section 65A(1) of the Copyright Act, 1957 penalizes intentional circumvention of effective TPMs for infringing copyright. Section 65A(2)(d) provides a statutory exemption for security testing conducted with the explicit authorization of the owner or operator of the computer system or network."
     },
+    "quickChecks": [
+      {
+        "id": "QC-P5-01",
+        "pillar": "PILLAR 5: COPYRIGHT AND INTELLECTUAL PROPERTY",
+        "scenario": "A cybersecurity auditing firm is formally engaged under a written security testing contract by the operator and owner of a secure cloud software distribution network. The auditor circumvents the technological protection measure (TPM) protecting the application solely to test for authentication bypass vulnerabilities, reporting all findings directly to the network operator without distributing pirated copies.",
+        "question": "Is the auditor's circumvention protected under Section 65A of the Copyright Act, 1957?",
+        "options": [
+          "Yes, because Section 65A(2)(d) explicitly exempts circumvention conducted for testing, investigating, or correcting the security of a computer system with the authorization of the system owner or operator.",
+          "No, because circumvention of any technological measure is an absolute criminal offence under Section 65A(1).",
+          "Yes, but only if the auditor obtained advance written permission from the Registrar of Copyrights.",
+          "No, because copyright law does not recognize cybersecurity exceptions."
+        ],
+        "correctIndex": 0,
+        "correctOptionIndex": 0,
+        "correctKey": "A",
+        "explanation": "Section 65A(1) of the Copyright Act, 1957 penalizes intentional circumvention of effective TPMs for infringing copyright. Section 65A(2)(d) provides a statutory exemption for security testing conducted with the explicit authorization of the owner or operator of the computer system or network."
+      }
+    ],
     "actionSteps": [
       "Always obtain express written authorization from system owners before conducting penetration testing or circumvention analysis.",
       "Respect digital copyright licenses and open-source terms when redistributing software code.",
@@ -1237,17 +1327,16 @@ const learningModulesData = [
       "in-copyright-tpm-65a"
     ],
     "relatedCyberCrimes": [
-      "software-piracy",
-      "tpm-bypass",
-      "drm-cracking"
+      "malware",
+      "credential-theft"
     ],
     "relatedScenarios": [
       "baseline",
       "final"
     ],
     "relatedCaseStudies": [
-      "software-reverse-engineering-case",
-      "digital-watermark-stripping-case"
+      "hospital-ransomware-certin-response",
+      "phishing-credential-takeover"
     ],
     "relatedResources": [
       "https://copyright.gov.in",
@@ -1275,7 +1364,7 @@ const learningModulesData = [
     "sections": [
       {
         "title": "1. Malware, Ransomware & Unauthorized System Access under IT Act Sections 43 & 66",
-        "content": "Under the Information Technology Act, 2000:\n\n- **Computer Contaminants (Section 43(c))**: Introducing or causing to be introduced any computer contaminant or computer virus into any computer system is a civil contravention liable to pay compensation up to ₹5 crore before the IT Adjudicating Officer.\n- **Disruption & Denial of Service (Section 43(e) & 43(f))**: Disrupting computer networks or denying authorized users access.\n- **Criminal Penalties under Section 66**: If any act referred to in Section 43 is committed dishonestly or fraudulently, it constitutes a cognizable criminal offence punishable with imprisonment up to 3 years and a fine up to ₹5 lakh."
+        "content": "Under the Information Technology Act, 2000:\n\n- **Computer Contaminants (Section 43(c))**: Introducing or causing to be introduced any computer contaminant or computer virus into any computer system is a civil contravention with uncapped compensation under Section 43; claims up to ₹5 crore are adjudicated by the State IT Secretary / Adjudicating Officer under Section 46(1A), while claims exceeding ₹5 crore lie before the competent civil court.\n- **Disruption & Denial of Service (Section 43(e) & 43(f))**: Disrupting computer networks or denying authorized users access.\n- **Criminal Penalties under Section 66**: If any act referred to in Section 43 is committed dishonestly or fraudulently, it constitutes a cognizable criminal offence punishable with imprisonment up to 3 years and a fine up to ₹5 lakh."
       },
       {
         "title": "2. Breach of Lawful Contract & Professional Confidentiality under Section 72A",
@@ -1283,15 +1372,15 @@ const learningModulesData = [
       },
       {
         "title": "3. RBI Customer Liability Directions: The 3-Day Rule, Shadow Reversal & Bank-Category Specifics",
-        "content": "The Reserve Bank of India protects bank consumers against electronic transaction fraud through category-specific Master Directions:\n\n- **Commercial Banks & Small Finance Banks**: Master Direction on Responsible Business Conduct, Paragraphs 67–75.\n- **Payments Banks**: Master Direction on Responsible Business Conduct for Payments Banks, Paragraphs 24–32.\n- **Regional Rural Banks (RRBs)**: Master Direction on Conduct of Business for RRBs, Paragraphs 119–127.\n- **Zero Customer Liability**: Where unauthorized transactions occur due to a third-party breach (neither customer nor bank at fault) and the customer notifies the bank within **3 working days**, the customer bears zero liability.\n- **Limited Liability**: Reporting between 4 to 7 working days caps customer liability at ₹5,000 (basic accounts), ₹10,000 (savings/current accounts with balance up to ₹5 lakh), or ₹25,000 (credit limits over ₹5 lakh). Beyond 7 working days, liability follows bank Board policy.\n- **Shadow Reversal within 10 Working Days**: The bank must credit the full disputed amount (shadow reversal / provisional credit) to the customer's account within **10 working days** from notification, and resolve complaints within 90 days. Burden of proof rests strictly upon the bank."
+        "content": "The Reserve Bank of India protects bank consumers against electronic transaction fraud through category-specific Master Directions:\n\n- **Commercial Banks & Small Finance Banks**: Master Direction on Responsible Business Conduct, Paragraphs 67–75.\n- **Payments Banks**: Master Direction on Responsible Business Conduct for Payments Banks, Paragraphs 24–32.\n- **Regional Rural Banks (RRBs)**: Master Direction on Conduct of Business for RRBs, Paragraphs 119–127.\n- **Zero Customer Liability**: Where unauthorized transactions occur due to a third-party breach (neither customer nor bank at fault) and the customer notifies the bank within **3 working days**, the customer bears zero liability.\n- **Limited Liability (Reporting between 4 to 7 working days)**: Customer liability is capped at:\n  - **₹5,000**: Basic Savings Bank Deposit (BSBD) accounts;\n  - **₹10,000**: All other savings bank accounts (irrespective of balance), prepaid payment instruments/gift cards, specified MSME and individual current/Cash Credit/Overdraft accounts with limits up to ₹25 lakh, and credit cards with limits up to ₹5 lakh;\n  - **₹25,000**: All other current/Cash Credit/Overdraft accounts and credit cards with limits exceeding ₹5 lakh.\n  - Beyond 7 working days, customer liability is determined in accordance with the bank's Board-approved customer protection policy.\n- **Shadow Reversal within 10 Working Days**: The bank must credit the full disputed amount (shadow reversal / provisional credit) to the customer's account within **10 working days** from notification, and resolve complaints within 90 days. Burden of proof rests strictly upon the bank."
       },
       {
         "title": "4. Bank-Issued PPIs vs. Non-Bank Wallets: 10 Working Days vs. 10 Calendar Days (MD-PPI Para 17)",
-        "content": "A critical distinction exists between bank accounts and non-bank digital wallets:\n\n- **Bank-Issued Payment Instruments**: Governed by bank circulars; shadow reversal is due within 10 **working days**.\n- **Non-Bank Prepaid Payment Instruments (PPIs)**: Wallets issued by non-bank entities (such as standalone mobile wallets) are governed by the **Master Directions on PPIs (MD-PPI), Paragraph 17**. Under Paragraph 17.4, non-bank PPI issuers must credit the customer's wallet within **10 calendar days** (not working days) of fraud reporting."
+        "content": "A critical distinction exists between bank accounts and non-bank digital wallets:\n\n- **Bank-Issued Payment Instruments**: Governed by bank circulars; shadow reversal is due within 10 **working days**.\n- **Non-Bank Prepaid Payment Instruments (PPIs)**: Wallets issued by non-bank entities (such as standalone mobile wallets) are governed by the **Master Directions on PPIs (MD-PPI), Paragraph 17**. Under Paragraph 17.7, non-bank PPI issuers must credit the customer's wallet within **10 calendar days** (not working days) of fraud reporting."
       },
       {
         "title": "5. Criminal Law Protections: Cheating by Personation (BNS 319), Cyber Stalking (BNS 78) & Voyeurism (BNS 77)",
-        "content": "The Bharatiya Nyaya Sanhita, 2023 provides modern criminal remedies:\n\n- **Cheating by Personation (BNS Section 319)**: Penalizes pretending to be someone else or knowingly substituting one person for another to deceive (punishable with imprisonment up to 5 years and fine). Complements IT Act Section 66D.\n- **Cheating & Property Delivery (BNS Section 318(4))**: Penalizes fraudulently inducing any person to deliver property or money (imprisonment up to 7 years and fine).\n- **Cyber Stalking (BNS Section 78)**: Criminalizes monitoring an individual's use of the internet, email, or electronic communication without consent, punishable on first conviction with up to 3 years imprisonment and fine.\n- **Voyeurism (BNS Section 77)**: Criminalizes capturing, publishing, or disseminating images of a person engaging in private acts without consent (imprisonment up to 3 years for first conviction, up to 7 years for second)."
+        "content": "The Bharatiya Nyaya Sanhita, 2023 provides modern criminal remedies:\n\n- **Cheating by Personation (BNS Section 319)**: Penalizes pretending to be someone else or knowingly substituting one person for another to deceive (punishable with imprisonment up to 5 years and fine). Complements IT Act Section 66D.\n- **Cheating & Property Delivery (BNS Section 318(4))**: Penalizes fraudulently inducing any person to deliver property or money (imprisonment up to 7 years and fine).\n- **Cyber Stalking (BNS Section 78)**: Criminalizes monitoring the use by a woman of the internet, email, or other form of electronic communication, or attempting to contact her repeatedly to foster personal interaction despite a clear indication of disinterest, punishable on first conviction with imprisonment up to 3 years and fine (and up to 5 years on subsequent conviction).\n- **Voyeurism (BNS Section 77)**: Criminalizes capturing, publishing, or disseminating images of a person engaging in private acts without consent (imprisonment up to 3 years for first conviction, up to 7 years for second)."
       }
     ],
     "quickCheck": {
@@ -1305,27 +1394,61 @@ const learningModulesData = [
       "correctIndex": 0,
       "explanation": "All statutory elements of Section 72A of the IT Act, 2000 are satisfied: access secured while providing services under a lawful contract; material containing personal information of another person; disclosure without consent or in breach of contract; and mens rea of intent to cause wrongful gain or wrongful loss. Under the Jan Vishwas Act, 2023, the penalty extends up to ₹25 lakh."
     },
+    "quickChecks": [
+      {
+        "id": "QC-P6-01",
+        "pillar": "PILLAR 6: MALWARE AND CYBER THREATS",
+        "scenario": "A senior systems administrator at a business process outsourcing (BPO) firm accesses client database servers while performing routine maintenance under a lawful IT services contract. The administrator extracts spreadsheets containing customer phone numbers, home addresses, and personal financial profiles. Knowing a competitor will pay for the leads, the administrator sells the personal data without customer consent, with the intent to cause wrongful gain to himself and wrongful loss to the contracting firm.",
+        "question": "What statutory violation has the administrator committed under the Information Technology Act, 2000?",
+        "options": [
+          "Violation of IT Act Section 72A (disclosure of personal information in breach of lawful contract with intent to cause wrongful loss or gain), liable to a penalty up to ₹25 lakh.",
+          "Only an internal company disciplinary breach.",
+          "Violation of Section 66A of the IT Act.",
+          "Copyright infringement under Section 63."
+        ],
+        "correctIndex": 0,
+        "correctOptionIndex": 0,
+        "correctKey": "A",
+        "explanation": "All statutory elements of Section 72A of the IT Act, 2000 are satisfied: access secured while providing services under a lawful contract; material containing personal information of another person; disclosure without consent or in breach of contract; and mens rea of intent to cause wrongful gain or wrongful loss. Under the Jan Vishwas Act, 2023, the penalty extends up to ₹25 lakh."
+      },
+      {
+        "id": "QC-P7-01",
+        "pillar": "PILLAR 7: DEFENSIVE DIGITAL CITIZENSHIP",
+        "scenario": "A customer of a Regional Rural Bank (RRB) discovers an unauthorized electronic debit of ₹12,000 on Tuesday morning caused by an external third-party breach (neither bank nor customer deficiency). The customer notifies the RRB in writing on Wednesday afternoon (within two working days).",
+        "question": "What is the customer's liability and the RRB's obligation under Paragraphs 119 and 124 of the RBI Master Directions for Regional Rural Banks?",
+        "options": [
+          "Zero liability under Paragraph 119(2), and the RRB must credit the account (provisional shadow reversal) within 10 working days under Paragraph 124.",
+          "Capped at ₹5,000 under the Basic Savings Bank Deposit limit.",
+          "The customer bears 100% of the loss until the cyber police complete investigation.",
+          "The RRB must resolve the matter within 24 hours."
+        ],
+        "correctIndex": 0,
+        "correctOptionIndex": 0,
+        "correctKey": "A",
+        "explanation": "Under Paragraph 119(2) of the Master Directions for RRBs (Circular DCBR.CO.RRB.BC.No.06/31.05.001/2017-18), a customer has zero liability where an unauthorized transaction occurs due to a third-party breach and the customer notifies within 3 working days. Under Paragraph 124, the RRB must provide a shadow reversal within 10 working days."
+      }
+    ],
     "actionSteps": [
       "Never disclose or monetize customer personal information obtained during employment or consulting contracts.",
       "Notify your bank or wallet issuer within 3 working days if an unauthorized financial transaction occurs to preserve statutory zero-liability protection.",
-      "Distinguish between bank-issued cards (10 working day shadow reversal) and non-bank PPI wallets (10 calendar day shadow reversal under MD-PPI Para 17)."
+      "Distinguish between bank-issued cards (10 working day shadow reversal) and non-bank PPI wallets (10 calendar day shadow reversal under MD-PPI Para 17.7)."
     ],
     "relatedLawSections": [
       "in-it-72a-contract-breach",
       "in-rbi-customer-liability"
     ],
     "relatedCyberCrimes": [
+      "malware",
       "ransomware",
-      "insider-threat",
-      "unauthorized-data-sale"
+      "spyware"
     ],
     "relatedScenarios": [
       "baseline",
       "final"
     ],
     "relatedCaseStudies": [
-      "bpo-data-leak-case",
-      "rbi-fraud-reversal-case"
+      "hospital-ransomware-certin-response",
+      "classified-marketplace-qr-fraud"
     ],
     "relatedResources": [
       "https://rbi.org.in",

@@ -1585,18 +1585,18 @@
   },
   {
     "category": "Cyber Law Basics",
-    "questionText": "Under the Information Technology (Intermediary Guidelines and Digital Media Ethics Code) Rules, what is the mandatory window for social media intermediaries to take down non-consensual sexually explicit or impersonation content after receiving a complaint?",
+    "questionText": "Under the Information Technology (Intermediary Guidelines and Digital Media Ethics Code) Rules as amended, what is the mandatory window for social media intermediaries to take down non-consensual sexually explicit or impersonation content after receiving a complaint?",
     "options": [
       "Intermediaries have no legal obligation to take down user-submitted content.",
       "Within 30 calendar days.",
       "Within 6 months after receiving police clearance.",
-      "Within 24 hours of receipt of the complaint."
+      "Within two hours of receipt of the complaint."
     ],
     "correctOptionIndex": 3,
-    "explanation": "Under Rule 3(2)(b) of the IT Intermediary Rules, intermediaries must take down or disable access to non-consensual intimate imagery, nudity, or impersonation within 24 hours of receiving a complaint.",
+    "explanation": "Under Rule 3(2)(b) of the IT Intermediary Rules (as amended by G.S.R. 120(E)), intermediaries must remove or disable access to non-consensual intimate imagery, nudity, or impersonation within two hours of receiving a complaint.",
     "questionType": "knowledge",
     "difficulty": "Intermediate",
-    "learningObjective": "[Level 1: Recall] Recall the 24-hour intermediary takedown mandate for non-consensual imagery.",
+    "learningObjective": "[Level 1: Recall] Recall the two-hour intermediary takedown mandate for non-consensual imagery under amended Rule 3(2)(b).",
     "relatedLawSection": "IT Intermediary Rules",
     "relatedLaw": "Information Technology Act, 2000",
     "relatedCrime": "intermediary-noncompliance",
@@ -2271,14 +2271,14 @@
     "options": [
       "Wait for 90 days before filing a formal writ petition in the Supreme Court.",
       "Instruct the victim to post public comments on the thread begging the uploader to delete it.",
-      "File an urgent grievance with the platform's Grievance Officer citing Rule 3(2)(b), which requires the intermediary to remove or disable access to the content within 24 hours of notice.",
+      "File an urgent grievance with the platform's Grievance Officer citing Rule 3(2)(b), which requires the intermediary to remove or disable access to the content within two hours of notice.",
       "Advise the victim that Indian cyber laws provide no remedy for online harassment."
     ],
     "correctOptionIndex": 2,
-    "explanation": "Rule 3(2)(b) of the IT Intermediary Rules creates an express 24-hour mandatory takedown obligation for intimate imagery upon receipt of complaint by or on behalf of the individual depicted.",
+    "explanation": "Rule 3(2)(b) of the IT Intermediary Rules (as amended by G.S.R. 120(E)) creates an express two-hour mandatory takedown obligation for intimate imagery upon receipt of complaint by or on behalf of the individual depicted.",
     "questionType": "situational-judgment",
     "difficulty": "Advanced",
-    "learningObjective": "[Level 6: Behavioral Judgment] Deploy emergency 24-hour intermediary takedown mechanisms to protect victims of non-consensual imagery.",
+    "learningObjective": "[Level 6: Behavioral Judgment] Deploy emergency two-hour intermediary takedown mechanisms to protect victims of non-consensual imagery under amended Rule 3(2)(b).",
     "relatedLawSection": "IT Intermediary Rules",
     "relatedLaw": "Information Technology Act, 2000",
     "relatedCrime": "intermediary-noncompliance",

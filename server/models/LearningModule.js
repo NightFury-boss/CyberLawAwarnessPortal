@@ -77,6 +77,44 @@ const LearningModuleSchema = new mongoose.Schema({
       type: String
     }
   },
+  quickChecks: [
+    {
+      id: {
+        type: String,
+        trim: true
+      },
+      pillar: {
+        type: String,
+        trim: true
+      },
+      scenario: {
+        type: String,
+        trim: true
+      },
+      question: {
+        type: String
+      },
+      options: [
+        {
+          type: String
+        }
+      ],
+      correctIndex: {
+        type: Number,
+        default: 0
+      },
+      correctOptionIndex: {
+        type: Number
+      },
+      correctKey: {
+        type: String,
+        trim: true
+      },
+      explanation: {
+        type: String
+      }
+    }
+  ],
   actionSteps: [
     {
       type: String

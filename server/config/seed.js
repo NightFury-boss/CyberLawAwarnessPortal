@@ -246,13 +246,13 @@ async function seed(isReset = false) {
         actName: 'Information Technology Act, 2000',
         officialTitle: 'Compensation for failure to protect data',
         role: 'Core Cyber Law',
-        plainLanguageExplanation: 'If a body corporate possessing sensitive personal data is negligent in maintaining reasonable security practices, causing wrongful loss or wrongful gain to any person, they are liable to pay compensation to the affected user.',
+        plainLanguageExplanation: 'If a body corporate possessing sensitive personal data is negligent in implementing and maintaining reasonable security practices and procedures, causing wrongful loss or wrongful gain to any person, it is liable to pay compensation to the affected person (fault-based negligence, not strict liability).',
         officialText: 'Where a body corporate, possessing, dealing or handling any sensitive personal data or information in a computer resource which it owns, controls or operates, is negligent in implementing and maintaining reasonable security practices and procedures and thereby causes wrongful loss or wrongful gain to any person, such body corporate shall be liable to pay damages by way of compensation to the person so affected.',
         whyItMatters: 'Holds businesses accountable. If a service provider leaks your personal data or credit card numbers due to poor security, you can sue for compensation.',
         exampleScenario: 'An online delivery application stores customer credit cards in raw text. A database hack leaks 10,000 credit profiles. The company is liable under Section 43A.',
-        penaltyOrLegalEffect: 'Civil compensation damages to victims. No statutory maximum upper limit.',
+        penaltyOrLegalEffect: 'Civil compensation damages to victims without a statutory upper ceiling; claims up to ₹5 crore are adjudicated by the State IT Secretary / Adjudicating Officer under Section 46(1A), while claims exceeding ₹5 crore lie before the competent civil court.',
         legalStatus: 'CURRENT',
-        commencementStatus: 'In force. Notified on 27th October 2009 via G.S.R. 775(E). Slated for omission under Section 44(2) of the DPDP Act, 2023 once gazetted; remains operative until official commencement.',
+        commencementStatus: 'In force. Notified on 27 October 2009 via G.S.R. 775(E). Slated for omission under Section 44(2) of the DPDP Act, 2023 after 18 months (commencing 13 May 2027 pursuant to G.S.R. 843(E)); actively operative on the 6 November 2026 baseline.',
         amendmentStatus: 'Inserted via the IT Amendment Act, 2008. Slated for omission under DPDP Act 2023 s. 44(2) upon official gazette appointment.',
         keywords: ['data leak', 'negligence', 'compensation', 'sensitive personal data', 'privacy'],
         relatedCyberCrimes: ['identity-theft', 'data-breach'],
@@ -437,13 +437,13 @@ async function seed(isReset = false) {
         officialTitle: 'Grievance redressal by online intermediaries',
         role: 'Government Rule / Notification',
         plainLanguageExplanation: 'Mandates social media platforms and messaging apps to set up grievance officers and remove illegal content within strict timelines.',
-        officialText: 'An intermediary shall observe due diligence... including publishing privacy policy, terms of use, and acting on reports of offensive content, deepfakes, or impersonations within 24-36 hours.',
+        officialText: 'An intermediary shall observe due diligence... including publishing privacy policy, terms of use, acting on court or government takedown orders within 36 hours, resolving urgent grievances within 36 hours, and removing non-consensual intimate or morphed imagery within two hours under Rule 3(2)(b).',
         whyItMatters: 'Gives you the power to force social media platforms to take down deepfakes or impersonating profiles.',
-        exampleScenario: 'You find a fake profile using your photos on Instagram. Under the Intermediary Rules, the platform must take it down within 24-36 hours of notification.',
+        exampleScenario: 'You find a fake or impersonating profile on Instagram. Under the Intermediary Rules, the platform must acknowledge the grievance within 24 hours and resolve it within 36 hours (or within 2 hours for intimate or morphed imagery).',
         penaltyOrLegalEffect: 'Loss of Safe Harbour immunity under Section 79 of the IT Act if platforms fail to comply.',
         legalStatus: 'CURRENT',
         commencementStatus: 'Notified on 25th February 2021. In force.',
-        amendmentStatus: 'Amended subsequently in 2022 and 2023.',
+        amendmentStatus: 'Amended subsequently in 2022, 2023, and February 2026 (G.S.R. 120(E)).',
         keywords: ['intermediaries', 'facebook', 'instagram', 'deepfakes', 'take down request', 'safe harbour'],
         relatedCyberCrimes: ['online-harassment', 'identity-theft'],
         relatedCaseStudies: [],
@@ -616,7 +616,7 @@ async function seed(isReset = false) {
         officialText: 'Every information relating to the commission of a cognizable offence, irrespective of the area where the offence is committed, may be given orally or by electronic communication... and recorded by the officer in charge of a police station.',
         whyItMatters: 'Prevents police jurisdictional refusal in multi-state cyber crimes, phishing rings, and online financial frauds.',
         exampleScenario: 'A resident of Lucknow is defrauded by an online scammer operating from Jamtara. The victim walks into a local Lucknow police station; the officer is statutorily bound under BNSS Section 173 to register a Zero FIR.',
-        penaltyOrLegalEffect: 'Statutory mandate for registration of cognizable offences; refusal by public servant attracts penal action under BNS Section 199.',
+        penaltyOrLegalEffect: 'Statutory mandate for registration of cognizable offences (Zero FIR); refusal by a public servant attracts penal action under BNS Section 199(c) strictly for enumerated offences (principally offences against women and children). For non-enumerated cyber/financial offences, BNSS Section 173(4) provides the statutory escalation path: a written complaint by post to the Superintendent of Police, followed by an application to the Magistrate.',
         legalStatus: 'CURRENT',
         commencementStatus: 'In force. Notified effective 1 July 2024 vide S.O. 851(E), replacing CrPC Section 154.',
         amendmentStatus: 'Substantive criminal procedure code replacing CrPC, 1973.',
@@ -632,11 +632,11 @@ async function seed(isReset = false) {
         actName: 'Information Technology Act, 2000',
         officialTitle: 'Compensation for failure to protect sensitive personal data (SPDI Rules, 2011)',
         role: 'Data Protection',
-        plainLanguageExplanation: 'Holds incorporated bodies corporate strictly liable to pay compensation to victims when negligent in implementing reasonable security practices while handling sensitive personal data, causing wrongful loss or gain.',
+        plainLanguageExplanation: 'Holds incorporated bodies corporate liable to pay compensation to victims when negligent in implementing and maintaining reasonable security practices and procedures while handling sensitive personal data, causing wrongful loss or wrongful gain (fault-based negligence, not strict liability).',
         officialText: 'Where a body corporate, possessing, dealing or handling any sensitive personal data or information in a computer resource which it owns, controls or operates, is negligent in implementing and maintaining reasonable security practices and procedures and thereby causes wrongful loss or wrongful gain to any person, such body corporate shall be liable to pay damages by way of compensation to the person so affected.',
         whyItMatters: 'Active statutory protection on 6 November 2026. Because DPDP Act Section 44(2) has not commenced, Section 43A and SPDI Rules 2011 remain the governing corporate data negligence law.',
         exampleScenario: 'An online pharmacy fails to implement encryption on its patient diagnostic server. The database is breached, exposing prescription histories and causing blackmail. The pharmacy is liable under Section 43A.',
-        penaltyOrLegalEffect: 'Civil compensation awarded by the State IT Secretary Adjudicating Officer under Section 46 without upper limit.',
+        penaltyOrLegalEffect: 'Civil compensation damages to victims without a statutory ceiling on damages; claims up to ₹5 crore are adjudicated by the State IT Secretary / Adjudicating Officer under Section 46(1A), while claims exceeding ₹5 crore lie before the competent civil court.',
         legalStatus: 'CURRENT',
         commencementStatus: 'In force. Notified on 27 October 2009. Slated for omission under DPDP Act Section 44(2) after 18 months (13 May 2027); actively operative on 6 November 2026 baseline.',
         amendmentStatus: 'Governing law pending commencement of DPDP Act Section 44(2).',
@@ -852,10 +852,10 @@ async function seed(isReset = false) {
         actName: 'Reserve Bank of India Master Directions',
         officialTitle: 'Limiting Customer Liability in Unauthorised Electronic Banking Transactions',
         role: 'Sector Regulation',
-        plainLanguageExplanation: 'Codifies customer protection rules: Zero liability for bank deficiency (Commercial Banks/SFBs Para 67(1), Payments Banks Para 24(1), RRBs Para 119(1), PPIs Para 17.4). Zero liability for third-party breaches reported within 3 working days. Capped liability for reporting between 4 to 7 working days. Mandates provisional shadow reversal within 10 working days (10 calendar days for non-bank PPIs under MD-PPI Para 17.7), and dispute resolution within 90 days. Burden of proof rests entirely on the bank/institution.',
+        plainLanguageExplanation: 'Codifies customer protection rules: Zero liability for bank deficiency (Commercial Banks/SFBs Para 67(1), Payments Banks Para 24(1), RRBs Para 119(1), PPIs Para 17.4(a)). Conditional zero liability for third-party breaches where the customer notifies within 3 working days and deficiency lies neither with bank nor customer. Limited liability capped for reporting between 4 to 7 working days. Mandates conditional provisional shadow reversal within 10 working days (10 calendar days for non-bank PPIs under MD-PPI Para 17.7), and complaint resolution within 90 days. Burden of proof rests upon the bank/institution.',
         officialText: 'A customer shall have zero liability where the unauthorized transaction occurs in the following events: (a) Contributory fraud/negligence/deficiency on the part of the bank; (b) Third party breach where the deficiency lies neither with the bank nor with the customer... and customer notifies within three working days... bank shall credit shadow reversal within 10 working days.',
-        whyItMatters: 'Guarantees statutory and regulatory consumer protection against banking fraud, safeguarding victims from bearing losses caused by cyber breaches beyond their control.',
-        exampleScenario: 'A savings account holder loses ₹40,000 to an unauthorized net-banking transfer due to a malware breach on a payment gateway. Reporting to the bank within 2 working days guarantees zero customer liability and a shadow credit within 10 working days.',
+        whyItMatters: 'Establishes an essential conditional regulatory consumer protection framework against electronic banking fraud, shielding victims from bearing losses when unauthorized transactions result from third-party breaches reported within prescribed deadlines.',
+        exampleScenario: 'A savings account holder loses ₹40,000 to an unauthorized net-banking transfer due to a third-party payment gateway breach. Reporting to the bank within 2 working days establishes entitlement to zero customer liability under third-party breach rules and a conditional shadow credit within 10 working days, provided the customer did not share credentials or act negligently.',
         penaltyOrLegalEffect: 'Regulatory mandate enforceable by the RBI Ombudsman under the Reserve Bank - Integrated Ombudsman Scheme, 2021.',
         legalStatus: 'CURRENT',
         commencementStatus: 'In force. Preserving foundational framework of Circular DBR.No.Leg.BC.78/09.07.005/2017-18 dated July 6, 2017 consolidated into operative RBC Master Directions.',
@@ -1719,7 +1719,7 @@ async function seed(isReset = false) {
         ],
         actionSteps: [
           'Create digital hashes of the imagery using StopNCII.org to prevent distribution across major participating platforms (Meta, Instagram, TikTok, Reddit).',
-          'Under Rule 3(2)(b) of the IT Intermediary Rules, intermediaries are legally mandated to remove non-consensual intimate imagery within 24 hours of receiving a report.'
+          'Under Rule 3(2)(b) of the IT Intermediary Rules (as amended by G.S.R. 120(E)), intermediaries are legally mandated to remove or disable access to non-consensual intimate imagery within two hours of receiving a report, and take reasonable measures to prevent recurrence.'
         ],
         avoidSteps: [
           'Never pay money to extortionists or online intermediaries promising removal.',
@@ -1730,7 +1730,7 @@ async function seed(isReset = false) {
           'Invoke IT Act Section 66E (privacy violation) and Section 67A (sexually explicit content).'
         ],
         mythFacts: [
-          { myth: 'Social media platforms have 30 days to review intimate image removal complaints.', fact: 'Under Rule 3(2)(b) of the IT Intermediary Rules, platforms MUST remove or disable access to non-consensual intimate or morphed imagery within 24 hours.' }
+          { myth: 'Social media platforms have 30 days to review intimate image removal complaints.', fact: 'Under Rule 3(2)(b) of the IT Intermediary Rules (amended by G.S.R. 120(E)), platforms MUST remove or disable access to non-consensual intimate or morphed imagery within two hours.' }
         ],
         spotTheFlags: {
           messageType: 'Extortion Email / DM',
@@ -1744,20 +1744,20 @@ async function seed(isReset = false) {
           questionText: 'You discover that an acquaintance has created a morphed intimate picture of you and posted it online. Under Indian law, what is the platform\'s legal obligation?',
           options: [
             { optionText: 'The platform can take up to 30 days to decide whether to remove it.', isCorrect: false, explanation: 'Incorrect! 30 days applies to general grievances, not intimate imagery.' },
-            { optionText: 'Under Rule 3(2)(b) of the IT Intermediary Rules, the platform is legally obligated to take down the intimate content within 24 hours of notification.', isCorrect: true, explanation: 'Correct! Indian rules mandate emergency 24-hour takedown for non-consensual intimate imagery.' }
+            { optionText: 'Under Rule 3(2)(b) of the IT Intermediary Rules (amended 2026), the platform is legally obligated to take down the intimate content within two hours of notification.', isCorrect: true, explanation: 'Correct! Indian rules mandate emergency two-hour takedown for non-consensual intimate imagery under Rule 3(2)(b) as amended.' }
           ]
         },
         quickCheckQuestions: [
           {
-            questionText: 'Under the Information Technology (Intermediary Guidelines) Rules, 2021, within what timeframe must a social media platform remove non-consensual intimate or morphed imagery once reported?',
+            questionText: 'Under the Information Technology (Intermediary Guidelines) Rules, 2021 (as amended February 2026), within what timeframe must a social media platform remove non-consensual intimate or morphed imagery once reported?',
             options: [
               '7 days',
-              '72 hours',
               '24 hours',
+              '2 hours',
               '15 days'
             ],
             correctOptionIndex: 2,
-            explanation: 'Rule 3(2)(b) strictly requires intermediaries to remove or disable access to non-consensual intimate imagery within 24 hours of receipt of complaint.'
+            explanation: 'Rule 3(2)(b) of the IT Rules, 2021 (as amended by G.S.R. 120(E)) strictly requires intermediaries to remove or disable access to non-consensual intimate imagery within two hours of receipt of complaint.'
           }
         ]
       }
@@ -3176,7 +3176,16 @@ async function seed(isReset = false) {
     if (fs.existsSync(p3Path)) {
       qPart3 = JSON.parse(fs.readFileSync(p3Path, 'utf8'));
     }
-    const quizQuestionsData = [...qPart1, ...qPart2, ...qPart3];
+
+    // Stage 4 Wave 2: Expanded Assessment Bank (21 questions across 7 pillars)
+    let stage4Questions = [];
+    const expandedQuestionsPath = path.join(__dirname, 'seedQuestionsExpanded.js');
+    if (fs.existsSync(expandedQuestionsPath)) {
+      const expExport = require(expandedQuestionsPath);
+      stage4Questions = Array.isArray(expExport) ? expExport : (expExport.expandedQuestions || []);
+    }
+
+    const quizQuestionsData = [...qPart1, ...qPart2, ...qPart3, ...stage4Questions];
 
     let questionIdx = 1;
     for (let qData of quizQuestionsData) {
@@ -3211,16 +3220,26 @@ async function seed(isReset = false) {
       }
       questionIdx++;
 
+      const query = qData.questionId
+        ? { $or: [{ questionId: qData.questionId }, { questionText: qData.questionText }] }
+        : { questionText: qData.questionText };
+
       await QuizQuestion.findOneAndUpdate(
-        { questionText: qData.questionText },
+        query,
         qData,
         { upsert: true, new: true }
       );
     }
 
-    // Synchronize questions: remove legacy questions whose questionText is no longer in the fixture bank
+    // Synchronize questions: remove legacy questions whose questionText and questionId are no longer in the fixture bank
     const activeQuestionTexts = new Set(quizQuestionsData.map(q => q.questionText));
-    await QuizQuestion.deleteMany({ questionText: { $nin: Array.from(activeQuestionTexts) } });
+    const activeQuestionIds = new Set(quizQuestionsData.filter(q => q.questionId).map(q => q.questionId));
+    await QuizQuestion.deleteMany({
+      $and: [
+        { questionText: { $nin: Array.from(activeQuestionTexts) } },
+        { questionId: { $nin: Array.from(activeQuestionIds) } }
+      ]
+    });
 
     // 8. Scenario Engine Seeding (Baseline & Branching Final)
     console.log('- Seeding scenario engine nodes...');

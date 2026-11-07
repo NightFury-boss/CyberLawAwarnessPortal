@@ -83,6 +83,37 @@ function extractLawSectionsDataFromSeed() {
   return fn(...Object.values(sandbox));
 }
 
+function extractArrayFromSeed(marker) {
+  const seedFilePath = path.join(__dirname, '../config/seed.js');
+  const seedContent = fs.readFileSync(seedFilePath, 'utf8');
+  const startIndex = seedContent.indexOf(marker);
+  assert(startIndex !== -1, `${marker} not found in seed.js`);
+  const arrayStart = startIndex + marker.length;
+  let bracketDepth = 0;
+  let endIndex = -1;
+  for (let i = arrayStart; i < seedContent.length; i++) {
+    if (seedContent[i] === '[') bracketDepth++;
+    else if (seedContent[i] === ']') {
+      bracketDepth--;
+      if (bracketDepth === 0) {
+        endIndex = i + 1;
+        break;
+      }
+    }
+  }
+  assert(endIndex !== -1, `Could not parse closing bracket for ${marker}`);
+  const arrayCode = seedContent.substring(arrayStart, endIndex);
+  return new Function('return ' + arrayCode)();
+}
+
+function extractCaseStudiesDataFromSeed() {
+  return extractArrayFromSeed('const caseStudiesData = ');
+}
+
+function extractCrimesDataFromSeed() {
+  return extractArrayFromSeed('const crimesData = ');
+}
+
 async function runWave1Tests() {
   console.log('======================================================================');
   console.log('STAGE 4 WAVE 1: COMPREHENSIVE INTEGRITY & REGRESSION TEST SUITE');
@@ -232,6 +263,11 @@ async function runWave1Tests() {
   // -------------------------------------------------------------------------
   console.log('\n[SECTION 3] Cross-Reference & Linkage Integrity:');
 
+  const caseStudies = extractCaseStudiesDataFromSeed();
+  const crimes = extractCrimesDataFromSeed();
+  const validCaseStudySlugs = new Set(caseStudies.map(cs => cs.slug));
+  const validCrimeSlugs = new Set(crimes.map(c => c.slug));
+
   test('Every relatedLawSections entry across all 18 modules resolves to an existing LawSection by sectionNumber or slug', () => {
     const validSectionNumbers = new Set(lawSections.map(s => s.sectionNumber));
     const validSlugs = new Set(lawSections.map(s => s.slug).filter(Boolean));
@@ -262,6 +298,131 @@ async function runWave1Tests() {
 
     for (const slug of expected14Slugs) {
       assert(allModuleRefs.has(slug), `New LawSection slug '${slug}' is not cross-referenced by any module!`);
+    }
+  });
+
+  test('Every relatedCaseStudies entry across all 18 modules resolves to an extracted CaseStudy slug', () => {
+    const unresolvedCS = [];
+    for (const mod of learningModulesData) {
+      for (const csSlug of (mod.relatedCaseStudies || [])) {
+        if (!validCaseStudySlugs.has(csSlug)) {
+          unresolvedCS.push({ module: mod.slug, caseStudy: csSlug });
+        }
+      }
+    }
+    assert.strictEqual(unresolvedCS.length, 0,
+      `Unresolved relatedCaseStudies references found:\n${JSON.stringify(unresolvedCS, null, 2)}`);
+  });
+
+  test('Every relatedCyberCrimes entry across all 18 modules resolves to an extracted CyberCrime slug', () => {
+    const unresolvedCrimes = [];
+    for (const mod of learningModulesData) {
+      for (const crimeSlug of (mod.relatedCyberCrimes || [])) {
+        if (!validCrimeSlugs.has(crimeSlug)) {
+          unresolvedCrimes.push({ module: mod.slug, crime: crimeSlug });
+        }
+      }
+    }
+    assert.strictEqual(unresolvedCrimes.length, 0,
+      `Unresolved relatedCyberCrimes references found:\n${JSON.stringify(unresolvedCrimes, null, 2)}`);
+  });
+
+  test('Statutory catalog values agree across modules and LawSection records', () => {
+    const lawSectionMap = new Map();
+    lawSections.forEach(s => {
+      lawSectionMap.set(s.sectionNumber, s);
+      if (s.slug) lawSectionMap.set(s.slug, s);
+    });
+
+    for (const mod of learningModulesData) {
+      for (const ref of mod.relatedLawSections) {
+        const sec = lawSectionMap.get(ref);
+        assert(sec, `Referenced LawSection '${ref}' in module '${mod.slug}' not found in catalog`);
+        assert(sec.actName && sec.actName.trim().length > 0, `LawSection '${ref}' has empty actName`);
+        assert(sec.officialTitle && sec.officialTitle.trim().length > 0, `LawSection '${ref}' has empty officialTitle`);
+        assert(['CURRENT', 'AMENDED', 'PENDING_COMMENCEMENT', 'NOT_YET_IN_FORCE', 'OMITTED'].includes(sec.legalStatus),
+          `LawSection '${ref}' has invalid legalStatus: ${sec.legalStatus}`);
+      }
+    }
+
+    // Verify DPDP rights sections in Modules 14 & 15 map to NOT_YET_IN_FORCE on 6 Nov 2026 baseline
+    const principalRightsSec = lawSectionMap.get('in-dpdp-principal-rights');
+    assert(principalRightsSec, 'in-dpdp-principal-rights missing');
+    assert.strictEqual(principalRightsSec.legalStatus, 'NOT_YET_IN_FORCE',
+      'in-dpdp-principal-rights must be NOT_YET_IN_FORCE on 6 Nov 2026 baseline');
+
+    const childSafetySec = lawSectionMap.get('in-dpdp-child-safety');
+    assert(childSafetySec, 'in-dpdp-child-safety missing');
+    assert.strictEqual(childSafetySec.legalStatus, 'NOT_YET_IN_FORCE',
+      'in-dpdp-child-safety must be NOT_YET_IN_FORCE on 6 Nov 2026 baseline');
+
+    // Verify Section 43A in Modules 10 & 13 maps to CURRENT operative law on 6 Nov 2026 baseline
+    const spdiSec = lawSectionMap.get('in-it-43a-spdi') || lawSectionMap.get('Section 43A');
+    assert(spdiSec, 'Section 43A record missing');
+    assert.strictEqual(spdiSec.legalStatus, 'CURRENT',
+      'Section 43A must be CURRENT operative law on 6 Nov 2026 baseline');
+  });
+
+  test('Negative Assertions: Section 66A is OMITTED and never taught as active law in keyTakeaways', () => {
+    const sec66a = lawSections.find(s => s.sectionNumber === 'Section 66A');
+    assert(sec66a, 'Section 66A must exist in LawSection catalog');
+    assert.strictEqual(sec66a.legalStatus, 'OMITTED', 'Section 66A legalStatus must be OMITTED');
+    assert.notStrictEqual(sec66a.legalStatus, 'CURRENT', 'Section 66A must not be marked CURRENT');
+
+    for (const mod of learningModulesData) {
+      for (const takeaway of (mod.keyTakeaways || [])) {
+        if (takeaway.includes('66A')) {
+          assert(
+            takeaway.includes('struck down') ||
+            takeaway.includes('unconstitutional') ||
+            takeaway.includes('cannot be used'),
+            `Module '${mod.slug}' keyTakeaways mentions 66A without stating it was struck down: "${takeaway}"`
+          );
+        }
+      }
+    }
+  });
+
+  test('Negative Assertions: No unqualified recovery guarantees across modules or law sections', () => {
+    const regexRecoveryGuarantee = /guarantees?\s+(?:fund\s+)?(?:recovery|freeze|refund)|guarantees?\s+zero\s+customer\s+liability/i;
+
+    for (const mod of learningModulesData) {
+      const jsonStr = JSON.stringify(mod);
+      assert(!regexRecoveryGuarantee.test(jsonStr),
+        `Module '${mod.slug}' contains unqualified recovery or liability guarantee`);
+    }
+
+    for (const sec of lawSections) {
+      const jsonStr = JSON.stringify(sec);
+      assert(!regexRecoveryGuarantee.test(jsonStr),
+        `LawSection '${sec.sectionNumber}' contains unqualified recovery or liability guarantee`);
+    }
+  });
+
+  test('Negative Assertions: Rule 3(2)(b) is never paired with 24 hours in instructional content or catalog', () => {
+    const regex32b24h = /Rule\s*3\(2\)\(b\)[\s\S]{0,80}24\s*hours|24\s*hours[\s\S]{0,80}Rule\s*3\(2\)\(b\)/i;
+
+    for (const mod of learningModulesData) {
+      for (const sec of (mod.sections || [])) {
+        assert(!regex32b24h.test(sec.content),
+          `Module '${mod.slug}' section '${sec.title}' pairs Rule 3(2)(b) with 24 hours instead of amended 2-hour timeline`);
+      }
+      for (const kt of (mod.keyTakeaways || [])) {
+        assert(!regex32b24h.test(kt),
+          `Module '${mod.slug}' keyTakeaway pairs Rule 3(2)(b) with 24 hours`);
+      }
+    }
+
+    for (const sec of lawSections) {
+      const text = `${sec.plainLanguageExplanation} ${sec.officialText} ${sec.whyItMatters} ${sec.exampleScenario}`;
+      assert(!regex32b24h.test(text),
+        `LawSection '${sec.sectionNumber}' pairs Rule 3(2)(b) with 24 hours`);
+    }
+
+    for (const crime of crimes) {
+      const text = JSON.stringify(crime.actionSteps) + JSON.stringify(crime.mythFacts);
+      assert(!regex32b24h.test(text),
+        `CyberCrime '${crime.slug}' pairs Rule 3(2)(b) with 24 hours`);
     }
   });
 

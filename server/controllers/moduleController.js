@@ -288,7 +288,12 @@ exports.recordModuleProgress = async (req, res) => {
     // ACTION 1: KNOWLEDGE CHECK SUBMISSION
     // =========================================================================
     if (action === 'knowledge_check' || typeof selectedIndex === 'number') {
-      const correctIndex = moduleDoc.quickCheck?.correctIndex ?? 0;
+      let targetCheck = moduleDoc.quickCheck;
+      if (Array.isArray(moduleDoc.quickChecks) && moduleDoc.quickChecks.length > 0) {
+        const checkIdx = typeof req.body.checkIndex === 'number' ? req.body.checkIndex : 0;
+        targetCheck = moduleDoc.quickChecks[checkIdx] || moduleDoc.quickCheck;
+      }
+      const correctIndex = targetCheck?.correctIndex ?? targetCheck?.correctOptionIndex ?? 0;
       const isCorrect = Number(selectedIndex) === Number(correctIndex);
 
       entry.lastAnswerIndex = Number(selectedIndex);
@@ -307,7 +312,7 @@ exports.recordModuleProgress = async (req, res) => {
       return res.json({
         success: true,
         isCorrect,
-        explanation: moduleDoc.quickCheck?.explanation || '',
+        explanation: targetCheck?.explanation || moduleDoc.quickCheck?.explanation || '',
         knowledgeCheckStatus: entry.knowledgeCheckStatus,
         status: deriveLessonStatus(entry),
         readCompleted: entry.readCompleted
