@@ -275,17 +275,17 @@ export default function DefensivePortfolioModal({
             {/* Delayed Recall Practice Entry */}
             <div className="portfolio-subentry" id="portfolio-delayed-recall">
               <div className="portfolio-subentry-header">
-                <h3 className="portfolio-subentry-title">Practice Again Later (Follow-Up Reviews)</h3>
+                <h3 className="portfolio-subentry-title">Self-Paced Concept Checkpoints</h3>
                 <p className="portfolio-subentry-desc">
-                  Short follow-up checks taken at your own pace to make sure key safety rules and laws stay fresh in your memory.
+                  Optional practice checkpoints completed at your own pace to reinforce statutory principles and defensive instincts.
                 </p>
               </div>
 
               {spacedReviews.length === 0 ? (
                 <div className="portfolio-empty-subbox">
-                  <p>No follow-up reviews completed yet.</p>
+                  <p>No practice checkpoints recorded yet.</p>
                   <span className="portfolio-empty-hint">
-                    Follow-up reviews become available after completing safety lessons.
+                    Completed practice checkpoints will appear here in your verified learning record.
                   </span>
                 </div>
               ) : (
@@ -293,7 +293,7 @@ export default function DefensivePortfolioModal({
                   <div className="portfolio-summary-metrics">
                     <div className="portfolio-metric-chip">
                       <span className="metric-chip-num">{spacedReviews.length}</span>
-                      <span className="metric-chip-label">Completed Reviews</span>
+                      <span className="metric-chip-label">Completed Checkpoints</span>
                     </div>
                     <div className="portfolio-metric-chip">
                       <span className="metric-chip-num">{passedSpacedCount}</span>

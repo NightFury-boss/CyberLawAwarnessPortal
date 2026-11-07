@@ -17,7 +17,6 @@ export default function PrimaryFocus({
   hasActiveFinal = false,
   activeFinalStage = null,
   pathwaysWithStatus = [],
-  dueSpacedReviews = [],
   dueQuizRecalls = [],
   inProgressLesson = null,
   recommendedLesson = null,
@@ -27,7 +26,6 @@ export default function PrimaryFocus({
   nextIncompletePathway,
   nextReinforcePathway,
   onLaunchRunner,
-  onLaunchSpacedRetrieval,
   onLaunchQuizRecall,
   onOpenPortfolioModal
 }) {
@@ -44,7 +42,6 @@ export default function PrimaryFocus({
     hasActiveFinal,
     activeFinalStage,
     pathwaysWithStatus: effectivePathways,
-    dueSpacedReviews,
     dueQuizRecalls,
     inProgressLesson,
     recommendedLesson,

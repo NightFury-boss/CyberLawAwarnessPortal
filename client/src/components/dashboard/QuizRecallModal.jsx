@@ -488,7 +488,7 @@ function QuizRecallModal({
                       fontWeight: isFlagged ? 700 : 500
                     }}
                   >
-                    {isFlagged ? '🚩 ' : '🔍 '}{ind.text}
+                    {isFlagged ? '⚑ ' : '○ '}{ind.text}
                   </button>
                 );
               })}
@@ -510,7 +510,7 @@ function QuizRecallModal({
               marginBottom: '10px'
             }}>
               <span style={{ fontSize: '0.82rem', fontWeight: 700, textTransform: 'uppercase', color: evalResult.isCorrect ? 'var(--color-success, #536F61)' : 'var(--color-danger, #A34D43)' }}>
-                {evalResult.isCorrect ? '✓ Correct answer' : '⚠️ Incorrect'}
+                {evalResult.isCorrect ? '✓ Correct answer' : '✕ Incorrect'}
               </span>
               <p style={{ margin: '4px 0 0 0', fontSize: '0.88rem', color: evalResult.isCorrect ? 'var(--color-success, #536F61)' : 'var(--color-danger, #A34D43)', lineHeight: 1.45 }}>
                 {evalResult.isCorrect
@@ -573,7 +573,7 @@ function QuizRecallModal({
                       .filter(ind => ind.isSuspicious)
                       .map((ind, iIdx) => (
                         <li key={iIdx} style={{ marginBottom: '3px' }}>
-                          🚩 <strong>{ind.text}</strong>
+                          ⚑ <strong>{ind.text}</strong>
                         </li>
                       ))}
                   </ul>
@@ -594,8 +594,13 @@ function QuizRecallModal({
             {/* Practical Takeaway */}
             {evalResult.practicalTakeaway && (
               <div style={{ padding: '8px 12px', borderRadius: '6px', backgroundColor: 'var(--color-surface-secondary, #EFE8DC)', border: '1px dashed var(--color-border, #DED6C9)', marginBottom: '8px' }}>
-                <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--color-text-secondary, #635B53)' }}>
-                  💡 {evalResult.practicalTakeaway}
+                <span style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--color-text-secondary, #635B53)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" y1="16" x2="12" y2="12"></line>
+                    <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                  </svg>
+                  <strong>Practical Takeaway:</strong> {evalResult.practicalTakeaway}
                 </span>
               </div>
             )}

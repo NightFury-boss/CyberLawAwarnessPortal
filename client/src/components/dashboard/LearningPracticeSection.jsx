@@ -9,9 +9,7 @@ import { formatRecentActivityEvents, resolvePathwayTitle } from '../../utils/evi
 export function TargetedInterventionsPanel({
   hasBaseline,
   pathwaysWithStatus = [],
-  dueSpacedReviews = [],
   onLaunchRunner,
-  onLaunchSpacedRetrieval,
   completedFocusCount = 0,
   totalFocusCount = 0
 }) {
