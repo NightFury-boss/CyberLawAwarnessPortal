@@ -125,17 +125,17 @@ export function selectPrimaryNextAction({
     };
   }
 
-  // 3. Due Missed Quiz Concept Recall (~2 min quiz concept review)
+  // 3. Optional Missed Quiz Concept Review (~2 min concept review)
   if (Array.isArray(dueQuizRecalls) && dueQuizRecalls.length > 0 && dueQuizRecalls[0]) {
     const recallItem = dueQuizRecalls[0];
     const categoryName = recallItem.category || recallItem.question?.category || 'Cyber Law';
 
     return {
       type: 'DUE_QUIZ_RECALL',
-      eyebrow: 'Concept Recall Ready (~2 min)',
-      title: `Review Missed Concept: ${categoryName}`,
-      description: `You recently missed a question on ${categoryName}. Reviewing this concept now reinforces statutory rules and prevents future security mistakes.`,
-      actionLabel: 'Review Concept Now \u2192',
+      eyebrow: 'Optional Concept Practice (~2 min)',
+      title: `Clarify Missed Concept: ${categoryName}`,
+      description: `Revisit this question on ${categoryName} at your convenience to explore statutory explanations and strengthen your legal awareness.`,
+      actionLabel: 'Review Missed Concept \u2192',
       actionType: 'QUIZ_RECALL_MODAL',
       destination: null,
       targetItem: recallItem,

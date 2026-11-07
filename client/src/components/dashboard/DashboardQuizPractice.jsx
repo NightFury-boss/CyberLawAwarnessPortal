@@ -46,23 +46,23 @@ export default function DashboardQuizPractice({
         </div>
       </div>
 
-      {/* Due Concept Recall Amber Alert Card */}
+      {/* Optional Concept Recall Card */}
       {dueRecallsCount > 0 && (
-        <div className="atelier-recall-card" role="region" aria-label="Due concept recall review">
+        <div className="atelier-recall-card" role="region" aria-label="Optional concept review">
           <div className="atelier-recall-top">
-            <span className="atelier-recall-tag">Spaced Review Ready</span>
+            <span className="atelier-recall-tag">Optional Concept Practice</span>
             <span className="atelier-recall-count">
-              {dueRecallsCount} {dueRecallsCount === 1 ? 'Concept Due' : 'Concepts Due'}
+              {dueRecallsCount} {dueRecallsCount === 1 ? 'Missed Concept' : 'Missed Concepts'}
             </span>
           </div>
           <p className="atelier-recall-desc">
-            You recently missed questions on key statutory provisions. A 2-minute review now reinforces safe memory.
+            You missed questions on key statutory provisions in past practice. Revisit and clarify these concepts at your own pace.
           </p>
           <button
             type="button"
             onClick={onLaunchQuizRecall}
             className="atelier-recall-btn"
-            aria-label="Start review of due missed quiz questions"
+            aria-label="Start optional review of missed quiz questions"
           >
             <span>Review Missed Concepts</span>
             <span aria-hidden="true">&rarr;</span>

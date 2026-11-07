@@ -611,10 +611,14 @@ exports.submitQuiz = async (req, res) => {
       }
     }
 
-    // Identify missed questions and add to quizRecallItems for spaced retrieval
+    // Identify missed and correct questions and synchronize with quizRecallItems
     const missedQuestionIds = evaluatedAnswers
       .filter(a => a.isCorrect === false)
-      .map(a => a.questionId);
+      .map(a => a.questionId.toString());
+
+    const correctQuestionIds = evaluatedAnswers
+      .filter(a => a.isCorrect === true)
+      .map(a => a.questionId.toString());
 
     const progressDoc = await UserProgress.findOne({ userId });
     if (progressDoc) {
@@ -622,27 +626,45 @@ exports.submitQuiz = async (req, res) => {
         progressDoc.quizRecallItems = [];
       }
 
-      for (const qId of missedQuestionIds) {
-        const qObj = questionMap.get(qId.toString());
+      for (const qIdStr of missedQuestionIds) {
+        const qObj = questionMap.get(qIdStr);
         const existingIdx = progressDoc.quizRecallItems.findIndex(
-          item => item.questionId.toString() === qId.toString()
+          item => item.questionId.toString() === qIdStr
         );
 
         if (existingIdx !== -1) {
           progressDoc.quizRecallItems[existingIdx].missedCount = (progressDoc.quizRecallItems[existingIdx].missedCount || 1) + 1;
           progressDoc.quizRecallItems[existingIdx].mastered = false;
+          progressDoc.quizRecallItems[existingIdx].isResolved = false;
+          progressDoc.quizRecallItems[existingIdx].lastRecallCorrect = false;
           progressDoc.quizRecallItems[existingIdx].lastAttemptedAt = new Date();
           progressDoc.quizRecallItems[existingIdx].nextReviewDue = new Date();
         } else {
           progressDoc.quizRecallItems.push({
-            questionId: qId,
+            questionId: qObj?._id || qIdStr,
             sourceAttemptId: attempt._id,
             category: qObj?.category || 'General',
             missedCount: 1,
             mastered: false,
+            isResolved: false,
+            lastRecallCorrect: false,
             lastAttemptedAt: new Date(),
             nextReviewDue: new Date()
           });
+        }
+      }
+
+      // Bidirectional sync: if question was previously missed, but answered correctly in regular practice, resolve it
+      for (const qIdStr of correctQuestionIds) {
+        const existingIdx = progressDoc.quizRecallItems.findIndex(
+          item => item.questionId.toString() === qIdStr
+        );
+        if (existingIdx !== -1 && (!progressDoc.quizRecallItems[existingIdx].isResolved || !progressDoc.quizRecallItems[existingIdx].mastered)) {
+          progressDoc.quizRecallItems[existingIdx].mastered = true;
+          progressDoc.quizRecallItems[existingIdx].isResolved = true;
+          progressDoc.quizRecallItems[existingIdx].resolvedAt = new Date();
+          progressDoc.quizRecallItems[existingIdx].lastRecallCorrect = true;
+          progressDoc.quizRecallItems[existingIdx].lastAttemptedAt = new Date();
         }
       }
 
@@ -729,11 +751,10 @@ exports.getQuizHistory = async (req, res) => {
       .filter(ts => ts.accuracy < 70 && ts.totalQuestions >= 3)
       .sort((a, b) => a.accuracy - b.accuracy);
 
-    // Check count of due unmastered quiz recall items
+    // Check count of unmastered/unresolved quiz recall items
     const progress = await UserProgress.findOne({ userId });
-    const now = new Date();
     const dueRecallCount = (progress?.quizRecallItems || []).filter(
-      item => !item.mastered && (!item.nextReviewDue || new Date(item.nextReviewDue) <= now)
+      item => !item.isResolved && !item.mastered
     ).length;
 
     const overallAccuracyPercent = totalQuestionsAttempted > 0
@@ -784,12 +805,11 @@ exports.getDueQuizRecallItems = async (req, res) => {
       return res.json({ success: true, dueItems: [], totalDue: 0 });
     }
 
-    const now = new Date();
     const unmastered = progress.quizRecallItems.filter(item =>
+      !item.isResolved &&
       !item.mastered &&
       item.questionId &&
-      item.questionId.published !== false &&
-      (!item.nextReviewDue || new Date(item.nextReviewDue) <= now)
+      item.questionId.published !== false
     );
 
     // Sanitize questions to enforce strict answer secrecy before evaluation
@@ -854,27 +874,28 @@ exports.submitQuizRecall = async (req, res) => {
 
     if (['single_choice', 'true_false', 'scenario_decision', 'legal_application'].includes(format)) {
       const selected = typeof answer === 'object' ? answer?.selectedOptionIndex : answer;
-      isCorrect = (selected === question.correctOptionIndex);
+      isCorrect = (selected !== undefined && selected !== null && selected !== -1 && selected === question.correctOptionIndex);
     } else if (format === 'multiple_choice') {
       const selected = Array.isArray(answer?.selectedOptionIndices) ? answer.selectedOptionIndices : [];
-      const correct = question.correctOptionIndices || [];
+      const correct = Array.isArray(question.correctOptionIndices) ? question.correctOptionIndices : [];
       isCorrect = (selected.length === correct.length && selected.every(idx => correct.includes(idx)));
     } else if (format === 'matching') {
       const submittedPairs = Array.isArray(answer?.selectedPairs) ? answer.selectedPairs : [];
-      const authMap = new Map((question.matchingPairs || []).map(p => [p.left, p.right]));
+      const authPairs = Array.isArray(question.matchingPairs) ? question.matchingPairs : [];
+      const authMap = new Map(authPairs.map(p => [p.left, p.right]));
       let matchCount = 0;
       submittedPairs.forEach(p => {
         if (authMap.get(p.left) === p.right) matchCount++;
       });
-      isCorrect = (matchCount === (question.matchingPairs?.length || 0));
+      isCorrect = (authPairs.length > 0 && submittedPairs.length === authPairs.length && matchCount === authPairs.length);
     } else if (format === 'ordering') {
       const submittedSeq = Array.isArray(answer?.selectedSequence) ? answer.selectedSequence : [];
-      const authSeq = question.sequenceItems || [];
-      isCorrect = (submittedSeq.length === authSeq.length && submittedSeq.every((item, i) => item === authSeq[i]));
+      const authSeq = Array.isArray(question.sequenceItems) ? question.sequenceItems : [];
+      isCorrect = (authSeq.length > 0 && submittedSeq.length === authSeq.length && submittedSeq.every((item, i) => item === authSeq[i]));
     } else if (format === 'indicator_identification') {
       const selectedIds = Array.isArray(answer?.selectedIndicatorIds) ? answer.selectedIndicatorIds : [];
       const trueSuspicious = (question.indicators || []).filter(ind => ind.isSuspicious).map(ind => ind.id);
-      isCorrect = (selectedIds.length === trueSuspicious.length && selectedIds.every(id => trueSuspicious.includes(id)));
+      isCorrect = (trueSuspicious.length > 0 && selectedIds.length === trueSuspicious.length && selectedIds.every(id => trueSuspicious.includes(id)));
     }
 
     // Update progress item
@@ -886,28 +907,56 @@ exports.submitQuizRecall = async (req, res) => {
       const it = progress.quizRecallItems[itemIdx];
       if (isCorrect) {
         it.mastered = true;
+        it.isResolved = true;
+        it.resolvedAt = new Date();
+        it.lastRecallCorrect = true;
+        it.lastAttemptedAt = new Date();
       } else {
         it.missedCount = (it.missedCount || 1) + 1;
         it.mastered = false;
-        // Schedule next recall 3 days from now
-        it.nextReviewDue = new Date(Date.now() + 3 * 86400000);
+        it.isResolved = false;
+        it.lastRecallCorrect = false;
+        it.lastAttemptedAt = new Date();
+        // Self-paced revision: immediately available without forced lockouts
+        it.nextReviewDue = new Date();
+      }
+
+      if (!Array.isArray(it.reviewHistory)) {
+        it.reviewHistory = [];
       }
       it.reviewHistory.push({
         reviewedAt: new Date(),
-        selectedOptionIndex: typeof answer === 'object' ? answer?.selectedOptionIndex : answer,
+        selectedOptionIndex: typeof answer === 'object' ? (answer?.selectedOptionIndex ?? null) : (typeof answer === 'number' ? answer : null),
+        selectedAnswer: answer,
         isCorrect
       });
+
+      // Cap reviewHistory to last 10 entries to prevent unbounded growth
+      if (it.reviewHistory.length > 10) {
+        it.reviewHistory = it.reviewHistory.slice(-10);
+      }
+
       await progress.save();
     }
+
+    const solutionDetails = {
+      correctOptionIndex: question.correctOptionIndex,
+      correctOptionIndices: question.correctOptionIndices || [],
+      matchingPairs: question.matchingPairs || [],
+      sequenceItems: question.sequenceItems || [],
+      indicators: question.indicators || []
+    };
 
     res.json({
       success: true,
       isCorrect,
       mastered: isCorrect,
+      isResolved: isCorrect,
       explanation: question.explanation,
       whyIncorrect: isCorrect ? null : (question.whyIncorrect || 'This choice does not align with the established statutory rule.'),
       practicalTakeaway: question.practicalTakeaway || 'Always verify digital communications through trusted independent channels.',
-      legalReferences: question.legalReferences || []
+      legalReferences: question.legalReferences || [],
+      solution: solutionDetails
     });
   } catch (error) {
     res.status(500).json({
