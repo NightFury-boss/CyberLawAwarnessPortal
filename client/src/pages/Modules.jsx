@@ -34,11 +34,17 @@ function Modules({ user, isWorkspace = false }) {
   const [activeSectionIndex, setActiveSectionIndex] = useState(0);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  // Knowledge check state
-  const [selectedOption, setSelectedOption] = useState(null);
-  const [isAnswerSubmitted, setIsAnswerSubmitted] = useState(false);
-  const [knowledgeCheckSubmitting, setKnowledgeCheckSubmitting] = useState(false);
-  const [knowledgeCheckResult, setKnowledgeCheckResult] = useState(null);
+  // Knowledge check state (multi-check aware: index-keyed maps with backward-compatible single fallbacks)
+  const [selectedOptions, setSelectedOptions] = useState({});
+  const [submittedChecks, setSubmittedChecks] = useState({});
+  const [submittingChecks, setSubmittingChecks] = useState({});
+  const [knowledgeCheckResults, setKnowledgeCheckResults] = useState({});
+
+  // Backward-compatible single check getters
+  const selectedOption = selectedOptions[0] ?? null;
+  const isAnswerSubmitted = !!submittedChecks[0];
+  const knowledgeCheckSubmitting = !!submittingChecks[0];
+  const knowledgeCheckResult = knowledgeCheckResults[0] ?? null;
 
   // Completion toggle state
   const [isCompleted, setIsCompleted] = useState(false);
@@ -86,10 +92,10 @@ function Modules({ user, isWorkspace = false }) {
       try {
         setLessonLoading(true);
         setLessonError('');
-        setSelectedOption(null);
-        setIsAnswerSubmitted(false);
-        setKnowledgeCheckSubmitting(false);
-        setKnowledgeCheckResult(null);
+        setSelectedOptions({});
+        setSubmittedChecks({});
+        setSubmittingChecks({});
+        setKnowledgeCheckResults({});
         setActiveSectionIndex(0);
         setMobileMenuOpen(false);
 
@@ -101,13 +107,19 @@ function Modules({ user, isWorkspace = false }) {
           setModuleStatus(mod.status || (mod.isCompleted ? 'read_completed' : 'in_progress'));
 
           if (mod.knowledgeCheckStatus && mod.knowledgeCheckStatus !== 'not_attempted') {
-            setIsAnswerSubmitted(true);
-            if (typeof mod.lastAnswerIndex === 'number') {
-              setSelectedOption(mod.lastAnswerIndex);
+            const lastAns = typeof mod.lastAnswerIndex === 'number' ? mod.lastAnswerIndex : null;
+            if (lastAns !== null) {
+              setSelectedOptions({ 0: lastAns });
             }
-            setKnowledgeCheckResult({
-              isCorrect: mod.knowledgeCheckStatus === 'passed',
-              explanation: mod.quickCheck?.explanation
+            setSubmittedChecks({ 0: true });
+            const checksList = Array.isArray(mod.quickChecks) && mod.quickChecks.length > 0
+              ? mod.quickChecks
+              : (mod.quickCheck ? [mod.quickCheck] : []);
+            setKnowledgeCheckResults({
+              0: {
+                isCorrect: mod.knowledgeCheckStatus === 'passed',
+                explanation: checksList[0]?.explanation || mod.quickCheck?.explanation
+              }
             });
           }
         } else if (isMounted) {
@@ -203,26 +215,36 @@ function Modules({ user, isWorkspace = false }) {
     }
   };
 
-  // Handle interactive Knowledge Check submission
-  const handleKnowledgeCheckSubmit = async () => {
+  // Handle interactive Knowledge Check submission (supports multiple quick checks via checkIndex)
+  const handleKnowledgeCheckSubmit = async (checkIdx = 0) => {
     if (!user) {
       navigate('/login');
       return;
     }
-    if (selectedOption === null || knowledgeCheckSubmitting || !slug) return;
+    const currentOpt = selectedOptions[checkIdx];
+    if (currentOpt === null || currentOpt === undefined || submittingChecks[checkIdx] || !slug) return;
 
-    setKnowledgeCheckSubmitting(true);
+    setSubmittingChecks(prev => ({ ...prev, [checkIdx]: true }));
     try {
       const res = await api.recordModuleProgress(slug, {
         action: 'knowledge_check',
-        selectedIndex: selectedOption
+        selectedIndex: currentOpt,
+        checkIndex: checkIdx
       });
       if (res.success) {
-        setIsAnswerSubmitted(true);
-        setKnowledgeCheckResult({
-          isCorrect: res.isCorrect,
-          explanation: res.explanation || currentModule?.quickCheck?.explanation
-        });
+        setSubmittedChecks(prev => ({ ...prev, [checkIdx]: true }));
+        const currentChecks = (Array.isArray(currentModule?.quickChecks) && currentModule.quickChecks.length > 0)
+          ? currentModule.quickChecks
+          : (currentModule?.quickCheck ? [currentModule.quickCheck] : []);
+        const target = currentChecks[checkIdx] || currentModule?.quickCheck;
+
+        setKnowledgeCheckResults(prev => ({
+          ...prev,
+          [checkIdx]: {
+            isCorrect: res.isCorrect,
+            explanation: res.explanation || target?.explanation || ''
+          }
+        }));
         if (res.status) {
           setModuleStatus(res.status);
         }
@@ -230,14 +252,22 @@ function Modules({ user, isWorkspace = false }) {
     } catch (err) {
       console.error('Error submitting knowledge check:', err);
     } finally {
-      setKnowledgeCheckSubmitting(false);
+      setSubmittingChecks(prev => ({ ...prev, [checkIdx]: false }));
     }
   };
 
-  const handleKnowledgeCheckRetry = () => {
-    setIsAnswerSubmitted(false);
-    setKnowledgeCheckResult(null);
-    setSelectedOption(null);
+  const handleKnowledgeCheckRetry = (checkIdx = 0) => {
+    setSubmittedChecks(prev => ({ ...prev, [checkIdx]: false }));
+    setKnowledgeCheckResults(prev => {
+      const next = { ...prev };
+      delete next[checkIdx];
+      return next;
+    });
+    setSelectedOptions(prev => {
+      const next = { ...prev };
+      delete next[checkIdx];
+      return next;
+    });
   };
 
   // -------------------------------------------------------------------------
@@ -649,154 +679,222 @@ function Modules({ user, isWorkspace = false }) {
               </div>
             )}
 
-            {/* Interactive Knowledge Check Widget */}
-            {currentModule.quickCheck && currentModule.quickCheck.question && (
-              <div
-                style={{
-                  backgroundColor: 'var(--color-surface-card, #FCFAF5)',
-                  border: '1px solid var(--color-border)',
-                  borderRadius: 'var(--radius-lg)',
-                  padding: 'var(--space-xl)',
-                  boxShadow: 'var(--shadow-sm)'
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: 'var(--space-sm)' }}>
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--color-tertiary)" strokeWidth="2">
-                    <circle cx="12" cy="12" r="10"></circle>
-                    <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"></polygon>
-                  </svg>
-                  <span style={{ fontSize: '0.8rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--color-tertiary)' }}>
-                    Quick Knowledge Check
-                  </span>
-                </div>
+            {/* Interactive Knowledge Check Widget(s) */}
+            {(() => {
+              const activeChecks = (Array.isArray(currentModule.quickChecks) && currentModule.quickChecks.length > 0)
+                ? currentModule.quickChecks
+                : (currentModule.quickCheck && currentModule.quickCheck.question ? [currentModule.quickCheck] : []);
 
-                <h4 style={{ fontFamily: 'var(--font-serif)', fontSize: '1.15rem', color: 'var(--color-navy)', margin: '0 0 var(--space-md) 0' }}>
-                  {currentModule.quickCheck.question}
-                </h4>
+              if (activeChecks.length === 0) return null;
 
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: 'var(--space-md)' }}>
-                  {currentModule.quickCheck.options.map((opt, oIdx) => {
-                    const isSelected = selectedOption === oIdx;
-                    const isCorrect = oIdx === currentModule.quickCheck.correctIndex;
-
-                    let bg = 'var(--color-surface-card, #FCFAF5)';
-                    let borderColor = 'var(--color-border)';
-                    if (isAnswerSubmitted) {
-                      if (isCorrect) {
-                        bg = 'rgba(16, 185, 129, 0.08)';
-                        borderColor = 'var(--color-success, #536F61)';
-                      } else if (isSelected && !isCorrect) {
-                        bg = 'rgba(239, 68, 68, 0.08)';
-                        borderColor = '#ef4444';
-                      }
-                    } else if (isSelected) {
-                      bg = 'rgba(30, 41, 59, 0.04)';
-                      borderColor = 'var(--color-navy)';
-                    }
+              return (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-xl)', marginBottom: 'var(--space-xl)' }}>
+                  {activeChecks.length > 1 && (
+                    <div style={{ paddingBottom: 'var(--space-xs)', borderBottom: '2px solid var(--color-border)' }}>
+                      <span style={{ fontSize: '0.85rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--color-navy)' }}>
+                        Lesson Knowledge Checks ({activeChecks.length} Practical Enquiries)
+                      </span>
+                    </div>
+                  )}
+                  {activeChecks.map((check, cIdx) => {
+                    const isSubmitted = !!submittedChecks[cIdx];
+                    const isSubmitting = !!submittingChecks[cIdx];
+                    const currentSelected = selectedOptions[cIdx] ?? null;
+                    const result = knowledgeCheckResults[cIdx] ?? null;
+                    const correctIdx = check.correctIndex ?? check.correctOptionIndex ?? 0;
+                    const isPassed = result?.isCorrect ?? (currentSelected === correctIdx);
 
                     return (
-                      <button
-                        key={oIdx}
-                        disabled={isAnswerSubmitted}
-                        onClick={() => setSelectedOption(oIdx)}
+                      <div
+                        key={check.id || cIdx}
+                        id={`quick-check-${cIdx + 1}`}
                         style={{
-                          textAlign: 'left',
-                          backgroundColor: bg,
-                          border: `1px solid ${borderColor}`,
-                          borderRadius: 'var(--radius-md)',
-                          padding: '12px 16px',
-                          fontSize: '0.93rem',
-                          color: 'var(--text-primary)',
-                          cursor: isAnswerSubmitted ? 'default' : 'pointer',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '12px',
-                          transition: 'all 0.15s ease'
+                          backgroundColor: 'var(--color-surface-card, #FCFAF5)',
+                          border: '1px solid var(--color-border)',
+                          borderRadius: 'var(--radius-lg)',
+                          padding: 'var(--space-xl)',
+                          boxShadow: 'var(--shadow-sm)'
                         }}
                       >
-                        <span
-                          style={{
-                            width: '20px',
-                            height: '20px',
-                            borderRadius: '50%',
-                            border: `1.5px solid ${borderColor}`,
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            fontSize: '0.75rem',
-                            fontWeight: 700,
-                            backgroundColor: isSelected ? 'var(--color-navy)' : 'var(--color-surface-card, #FCFAF5)',
-                            color: isSelected ? 'var(--color-surface-card, #FCFAF5)' : 'var(--text-secondary)'
-                          }}
-                        >
-                          {String.fromCharCode(65 + oIdx)}
-                        </span>
-                        <span style={{ flex: 1 }}>{opt}</span>
-                        {isAnswerSubmitted && isCorrect && (
-                          <span style={{ color: 'var(--color-success, #536F61)', fontSize: '0.85rem', fontWeight: 600 }}>✓ Correct</span>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px', marginBottom: 'var(--space-sm)' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--color-tertiary)" strokeWidth="2">
+                              <circle cx="12" cy="12" r="10"></circle>
+                              <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"></polygon>
+                            </svg>
+                            <span style={{ fontSize: '0.8rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--color-tertiary)' }}>
+                              {activeChecks.length > 1
+                                ? `Quick Knowledge Check ${cIdx + 1} of ${activeChecks.length}${check.id ? ` · ${check.id}` : ''}`
+                                : `Quick Knowledge Check${check.id ? ` · ${check.id}` : ''}`}
+                            </span>
+                          </div>
+                          {check.pillar && (
+                            <span
+                              style={{
+                                fontSize: '0.72rem',
+                                fontWeight: 600,
+                                textTransform: 'uppercase',
+                                letterSpacing: '0.04em',
+                                color: 'var(--color-tertiary)',
+                                backgroundColor: 'rgba(239, 232, 220, 0.7)',
+                                padding: '3px 8px',
+                                borderRadius: 'var(--radius-sm)'
+                              }}
+                            >
+                              {check.pillar}
+                            </span>
+                          )}
+                        </div>
+
+                        {check.scenario && (
+                          <div
+                            style={{
+                              backgroundColor: 'rgba(239, 232, 220, 0.4)',
+                              borderLeft: '3px solid var(--color-tertiary)',
+                              padding: '12px 16px',
+                              marginBottom: 'var(--space-md)',
+                              borderRadius: '0 var(--radius-sm) var(--radius-sm) 0',
+                              fontSize: '0.92rem',
+                              lineHeight: 1.6,
+                              color: 'var(--text-secondary)'
+                            }}
+                          >
+                            <strong style={{ display: 'block', color: 'var(--color-navy)', marginBottom: '4px', fontSize: '0.78rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                              Statutory Scenario
+                            </strong>
+                            {check.scenario}
+                          </div>
                         )}
-                      </button>
+
+                        <h4 style={{ fontFamily: 'var(--font-serif)', fontSize: '1.15rem', color: 'var(--color-navy)', margin: '0 0 var(--space-md) 0' }}>
+                          {check.question}
+                        </h4>
+
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: 'var(--space-md)' }}>
+                          {check.options.map((opt, oIdx) => {
+                            const isSelected = currentSelected === oIdx;
+                            const isOptionCorrect = oIdx === correctIdx;
+
+                            let bg = 'var(--color-surface-card, #FCFAF5)';
+                            let borderColor = 'var(--color-border)';
+                            if (isSubmitted) {
+                              if (isOptionCorrect) {
+                                bg = 'rgba(16, 185, 129, 0.08)';
+                                borderColor = 'var(--color-success, #536F61)';
+                              } else if (isSelected && !isOptionCorrect) {
+                                bg = 'rgba(239, 68, 68, 0.08)';
+                                borderColor = '#ef4444';
+                              }
+                            } else if (isSelected) {
+                              bg = 'rgba(30, 41, 59, 0.04)';
+                              borderColor = 'var(--color-navy)';
+                            }
+
+                            return (
+                              <button
+                                key={oIdx}
+                                disabled={isSubmitted}
+                                onClick={() => setSelectedOptions(prev => ({ ...prev, [cIdx]: oIdx }))}
+                                style={{
+                                  textAlign: 'left',
+                                  backgroundColor: bg,
+                                  border: `1px solid ${borderColor}`,
+                                  borderRadius: 'var(--radius-md)',
+                                  padding: '12px 16px',
+                                  fontSize: '0.93rem',
+                                  color: 'var(--text-primary)',
+                                  cursor: isSubmitted ? 'default' : 'pointer',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: '12px',
+                                  transition: 'all 0.15s ease'
+                                }}
+                              >
+                                <span
+                                  style={{
+                                    width: '20px',
+                                    height: '20px',
+                                    borderRadius: '50%',
+                                    border: `1.5px solid ${borderColor}`,
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    fontSize: '0.75rem',
+                                    fontWeight: 700,
+                                    backgroundColor: isSelected ? 'var(--color-navy)' : 'var(--color-surface-card, #FCFAF5)',
+                                    color: isSelected ? 'var(--color-surface-card, #FCFAF5)' : 'var(--text-secondary)'
+                                  }}
+                                >
+                                  {String.fromCharCode(65 + oIdx)}
+                                </span>
+                                <span style={{ flex: 1 }}>{opt}</span>
+                                {isSubmitted && isOptionCorrect && (
+                                  <span style={{ color: 'var(--color-success, #536F61)', fontSize: '0.85rem', fontWeight: 600 }}>✓ Correct</span>
+                                )}
+                              </button>
+                            );
+                          })}
+                        </div>
+
+                        {!isSubmitted ? (
+                          <button
+                            onClick={() => handleKnowledgeCheckSubmit(cIdx)}
+                            disabled={currentSelected === null || isSubmitting}
+                            className="btn-portal-primary"
+                            style={{
+                              padding: '9px 20px',
+                              fontSize: '0.88rem',
+                              opacity: currentSelected === null || isSubmitting ? 0.5 : 1,
+                              cursor: currentSelected === null || isSubmitting ? 'not-allowed' : 'pointer'
+                            }}
+                          >
+                            {isSubmitting ? 'Checking Answer...' : 'Check My Answer'}
+                          </button>
+                        ) : (
+                          <div>
+                            <div
+                              style={{
+                                backgroundColor: isPassed ? 'var(--color-success-light, #EEF4F0)' : 'var(--color-danger-light, #F9ECEB)',
+                                border: `1px solid ${isPassed ? '#a7f3d0' : '#fecaca'}`,
+                                borderRadius: 'var(--radius-md)',
+                                padding: 'var(--space-md)',
+                                fontSize: '0.92rem',
+                                lineHeight: 1.6,
+                                color: isPassed ? '#065f46' : '#991b1b',
+                                marginBottom: 'var(--space-md)'
+                              }}
+                            >
+                              <strong>
+                                {isPassed ? '✓ Excellent insight!' : '✕ Not quite.'}
+                              </strong>{' '}
+                              {result?.explanation || check.explanation}
+                            </div>
+
+                            {!isPassed && (
+                              <button
+                                onClick={() => handleKnowledgeCheckRetry(cIdx)}
+                                style={{
+                                  backgroundColor: 'var(--color-surface-card, #FCFAF5)',
+                                  color: 'var(--color-navy)',
+                                  border: '1px solid var(--color-border)',
+                                  borderRadius: 'var(--radius-md)',
+                                  padding: '7px 14px',
+                                  fontSize: '0.84rem',
+                                  fontWeight: 600,
+                                  cursor: 'pointer'
+                                }}
+                              >
+                                ↻ Try Again
+                              </button>
+                            )}
+                          </div>
+                        )}
+                      </div>
                     );
                   })}
                 </div>
-
-                {!isAnswerSubmitted ? (
-                  <button
-                    onClick={handleKnowledgeCheckSubmit}
-                    disabled={selectedOption === null || knowledgeCheckSubmitting}
-                    className="btn-portal-primary"
-                    style={{
-                      padding: '9px 20px',
-                      fontSize: '0.88rem',
-                      opacity: selectedOption === null || knowledgeCheckSubmitting ? 0.5 : 1,
-                      cursor: selectedOption === null || knowledgeCheckSubmitting ? 'not-allowed' : 'pointer'
-                    }}
-                  >
-                    {knowledgeCheckSubmitting ? 'Checking Answer...' : 'Check My Answer'}
-                  </button>
-                ) : (
-                  <div>
-                    <div
-                      style={{
-                        backgroundColor: (knowledgeCheckResult?.isCorrect ?? (selectedOption === currentModule.quickCheck.correctIndex)) ? 'var(--color-success-light, #EEF4F0)' : 'var(--color-danger-light, #F9ECEB)',
-                        border: `1px solid ${(knowledgeCheckResult?.isCorrect ?? (selectedOption === currentModule.quickCheck.correctIndex)) ? '#a7f3d0' : '#fecaca'}`,
-                        borderRadius: 'var(--radius-md)',
-                        padding: 'var(--space-md)',
-                        fontSize: '0.92rem',
-                        lineHeight: 1.6,
-                        color: (knowledgeCheckResult?.isCorrect ?? (selectedOption === currentModule.quickCheck.correctIndex)) ? '#065f46' : '#991b1b',
-                        marginBottom: 'var(--space-md)'
-                      }}
-                    >
-                      <strong>
-                        {(knowledgeCheckResult?.isCorrect ?? (selectedOption === currentModule.quickCheck.correctIndex))
-                          ? '✓ Excellent insight!'
-                          : '✕ Not quite.'}
-                      </strong>{' '}
-                      {knowledgeCheckResult?.explanation || currentModule.quickCheck.explanation}
-                    </div>
-
-                    {!(knowledgeCheckResult?.isCorrect ?? (selectedOption === currentModule.quickCheck.correctIndex)) && (
-                      <button
-                        onClick={handleKnowledgeCheckRetry}
-                        style={{
-                          backgroundColor: 'var(--color-surface-card, #FCFAF5)',
-                          color: 'var(--color-navy)',
-                          border: '1px solid var(--color-border)',
-                          borderRadius: 'var(--radius-md)',
-                          padding: '7px 14px',
-                          fontSize: '0.84rem',
-                          fontWeight: 600,
-                          cursor: 'pointer'
-                        }}
-                      >
-                        ↻ Try Again
-                      </button>
-                    )}
-                  </div>
-                )}
-              </div>
-            )}
+              );
+            })()}
 
             {/* Mobile Cross-References (<992px) */}
             <div className="lesson-mobile-crossrefs">
