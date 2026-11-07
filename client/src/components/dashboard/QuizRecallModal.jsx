@@ -11,7 +11,7 @@ import api from '../../services/api';
  *   ordering, indicator_identification, scenario_decision, and legal_application.
  * - Zero answer leakage: questions are served sanitized; correct answers and explanations appear ONLY after submission.
  * - Non-coercive, self-paced revision: no mandatory lockouts, no overdue threats.
- * - Honest evaluation copy: '✓ Concept Clarified & Understood' (not 'Mastered').
+ * - Neutral, accurate feedback: '✓ Correct answer' (avoids implying permanent mastery).
  * - Clear statutory feedback: explains why an option failed, provides actionable practical takeaways,
  *   and presents the exact correct solution structure.
  */
@@ -488,11 +488,11 @@ function QuizRecallModal({
               marginBottom: '10px'
             }}>
               <span style={{ fontSize: '0.82rem', fontWeight: 700, textTransform: 'uppercase', color: evalResult.isCorrect ? 'var(--color-success, #536F61)' : 'var(--color-danger, #A34D43)' }}>
-                {evalResult.isCorrect ? '✓ Concept Clarified & Understood' : '⚠️ Still Needs Practice'}
+                {evalResult.isCorrect ? '✓ Correct answer' : '⚠️ Incorrect'}
               </span>
               <p style={{ margin: '4px 0 0 0', fontSize: '0.88rem', color: evalResult.isCorrect ? 'var(--color-success, #536F61)' : 'var(--color-danger, #A34D43)', lineHeight: 1.45 }}>
                 {evalResult.isCorrect
-                  ? 'Great job. You have demonstrated accurate recall and practical understanding of this statutory principle.'
+                  ? 'Your answer matches the statutory principle.'
                   : (evalResult.whyIncorrect || 'This selection does not align with established statutory provisions.')}
               </p>
             </div>

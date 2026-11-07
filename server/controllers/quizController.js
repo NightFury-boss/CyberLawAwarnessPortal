@@ -336,20 +336,27 @@ exports.submitQuiz = async (req, res) => {
 
       // Format 2: multiple_choice (Multi-select MCQ)
       else if (format === 'multiple_choice') {
-        const selectedIndices = Array.isArray(ans.selectedOptionIndices) ? ans.selectedOptionIndices : [];
+        const rawIndices = Array.isArray(ans.selectedOptionIndices) ? ans.selectedOptionIndices : [];
+        const numOptions = q.options?.length || 0;
+        const validIntegers = rawIndices.every(idx => Number.isInteger(idx) && idx >= 0 && idx < numOptions);
+        const uniqueIndices = new Set(rawIndices);
+        const hasDuplicates = uniqueIndices.size !== rawIndices.length;
+        const selectedIndices = (!hasDuplicates && validIntegers) ? rawIndices : [];
+
         const correctIndices = Array.isArray(q.correctOptionIndices) ? q.correctOptionIndices : [];
 
-        humanUserAnswer = selectedIndices.length > 0
-          ? selectedIndices.map(i => q.options[i] || `Option ${i + 1}`).join('; ')
+        humanUserAnswer = rawIndices.length > 0
+          ? rawIndices.map(i => q.options[i] || `Option ${i + 1}`).join('; ')
           : 'None selected';
         humanCorrectAnswer = correctIndices.map(i => q.options[i] || `Option ${i + 1}`).join('; ');
 
-        if (selectedIndices.length === 0) {
+        if (rawIndices.length === 0) {
           unansweredCount++;
+        } else if (hasDuplicates || !validIntegers) {
+          incorrectCount++;
+          specificWhyIncorrect = 'Submission contained invalid or duplicate option indices.';
         } else {
           const correctSet = new Set(correctIndices);
-          const selectedSet = new Set(selectedIndices);
-
           let correctHits = 0;
           let wrongHits = 0;
 
@@ -381,32 +388,61 @@ exports.submitQuiz = async (req, res) => {
         const submittedPairs = Array.isArray(ans.selectedPairs) ? ans.selectedPairs : [];
         const authoritativePairs = q.matchingPairs || [];
 
-        humanUserAnswer = submittedPairs.map(p => `${p.left} → ${p.right}`).join('; ');
+        humanUserAnswer = submittedPairs.map(p => `${p?.left} → ${p?.right}`).join('; ');
         humanCorrectAnswer = authoritativePairs.map(p => `${p.left} → ${p.right}`).join('; ');
 
         if (submittedPairs.length === 0) {
           unansweredCount++;
         } else {
-          let matchedCount = 0;
+          const authLeftSet = new Set(authoritativePairs.map(p => p.left));
+          const authRightSet = new Set(authoritativePairs.map(p => p.right));
           const authMap = new Map(authoritativePairs.map(p => [p.left, p.right]));
 
-          submittedPairs.forEach(p => {
-            if (authMap.get(p.left) === p.right) matchedCount++;
-          });
+          const seenLefts = new Set();
+          const seenRights = new Set();
+          let matchedCount = 0;
+          let hasDuplicateOrInvalid = false;
 
-          if (matchedCount === authoritativePairs.length && authoritativePairs.length > 0) {
+          for (const p of submittedPairs) {
+            if (!p || typeof p.left !== 'string' || typeof p.right !== 'string') {
+              hasDuplicateOrInvalid = true;
+              break;
+            }
+            if (seenLefts.has(p.left) || seenRights.has(p.right)) {
+              hasDuplicateOrInvalid = true;
+              break;
+            }
+            if (!authLeftSet.has(p.left) || !authRightSet.has(p.right)) {
+              hasDuplicateOrInvalid = true;
+              break;
+            }
+            if (authMap.get(p.left) === p.right) {
+              matchedCount++;
+            }
+            seenLefts.add(p.left);
+            seenRights.add(p.right);
+          }
+
+          if (
+            !hasDuplicateOrInvalid &&
+            authoritativePairs.length > 0 &&
+            submittedPairs.length === authoritativePairs.length &&
+            matchedCount === authoritativePairs.length
+          ) {
             isCorrect = true;
             partialScore = 1.0;
             correctCount++;
             topicTracker[category].correct++;
-          } else if (matchedCount > 0) {
+          } else if (!hasDuplicateOrInvalid && matchedCount > 0 && submittedPairs.length === authoritativePairs.length) {
             partialScore = Number((matchedCount / authoritativePairs.length).toFixed(2));
             totalScoreEarned += partialScore;
             incorrectCount++;
             specificWhyIncorrect = `Matched ${matchedCount} of ${authoritativePairs.length} pairs correctly.`;
           } else {
             incorrectCount++;
-            specificWhyIncorrect = 'None of the submitted pair associations matched the statutory definitions.';
+            specificWhyIncorrect = hasDuplicateOrInvalid
+              ? 'Matching submission contained duplicate or invalid provision pairings.'
+              : 'None of the submitted pair associations matched the statutory definitions.';
           }
         }
       }
@@ -443,23 +479,29 @@ exports.submitQuiz = async (req, res) => {
 
       // Format 5: indicator_identification
       else if (format === 'indicator_identification') {
-        const selectedIndicatorIds = Array.isArray(ans.selectedIndicatorIds) ? ans.selectedIndicatorIds : [];
+        const rawIndicatorIds = Array.isArray(ans.selectedIndicatorIds) ? ans.selectedIndicatorIds : [];
         const indicators = q.indicators || [];
+        const validIdSet = new Set(indicators.map(ind => ind.id));
         const trueSuspiciousIds = indicators.filter(ind => ind.isSuspicious).map(ind => ind.id);
+        const hasDuplicates = new Set(rawIndicatorIds).size !== rawIndicatorIds.length;
+        const allValid = rawIndicatorIds.every(id => typeof id === 'string' && validIdSet.has(id));
 
-        humanUserAnswer = selectedIndicatorIds.length > 0
-          ? indicators.filter(ind => selectedIndicatorIds.includes(ind.id)).map(ind => ind.text).join('; ')
+        humanUserAnswer = rawIndicatorIds.length > 0
+          ? indicators.filter(ind => rawIndicatorIds.includes(ind.id)).map(ind => ind.text).join('; ')
           : 'No indicators flagged';
         humanCorrectAnswer = indicators.filter(ind => ind.isSuspicious).map(ind => ind.text).join('; ');
 
-        if (selectedIndicatorIds.length === 0) {
+        if (rawIndicatorIds.length === 0) {
           unansweredCount++;
+        } else if (hasDuplicates || !allValid) {
+          incorrectCount++;
+          specificWhyIncorrect = 'Submission contained invalid or duplicate indicator identifiers.';
         } else {
           const trueSet = new Set(trueSuspiciousIds);
           let correctFlags = 0;
           let falseAlarms = 0;
 
-          selectedIndicatorIds.forEach(id => {
+          rawIndicatorIds.forEach(id => {
             if (trueSet.has(id)) correctFlags++;
             else falseAlarms++;
           });
@@ -874,28 +916,94 @@ exports.submitQuizRecall = async (req, res) => {
 
     if (['single_choice', 'true_false', 'scenario_decision', 'legal_application'].includes(format)) {
       const selected = typeof answer === 'object' ? answer?.selectedOptionIndex : answer;
-      isCorrect = (selected !== undefined && selected !== null && selected !== -1 && selected === question.correctOptionIndex);
+      const validIndex = Number.isInteger(selected) && selected >= 0 && selected < (question.options?.length || 0);
+      isCorrect = validIndex && (selected === question.correctOptionIndex);
     } else if (format === 'multiple_choice') {
-      const selected = Array.isArray(answer?.selectedOptionIndices) ? answer.selectedOptionIndices : [];
-      const correct = Array.isArray(question.correctOptionIndices) ? question.correctOptionIndices : [];
-      isCorrect = (selected.length === correct.length && selected.every(idx => correct.includes(idx)));
+      const rawIndices = Array.isArray(answer?.selectedOptionIndices) ? answer.selectedOptionIndices : [];
+      const numOptions = question.options?.length || 0;
+      const validIntegers = rawIndices.every(idx => Number.isInteger(idx) && idx >= 0 && idx < numOptions);
+      const uniqueIndices = new Set(rawIndices);
+      const hasDuplicates = uniqueIndices.size !== rawIndices.length;
+
+      const correctIndices = Array.isArray(question.correctOptionIndices) ? question.correctOptionIndices : [];
+      const correctSet = new Set(correctIndices);
+
+      isCorrect = (
+        validIntegers &&
+        !hasDuplicates &&
+        rawIndices.length === correctIndices.length &&
+        rawIndices.every(idx => correctSet.has(idx))
+      );
     } else if (format === 'matching') {
       const submittedPairs = Array.isArray(answer?.selectedPairs) ? answer.selectedPairs : [];
       const authPairs = Array.isArray(question.matchingPairs) ? question.matchingPairs : [];
+      const authLeftSet = new Set(authPairs.map(p => p.left));
+      const authRightSet = new Set(authPairs.map(p => p.right));
       const authMap = new Map(authPairs.map(p => [p.left, p.right]));
-      let matchCount = 0;
-      submittedPairs.forEach(p => {
-        if (authMap.get(p.left) === p.right) matchCount++;
-      });
-      isCorrect = (authPairs.length > 0 && submittedPairs.length === authPairs.length && matchCount === authPairs.length);
+
+      if (authPairs.length > 0 && submittedPairs.length === authPairs.length) {
+        const seenLefts = new Set();
+        const seenRights = new Set();
+        let allValidAndMatched = true;
+
+        for (const p of submittedPairs) {
+          if (!p || typeof p.left !== 'string' || typeof p.right !== 'string') {
+            allValidAndMatched = false;
+            break;
+          }
+          if (seenLefts.has(p.left) || seenRights.has(p.right)) {
+            // Rejects duplicate left or duplicate right mapping (requires 1-to-1 unique mapping)
+            allValidAndMatched = false;
+            break;
+          }
+          if (!authLeftSet.has(p.left) || !authRightSet.has(p.right)) {
+            // Rejects invalid keys/values
+            allValidAndMatched = false;
+            break;
+          }
+          if (authMap.get(p.left) !== p.right) {
+            allValidAndMatched = false;
+            break;
+          }
+          seenLefts.add(p.left);
+          seenRights.add(p.right);
+        }
+
+        isCorrect = allValidAndMatched && (seenLefts.size === authPairs.length);
+      } else {
+        isCorrect = false;
+      }
     } else if (format === 'ordering') {
       const submittedSeq = Array.isArray(answer?.selectedSequence) ? answer.selectedSequence : [];
       const authSeq = Array.isArray(question.sequenceItems) ? question.sequenceItems : [];
-      isCorrect = (authSeq.length > 0 && submittedSeq.length === authSeq.length && submittedSeq.every((item, i) => item === authSeq[i]));
+      const authSet = new Set(authSeq);
+      const hasDuplicates = new Set(submittedSeq).size !== submittedSeq.length;
+      const allValid = submittedSeq.every(item => typeof item === 'string' && authSet.has(item));
+
+      isCorrect = (
+        authSeq.length > 0 &&
+        !hasDuplicates &&
+        allValid &&
+        submittedSeq.length === authSeq.length &&
+        submittedSeq.every((item, i) => item === authSeq[i])
+      );
     } else if (format === 'indicator_identification') {
-      const selectedIds = Array.isArray(answer?.selectedIndicatorIds) ? answer.selectedIndicatorIds : [];
-      const trueSuspicious = (question.indicators || []).filter(ind => ind.isSuspicious).map(ind => ind.id);
-      isCorrect = (trueSuspicious.length > 0 && selectedIds.length === trueSuspicious.length && selectedIds.every(id => trueSuspicious.includes(id)));
+      const rawIds = Array.isArray(answer?.selectedIndicatorIds) ? answer.selectedIndicatorIds : [];
+      const indicators = Array.isArray(question.indicators) ? question.indicators : [];
+      const validIdSet = new Set(indicators.map(ind => ind.id));
+      const trueSuspicious = indicators.filter(ind => ind.isSuspicious).map(ind => ind.id);
+      const trueSuspiciousSet = new Set(trueSuspicious);
+
+      const allValidStrings = rawIds.every(id => typeof id === 'string' && validIdSet.has(id));
+      const hasDuplicates = new Set(rawIds).size !== rawIds.length;
+
+      isCorrect = (
+        trueSuspicious.length > 0 &&
+        allValidStrings &&
+        !hasDuplicates &&
+        rawIds.length === trueSuspicious.length &&
+        rawIds.every(id => trueSuspiciousSet.has(id))
+      );
     }
 
     // Update progress item

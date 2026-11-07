@@ -411,8 +411,24 @@ async function runStage5ConsolidationSuite() {
     assert(resRecallSingleRight.data.isCorrect === true, 'single_choice: correct answer returns isCorrect: true');
     assert(resRecallSingleRight.data.isResolved === true, 'single_choice: isResolved is true');
 
-    // 6.2 Multiple Choice (Multi-Select) Evaluation
+    // 6.2 Multiple Choice (Multi-Select) Evaluation & Payload Hardening
     await stageQuestionForRecall(qMulti);
+    // Duplicate indices rejection
+    const resMultiDup = createMockRes();
+    await quizController.submitQuizRecall({
+      user: { _id: testUser._id },
+      body: { questionId: qMulti._id, answer: { selectedOptionIndices: [0, 0, 1, 3] } }
+    }, resMultiDup);
+    assert(resMultiDup.data.isCorrect === false, 'multiple_choice: duplicate indices in payload rejected as isCorrect: false');
+
+    // Out of bounds index rejection
+    const resMultiOob = createMockRes();
+    await quizController.submitQuizRecall({
+      user: { _id: testUser._id },
+      body: { questionId: qMulti._id, answer: { selectedOptionIndices: [0, 1, 99] } }
+    }, resMultiOob);
+    assert(resMultiOob.data.isCorrect === false, 'multiple_choice: out-of-bounds index rejected as isCorrect: false');
+
     // Partial selection (missing index 3)
     const resMultiPartial = createMockRes();
     await quizController.submitQuizRecall({
@@ -437,8 +453,60 @@ async function runStage5ConsolidationSuite() {
     }, resMultiRight);
     assert(resMultiRight.data.isCorrect === true, 'multiple_choice: exact match returns isCorrect: true');
 
-    // 6.3 Matching Evaluation (including length and pairing accuracy)
+    // 6.3 Matching Evaluation & Payload Hardening (Complete, Unique, Bijective Mapping)
     await stageQuestionForRecall(qMatching);
+
+    // Duplicate left mapping rejection
+    const resMatchDupLeft = createMockRes();
+    await quizController.submitQuizRecall({
+      user: { _id: testUser._id },
+      body: {
+        questionId: qMatching._id,
+        answer: {
+          selectedPairs: [
+            { left: 'IT Act Section 66C', right: 'Identity theft using digital signature or password' },
+            { left: 'IT Act Section 66C', right: 'Cheating by personation using computer resource' },
+            { left: 'IT Act Section 72A', right: 'Disclosure of personal information in breach of lawful contract' }
+          ]
+        }
+      }
+    }, resMatchDupLeft);
+    assert(resMatchDupLeft.data.isCorrect === false, 'matching: duplicate left item rejected as isCorrect: false');
+
+    // Duplicate right mapping rejection (mapping two lefts to the same right)
+    const resMatchDupRight = createMockRes();
+    await quizController.submitQuizRecall({
+      user: { _id: testUser._id },
+      body: {
+        questionId: qMatching._id,
+        answer: {
+          selectedPairs: [
+            { left: 'IT Act Section 66C', right: 'Identity theft using digital signature or password' },
+            { left: 'IT Act Section 66D', right: 'Identity theft using digital signature or password' },
+            { left: 'IT Act Section 72A', right: 'Disclosure of personal information in breach of lawful contract' }
+          ]
+        }
+      }
+    }, resMatchDupRight);
+    assert(resMatchDupRight.data.isCorrect === false, 'matching: duplicate right target mapping rejected as isCorrect: false');
+
+    // Invalid / hallucinated left key
+    const resMatchInvalidLeft = createMockRes();
+    await quizController.submitQuizRecall({
+      user: { _id: testUser._id },
+      body: {
+        questionId: qMatching._id,
+        answer: {
+          selectedPairs: [
+            { left: 'IT Act Section 999_FAKE', right: 'Identity theft using digital signature or password' },
+            { left: 'IT Act Section 66D', right: 'Cheating by personation using computer resource' },
+            { left: 'IT Act Section 72A', right: 'Disclosure of personal information in breach of lawful contract' }
+          ]
+        }
+      }
+    }, resMatchInvalidLeft);
+    assert(resMatchInvalidLeft.data.isCorrect === false, 'matching: invalid provision key rejected as isCorrect: false');
+
     // Missing one pair
     const resMatchIncomplete = createMockRes();
     await quizController.submitQuizRecall({
@@ -454,6 +522,24 @@ async function runStage5ConsolidationSuite() {
       }
     }, resMatchIncomplete);
     assert(resMatchIncomplete.data.isCorrect === false, 'matching: incomplete pair count evaluated as isCorrect: false');
+
+    // Extra pair (length mismatch)
+    const resMatchExtra = createMockRes();
+    await quizController.submitQuizRecall({
+      user: { _id: testUser._id },
+      body: {
+        questionId: qMatching._id,
+        answer: {
+          selectedPairs: [
+            { left: 'IT Act Section 66C', right: 'Identity theft using digital signature or password' },
+            { left: 'IT Act Section 66D', right: 'Cheating by personation using computer resource' },
+            { left: 'IT Act Section 72A', right: 'Disclosure of personal information in breach of lawful contract' },
+            { left: 'IT Act Section 43A', right: 'Reasonable security practices' }
+          ]
+        }
+      }
+    }, resMatchExtra);
+    assert(resMatchExtra.data.isCorrect === false, 'matching: extra pair rejected as isCorrect: false');
 
     // Wrong right association
     const resMatchWrongPair = createMockRes();
@@ -472,7 +558,7 @@ async function runStage5ConsolidationSuite() {
     }, resMatchWrongPair);
     assert(resMatchWrongPair.data.isCorrect === false, 'matching: mismatched pairs evaluated as isCorrect: false');
 
-    // Correct pairs
+    // Correct pairs (unique complete 1-to-1 mapping)
     const resMatchRight = createMockRes();
     await quizController.submitQuizRecall({
       user: { _id: testUser._id },
@@ -487,10 +573,28 @@ async function runStage5ConsolidationSuite() {
         }
       }
     }, resMatchRight);
-    assert(resMatchRight.data.isCorrect === true, 'matching: exact pairs return isCorrect: true');
+    assert(resMatchRight.data.isCorrect === true, 'matching: complete, unique valid mapping returns isCorrect: true');
 
-    // 6.4 Ordering Evaluation
+    // 6.4 Ordering Evaluation & Hardening
     await stageQuestionForRecall(qOrdering);
+    // Duplicate step rejection
+    const resOrderDup = createMockRes();
+    await quizController.submitQuizRecall({
+      user: { _id: testUser._id },
+      body: {
+        questionId: qOrdering._id,
+        answer: {
+          selectedSequence: [
+            'Immediately block affected payment instruments and freeze net banking',
+            'Immediately block affected payment instruments and freeze net banking',
+            'Notify the banking institution in writing within the zero-liability notification window',
+            'Lodge formal docket at cybercrime.gov.in with transaction acknowledgment'
+          ]
+        }
+      }
+    }, resOrderDup);
+    assert(resOrderDup.data.isCorrect === false, 'ordering: duplicate step in sequence rejected as isCorrect: false');
+
     // Inverted sequence
     const resOrderWrong = createMockRes();
     await quizController.submitQuizRecall({
@@ -527,8 +631,31 @@ async function runStage5ConsolidationSuite() {
     }, resOrderRight);
     assert(resOrderRight.data.isCorrect === true, 'ordering: exact chronological sequence returns isCorrect: true');
 
-    // 6.5 Indicator Identification Evaluation
+    // 6.5 Indicator Identification Evaluation & Hardening
     await stageQuestionForRecall(qIndicator);
+
+    // Duplicate indicator IDs rejection
+    const resIndDup = createMockRes();
+    await quizController.submitQuizRecall({
+      user: { _id: testUser._id },
+      body: {
+        questionId: qIndicator._id,
+        answer: { selectedIndicatorIds: ['ind_urgency', 'ind_urgency', 'ind_phone', 'ind_apk'] }
+      }
+    }, resIndDup);
+    assert(resIndDup.data.isCorrect === false, 'indicator_identification: duplicate IDs rejected as isCorrect: false');
+
+    // Invalid / hallucinated indicator ID rejection
+    const resIndInvalid = createMockRes();
+    await quizController.submitQuizRecall({
+      user: { _id: testUser._id },
+      body: {
+        questionId: qIndicator._id,
+        answer: { selectedIndicatorIds: ['ind_urgency', 'ind_phone', 'ind_apk_fake'] }
+      }
+    }, resIndInvalid);
+    assert(resIndInvalid.data.isCorrect === false, 'indicator_identification: invalid indicator ID rejected as isCorrect: false');
+
     // Missing one red flag
     const resIndMissing = createMockRes();
     await quizController.submitQuizRecall({

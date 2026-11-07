@@ -58,9 +58,11 @@ function Dashboard({ user, progressTrigger }) {
     setPortfolioInitialPillar(null);
   };
 
-  const fetchDashboardData = useCallback(async () => {
-    setLoadState('LOADING');
-    setErrorMessage('');
+  const fetchDashboardData = useCallback(async (silent = false) => {
+    if (!silent) {
+      setLoadState('LOADING');
+      setErrorMessage('');
+    }
     try {
       // 1. Authoritative identity and assessment status checks MUST succeed.
       // If either fails due to network/server failure, we MUST NOT assume the learner is new or has completed anything.
@@ -99,8 +101,10 @@ function Dashboard({ user, progressTrigger }) {
 
       setLoadState('RESOLVED');
     } catch (err) {
-      setErrorMessage(err.message || 'Unable to connect to the learning portal. Please check your network connection.');
-      setLoadState('ERROR');
+      if (!silent) {
+        setErrorMessage(err.message || 'Unable to connect to the learning portal. Please check your network connection.');
+        setLoadState('ERROR');
+      }
     }
   }, []);
 
@@ -514,11 +518,11 @@ displayName={firstName}
       {isQuizRecallModalOpen && dueQuizRecalls.length > 0 && (
         <QuizRecallModal
           isOpen={isQuizRecallModalOpen}
-          onClose={() => setIsQuizRecallModalOpen(false)}
-          dueRecalls={dueQuizRecalls}
-          onRecallCompleted={() => {
-            fetchDashboardData();
+          onClose={() => {
+            setIsQuizRecallModalOpen(false);
+            fetchDashboardData(true);
           }}
+          dueRecalls={dueQuizRecalls}
         />
       )}
 
