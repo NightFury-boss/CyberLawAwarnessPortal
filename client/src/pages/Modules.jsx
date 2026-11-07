@@ -106,7 +106,31 @@ function Modules({ user, isWorkspace = false }) {
           setIsCompleted(!!mod.isCompleted);
           setModuleStatus(mod.status || (mod.isCompleted ? 'read_completed' : 'in_progress'));
 
-          if (mod.knowledgeCheckStatus && mod.knowledgeCheckStatus !== 'not_attempted') {
+          if (Array.isArray(mod.checkResults) && mod.checkResults.length > 0) {
+            const restoredSelected = {};
+            const restoredSubmitted = {};
+            const restoredResults = {};
+            const activeChecksList = (Array.isArray(mod.quickChecks) && mod.quickChecks.length > 0)
+              ? mod.quickChecks
+              : (mod.quickCheck ? [mod.quickCheck] : []);
+
+            mod.checkResults.forEach(cr => {
+              if (typeof cr.checkIndex === 'number') {
+                if (typeof cr.lastAnswerIndex === 'number') {
+                  restoredSelected[cr.checkIndex] = cr.lastAnswerIndex;
+                }
+                restoredSubmitted[cr.checkIndex] = true;
+                const target = activeChecksList[cr.checkIndex] || mod.quickCheck;
+                restoredResults[cr.checkIndex] = {
+                  isCorrect: Boolean(cr.isCorrect),
+                  explanation: target?.explanation || ''
+                };
+              }
+            });
+            setSelectedOptions(restoredSelected);
+            setSubmittedChecks(restoredSubmitted);
+            setKnowledgeCheckResults(restoredResults);
+          } else if (mod.knowledgeCheckStatus && mod.knowledgeCheckStatus !== 'not_attempted') {
             const lastAns = typeof mod.lastAnswerIndex === 'number' ? mod.lastAnswerIndex : null;
             if (lastAns !== null) {
               setSelectedOptions({ 0: lastAns });
@@ -766,11 +790,18 @@ function Modules({ user, isWorkspace = false }) {
                           </div>
                         )}
 
-                        <h4 style={{ fontFamily: 'var(--font-serif)', fontSize: '1.15rem', color: 'var(--color-navy)', margin: '0 0 var(--space-md) 0' }}>
+                        <h4
+                          id={`quick-check-q-${cIdx + 1}`}
+                          style={{ fontFamily: 'var(--font-serif)', fontSize: '1.15rem', color: 'var(--color-navy)', margin: '0 0 var(--space-md) 0' }}
+                        >
                           {check.question}
                         </h4>
 
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: 'var(--space-md)' }}>
+                        <div
+                          role="radiogroup"
+                          aria-labelledby={`quick-check-q-${cIdx + 1}`}
+                          style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: 'var(--space-md)' }}
+                        >
                           {check.options.map((opt, oIdx) => {
                             const isSelected = currentSelected === oIdx;
                             const isOptionCorrect = oIdx === correctIdx;
@@ -793,6 +824,9 @@ function Modules({ user, isWorkspace = false }) {
                             return (
                               <button
                                 key={oIdx}
+                                type="button"
+                                role="radio"
+                                aria-checked={isSelected}
                                 disabled={isSubmitted}
                                 onClick={() => setSelectedOptions(prev => ({ ...prev, [cIdx]: oIdx }))}
                                 style={{
@@ -807,7 +841,14 @@ function Modules({ user, isWorkspace = false }) {
                                   display: 'flex',
                                   alignItems: 'center',
                                   gap: '12px',
-                                  transition: 'all 0.15s ease'
+                                  transition: 'all 0.15s ease',
+                                  outline: 'none'
+                                }}
+                                onFocus={(e) => {
+                                  e.currentTarget.style.boxShadow = '0 0 0 2px var(--color-navy)';
+                                }}
+                                onBlur={(e) => {
+                                  e.currentTarget.style.boxShadow = 'none';
                                 }}
                               >
                                 <span
@@ -853,6 +894,8 @@ function Modules({ user, isWorkspace = false }) {
                         ) : (
                           <div>
                             <div
+                              role="status"
+                              aria-live="polite"
                               style={{
                                 backgroundColor: isPassed ? 'var(--color-success-light, #EEF4F0)' : 'var(--color-danger-light, #F9ECEB)',
                                 border: `1px solid ${isPassed ? '#a7f3d0' : '#fecaca'}`,

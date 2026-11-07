@@ -311,13 +311,16 @@ async function runWave2Tests() {
     assert.strictEqual(totalCount, 361, `Expected 361 total questions after Stage 4 expansion, got ${totalCount}`);
   });
 
-  test('Seed Idempotency & Upsert Safety: $or questionId query and non-destructive delete guard', () => {
+  test('Seed Idempotency & Upsert Safety: stable authored questionId vs questionText query and non-destructive delete guard', () => {
     const seedFilePath = path.join(__dirname, '../config/seed.js');
     const seedContent = fs.readFileSync(seedFilePath, 'utf8');
 
-    // Check $or matching
-    assert(seedContent.includes('$or: [{ questionId: qData.questionId }, { questionText: qData.questionText }]'),
-      'seed.js must upsert by questionId with questionText fallback');
+    // Check authored vs generated query matching
+    const hasAuthoredQueryCheck = seedContent.includes('hasAuthoredId') &&
+      seedContent.includes('questionId: qData.questionId') &&
+      seedContent.includes('questionText: qData.questionText');
+    assert(hasAuthoredQueryCheck,
+      'seed.js must upsert authored IDs by questionId and generated positional IDs by questionText');
 
     // Check deleteMany non-destructive guard
     assert(seedContent.includes('activeQuestionIds'), 'seed.js must collect activeQuestionIds');

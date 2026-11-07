@@ -34,17 +34,17 @@ const expandedQuestions = [
     "practicalTakeaway": "Key Rule: Always verify statutory prerequisites, jurisdictional limits, and applicable notification timelines under operative Indian cyber and privacy enactments.",
     "legalReferences": [
       {
-        "actName": "Information Technology Act, 2000 / DPDP Act, 2023",
-        "sectionNumber": "Section 43A / DPDP Section 6(1)",
-        "title": "Personal Data and Digital Identity",
-        "status": "active"
+        "actName": "Digital Personal Data Protection Act, 2023",
+        "sectionNumber": "DPDP Section 6(1)",
+        "title": "Personal Data and Digital Identity - Conditional Consent",
+        "status": "not_yet_in_force"
       }
     ],
     "sourceMetadata": {
-      "actName": "Information Technology Act, 2000 / DPDP Act, 2023",
-      "citation": "Section 43A / DPDP Section 6(1)",
-      "year": 2026,
-      "status": "Operative legal standard on 6 November 2026 baseline"
+      "actName": "Digital Personal Data Protection Act, 2023",
+      "citation": "DPDP Section 6(1)",
+      "year": 2023,
+      "status": "Enacted; scheduled for commencement on 13 May 2027 under G.S.R. 843(E) (prospective standard on 6 November 2026 baseline)"
     },
     "topicTag": "PILLAR 1",
     "relatedModule": "digital-identity-data-protection",
@@ -77,17 +77,17 @@ const expandedQuestions = [
     "practicalTakeaway": "Key Rule: Always verify statutory prerequisites, jurisdictional limits, and applicable notification timelines under operative Indian cyber and privacy enactments.",
     "legalReferences": [
       {
-        "actName": "Information Technology Act, 2000 / DPDP Act, 2023",
-        "sectionNumber": "Section 43A / DPDP Section 6(1)",
-        "title": "Personal Data and Digital Identity",
+        "actName": "Information Technology Act, 2000",
+        "sectionNumber": "Section 43A",
+        "title": "Compensation for Failure to Protect Data & SPDI Rules",
         "status": "active"
       }
     ],
     "sourceMetadata": {
-      "actName": "Information Technology Act, 2000 / DPDP Act, 2023",
-      "citation": "Section 43A / DPDP Section 6(1)",
-      "year": 2026,
-      "status": "Operative legal standard on 6 November 2026 baseline"
+      "actName": "Information Technology Act, 2000",
+      "citation": "Section 43A / SPDI Rules, 2011",
+      "year": 2000,
+      "status": "Operative legal standard on 6 November 2026 baseline (DPDP Section 44(2) omission effective 13 May 2027)"
     },
     "topicTag": "PILLAR 1",
     "relatedModule": "digital-identity-data-protection",
@@ -120,17 +120,17 @@ const expandedQuestions = [
     "practicalTakeaway": "Key Rule: Always verify statutory prerequisites, jurisdictional limits, and applicable notification timelines under operative Indian cyber and privacy enactments.",
     "legalReferences": [
       {
-        "actName": "Information Technology Act, 2000 / DPDP Act, 2023",
-        "sectionNumber": "Section 43A / DPDP Section 6(1)",
-        "title": "Personal Data and Digital Identity",
+        "actName": "Bharatiya Nyaya Sanhita, 2023 / Information Technology Act, 2000",
+        "sectionNumber": "BNS Section 319 / IT Act Section 66D",
+        "title": "Cheating by Personation and Identity Spoofing",
         "status": "active"
       }
     ],
     "sourceMetadata": {
-      "actName": "Information Technology Act, 2000 / DPDP Act, 2023",
-      "citation": "Section 43A / DPDP Section 6(1)",
-      "year": 2026,
-      "status": "Operative legal standard on 6 November 2026 baseline"
+      "actName": "Bharatiya Nyaya Sanhita, 2023 / Information Technology Act, 2000",
+      "citation": "BNS Section 319 / IT Act Section 66D",
+      "year": 2024,
+      "status": "In force. Notified effective 1 July 2024 (BNS) / 17 October 2000 (IT Act)"
     },
     "topicTag": "PILLAR 1",
     "relatedModule": "digital-identity-data-protection",
@@ -166,14 +166,14 @@ const expandedQuestions = [
         "actName": "Digital Personal Data Protection Act, 2023",
         "sectionNumber": "Sections 11-14 & Section 9",
         "title": "Data Principal Rights",
-        "status": "active"
+        "status": "not_yet_in_force"
       }
     ],
     "sourceMetadata": {
       "actName": "Digital Personal Data Protection Act, 2023",
       "citation": "Sections 11-14 & Section 9",
-      "year": 2026,
-      "status": "Operative legal standard on 6 November 2026 baseline"
+      "year": 2023,
+      "status": "Enacted; scheduled for commencement on 13 May 2027 under G.S.R. 843(E) (prospective standard on 6 November 2026 baseline)"
     },
     "topicTag": "PILLAR 2",
     "relatedModule": "data-principal-rights-child-safeguards",
@@ -209,14 +209,14 @@ const expandedQuestions = [
         "actName": "Digital Personal Data Protection Act, 2023",
         "sectionNumber": "Sections 11-14 & Section 9",
         "title": "Data Principal Rights",
-        "status": "active"
+        "status": "not_yet_in_force"
       }
     ],
     "sourceMetadata": {
       "actName": "Digital Personal Data Protection Act, 2023",
       "citation": "Sections 11-14 & Section 9",
-      "year": 2026,
-      "status": "Operative legal standard on 6 November 2026 baseline"
+      "year": 2023,
+      "status": "Enacted; scheduled for commencement on 13 May 2027 under G.S.R. 843(E) (prospective standard on 6 November 2026 baseline)"
     },
     "topicTag": "PILLAR 2",
     "relatedModule": "data-principal-rights-child-safeguards",
@@ -252,14 +252,14 @@ const expandedQuestions = [
         "actName": "Digital Personal Data Protection Act, 2023",
         "sectionNumber": "Sections 11-14 & Section 9",
         "title": "Data Principal Rights",
-        "status": "active"
+        "status": "not_yet_in_force"
       }
     ],
     "sourceMetadata": {
       "actName": "Digital Personal Data Protection Act, 2023",
       "citation": "Sections 11-14 & Section 9",
-      "year": 2026,
-      "status": "Operative legal standard on 6 November 2026 baseline"
+      "year": 2023,
+      "status": "Enacted; scheduled for commencement on 13 May 2027 under G.S.R. 843(E) (prospective standard on 6 November 2026 baseline)"
     },
     "topicTag": "PILLAR 2",
     "relatedModule": "data-principal-rights-child-safeguards",
@@ -293,16 +293,16 @@ const expandedQuestions = [
     "legalReferences": [
       {
         "actName": "Digital Personal Data Protection Act, 2023",
-        "sectionNumber": "Section 5(3), Section 6(1), Section 8(6)",
-        "title": "Consent and Data Fiduciary Obligations",
-        "status": "active"
+        "sectionNumber": "Section 5(3)",
+        "title": "Consent Notice in Eighth Schedule Languages",
+        "status": "not_yet_in_force"
       }
     ],
     "sourceMetadata": {
       "actName": "Digital Personal Data Protection Act, 2023",
-      "citation": "Section 5(3), Section 6(1), Section 8(6)",
-      "year": 2026,
-      "status": "Operative legal standard on 6 November 2026 baseline"
+      "citation": "Section 5(3)",
+      "year": 2023,
+      "status": "Enacted; scheduled for commencement on 13 May 2027 under G.S.R. 843(E) (prospective standard on 6 November 2026 baseline)"
     },
     "topicTag": "PILLAR 3",
     "relatedModule": "notice-consent-fiduciary-obligations",
@@ -336,16 +336,16 @@ const expandedQuestions = [
     "legalReferences": [
       {
         "actName": "Digital Personal Data Protection Act, 2023",
-        "sectionNumber": "Section 5(3), Section 6(1), Section 8(6)",
-        "title": "Consent and Data Fiduciary Obligations",
-        "status": "active"
+        "sectionNumber": "Section 8(6)",
+        "title": "Personal Data Breach Intimation",
+        "status": "not_yet_in_force"
       }
     ],
     "sourceMetadata": {
       "actName": "Digital Personal Data Protection Act, 2023",
-      "citation": "Section 5(3), Section 6(1), Section 8(6)",
-      "year": 2026,
-      "status": "Operative legal standard on 6 November 2026 baseline"
+      "citation": "Section 8(6)",
+      "year": 2023,
+      "status": "Enacted; scheduled for commencement on 13 May 2027 under G.S.R. 843(E) (prospective standard on 6 November 2026 baseline)"
     },
     "topicTag": "PILLAR 3",
     "relatedModule": "notice-consent-fiduciary-obligations",
@@ -379,16 +379,16 @@ const expandedQuestions = [
     "legalReferences": [
       {
         "actName": "Digital Personal Data Protection Act, 2023",
-        "sectionNumber": "Section 5(3), Section 6(1), Section 8(6)",
-        "title": "Consent and Data Fiduciary Obligations",
-        "status": "active"
+        "sectionNumber": "Section 6(9) / Rule 4",
+        "title": "Consent Manager Registration Framework",
+        "status": "not_yet_in_force"
       }
     ],
     "sourceMetadata": {
       "actName": "Digital Personal Data Protection Act, 2023",
-      "citation": "Section 5(3), Section 6(1), Section 8(6)",
-      "year": 2026,
-      "status": "Operative legal standard on 6 November 2026 baseline"
+      "citation": "Section 6(9) / Rule 4",
+      "year": 2023,
+      "status": "Enacted; scheduled for commencement on 13 November 2026 under G.S.R. 843(E) / G.S.R. 846(E) (prospective standard on 6 November 2026 baseline)"
     },
     "topicTag": "PILLAR 3",
     "relatedModule": "notice-consent-fiduciary-obligations",
@@ -808,17 +808,17 @@ const expandedQuestions = [
     "practicalTakeaway": "Key Rule: Always verify statutory prerequisites, jurisdictional limits, and applicable notification timelines under operative Indian cyber and privacy enactments.",
     "legalReferences": [
       {
-        "actName": "RBI Master Directions / BNSS / BNS",
-        "sectionNumber": "RBI RBC Paras 67/119, BNSS 106/503, BNS 77/78",
-        "title": "Defensive Digital Citizenship",
+        "actName": "Reserve Bank of India Master Directions",
+        "sectionNumber": "RBI Commercial Bank RBC Para 67(1) / Para 72",
+        "title": "Customer Protection - Contributory Bank Negligence & Shadow Reversal",
         "status": "active"
       }
     ],
     "sourceMetadata": {
-      "actName": "RBI Master Directions / BNSS / BNS",
-      "citation": "RBI RBC Paras 67/119, BNSS 106/503, BNS 77/78",
-      "year": 2026,
-      "status": "Operative legal standard on 6 November 2026 baseline"
+      "actName": "Reserve Bank of India Master Directions",
+      "citation": "RBI Commercial Bank RBC Para 67(1) / Para 72",
+      "year": 2017,
+      "status": "Operative circular standard on 6 November 2026 baseline"
     },
     "topicTag": "PILLAR 7",
     "relatedModule": "malware-professional-confidentiality-defensive-citizenship",
@@ -828,7 +828,7 @@ const expandedQuestions = [
     "questionId": "Q-P7-02",
     "format": "single_choice",
     "questionType": "scenario",
-    "category": "UPI, banking and financial fraud",
+    "category": "Indian Cyber Law and IT Act",
     "subtopic": "Defensive Digital Citizenship",
     "difficulty": "Advanced",
     "cognitiveLevel": "Level 4",
@@ -851,17 +851,17 @@ const expandedQuestions = [
     "practicalTakeaway": "Key Rule: Always verify statutory prerequisites, jurisdictional limits, and applicable notification timelines under operative Indian cyber and privacy enactments.",
     "legalReferences": [
       {
-        "actName": "RBI Master Directions / BNSS / BNS",
-        "sectionNumber": "RBI RBC Paras 67/119, BNSS 106/503, BNS 77/78",
-        "title": "Defensive Digital Citizenship",
+        "actName": "Bharatiya Nagarik Suraksha Sanhita, 2023",
+        "sectionNumber": "BNSS Section 106 & Section 503",
+        "title": "Police Seizure and Magistrate Property Delivery",
         "status": "active"
       }
     ],
     "sourceMetadata": {
-      "actName": "RBI Master Directions / BNSS / BNS",
-      "citation": "RBI RBC Paras 67/119, BNSS 106/503, BNS 77/78",
-      "year": 2026,
-      "status": "Operative legal standard on 6 November 2026 baseline"
+      "actName": "Bharatiya Nagarik Suraksha Sanhita, 2023",
+      "citation": "BNSS Section 106 & Section 503",
+      "year": 2024,
+      "status": "In force. Notified effective 1 July 2024"
     },
     "topicTag": "PILLAR 7",
     "relatedModule": "malware-professional-confidentiality-defensive-citizenship",
@@ -871,7 +871,7 @@ const expandedQuestions = [
     "questionId": "Q-P7-03",
     "format": "single_choice",
     "questionType": "scenario",
-    "category": "UPI, banking and financial fraud",
+    "category": "Indian Cyber Law and IT Act",
     "subtopic": "Defensive Digital Citizenship",
     "difficulty": "Intermediate",
     "cognitiveLevel": "Level 3",
@@ -894,17 +894,17 @@ const expandedQuestions = [
     "practicalTakeaway": "Key Rule: Always verify statutory prerequisites, jurisdictional limits, and applicable notification timelines under operative Indian cyber and privacy enactments.",
     "legalReferences": [
       {
-        "actName": "RBI Master Directions / BNSS / BNS",
-        "sectionNumber": "RBI RBC Paras 67/119, BNSS 106/503, BNS 77/78",
-        "title": "Defensive Digital Citizenship",
+        "actName": "Bharatiya Nyaya Sanhita, 2023 / Information Technology Act, 2000",
+        "sectionNumber": "BNS Section 77 / IT Act Section 66E",
+        "title": "Voyeurism and Violation of Bodily Privacy",
         "status": "active"
       }
     ],
     "sourceMetadata": {
-      "actName": "RBI Master Directions / BNSS / BNS",
-      "citation": "RBI RBC Paras 67/119, BNSS 106/503, BNS 77/78",
-      "year": 2026,
-      "status": "Operative legal standard on 6 November 2026 baseline"
+      "actName": "Bharatiya Nyaya Sanhita, 2023 / Information Technology Act, 2000",
+      "citation": "BNS Section 77 / IT Act Section 66E",
+      "year": 2024,
+      "status": "In force. Notified effective 1 July 2024 (BNS) / 27 October 2009 (IT Act)"
     },
     "topicTag": "PILLAR 7",
     "relatedModule": "malware-professional-confidentiality-defensive-citizenship",

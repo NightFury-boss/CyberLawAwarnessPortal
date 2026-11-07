@@ -437,9 +437,9 @@ async function seed(isReset = false) {
         officialTitle: 'Grievance redressal by online intermediaries',
         role: 'Government Rule / Notification',
         plainLanguageExplanation: 'Mandates social media platforms and messaging apps to set up grievance officers and remove illegal content within strict timelines.',
-        officialText: 'An intermediary shall observe due diligence... including publishing privacy policy, terms of use, acting on court or government takedown orders within 36 hours, resolving urgent grievances within 36 hours, and removing non-consensual intimate or morphed imagery within two hours under Rule 3(2)(b).',
+        officialText: 'An intermediary shall observe due diligence under Section 79(2)(c)... including publishing privacy policy and user agreement, removing unlawful information upon receipt of a court order or qualifying government intimation under Rule 3(1)(d) within three hours (or thirty-six hours under general track), resolving user grievances under Rule 3(2)(a) with 24-hour acknowledgement and disposal within fifteen days (or thirty-six hours for specified harms), and removing non-consensual intimate, sexually explicit, or morphed imagery within two hours under Rule 3(2)(b) as amended by G.S.R. 120(E).',
         whyItMatters: 'Gives you the power to force social media platforms to take down deepfakes or impersonating profiles.',
-        exampleScenario: 'You find a fake or impersonating profile on Instagram. Under the Intermediary Rules, the platform must acknowledge the grievance within 24 hours and resolve it within 36 hours (or within 2 hours for intimate or morphed imagery).',
+        exampleScenario: 'If you discover a generic impersonating profile on Instagram, the platform must acknowledge your grievance within 24 hours and dispose of it under Rule 3(2)(a) (within 15 days, or 36 hours for expedited tracks). However, if the fake profile or harassment involves non-consensual intimate, sexually explicit, or morphed imagery, Rule 3(2)(b) strictly requires the intermediary to remove or disable access within 2 hours of receipt of the complaint.',
         penaltyOrLegalEffect: 'Loss of Safe Harbour immunity under Section 79 of the IT Act if platforms fail to comply.',
         legalStatus: 'CURRENT',
         commencementStatus: 'Notified on 25th February 2021. In force.',
@@ -3201,6 +3201,7 @@ async function seed(isReset = false) {
         throw new Error(`Quiz not found for category: ${qData.category}`);
       }
       qData.quizId = dbQuiz._id;
+      const hasAuthoredId = Boolean(qData.questionId);
       if (!qData.questionId) {
         const catPrefix = qData.category.replace(/[^A-Za-z]/g, '').substring(0, 5).toUpperCase();
         qData.questionId = `QZ-${catPrefix}-${String(questionIdx).padStart(3, '0')}`;
@@ -3220,8 +3221,9 @@ async function seed(isReset = false) {
       }
       questionIdx++;
 
-      const query = qData.questionId
-        ? { $or: [{ questionId: qData.questionId }, { questionText: qData.questionText }] }
+      // Match authored IDs by questionId to maintain stability, and generated IDs by questionText to prevent collisions on positional shifts
+      const query = hasAuthoredId
+        ? { questionId: qData.questionId }
         : { questionText: qData.questionText };
 
       await QuizQuestion.findOneAndUpdate(
@@ -3425,7 +3427,63 @@ async function seed(isReset = false) {
       await Resource.findOneAndUpdate({ title: resData.title }, resData, { upsert: true, new: true });
     }
 
-    console.log('- Seeding Learning Modules (12 Structured Lessons)...');
+    console.log('- Seeding Learning Modules (18 Structured Lessons)...');
+
+    // Non-destructive seed migration for replacement Module 12 slug
+    const legacyModule12Slug = 'reporting-cybercrime-evidence-preservation';
+    const newModule12Slug = 'citizen-cyber-remedies-reporting-portals';
+
+    const legacyModuleDoc = await LearningModule.findOne({ slug: legacyModule12Slug });
+    if (legacyModuleDoc) {
+      await LearningModule.updateOne(
+        { slug: legacyModule12Slug },
+        { published: false, order: 999 }
+      );
+    }
+
+    const affectedProgress = await UserProgress.find({
+      $or: [
+        { completedModules: legacyModule12Slug },
+        { 'lessonProgress.slug': legacyModule12Slug }
+      ]
+    });
+
+    for (let uProg of affectedProgress) {
+      let changed = false;
+      if (Array.isArray(uProg.completedModules) && uProg.completedModules.includes(legacyModule12Slug)) {
+        uProg.completedModules = uProg.completedModules.filter(s => s !== legacyModule12Slug);
+        if (!uProg.completedModules.includes(newModule12Slug)) {
+          uProg.completedModules.push(newModule12Slug);
+        }
+        changed = true;
+      }
+      if (Array.isArray(uProg.lessonProgress)) {
+        const legacyEntry = uProg.lessonProgress.find(lp => lp.slug === legacyModule12Slug);
+        if (legacyEntry) {
+          const newEntry = uProg.lessonProgress.find(lp => lp.slug === newModule12Slug);
+          if (!newEntry) {
+            legacyEntry.slug = newModule12Slug;
+          } else {
+            if (legacyEntry.readCompleted) newEntry.readCompleted = true;
+            if (legacyEntry.knowledgeCheckStatus === 'passed') newEntry.knowledgeCheckStatus = 'passed';
+            uProg.lessonProgress = uProg.lessonProgress.filter(lp => lp.slug !== legacyModule12Slug);
+          }
+          changed = true;
+        }
+      }
+      if (changed) {
+        uProg.markModified('completedModules');
+        uProg.markModified('lessonProgress');
+        await uProg.save();
+      }
+    }
+
+    await LawSection.updateMany(
+      { relatedModules: legacyModule12Slug },
+      { $set: { 'relatedModules.$[elem]': newModule12Slug } },
+      { arrayFilters: [{ elem: legacyModule12Slug }] }
+    );
+
     for (let lm of learningModulesData) {
       await LearningModule.findOneAndUpdate({ slug: lm.slug }, lm, { upsert: true, new: true });
     }

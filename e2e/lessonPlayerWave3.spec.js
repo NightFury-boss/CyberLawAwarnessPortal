@@ -299,3 +299,4 @@ test.describe('Stage 4 Wave 3: Lesson Player & Multi-QuickCheck E2E Suite', () =
     expect(legacyReq.postData.selectedIndex).toBe(0);
   });
 });
+
