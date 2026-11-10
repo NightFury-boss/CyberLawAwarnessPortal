@@ -12,9 +12,10 @@ export default function Footer() {
         {/* Brand & Purpose Column */}
         <div className="footer-brand-col">
           <div className="footer-logo-wrapper">
-            <img src="/logo/cyber-law-logo-horizontal.svg" alt="Cyber Law Awareness Portal" className="footer-logo" />
+            <Link to="/" aria-label="Cyber Law Awareness Portal Home" className="footer-logo-link">
+              <img src="/logo/cyber-law-logo-footer.svg" alt="Cyber Law Awareness Portal - Learn, Recognize, Stay Safe" className="footer-logo" />
+            </Link>
           </div>
-          <p className="footer-tagline">Learn. Recognize. Stay Safe.</p>
           <p className="footer-desc">
             An open educational awareness portal structured to turn statutory digital law into practical everyday awareness.
           </p>

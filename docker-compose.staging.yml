@@ -46,7 +46,7 @@ services:
     container_name: cyberlaw_frontend_staging
     restart: unless-stopped
     ports:
-      - "${STAGING_PORT:-80}:80"
+      - "${STAGING_HOST_BIND:-127.0.0.1}:${STAGING_PORT:-8080}:80"
     depends_on:
       backend:
         condition: service_healthy

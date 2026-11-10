@@ -115,7 +115,7 @@ function Dashboard({ user, progressTrigger }) {
   if (loadState === 'LOADING') {
     return (
       <div className="desk-space-redesign page-entry" style={{ padding: 'var(--space-3xl, 64px) 0', textAlign: 'center' }}>
-        <p style={{ color: 'var(--text-secondary, #56565c)', fontSize: '0.95rem' }}>
+        <p style={{ color: 'var(--color-text-secondary, #3A443B)', fontSize: '0.95rem' }}>
           Opening your personal learning workspace...
         </p>
       </div>
@@ -260,7 +260,8 @@ function Dashboard({ user, progressTrigger }) {
   const nextReinforcePathway = pathwaysWithStatus.find(p => p.isReinforcementEligible && !p.isReinforced);
 
   const handleLaunchRunner = (pathwayItem, isReinforce = false) => {
-    if (!progress?.latestSessionId) {
+    const launchSessionId = progress?.latestSessionId || baselineStatus?.sessionId;
+    if (!launchSessionId) {
       setActionNotice('To start a pathway, please complete your First Check first so we can personalize your learning.');
       return;
     }
@@ -276,7 +277,7 @@ function Dashboard({ user, progressTrigger }) {
         pedagogicalFocus: pathwayItem.rec.pedagogicalFocus,
         coreRule: pathwayItem.rec.coreRule
       },
-      sourceSessionId: pathwayItem.completedRecord?.sourceSessionId || progress.latestSessionId,
+      sourceSessionId: pathwayItem.completedRecord?.sourceSessionId || launchSessionId,
       initialProgress: {
         currentStep: pathwayItem.isInProgress ? 2 : 1,
         stepsCompleted: pathwayItem.completedRecord?.stepsCompleted || { caseStudy: false, prevention: false, checkpointQuiz: false },
@@ -571,9 +572,13 @@ function Dashboard({ user, progressTrigger }) {
       {/* Missed Quiz Concept Recall Modal (Optional, Learner-Initiated Revision) */}
       <QuizRecallModal
         isOpen={isQuizRecallModalOpen}
-        onClose={() => setIsQuizRecallModalOpen(false)}
+        dueRecalls={dueQuizRecalls}
+        onClose={() => {
+          setIsQuizRecallModalOpen(false);
+          fetchDashboardData(true);
+        }}
         onRecallCompleted={() => {
-          fetchDashboardData();
+          // Defer full dashboard refresh until modal is closed to preserve learner's feedback
         }}
       />
 
@@ -583,6 +588,9 @@ function Dashboard({ user, progressTrigger }) {
         onClose={handleClosePortfolioModal}
         portfolioData={portfolioData}
         initialPillar={portfolioInitialPillar}
+        user={user}
+        progress={progress}
+        trajectoryData={trajectoryData}
       />
     </div>
   );

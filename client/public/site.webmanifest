@@ -1,0 +1,22 @@
+{
+  "name": "Cyber Law Awareness Portal",
+  "short_name": "Cyber Law",
+  "description": "An open educational platform bridging statutory cyber law and practical digital defense reflexes.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#F8F1E6",
+  "theme_color": "#3A2E26",
+  "icons": [
+    {
+      "src": "/favicon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/favicon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
+

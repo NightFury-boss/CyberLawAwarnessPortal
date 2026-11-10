@@ -2,8 +2,6 @@
 const { test, expect } = require('@playwright/test');
 const path = require('path');
 
-const SCREENSHOT_DIR = 'C:\\Users\\Asus\\.gemini\\antigravity\\brain\\2a38735a-7985-4d0c-9744-999cb0b89167\\screenshots\\stage6-acceptance';
-
 const setupMockApi = async (page) => {
   await page.addInitScript(() => {
     window.localStorage.setItem('token', 'mock_jwt_s6_acceptance_token');
@@ -272,7 +270,7 @@ const setupMockApi = async (page) => {
 
 test.describe('Stage 6 Final Acceptance: AFTER Screenshots & Interaction Verification', () => {
 
-  test('Desktop (1280px): Capture full page, Milestones Journey Map, and Carousel transitions', async ({ page }) => {
+  test('Desktop (1280px): Capture full page, Milestones Journey Map, and Carousel transitions', async ({ page }, testInfo) => {
     await setupMockApi(page);
     await page.setViewportSize({ width: 1280, height: 800 });
     await page.goto('/dashboard');
@@ -281,7 +279,7 @@ test.describe('Stage 6 Final Acceptance: AFTER Screenshots & Interaction Verific
 
     // 1. Full Page Desktop
     await page.screenshot({
-      path: path.join(SCREENSHOT_DIR, '01_after_desktop_1280.png'),
+      path: testInfo.outputPath('01_after_desktop_1280.png'),
       fullPage: true
     });
 
@@ -289,7 +287,7 @@ test.describe('Stage 6 Final Acceptance: AFTER Screenshots & Interaction Verific
     const journeyTrack = page.locator('.atelier-journey-track');
     await expect(journeyTrack).toBeVisible();
     await journeyTrack.screenshot({
-      path: path.join(SCREENSHOT_DIR, '02_after_masthead_milestones_desktop.png')
+      path: testInfo.outputPath('02_after_masthead_milestones_desktop.png')
     });
 
     // Verify 4 stages are rendered and clearly distinguishable
@@ -305,7 +303,7 @@ test.describe('Stage 6 Final Acceptance: AFTER Screenshots & Interaction Verific
     await expect(storySection).toBeVisible();
     await expect(page.locator('.story-counter-pill')).toHaveText('Scenario 1 of 4');
     await storySection.screenshot({
-      path: path.join(SCREENSHOT_DIR, '03_after_scenarios_desktop_tab1.png')
+      path: testInfo.outputPath('03_after_scenarios_desktop_tab1.png')
     });
 
     // 4. Test Next Scenario Button Click and Directional Transition
@@ -315,7 +313,7 @@ test.describe('Stage 6 Final Acceptance: AFTER Screenshots & Interaction Verific
     await expect(page.locator('.story-canvas-grid')).toHaveClass(/slide-forward/);
     await page.waitForTimeout(300); // Wait for transition settle
     await storySection.screenshot({
-      path: path.join(SCREENSHOT_DIR, '03b_after_scenarios_desktop_tab2_transitioned.png')
+      path: testInfo.outputPath('03b_after_scenarios_desktop_tab2_transitioned.png')
     });
 
     // 5. Test Keyboard Navigation (ArrowRight to Scenario 3)
@@ -324,7 +322,7 @@ test.describe('Stage 6 Final Acceptance: AFTER Screenshots & Interaction Verific
     await expect(page.locator('.story-counter-pill')).toHaveText('Scenario 3 of 4');
     await page.waitForTimeout(300);
     await storySection.screenshot({
-      path: path.join(SCREENSHOT_DIR, '03c_after_scenarios_desktop_tab3_keyboard.png')
+      path: testInfo.outputPath('03c_after_scenarios_desktop_tab3_keyboard.png')
     });
 
     // 6. Test Previous Scenario Button Click (Backward transition)
@@ -334,7 +332,7 @@ test.describe('Stage 6 Final Acceptance: AFTER Screenshots & Interaction Verific
     await expect(page.locator('.story-canvas-grid')).toHaveClass(/slide-backward/);
   });
 
-  test('Mobile (390px): Viewport rendering and overflow safety', async ({ page }) => {
+  test('Mobile (390px): Viewport rendering and overflow safety', async ({ page }, testInfo) => {
     await setupMockApi(page);
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto('/dashboard');
@@ -349,7 +347,7 @@ test.describe('Stage 6 Final Acceptance: AFTER Screenshots & Interaction Verific
 
     // Capture Full Page Mobile 390
     await page.screenshot({
-      path: path.join(SCREENSHOT_DIR, '04_after_mobile_390.png'),
+      path: testInfo.outputPath('04_after_mobile_390.png'),
       fullPage: true
     });
 
@@ -357,11 +355,11 @@ test.describe('Stage 6 Final Acceptance: AFTER Screenshots & Interaction Verific
     const storySection = page.locator('.story-atelier-section');
     await expect(storySection).toBeVisible();
     await storySection.screenshot({
-      path: path.join(SCREENSHOT_DIR, '04b_after_scenarios_mobile_390.png')
+      path: testInfo.outputPath('04b_after_scenarios_mobile_390.png')
     });
   });
 
-  test('Mobile (375px): Compact screen rendering and touch navigation', async ({ page }) => {
+  test('Mobile (375px): Compact screen rendering and touch navigation', async ({ page }, testInfo) => {
     await setupMockApi(page);
     await page.setViewportSize({ width: 375, height: 667 });
     await page.goto('/dashboard');
@@ -376,7 +374,7 @@ test.describe('Stage 6 Final Acceptance: AFTER Screenshots & Interaction Verific
 
     // Capture Full Page Mobile 375
     await page.screenshot({
-      path: path.join(SCREENSHOT_DIR, '05_after_mobile_375.png'),
+      path: testInfo.outputPath('05_after_mobile_375.png'),
       fullPage: true
     });
 
@@ -387,7 +385,7 @@ test.describe('Stage 6 Final Acceptance: AFTER Screenshots & Interaction Verific
 
     const storySection = page.locator('.story-atelier-section');
     await storySection.screenshot({
-      path: path.join(SCREENSHOT_DIR, '05b_after_scenarios_mobile_375.png')
+      path: testInfo.outputPath('05b_after_scenarios_mobile_375.png')
     });
   });
 

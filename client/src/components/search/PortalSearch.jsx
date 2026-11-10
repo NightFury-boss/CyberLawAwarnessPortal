@@ -92,6 +92,7 @@ function PortalSearch({
           <input
             ref={inputRef}
             type="text"
+            className="portal-search-input"
             placeholder={placeholder}
             value={searchQuery}
             onChange={(e) => onSearchChange(e.target.value)}
@@ -104,26 +105,28 @@ function PortalSearch({
               backgroundColor: 'var(--bg-white)',
               fontSize: '0.95rem',
               color: 'var(--text-primary)',
-              outline: 'none',
               transition: 'border-color 0.15s ease'
             }}
             aria-label={placeholder}
           />
 
-          {/* Keyboard shortcut hint badge when empty */}
+          {/* Keyboard shortcut hint badge when empty (hidden on touch devices) */}
           {!searchQuery && (
-            <span style={{
-              position: 'absolute',
-              right: '14px',
-              fontSize: '0.72rem',
-              fontWeight: '600',
-              padding: '2px 6px',
-              borderRadius: '4px',
-              border: '1px solid var(--color-border)',
-              color: 'var(--text-muted)',
-              backgroundColor: 'var(--bg-secondary)',
-              pointerEvents: 'none'
-            }}>
+            <span
+              className="portal-search-shortcut-hint"
+              style={{
+                position: 'absolute',
+                right: '14px',
+                fontSize: '0.72rem',
+                fontWeight: '600',
+                padding: '2px 6px',
+                borderRadius: '4px',
+                border: '1px solid var(--color-border)',
+                color: 'var(--text-muted)',
+                backgroundColor: 'var(--bg-secondary)',
+                pointerEvents: 'none'
+              }}
+            >
               Ctrl + K
             </span>
           )}

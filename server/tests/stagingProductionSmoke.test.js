@@ -31,6 +31,7 @@ dotenv.config({ path: path.join(__dirname, '../.env') });
 
 const connectDB = require('../config/db');
 const { getJwtSecret } = require('../config/productionSecurity');
+const { assertApprovedStagingDatabase } = require('../config/stagingDatabaseGuard');
 const { authLimiter, assistantLimiter } = require('../middleware/rateLimitMiddleware');
 const catalog = require('../config/remediationCatalog');
 
@@ -73,11 +74,20 @@ describe('Release Gate 3: Staging & Production Smoke Test Suite', () => {
   let baselineDecision1;
   let activePathwayId;
   let createdSessionId;
+  const SMOKE_RUN_ID = `smoke_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
 
   const testUserIds = [];
   const testSessionIds = [];
 
   before(async () => {
+    // 0. Fail-Closed Staging Database Target Validation (Executed before connection)
+    const targetUri = process.env.NODE_ENV === 'test' && process.env.MONGO_URI_TEST
+      ? process.env.MONGO_URI_TEST
+      : (process.env.MONGODB_URI || process.env.MONGO_URI || '');
+
+    const stagingGuard = assertApprovedStagingDatabase(targetUri);
+    console.log(`[Staging Database Guard] Approved target cluster host: ${stagingGuard.host}, database: ${stagingGuard.dbName} (Run ID: ${SMOKE_RUN_ID})`);
+
     // 1. Establish DB Connection
     await connectDB();
 
@@ -168,13 +178,12 @@ describe('Release Gate 3: Staging & Production Smoke Test Suite', () => {
       });
     });
 
-    // 4. Setup Dedicated Test Accounts
-    const timestamp = Date.now();
+    // 4. Setup Dedicated Test Accounts (Tagged with unique SMOKE_RUN_ID)
     const passwordHash = await bcrypt.hash('StagingSmokePass123!', 8);
 
     learnerA = await User.create({
       fullName: 'Smoke Learner Alice',
-      email: `smoke_alice_${timestamp}@staging.test`,
+      email: `smoke_alice_${SMOKE_RUN_ID}@staging.test`,
       passwordHash,
       role: 'user',
       isActive: true
@@ -183,7 +192,7 @@ describe('Release Gate 3: Staging & Production Smoke Test Suite', () => {
 
     learnerB = await User.create({
       fullName: 'Smoke Learner Bob',
-      email: `smoke_bob_${timestamp}@staging.test`,
+      email: `smoke_bob_${SMOKE_RUN_ID}@staging.test`,
       passwordHash,
       role: 'user',
       isActive: true
@@ -192,7 +201,7 @@ describe('Release Gate 3: Staging & Production Smoke Test Suite', () => {
 
     adminUser = await User.create({
       fullName: 'Smoke Admin Carol',
-      email: `smoke_admin_${timestamp}@staging.test`,
+      email: `smoke_admin_${SMOKE_RUN_ID}@staging.test`,
       passwordHash,
       role: 'admin',
       isActive: true
@@ -267,17 +276,31 @@ describe('Release Gate 3: Staging & Production Smoke Test Suite', () => {
   });
 
   after(async () => {
-    // Teardown test artifacts
-    if (testSessionIds.length > 0) {
-      await AssessmentSession.deleteMany({ _id: { $in: testSessionIds } });
+    // Teardown test artifacts scoped strictly to this specific smoke run
+    try {
+      if (testSessionIds.length > 0) {
+        await AssessmentSession.deleteMany({ _id: { $in: testSessionIds } });
+      }
+      if (testUserIds.length > 0) {
+        await UserProgress.deleteMany({ userId: { $in: testUserIds } });
+        await User.deleteMany({ _id: { $in: testUserIds } });
+      }
+    } catch (cleanupError) {
+      console.error('\n=============================================================');
+      console.error('[CRITICAL SMOKE TEARDOWN WARNING]');
+      console.error(`Automated cleanup encountered an error: ${cleanupError.message}`);
+      console.error(`Orphaned smoke run records remain tagged with ID: ${SMOKE_RUN_ID}`);
+      console.error(`To preview orphaned records: node scripts/safeOrphanRecovery.js --run-id ${SMOKE_RUN_ID}`);
+      console.error(`To purge orphaned records:   node scripts/safeOrphanRecovery.js --run-id ${SMOKE_RUN_ID} --confirm`);
+      console.error('=============================================================\n');
+    } finally {
+      if (server) {
+        await new Promise(resolve => server.close(resolve));
+      }
+      if (mongoose.connection && mongoose.connection.readyState !== 0) {
+        await mongoose.connection.close();
+      }
     }
-    await UserProgress.deleteMany({ userId: { $in: testUserIds } });
-    await User.deleteMany({ _id: { $in: testUserIds } });
-
-    if (server) {
-      await new Promise(resolve => server.close(resolve));
-    }
-    await mongoose.connection.close();
   });
 
   // =========================================================================
@@ -325,7 +348,7 @@ describe('Release Gate 3: Staging & Production Smoke Test Suite', () => {
   // TEST 2: Registration and Login Lifecycle
   // =========================================================================
   it('2. Registration and login lifecycle with duplicate and password validation', async () => {
-    const uniqueEmail = `staging_reg_${Date.now()}@portal-smoke.org`;
+    const uniqueEmail = `smoke_reg_${SMOKE_RUN_ID}@staging.test`;
 
     // Successful registration
     const regRes = await fetch(`${baseUrl}/api/auth/register`, {

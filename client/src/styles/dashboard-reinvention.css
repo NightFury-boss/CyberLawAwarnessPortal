@@ -271,7 +271,7 @@
 
 .badge-upcoming {
   background-color: var(--color-surface-secondary, #EFE5D6);
-  color: var(--color-text-muted, #6F665D);
+  color: #4A433D;
 }
 
 .journey-step-desc {
@@ -985,9 +985,9 @@
 }
 
 .codex-tag.statute {
-  background-color: rgba(37, 99, 235, 0.08);
-  color: var(--color-accent-gold, #B18A55);
-  border-color: rgba(37, 99, 235, 0.2);
+  background-color: rgba(31, 77, 58, 0.08);
+  color: var(--color-accent-forest, #1F4D3A);
+  border-color: rgba(31, 77, 58, 0.2);
 }
 
 .codex-chapter-title {

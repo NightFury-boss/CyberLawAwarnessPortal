@@ -1,0 +1,19 @@
+# ==============================================================================
+# Cyber Law Awareness Portal — Root Docker Build Ignore
+# ==============================================================================
+
+.env
+.env.*
+*.local
+node_modules
+.git
+.gitignore
+.vscode
+.idea
+dist
+build
+scratch
+screenshots
+test-results
+playwright-report
+

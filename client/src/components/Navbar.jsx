@@ -189,16 +189,18 @@ function Navbar({ user, setUser, isWorkspace, sidebarOpen, setSidebarOpen }) {
   // ----------------------------------------------------
   // CONTEXT A: PUBLIC PORTAL NAVBAR (LEFT-ALIGNED COHESIVE GROUP)
   // ----------------------------------------------------
+  const isHomepage = location.pathname === '/';
+
   return (
-    <header className={`top-header ${isScrolled ? 'scrolled' : ''}`}>
+    <header className={`top-header ${isHomepage ? 'header-earth-terracotta' : ''} ${isScrolled ? 'scrolled' : ''}`}>
       <div className="public-navbar-container">
         {/* Left-Aligned Cohesive Group: [LOGO] + [PRIMARY NAVIGATION] */}
         <div className="public-navbar-left">
           <Link to="/" className="public-navbar-brand" aria-label="Cyber Law Awareness Portal Home">
             <img
-              src="/logo/cyber-law-logo-horizontal.svg"
+              src={isHomepage ? "/logo/cyber-law-logo-dark.svg" : "/logo/cyber-law-logo-horizontal.svg"}
               alt="Cyber Law Awareness Portal"
-              style={{ height: '34px', width: 'auto' }}
+              className="navbar-brand-logo"
             />
           </Link>
 
@@ -256,7 +258,7 @@ function Navbar({ user, setUser, isWorkspace, sidebarOpen, setSidebarOpen }) {
                 ) : (
                   <Link
                     to="/dashboard"
-                    className="btn btn-secondary"
+                    className="btn nav-action-dashboard"
                   >
                     Dashboard
                   </Link>
@@ -325,7 +327,7 @@ function Navbar({ user, setUser, isWorkspace, sidebarOpen, setSidebarOpen }) {
               <img
                 src="/logo/cyber-law-logo-horizontal.svg"
                 alt="Cyber Law Awareness Portal"
-                style={{ height: '30px', width: 'auto' }}
+                className="mobile-drawer-logo"
               />
               <button
                 ref={closeBtnRef}

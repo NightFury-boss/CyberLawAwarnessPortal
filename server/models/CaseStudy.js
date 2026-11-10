@@ -54,6 +54,44 @@ const CaseStudySchema = new mongoose.Schema({
     type: Boolean,
     default: false
   },
+  officialCaseName: {
+    type: String,
+    trim: true,
+    default: null
+  },
+  collection: {
+    type: String,
+    default: 'Landmark Precedents',
+    trim: true
+  },
+  collectionCategory: {
+    type: String,
+    enum: [
+      'Judicial Precedents',
+      'Investigative & Evidentiary Gaps',
+      'Banking & Regulatory Inquiries',
+      'Platform & Marketplace Lags',
+      'Critical Infrastructure & Complex Attribution'
+    ],
+    default: 'Judicial Precedents',
+    trim: true
+  },
+  evidentiaryClassification: {
+    type: String,
+    enum: [
+      'Documented Judicial Precedent',
+      'Established Institutional Failure',
+      'Documented Procedural Shortcoming',
+      'Unresolved Incident'
+    ],
+    default: 'Documented Judicial Precedent',
+    trim: true
+  },
+  seedBatchId: {
+    type: String,
+    trim: true,
+    default: null
+  },
   sourceSummary: {
     type: String
   },
@@ -133,7 +171,10 @@ const CaseStudySchema = new mongoose.Schema({
       authority: { type: String, required: true },
       url: { type: String },
       publicationDate: { type: String },
-      sourceType: { type: String, enum: ['official', 'court', 'government', 'news', 'research', 'educational'], default: 'official' }
+      sourceType: { type: String, enum: ['official', 'court', 'government', 'news', 'research', 'educational'], default: 'official' },
+      citation: { type: String, trim: true },
+      documentType: { type: String, trim: true },
+      verificationDate: { type: String, trim: true }
     }
   ],
   published: {
@@ -141,7 +182,8 @@ const CaseStudySchema = new mongoose.Schema({
     default: true
   }
 }, {
-  timestamps: true
+  timestamps: true,
+  suppressReservedKeysWarning: true
 });
 
 module.exports = mongoose.model('CaseStudy', CaseStudySchema);

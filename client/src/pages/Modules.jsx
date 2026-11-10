@@ -957,7 +957,7 @@ function Modules({ user, isWorkspace = false }) {
                     {currentModule.relatedLaws.map((law, lIdx) => (
                       <Link
                         key={lIdx}
-                        to={getContextPath(`/laws#sec-${law.sectionNumber.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`)}
+                        to={`${getContextPath('/laws')}#${encodeURIComponent(law.sectionNumber.replace(/\s+/g, '-'))}`}
                         style={{
                           textDecoration: 'none',
                           backgroundColor: 'var(--color-surface-card, #FCFAF5)',
@@ -1156,7 +1156,7 @@ function Modules({ user, isWorkspace = false }) {
                   {currentModule.relatedLaws.map((law, lIdx) => (
                     <Link
                       key={lIdx}
-                      to={getContextPath(`/laws#sec-${law.sectionNumber.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`)}
+                      to={`${getContextPath('/laws')}#${encodeURIComponent(law.sectionNumber.replace(/\s+/g, '-'))}`}
                       style={{
                         textDecoration: 'none',
                         backgroundColor: 'var(--color-surface-card, #FCFAF5)',
@@ -1323,6 +1323,7 @@ function Modules({ user, isWorkspace = false }) {
           <select
             value={activeDifficulty}
             onChange={(e) => setActiveDifficulty(e.target.value)}
+            aria-label="Filter modules by difficulty level"
             style={{
               padding: '7px 12px',
               borderRadius: 'var(--radius-md)',

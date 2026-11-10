@@ -46,7 +46,7 @@
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: var(--color-accent-terracotta, #9A503A);
+  color: var(--brand-terracotta-dark, #7C3B24);
 }
 
 .profile-badge-dot {

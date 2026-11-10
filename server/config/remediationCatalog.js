@@ -550,8 +550,8 @@ const remediationCatalog = [
     primaryLawSectionNumber: null, // Intentionally null; Section 72A removed
     legalReferences: [],           // Intentionally empty; pure alert triage
     curriculumLesson: {
-      slug: 'reporting-cybercrime-evidence-preservation',
-      title: 'Reporting Cybercrime and Preserving Evidence in India',
+      slug: 'citizen-cyber-remedies-reporting-portals',
+      title: 'Citizen Cyber Remedies & Reporting Portals',
       category: 'Defensive Practice',
       relevanceReason: 'Teaches evidence collection, distinguishing authentic receipts from fraudulent coercion, and statutory procedures under BSA Section 63.'
     },

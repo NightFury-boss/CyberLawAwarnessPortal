@@ -55,7 +55,14 @@ export default function CurriculumLessonsSection({
       </div>
 
       {/* Publication Progress Bar */}
-      <div className="codex-progress-bar-bg" role="progressbar" aria-valuenow={progressPercent} aria-valuemin="0" aria-valuemax="100">
+      <div 
+        className="codex-progress-bar-bg" 
+        role="progressbar" 
+        aria-valuenow={progressPercent} 
+        aria-valuemin="0" 
+        aria-valuemax="100"
+        aria-label={`Curriculum reading progress: ${progressPercent}% completed`}
+      >
         <div
           className="codex-progress-bar-fill"
           style={{ width: `${progressPercent}%` }}

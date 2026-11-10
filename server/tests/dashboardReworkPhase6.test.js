@@ -111,6 +111,7 @@ async function runDashboardReworkPhase6Tests() {
 
   let testUser = null;
   let testQuestion = null;
+  let questionCreatedByTest = false;
 
   try {
     // -------------------------------------------------------------------------
@@ -369,6 +370,7 @@ async function runDashboardReworkPhase6Tests() {
         explanation: 'I4C under MHA coordinates CFCFRMS and the 1930 reporting helpline.',
         published: true
       });
+      questionCreatedByTest = true;
     }
     assert(testQuestion, 'Must find at least one published question in database');
 
@@ -515,7 +517,7 @@ async function runDashboardReworkPhase6Tests() {
       await UserProgress.deleteMany({ userId: testUser._id });
       await User.deleteOne({ _id: testUser._id });
     }
-    if (testQuestion) {
+    if (testQuestion && questionCreatedByTest) {
       await QuizQuestion.deleteOne({ _id: testQuestion._id });
     }
     await mongoose.disconnect();

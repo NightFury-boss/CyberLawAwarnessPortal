@@ -35,6 +35,7 @@ server/scratch/
 Components Examples/
 screenshots/
 *.mp4
+backups/
 
 # Custom changes tracking folder
 changes/
@@ -42,4 +43,5 @@ changes/
 # Test outputs
 test-results/
 playwright-report/
+*_results.json
 

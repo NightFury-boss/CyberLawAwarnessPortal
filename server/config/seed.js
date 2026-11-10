@@ -24,6 +24,7 @@ const Resource = require('../models/Resource');
 const UserProgress = require('../models/UserProgress');
 const LearningModule = require('../models/LearningModule');
 const learningModulesData = require('./seedModulesData');
+const remediationCatalog = require('./remediationCatalog');
 
 async function seed(isReset = false) {
   try {
@@ -437,9 +438,9 @@ async function seed(isReset = false) {
         officialTitle: 'Grievance redressal by online intermediaries',
         role: 'Government Rule / Notification',
         plainLanguageExplanation: 'Mandates social media platforms and messaging apps to set up grievance officers and remove illegal content within strict timelines.',
-        officialText: 'An intermediary shall observe due diligence under Section 79(2)(c)... including publishing privacy policy and user agreement, removing unlawful information upon receipt of a court order or qualifying government intimation under Rule 3(1)(d) within three hours (or thirty-six hours under general track), resolving user grievances under Rule 3(2)(a) with 24-hour acknowledgement and disposal within fifteen days (or thirty-six hours for specified harms), and removing non-consensual intimate, sexually explicit, or morphed imagery within two hours under Rule 3(2)(b) as amended by G.S.R. 120(E).',
+        officialText: 'An intermediary shall observe due diligence under Section 79(2)(c)... including publishing privacy policy and user agreement, removing unlawful information upon receipt of a court order or qualifying government intimation under Rule 3(1)(d) within three hours (or thirty-six hours under general track), resolving user grievances under Rule 3(2)(a) with 24-hour acknowledgement and disposal within seven days (or thirty-six hours for specified harms), and removing non-consensual intimate, sexually explicit, or morphed imagery within two hours under Rule 3(2)(b) as amended by G.S.R. 120(E).',
         whyItMatters: 'Gives you the power to force social media platforms to take down deepfakes or impersonating profiles.',
-        exampleScenario: 'If you discover a generic impersonating profile on Instagram, the platform must acknowledge your grievance within 24 hours and dispose of it under Rule 3(2)(a) (within 15 days, or 36 hours for expedited tracks). However, if the fake profile or harassment involves non-consensual intimate, sexually explicit, or morphed imagery, Rule 3(2)(b) strictly requires the intermediary to remove or disable access within 2 hours of receipt of the complaint.',
+        exampleScenario: 'If you discover a generic impersonating profile on Instagram, the platform must acknowledge your grievance within 24 hours and dispose of it under Rule 3(2)(a) (within 7 days, or 36 hours for expedited tracks). However, if the fake profile or harassment involves non-consensual intimate, sexually explicit, or morphed imagery, Rule 3(2)(b) strictly requires the intermediary to remove or disable access within 2 hours of receipt of the complaint.',
         penaltyOrLegalEffect: 'Loss of Safe Harbour immunity under Section 79 of the IT Act if platforms fail to comply.',
         legalStatus: 'CURRENT',
         commencementStatus: 'Notified on 25th February 2021. In force.',
@@ -3432,6 +3433,16 @@ async function seed(isReset = false) {
 
     console.log('- Seeding Learning Modules (18 Structured Lessons)...');
 
+    // Verify all remediationCatalog curriculumLesson slugs exist in learningModulesData
+    for (const pathway of remediationCatalog) {
+      if (pathway.curriculumLesson?.slug) {
+        const found = learningModulesData.some(m => m.slug === pathway.curriculumLesson.slug);
+        if (!found) {
+          throw new Error(`Remediation catalog lesson slug '${pathway.curriculumLesson.slug}' in pathway '${pathway.pathwayId}' not found in learningModulesData`);
+        }
+      }
+    }
+
     // Non-destructive seed migration for replacement Module 12 slug
     const legacyModule12Slug = 'reporting-cybercrime-evidence-preservation';
     const newModule12Slug = 'citizen-cyber-remedies-reporting-portals';
@@ -3468,7 +3479,27 @@ async function seed(isReset = false) {
             legacyEntry.slug = newModule12Slug;
           } else {
             if (legacyEntry.readCompleted) newEntry.readCompleted = true;
-            if (legacyEntry.knowledgeCheckStatus === 'passed') newEntry.knowledgeCheckStatus = 'passed';
+            if (!newEntry.readCompletedAt && legacyEntry.readCompletedAt) {
+              newEntry.readCompletedAt = legacyEntry.readCompletedAt;
+            }
+            if (legacyEntry.knowledgeCheckStatus === 'passed') {
+              newEntry.knowledgeCheckStatus = 'passed';
+            }
+            if (legacyEntry.knowledgeCheckScore != null && (newEntry.knowledgeCheckScore == null || legacyEntry.knowledgeCheckScore > newEntry.knowledgeCheckScore)) {
+              newEntry.knowledgeCheckScore = legacyEntry.knowledgeCheckScore;
+            }
+            if (newEntry.lastAnswerIndex == null && legacyEntry.lastAnswerIndex != null) {
+              newEntry.lastAnswerIndex = legacyEntry.lastAnswerIndex;
+            }
+            if ((!newEntry.checkResults || newEntry.checkResults.length === 0) && legacyEntry.checkResults && legacyEntry.checkResults.length > 0) {
+              newEntry.checkResults = legacyEntry.checkResults;
+            }
+            // Recompute status
+            if (newEntry.readCompleted && newEntry.knowledgeCheckStatus === 'passed') {
+              newEntry.status = 'completed';
+            } else if (newEntry.readCompleted || newEntry.knowledgeCheckStatus === 'passed' || newEntry.lastAnswerIndex != null) {
+              newEntry.status = 'in_progress';
+            }
             uProg.lessonProgress = uProg.lessonProgress.filter(lp => lp.slug !== legacyModule12Slug);
           }
           changed = true;

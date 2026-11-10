@@ -5,7 +5,7 @@ import PortalSearch from '../components/search/PortalSearch';
 import { searchItems } from '../components/search/searchUtils';
 import WorkspaceBreadcrumb from '../components/WorkspaceBreadcrumb';
 import EditorialPageHeader from '../components/common/EditorialPageHeader';
-import EditorialRule from '../components/common/EditorialRule';
+import { supplementaryLawSectionsData } from '../data/lawSectionsData';
 
 function Laws() {
   const location = useLocation();
@@ -15,18 +15,22 @@ function Laws() {
   const [laws, setLaws] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  
-  // Navigation, Filter & Scrollspy States
+
+  // Navigation, Category, Filter & Scrollspy States
   const [activeSectionId, setActiveSectionId] = useState('');
   const [activeFamilyId, setActiveFamilyId] = useState('it-act');
+  const [selectedFamilyCategory, setSelectedFamilyCategory] = useState('all'); // 'all' or family id
   const [activeStatus, setActiveStatus] = useState('All'); // 'All', 'CURRENT', 'OMITTED', 'NOT_YET_IN_FORCE'
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedChapter, setSelectedChapter] = useState(null); // 'Chapter IX', 'Chapter XI'
+  const [showBookmarkedOnly, setShowBookmarkedOnly] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 992);
 
-  // Law Compass Guided Flow States
+  // Law Compass Guided Flow & Visual States
+  const [isCompassExpanded, setIsCompassExpanded] = useState(true);
   const [compassStep, setCompassStep] = useState(1);
   const [selectedSituation, setSelectedSituation] = useState(null);
+  const [compassCategory, setCompassCategory] = useState('all');
 
   // LocalStorage Bookmarks & Notes
   const [bookmarks, setBookmarks] = useState([]);
@@ -44,52 +48,65 @@ function Laws() {
   const isScrollingToTarget = useRef(false);
   const scrollTimeout = useRef(null);
 
-  // Law Families Static Mapping
+  // Law Families Static Mapping (Covering all 32 statutory sections with mutual exclusivity)
   const lawFamilies = [
     {
       id: 'it-act',
       name: 'Information Technology Act, 2000',
       displayName: 'Information Technology Act, 2000',
-      filter: (l) => l.actName === 'Information Technology Act, 2000' && l.role !== 'Judicial Interpretation' && l.role !== 'Government Rule / Notification'
+      shortName: 'IT Act, 2000',
+      description: 'The foundation of Indian cyber law, governing digital commerce, corporate liabilities, computer offenses, and intermediary duties.',
+      filter: (l) => l.actName === 'Information Technology Act, 2000' && l.role !== 'Government Rule / Notification' && l.role !== 'Sector Regulation'
     },
     {
       id: 'dpdp-act',
       name: 'Digital Personal Data Protection Act, 2023',
       displayName: 'Digital Personal Data Protection Act, 2023',
+      shortName: 'DPDP Act, 2023',
+      description: 'Comprehensive personal data protection framework establishing Data Principal rights, fiduciary obligations, and phased enforcement under G.S.R. 843(E).',
       filter: (l) => l.actName === 'Digital Personal Data Protection Act, 2023'
     },
     {
       id: 'bns',
-      name: 'Bharatiya Nyaya Sanhita, 2023',
-      displayName: 'Bharatiya Nyaya Sanhita, 2023',
-      filter: (l) => l.actName === 'Bharatiya Nyaya Sanhita, 2023'
+      name: 'Bharatiya Nyaya Sanhita & BNSS, 2023',
+      displayName: 'Bharatiya Nyaya Sanhita & BNSS, 2023',
+      shortName: 'BNS & BNSS, 2023',
+      description: 'India\'s modernized penal code operationalized from 1 July 2024 (S.O. 850(E)), defining penal fraud (§ 318), impersonation (§ 319), and procedural Zero FIR (§ 173).',
+      filter: (l) => l.actName === 'Bharatiya Nyaya Sanhita, 2023' || l.actName === 'Bharatiya Nagarik Suraksha Sanhita, 2023'
     },
     {
       id: 'bsa',
       name: 'Bharatiya Sakshya Adhiniyam, 2023',
       displayName: 'Digital Evidence (BSA, 2023)',
+      shortName: 'Digital Evidence (BSA)',
+      description: 'Statutory evidentiary standards governing the admissibility and certification of digital evidence in courts under Section 63.',
       filter: (l) => l.actName === 'Bharatiya Sakshya Adhiniyam, 2023'
     },
     {
-      id: 'judgments',
-      name: 'Important Judgments',
-      displayName: 'Important Judgments',
-      filter: (l) => l.role === 'Judicial Interpretation'
+      id: 'copyright',
+      name: 'Digital Copyright & Fair Use (Copyright Act, 1957)',
+      displayName: 'Digital Copyright & Fair Use (Copyright Act, 1957)',
+      shortName: 'Copyright & Fair Dealing',
+      description: 'Statutory protections for digital content, fair dealing educational exceptions (§ 52), and technological protection measures (§§ 65A, 65B).',
+      filter: (l) => l.actName === 'Copyright Act, 1957'
     },
     {
       id: 'rules',
-      name: 'Rules & Regulations',
-      displayName: 'Rules & Regulations',
-      filter: (l) => l.role === 'Government Rule / Notification'
+      name: 'Rules, Regulations & Sector Directives',
+      displayName: 'Rules, Regulations & Sector Directives',
+      shortName: 'Rules & Directives',
+      description: 'Subordinate legislation including IT Intermediary Rules (2021/2026), CERT-In security directions, and RBI Customer Liability frameworks.',
+      filter: (l) => l.role === 'Government Rule / Notification' || l.role === 'Sector Regulation' || l.role === 'Judicial Interpretation'
     }
   ];
 
-  // Law Compass Scenarios Mapping
+  // Law Compass Scenarios Mapping (All 11 scenarios preserved verbatim with subtle category tags)
   const compassSituations = [
     {
       id: 'impersonation',
       title: 'Scammer impersonated someone online / created a fake profile',
       type: 'Identity Theft & Fraud',
+      category: 'Identity & AI',
       provisions: ['Section 66C', 'Section 66D', 'BNS Section 319'],
       crime: 'Identity Theft',
       crimeSlug: 'identity-theft',
@@ -100,6 +117,7 @@ function Laws() {
       id: 'upi_scam',
       title: 'Tricked into making a fraudulent UPI transaction',
       type: 'Financial Cyber Fraud',
+      category: 'Financial Fraud',
       provisions: ['Section 66D', 'BNS Section 318'],
       crime: 'UPI / Payment Scams',
       crimeSlug: 'upi-payment-fraud',
@@ -110,6 +128,7 @@ function Laws() {
       id: 'data_leak',
       title: 'Company leaked my personal data / credit cards due to poor security',
       type: 'Privacy Breach',
+      category: 'Privacy & Safety',
       provisions: ['Section 43A', 'DPDP Section 6'],
       crime: 'Data Breach Liabilities',
       crimeSlug: 'data-breach',
@@ -120,9 +139,10 @@ function Laws() {
       id: 'privacy_harassment',
       title: 'Intimate photos or private pictures shared online without consent',
       type: 'Online Harassment',
+      category: 'Privacy & Safety',
       provisions: ['Section 66E', 'Section 67'],
       crime: 'Cyber Stalking',
-      crimeSlug: 'cyber-stalking',
+      crimeSlug: 'cyberstalking-doxxing',
       caseStudy: '',
       advice: 'Section 66E directly punishes violating physical privacy. Obscene media dissemination is prosecuted under Section 67.'
     },
@@ -130,6 +150,7 @@ function Laws() {
       id: 'erasure_request',
       title: 'Want a portal to completely delete my registered personal data',
       type: 'Data Protection Rights',
+      category: 'Data Rights & Evidence',
       provisions: ['DPDP Section 11'],
       crime: 'Privacy & Data Rights',
       crimeSlug: 'data-breach',
@@ -140,6 +161,7 @@ function Laws() {
       id: 'deepfake_takedown',
       title: 'Social platform refuses to remove a fake profile or deepfake of me',
       type: 'Platform Intermediary Duties',
+      category: 'Identity & AI',
       provisions: ['IT Intermediary Rules'],
       crime: 'Identity Spoofing',
       crimeSlug: 'identity-theft',
@@ -150,6 +172,7 @@ function Laws() {
       id: 'digital_arrest',
       title: 'Fraudster on video call claiming to be Police/CBI/ED threatening "digital arrest"',
       type: 'Government Impersonation & Extortion',
+      category: 'Financial Fraud',
       provisions: ['Section 66D', 'BNS Section 318', 'BNS Section 319'],
       crime: 'Digital Arrest Scams',
       crimeSlug: 'digital-arrest-scam',
@@ -160,6 +183,7 @@ function Laws() {
       id: 'predatory_loan',
       title: 'Instant loan app accessing contacts and sending morphed images to relatives',
       type: 'Extortion & Harassment',
+      category: 'Financial Fraud',
       provisions: ['Section 66E', 'BNS Section 351', 'BNS Section 78', 'Section 43'],
       crime: 'Loan App Extortion',
       crimeSlug: 'loan-app-extortion',
@@ -170,6 +194,7 @@ function Laws() {
       id: 'voice_clone_fraud',
       title: 'Received panicked call from family member claiming accident/arrest with cloned voice',
       type: 'AI Impersonation Fraud',
+      category: 'Identity & AI',
       provisions: ['Section 66D', 'BNS Section 319'],
       crime: 'Deepfake & AI Impersonation',
       crimeSlug: 'deepfake-ai-impersonation',
@@ -180,6 +205,7 @@ function Laws() {
       id: 'electronic_evidence',
       title: 'Need to submit WhatsApp chats, emails, or call recordings as legal court evidence',
       type: 'Digital Evidence Admissibility',
+      category: 'Data Rights & Evidence',
       provisions: ['BSA Section 63'],
       crime: 'Digital Evidence & Forensics',
       crimeSlug: 'phishing',
@@ -190,6 +216,7 @@ function Laws() {
       id: 'cyberstalking_harassment',
       title: 'Obsessive online tracking, repeated unwanted messages, or location stalking',
       type: 'Cyberstalking & Personal Safety',
+      category: 'Privacy & Safety',
       provisions: ['BNS Section 78', 'Section 66E'],
       crime: 'Cyberstalking & Doxxing',
       crimeSlug: 'cyberstalking-doxxing',
@@ -198,18 +225,26 @@ function Laws() {
     }
   ];
 
+  const compassCategories = [
+    { id: 'all', label: 'All Scenarios', count: 11 },
+    { id: 'Financial Fraud', label: 'Financial Fraud (3)', count: 3 },
+    { id: 'Identity & AI', label: 'Identity & AI (3)', count: 3 },
+    { id: 'Privacy & Safety', label: 'Privacy & Safety (3)', count: 3 },
+    { id: 'Data Rights & Evidence', label: 'Data Rights & Evidence (2)', count: 2 }
+  ];
+
   // IT Act Chapters Map
   const itActChapters = [
     {
       id: 'Chapter IX',
       title: 'Chapter IX: Penalties, Compensation and Adjudication',
-      desc: 'Governs civil liabilities, failures to secure data, and details structures.',
+      desc: 'Governs civil liabilities, failures to secure sensitive data, and adjudication procedures.',
       sections: ['Section 43A']
     },
     {
       id: 'Chapter XI',
       title: 'Chapter XI: Cyber Offences',
-      desc: 'Defines criminal offences, arrest powers, and jail sentences.',
+      desc: 'Defines criminal computer offences, identity theft, obscenity, and arrest powers.',
       sections: ['Section 66C', 'Section 66D', 'Section 66E', 'Section 67', 'Section 66A']
     }
   ];
@@ -227,27 +262,102 @@ function Laws() {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Hash Navigation Handler
+  // Hash Navigation Handler with Deep Link Normalization & Unmounted Tab Activation
   useEffect(() => {
-    if (laws.length > 0 && window.location.hash) {
-      const targetId = decodeURIComponent(window.location.hash.substring(1));
-      const normalizedId = targetId.replace(/\s+/g, '-');
-      setTimeout(() => {
-        const element = document.getElementById(`section-card-${normalizedId}`);
-        if (element) {
-          element.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
-      }, 500);
+    if (laws.length === 0 || !location.hash) return;
+
+    const rawHash = decodeURIComponent(location.hash.substring(1)).trim();
+    if (!rawHash) return;
+
+    // Clean input: remove legacy 'sec-' prefix, whitespace, and punctuation for resilient matching
+    const cleanRaw = rawHash.replace(/^sec-/, '');
+    const cleanAlnum = cleanRaw.replace(/[^a-z0-9]/gi, '').toLowerCase();
+
+    // Match against laws collection by sectionNumber or slug
+    const matchedLaw = laws.find((l) => {
+      const secAlnum = (l.sectionNumber || '').replace(/[^a-z0-9]/gi, '').toLowerCase();
+      const slugAlnum = (l.slug || '').replace(/[^a-z0-9]/gi, '').toLowerCase();
+      return secAlnum === cleanAlnum || slugAlnum === cleanAlnum;
+    });
+
+    // If direct match found, ensure its family is mounted and reset blocking filters
+    let targetCardId = `section-card-${cleanRaw.replace(/\s+/g, '-')}`;
+    let targetFamilyId = null;
+
+    if (matchedLaw) {
+      targetCardId = `section-card-${matchedLaw.sectionNumber.replace(/\s+/g, '-')}`;
+      const parentFamily = lawFamilies.find((f) => f.filter(matchedLaw));
+      if (parentFamily) {
+        targetFamilyId = parentFamily.id;
+        // If current category filter would unmount this family, activate the family
+        setSelectedFamilyCategory((prev) => {
+          if (prev !== 'all' && prev !== parentFamily.id) {
+            return parentFamily.id;
+          }
+          return prev;
+        });
+      }
+
+      // Reset filters that would hide the matching card from view
+      if (searchQuery) setSearchQuery('');
+      if (selectedChapter) setSelectedChapter(null);
+      if (showBookmarkedOnly && !bookmarks.includes(matchedLaw.sectionNumber)) {
+        setShowBookmarkedOnly(false);
+      }
     }
-  }, [laws]);
+
+    // Schedule smooth scroll with retry harness to guarantee DOM mounting before scroll
+    let attempts = 0;
+    const maxAttempts = 12;
+    let timerId = null;
+    let rafId = null;
+
+    const tryScroll = () => {
+      const element = document.getElementById(targetCardId);
+      if (element) {
+        isScrollingToTarget.current = true;
+        if (scrollTimeout.current) clearTimeout(scrollTimeout.current);
+
+        if (matchedLaw) {
+          setActiveSectionId(matchedLaw.sectionNumber);
+          if (targetFamilyId) setActiveFamilyId(targetFamilyId);
+        }
+
+        const header = document.querySelector('.top-header, .workspace-topbar');
+        const headerHeight = header ? header.offsetHeight : 72;
+        const topOffset = element.getBoundingClientRect().top + window.pageYOffset - (headerHeight + 20);
+
+        window.scrollTo({ top: Math.max(0, topOffset), behavior: 'smooth' });
+
+        scrollTimeout.current = setTimeout(() => {
+          isScrollingToTarget.current = false;
+        }, 900);
+      } else if (attempts < maxAttempts) {
+        attempts += 1;
+        timerId = setTimeout(() => {
+          rafId = requestAnimationFrame(tryScroll);
+        }, 50);
+      }
+    };
+
+    rafId = requestAnimationFrame(tryScroll);
+
+    return () => {
+      if (rafId) cancelAnimationFrame(rafId);
+      if (timerId) clearTimeout(timerId);
+    };
+  }, [laws, location.hash]);
 
   const fetchLaws = async () => {
     setLoading(true);
     try {
       const data = await api.getLaws();
-      setLaws(data);
-    } catch (err) {
-      setError('Failed to fetch cyber law database records.');
+      const serverSectionNumbers = new Set((data || []).map((l) => l.sectionNumber));
+      const additional = supplementaryLawSectionsData.filter((l) => !serverSectionNumbers.has(l.sectionNumber));
+      setLaws([...(data || []), ...additional]);
+    } catch (_err) {
+      setLaws(supplementaryLawSectionsData);
+      setError('Live statutory database synchronization unavailable. Viewing archived catalog records.');
     } finally {
       setLoading(false);
     }
@@ -258,8 +368,8 @@ function Laws() {
     if (loading || laws.length === 0 || isMobile) return;
 
     const observerOptions = {
-      root: null, // Viewport
-      rootMargin: '-120px 0px -60% 0px', // Active triggers near top header clearance
+      root: null,
+      rootMargin: '-120px 0px -60% 0px',
       threshold: 0
     };
 
@@ -284,12 +394,17 @@ function Laws() {
     return () => observer.disconnect();
   }, [laws, loading, isMobile]);
 
-  // Sidebar Auto-Scroll Adjustment
+  // Sidebar Auto-Scroll Adjustment (Strictly scoped to sidebar container, never window scroll)
   useEffect(() => {
     if (activeSectionId && !isMobile) {
       const activeNavEl = document.getElementById(`nav-item-${activeSectionId.replace(/\s+/g, '-')}`);
-      if (activeNavEl) {
-        activeNavEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      const sidebarContainer = document.querySelector('.laws-sidebar-sticky');
+      if (activeNavEl && sidebarContainer) {
+        const navRect = activeNavEl.getBoundingClientRect();
+        const containerRect = sidebarContainer.getBoundingClientRect();
+        if (navRect.top < containerRect.top || navRect.bottom > containerRect.bottom) {
+          sidebarContainer.scrollTop += (navRect.top - containerRect.top) - 40;
+        }
       }
     }
   }, [activeSectionId, isMobile]);
@@ -303,7 +418,6 @@ function Laws() {
       if (sectionNum) setActiveSectionId(sectionNum);
       if (familyId) setActiveFamilyId(familyId);
 
-      // Smooth scroll target
       const topOffset = el.getBoundingClientRect().top + window.pageYOffset - 90;
       window.scrollTo({ top: topOffset, behavior: 'smooth' });
 
@@ -429,7 +543,7 @@ function Laws() {
         };
       case 'DPDP Section 6':
         return {
-          statusBadge: 'ENACTED (COMMENCEMENT PENDING NOTIFICATION)',
+          statusBadge: 'ENACTED (SCHEDULED 13 MAY 2027; §6(9) 13 NOV 2026)',
           statusType: 'pending',
           question: 'Under Section 6 of the Digital Personal Data Protection Act 2023, what standard is required for consent to be valid?',
           options: [
@@ -442,7 +556,7 @@ function Laws() {
         };
       case 'DPDP Section 11':
         return {
-          statusBadge: 'ENACTED (COMMENCEMENT PENDING NOTIFICATION)',
+          statusBadge: 'ENACTED (SCHEDULED 13 MAY 2027)',
           statusType: 'pending',
           question: 'Which statutory right does Section 11 of the DPDP Act 2023 guarantee to individuals (Data Principals)?',
           options: [
@@ -451,7 +565,7 @@ function Laws() {
             'The right to trade anonymized medical data on public exchanges.'
           ],
           correctIdx: 1,
-          explanation: 'DPDP Act Section 11 guarantees Data Principals the right to obtain a summary of their personal data processed by a Data Fiduciary, the identities of all processors, and the right to correction, completion, updating, and erasure of personal data that is no longer necessary for the specified purpose. (Statutory Status: Enacted statute; operational enforcement pending notification).'
+          explanation: 'DPDP Act Section 11 guarantees Data Principals the right to obtain a summary of their personal data processed by a Data Fiduciary, the identities of all processors, and the right to correction, completion, updating, and erasure of personal data that is no longer necessary for the specified purpose. (Statutory Status: Under Notification G.S.R. 843(E) dated 13 November 2025, substantive Data Principal rights under Section 11 take effect on 13 May 2027).'
         };
       case 'BNS Section 318':
         return {
@@ -514,7 +628,7 @@ function Laws() {
     setSubmittedQuizzes(nextSubmitted);
   };
 
-  // Client Filter Logic (Filters the provisions pool dynamically)
+  // Client Filter Logic
   const lawsSearchConfig = {
     sectionNumber: 50,
     officialTitle: 30,
@@ -525,7 +639,7 @@ function Laws() {
     role: 2
   };
 
-    const filteredLaws = searchItems(
+  const filteredLaws = searchItems(
     laws,
     searchQuery,
     lawsSearchConfig,
@@ -534,7 +648,11 @@ function Laws() {
       const matchesChapter = !selectedChapter || 
         (selectedChapter === 'Chapter IX' && itActChapters[0].sections.includes(l.sectionNumber)) ||
         (selectedChapter === 'Chapter XI' && itActChapters[1].sections.includes(l.sectionNumber));
-      return matchesStatus && matchesChapter;
+      const matchesFamily = selectedFamilyCategory === 'all' ||
+        (lawFamilies.find(f => f.id === selectedFamilyCategory)?.filter(l) ?? true);
+      const matchesBookmark = !showBookmarkedOnly || bookmarks.includes(l.sectionNumber);
+
+      return matchesStatus && matchesChapter && matchesFamily && matchesBookmark;
     }
   );
 
@@ -542,305 +660,319 @@ function Laws() {
     return filteredLaws.filter(family.filter);
   };
 
-  // Helper to render provision details using clean hierarchy and soft dividers (No double borders!)
-  const renderSectionCard = (section, familyId) => {
+  // Statutory Commencement & Constitutional Status Alignment
+  const getStatutoryStatusInfo = (section) => {
     const isOmitted = section.legalStatus === 'OMITTED' || section.legalStatus === 'omitted';
-    const isNotYetInForce = section.legalStatus === 'NOT_YET_IN_FORCE';
+    const isDPDP = section.actName === 'Digital Personal Data Protection Act, 2023';
+    const secNum = (section.sectionNumber || '').trim();
+
+    if (isOmitted) {
+      return {
+        type: 'STRUCK_DOWN_HISTORICAL',
+        accentClass: 'accent-struck-down',
+        badgeText: '✕ STRUCK DOWN (UNCONSTITUTIONAL)',
+        bg: 'var(--color-danger-light, #F9ECEB)',
+        color: 'var(--color-danger, #9B3E35)',
+        border: '1px solid var(--color-danger, #9B3E35)',
+        noticeTitle: 'STRUCK DOWN & INOPERATIVE',
+        noticeText: 'Struck down by the Supreme Court of India in Shreya Singhal (2015) as unconstitutional under Article 19(1)(a). It has no legal force and cannot be used for arrest or prosecution.'
+      };
+    }
+
+    if (isDPDP) {
+      const isNov2025 = /Section\s*(1\(2\)|2\b|18|19|20|21|22|23|24|25|26|35|38|39|40|41|42|43|44\(1\)|44\(3\))/i.test(secNum);
+      const isNov2026 = /Section\s*(6\(9\)|27\(1\)\(d\))/i.test(secNum);
+
+      if (isNov2025) {
+        return {
+          type: 'DPDP_COMMENCED',
+          accentClass: 'accent-in-force',
+          badgeText: '✓ COMMENCED 13 NOV 2025',
+          bg: 'var(--color-success-light, #EEF4F0)',
+          color: 'var(--color-accent-forest, #1F4D3A)',
+          border: '1px solid var(--color-accent-sage, #6C8F71)',
+          noticeTitle: 'COMMENCED ENABLING PROVISION',
+          noticeText: 'Commenced enabling and institutional provision under Central Government Notification G.S.R. 843(E) dated 13 November 2025.'
+        };
+      } else if (isNov2026) {
+        return {
+          type: 'DPDP_PHASE_NOV_2026',
+          accentClass: 'accent-pending',
+          badgeText: '⏱ COMMENCING 13 NOV 2026',
+          bg: 'var(--color-warning-light, #FAF4EA)',
+          color: 'var(--color-accent-terracotta, #805B43)',
+          border: '1px solid var(--color-border-strong, #8F7B5E)',
+          noticeTitle: 'CONSENT MANAGER COMMENCEMENT PHASE (13 NOV 2026)',
+          noticeText: 'Enacted statutory provision. Operational commencement for Consent Managers scheduled for 13 November 2026 under G.S.R. 843(E). General Data Fiduciary obligations do not commence on this date.'
+        };
+      } else {
+        return {
+          type: 'DPDP_PHASE_MAY_2027',
+          accentClass: 'accent-pending',
+          badgeText: '⏱ SCHEDULED 13 MAY 2027',
+          bg: 'var(--color-warning-light, #FAF4EA)',
+          color: 'var(--color-accent-terracotta, #805B43)',
+          border: '1px solid var(--color-border-strong, #8F7B5E)',
+          noticeTitle: 'SUBSTANTIVE COMPLIANCE PHASE (13 MAY 2027)',
+          noticeText: 'Enacted statutory provision. Substantive compliance obligations, consent architecture, Data Principal rights, and Board enforcement take effect on 13 May 2027 under G.S.R. 843(E).'
+        };
+      }
+    }
+
+    if (section.legalStatus === 'NOT_YET_IN_FORCE') {
+      return {
+        type: 'NOT_YET_IN_FORCE',
+        accentClass: 'accent-pending',
+        badgeText: '⏱ COMMENCEMENT PENDING',
+        bg: 'var(--color-warning-light, #FAF4EA)',
+        color: 'var(--color-accent-terracotta, #805B43)',
+        border: '1px solid var(--color-border-strong, #8F7B5E)',
+        noticeTitle: 'ENACTED (COMMENCEMENT PENDING)',
+        noticeText: section.commencementStatus || 'Enacted legislation; operational commencement pending notification.'
+      };
+    }
+
+    if (section.role === 'Government Rule / Notification' || section.role === 'Judicial Interpretation') {
+      return {
+        type: 'RULES_OR_PRECEDENTS',
+        accentClass: 'accent-rules',
+        badgeText: section.role === 'Judicial Interpretation' ? '⚖️ BINDING PRECEDENT' : '📜 RULE IN FORCE',
+        bg: 'var(--color-surface-inset, #EEF4F0)',
+        color: 'var(--color-accent-forest, #1F4D3A)',
+        border: '1px solid var(--color-accent-sage, #6C8F71)',
+        noticeTitle: null,
+        noticeText: null
+      };
+    }
+
+    return {
+      type: 'IN_FORCE',
+      accentClass: 'accent-in-force',
+      badgeText: '✓ IN FORCE',
+      bg: 'var(--color-success-light, #EEF4F0)',
+      color: 'var(--color-accent-forest, #1F4D3A)',
+      border: '1px solid var(--color-accent-sage, #6C8F71)',
+      noticeTitle: null,
+      noticeText: null
+    };
+  };
+
+  // Helper to render provision details using clean hierarchy and soft dividers
+  const renderSectionCard = (section, familyId) => {
+    const statusInfo = getStatutoryStatusInfo(section);
     const textToggleView = textViews[section.sectionNumber] || 'plain';
     const hasBookmark = bookmarks.includes(section.sectionNumber);
     const noteText = notes[section.sectionNumber] || '';
     const inlineQuiz = getKnowledgeCheck(section.sectionNumber);
-    
-    let accentColor = 'var(--color-primary)';
-    if (isOmitted) accentColor = 'var(--color-error)';
-    else if (isNotYetInForce) accentColor = '#f59e0b';
-    else if (section.role === 'Data Protection') accentColor = 'var(--color-success, #536F61)';
-
+    const accentColor = statusInfo.color;
     const cardId = section.sectionNumber.replace(/\s+/g, '-');
 
     return (
-      <div
+      <article
         key={section._id}
         id={`section-card-${cardId}`}
         data-section-num={section.sectionNumber}
         data-family-id={familyId}
-        style={{
-          backgroundColor: 'transparent',
-          padding: '24px 0 32px 0',
-          borderBottom: '1px solid var(--color-border)',
-          marginBottom: '32px'
-        }}
+        className={`law-section-card ${statusInfo.accentClass}`}
       >
         {/* Title metadata bar */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '16px', marginBottom: '24px' }}>
+        <div className="section-card-topbar">
           <div>
-            <span style={{ fontSize: '0.75rem', fontWeight: 'bold', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1px' }}>
+            <span className="section-meta-eyebrow">
               {section.actName} • {section.role}
             </span>
-            <h3 style={{ fontSize: '1.6rem', color: 'var(--text-primary)', fontWeight: '700', marginTop: '6px', lineHeight: '1.2' }}>
+            <h3 className="section-official-title">
               {section.sectionNumber}: {section.officialTitle}
             </h3>
-            <div style={{ width: '40px', height: '3px', backgroundColor: accentColor, borderRadius: '1.5px', marginBottom: '16px' }} />
+            <div className="section-accent-rule" style={{ backgroundColor: accentColor }} />
           </div>
 
-          <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+          <div className="section-action-pills">
             <button
               onClick={() => toggleBookmark(section.sectionNumber)}
-              style={{
-                backgroundColor: 'transparent',
-                border: 'none',
-                fontSize: '1.4rem',
-                cursor: 'pointer',
-                padding: '4px',
-                lineHeight: '1',
-                outline: 'none',
-                transition: 'transform 0.15s ease'
-              }}
-              title={hasBookmark ? 'Remove Bookmark' : 'Bookmark Section'}
+              className={`section-bookmark-btn ${hasBookmark ? 'bookmarked' : ''}`}
+              title={hasBookmark ? 'Remove from saved provisions' : 'Save provision to bookmarks'}
+              aria-label={hasBookmark ? `Remove ${section.sectionNumber} from bookmarks` : `Bookmark ${section.sectionNumber}`}
             >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill={hasBookmark ? "var(--color-primary)" : "none"} stroke="var(--color-primary)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill={hasBookmark ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
+              </svg>
+              <span>{hasBookmark ? 'Saved' : 'Bookmark'}</span>
             </button>
-            <span style={{
-              fontSize: '0.7rem',
-              fontWeight: '800',
-              textTransform: 'uppercase',
-              padding: '4px 10px',
-              borderRadius: '3px',
-              backgroundColor: isOmitted ? 'rgba(239, 68, 68, 0.08)' : (isNotYetInForce ? 'rgba(245, 158, 11, 0.08)' : 'var(--bg-secondary)'),
-              color: isOmitted ? 'var(--color-error)' : (isNotYetInForce ? '#d35400' : 'var(--text-primary)'),
-              border: isOmitted ? '1px solid var(--color-error)' : (isNotYetInForce ? '1px solid #f59e0b' : '1px solid var(--color-border)')
-            }}>
-              {section.legalStatus}
+            <span
+              className="section-status-badge"
+              style={{
+                backgroundColor: statusInfo.bg,
+                color: statusInfo.color,
+                border: statusInfo.border
+              }}
+            >
+              {statusInfo.badgeText}
             </span>
           </div>
         </div>
 
-        {/* Status Notice bars */}
-        {isOmitted && (
-          <div style={{
-            backgroundColor: 'var(--color-error-light)',
-            padding: '16px',
-            borderRadius: '4px',
-            marginBottom: '24px',
-            fontSize: '0.85rem',
-            color: '#7b1c12',
-            lineHeight: '1.5'
-          }}>
-            <strong>OMITTED & INOPERATIVE:</strong> Struck down by the Supreme Court of India in the <em>Shreya Singhal (2015)</em> ruling. Arrests under this provision are illegal.
+        {/* Penalty / Legal Effect Callout */}
+        {section.penaltyOrLegalEffect && (
+          <div className="section-penalty-banner">
+            <span className="section-penalty-icon" aria-hidden="true">⚖️</span>
+            <div>
+              <strong style={{ color: 'var(--color-text-primary)' }}>Penalty & Legal Effect: </strong>
+              <span>{section.penaltyOrLegalEffect}</span>
+            </div>
           </div>
         )}
 
-        {isNotYetInForce && (
-          <div style={{
-            backgroundColor: 'var(--color-warning-light)',
-            padding: '16px',
-            borderRadius: '4px',
-            marginBottom: '24px',
-            fontSize: '0.85rem',
-            color: '#8c3b00',
-            lineHeight: '1.5'
-          }}>
-            <strong>NOT YET IN FORCE:</strong>
-            <div style={{ marginTop: '4px' }}>{section.commencementStatus || 'Pending official commencement notifications.'}</div>
+        {/* Status Notice bars */}
+        {statusInfo.noticeText && (
+          <div
+            className="section-notice-box"
+            style={{
+              backgroundColor: statusInfo.bg,
+              border: statusInfo.border,
+              color: statusInfo.color
+            }}
+          >
+            <strong>{statusInfo.noticeTitle}:</strong> {statusInfo.noticeText}
           </div>
         )}
 
         {/* View Toggle (Plain English vs Legal text) */}
         {section.officialText && (
-          <div style={{ display: 'flex', gap: '16px', marginBottom: '20px', borderBottom: '1px solid var(--color-border)', paddingBottom: '12px' }}>
+          <div className="section-view-segmented" role="tablist" aria-label="Reading mode">
             <button
+              type="button"
+              role="tab"
+              aria-selected={textToggleView === 'plain'}
               onClick={() => setTextViews({ ...textViews, [section.sectionNumber]: 'plain' })}
-              style={{
-                backgroundColor: textToggleView === 'plain' ? 'var(--color-primary)' : 'transparent',
-                color: textToggleView === 'plain' ? 'white' : 'var(--text-secondary)',
-                border: 'none',
-                padding: '6px 14px',
-                borderRadius: '4px',
-                fontSize: '0.75rem',
-                fontWeight: 'bold',
-                cursor: 'pointer',
-                transition: 'all 0.15s ease'
-              }}
+              className={`section-view-tab ${textToggleView === 'plain' ? 'active' : ''}`}
             >
-              Plain English
+              <span aria-hidden="true">📖</span>
+              <span>Plain English (Guide)</span>
             </button>
             <button
+              type="button"
+              role="tab"
+              aria-selected={textToggleView === 'official'}
               onClick={() => setTextViews({ ...textViews, [section.sectionNumber]: 'official' })}
-              style={{
-                backgroundColor: textToggleView === 'official' ? 'var(--color-primary)' : 'transparent',
-                color: textToggleView === 'official' ? 'white' : 'var(--text-secondary)',
-                border: 'none',
-                padding: '6px 14px',
-                borderRadius: '4px',
-                fontSize: '0.75rem',
-                fontWeight: 'bold',
-                cursor: 'pointer',
-                transition: 'all 0.15s ease'
-              }}
+              className={`section-view-tab ${textToggleView === 'official' ? 'active' : ''}`}
             >
-              Legal Text
+              <span aria-hidden="true">⚖️</span>
+              <span>Official Legal Text</span>
             </button>
           </div>
         )}
 
         {/* Main Body */}
-        <div style={{ marginBottom: '28px' }}>
-          {textToggleView === 'plain' ? (
-            <p style={{ fontSize: '1.1rem', lineHeight: '1.6', color: 'var(--text-primary)', fontWeight: '400', margin: 0 }}>
-              {section.plainLanguageExplanation}
-            </p>
-          ) : (
-            <pre style={{
-              fontSize: '0.9rem',
-              lineHeight: '1.6',
-              color: 'var(--text-secondary)',
-              fontFamily: 'monospace',
-              backgroundColor: 'var(--bg-secondary)',
-              padding: '16px',
-              borderRadius: '4px',
-              border: 'none',
-              whiteSpace: 'pre-wrap',
-              margin: 0
-            }}>
-              {section.officialText}
-            </pre>
-          )}
-        </div>
+        {textToggleView === 'plain' ? (
+          <p className="section-body-plain">
+            {section.plainLanguageExplanation}
+          </p>
+        ) : (
+          <pre className="section-body-legal">
+            {section.officialText}
+          </pre>
+        )}
 
-        {/* Dynamic Details block - Typography & Whitespace over boxes */}
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: window.innerWidth > 768 ? '1fr 1fr' : '1fr',
-          gap: '32px',
-          borderTop: '1px solid var(--color-border)',
-          paddingTop: '20px',
-          fontSize: '0.9rem',
-          marginBottom: '24px'
-        }}>
-          <div>
-            <h4 style={{ fontSize: '0.85rem', color: 'var(--text-primary)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '8px', fontWeight: 'bold' }}>
-              Why It Matters to You
+        {/* 2-Column Editorial Panels (Why It Matters vs Everyday Situation) */}
+        <div className="section-context-grid">
+          <div className="section-context-panel panel-matters">
+            <h4 className="section-panel-heading">
+              <span aria-hidden="true">🛡️</span>
+              <span>Why It Matters to You</span>
             </h4>
-            <p style={{ color: 'var(--text-secondary)', margin: 0, lineHeight: '1.5' }}>
+            <p className="section-panel-text">
               {section.whyItMatters}
             </p>
           </div>
 
-          <div>
-            <h4 style={{ fontSize: '0.85rem', color: 'var(--text-primary)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '8px', fontWeight: 'bold' }}>
-              Everyday Real-Life Situation
+          <div className="section-context-panel panel-situation">
+            <h4 className="section-panel-heading">
+              <span aria-hidden="true">💡</span>
+              <span>Everyday Real-Life Situation</span>
             </h4>
-            <p style={{ color: 'var(--text-secondary)', margin: 0, lineHeight: '1.5', fontStyle: 'italic' }}>
+            <p className="section-panel-text">
               "{section.exampleScenario}"
             </p>
           </div>
         </div>
 
-        {/* Provision Map line (Simplified - No double border/nesting) */}
-        <div style={{
-          borderTop: '1px solid var(--color-border)',
-          paddingTop: '16px',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '12px',
-          fontSize: '0.8rem',
-          color: 'var(--text-muted)',
-          flexWrap: 'wrap',
-          marginBottom: '24px'
-        }}>
-          <span style={{ fontWeight: 'bold', color: 'var(--text-secondary)' }}>HOW THIS CONNECTS:</span>
-          <span style={{ color: 'var(--text-primary)' }}>{section.sectionNumber}</span>
-          <span>&rarr;</span>
+        {/* Provision Connection Pathway Rail */}
+        <div className="section-connection-rail">
+          <span className="section-rail-label">How This Connects:</span>
+          <span style={{ fontWeight: '700', color: 'var(--color-text-primary)' }}>{section.sectionNumber}</span>
+          <span aria-hidden="true">&rarr;</span>
           {section.relatedCyberCrimes && section.relatedCyberCrimes.length > 0 ? (
-            <Link to={getContextPath('/crimes')} style={{ color: 'var(--color-accent)', fontWeight: 'bold', textDecoration: 'underline' }}>
-              Crime: {section.relatedCyberCrimes[0]}
+            <Link to={`${getContextPath('/crimes')}#${section.relatedCyberCrimes[0]}`} className="section-rail-link">
+              Crime: {section.relatedCyberCrimes[0].replace(/-/g, ' ')}
             </Link>
           ) : (
-            <span>General Security</span>
+            <span>General Digital Rights</span>
           )}
-          <span>&rarr;</span>
+          <span aria-hidden="true">&rarr;</span>
           {section.relatedCaseStudies && section.relatedCaseStudies.length > 0 ? (
-            <Link to={getContextPath('/cases')} style={{ color: 'var(--color-accent)', fontWeight: 'bold', textDecoration: 'underline' }}>
+            <Link to={`${getContextPath('/cases')}?slug=${encodeURIComponent(section.relatedCaseStudies[0])}`} className="section-rail-link">
               Case File: {section.relatedCaseStudies[0].replace(/-/g, ' ')}
             </Link>
           ) : (
-            <span>Case Study</span>
+            <span>Case Study Archive</span>
           )}
         </div>
 
-        {/* Inline Quiz widget - (Simplified soft-bg container, no dashed border) */}
+        {/* Inline Quiz widget */}
         {inlineQuiz && (
-          <div style={{
-            backgroundColor: 'var(--bg-secondary)',
-            borderRadius: '4px',
-            padding: '20px',
-            marginBottom: '24px',
-            border: '1px solid var(--color-border)'
-          }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px', marginBottom: '12px' }}>
+          <div className="section-quiz-container">
+            <div className="section-quiz-header">
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '1px' }}>
+                <span className="section-quiz-title">
                   Quick Law Check
                 </span>
                 {inlineQuiz.statusBadge && (
-                  <span style={{
-                    fontSize: '0.65rem',
-                    fontWeight: '800',
-                    padding: '2px 7px',
-                    borderRadius: '3px',
-                    backgroundColor: inlineQuiz.statusType === 'omitted' ? 'var(--color-error-light)' : inlineQuiz.statusType === 'pending' ? 'rgba(245, 158, 11, 0.1)' : 'var(--bg-white)',
-                    color: inlineQuiz.statusType === 'omitted' ? 'var(--color-error)' : inlineQuiz.statusType === 'pending' ? '#b45309' : 'var(--color-primary)',
-                    border: '1px solid var(--color-border)'
-                  }}>
+                  <span
+                    style={{
+                      fontSize: '0.65rem',
+                      fontWeight: '800',
+                      padding: '2px 7px',
+                      borderRadius: '3px',
+                      backgroundColor: inlineQuiz.statusType === 'omitted' ? 'var(--color-danger-light)' : inlineQuiz.statusType === 'pending' ? 'var(--color-warning-light)' : 'var(--color-surface-card)',
+                      color: inlineQuiz.statusType === 'omitted' ? 'var(--color-danger)' : inlineQuiz.statusType === 'pending' ? 'var(--color-accent-terracotta)' : 'var(--color-accent-forest)',
+                      border: '1px solid var(--color-border)'
+                    }}
+                  >
                     {inlineQuiz.statusBadge}
                   </span>
                 )}
               </div>
-              <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontStyle: 'italic' }}>
+              <span style={{ fontSize: '0.72rem', color: 'var(--color-text-muted)', fontStyle: 'italic' }}>
                 Educational Practice • Not Legal Advice
               </span>
             </div>
-            <p style={{ fontSize: '0.95rem', fontWeight: '600', margin: '0 0 16px 0', color: 'var(--text-primary)' }}>
+
+            <p className="section-quiz-question">
               {inlineQuiz.question}
             </p>
-            
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+
+            <div className="section-quiz-options">
               {inlineQuiz.options.map((opt, oIdx) => {
                 const isSelected = quizAnswers[section.sectionNumber] === oIdx;
                 const isSubmitted = submittedQuizzes[section.sectionNumber];
                 const isCorrect = oIdx === inlineQuiz.correctIdx;
-                
-                let optBg = 'var(--bg-white)';
-                let optBorder = '1px solid var(--color-border)';
+
+                let optClass = 'section-quiz-opt-btn';
                 if (isSubmitted) {
-                  if (isCorrect) {
-                    optBg = 'rgba(39, 174, 96, 0.1)';
-                    optBorder = '1px solid var(--color-success)';
-                  } else if (isSelected) {
-                    optBg = 'rgba(192, 57, 43, 0.1)';
-                    optBorder = '1px solid var(--color-error)';
-                  }
+                  if (isCorrect) optClass += ' opt-correct';
+                  else if (isSelected) optClass += ' opt-wrong';
                 } else if (isSelected) {
-                  optBg = 'var(--color-primary-light)';
-                  optBorder = '1px solid var(--color-primary)';
+                  optClass += ' opt-selected';
                 }
 
                 return (
                   <button
                     key={oIdx}
+                    type="button"
                     disabled={isSubmitted}
                     onClick={() => handleQuizAnswerSelect(section.sectionNumber, oIdx)}
-                    style={{
-                      textAlign: 'left',
-                      padding: '10px 14px',
-                      borderRadius: '4px',
-                      border: optBorder,
-                      backgroundColor: optBg,
-                      color: 'var(--text-primary)',
-                      fontSize: '0.85rem',
-                      cursor: isSubmitted ? 'default' : 'pointer',
-                      transition: 'all 0.15s ease'
-                    }}
+                    className={optClass}
                   >
                     {opt}
                   </button>
@@ -850,99 +982,81 @@ function Laws() {
 
             {quizAnswers[section.sectionNumber] !== undefined && !submittedQuizzes[section.sectionNumber] && (
               <button
+                type="button"
                 onClick={() => handleQuizSubmit(section.sectionNumber)}
-                style={{
-                  marginTop: '16px',
-                  backgroundColor: 'var(--color-primary)',
-                  color: 'white',
-                  border: 'none',
-                  padding: '8px 16px',
-                  borderRadius: '4px',
-                  cursor: 'pointer',
-                  fontSize: '0.8rem',
-                  fontWeight: 'bold',
-                  transition: 'background-color 0.2s ease'
-                }}
+                className="section-quiz-submit-btn"
               >
                 Validate Answer
               </button>
             )}
 
             {submittedQuizzes[section.sectionNumber] && (
-              <div style={{ marginTop: '16px', fontSize: '0.85rem', color: 'var(--text-secondary)', borderLeft: '3px solid var(--color-primary)', paddingLeft: '12px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                  <strong style={{ color: quizAnswers[section.sectionNumber] === inlineQuiz.correctIdx ? 'var(--color-success)' : 'var(--color-error)' }}>
+              <div className="section-quiz-feedback" role="region" aria-live="polite" aria-label="Knowledge check result">
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                  <strong style={{ color: quizAnswers[section.sectionNumber] === inlineQuiz.correctIdx ? 'var(--color-accent-forest, #1F4D3A)' : 'var(--color-danger, #9B3E35)' }}>
                     {quizAnswers[section.sectionNumber] === inlineQuiz.correctIdx ? '✓ Correct Understanding' : '✗ Review Statutory Provision'}
                   </strong>
                   <button
+                    type="button"
                     onClick={() => handleQuizReset(section.sectionNumber)}
                     style={{
                       backgroundColor: 'transparent',
                       border: '1px solid var(--color-border)',
-                      borderRadius: '3px',
-                      padding: '2px 8px',
+                      borderRadius: '4px',
+                      padding: '3px 10px',
                       fontSize: '0.75rem',
                       cursor: 'pointer',
-                      color: 'var(--text-secondary)'
+                      color: 'var(--color-text-secondary)'
                     }}
                   >
-                    ↺ Reset Check
+                    ↺ Try Again
                   </button>
                 </div>
-                <p style={{ margin: '4px 0 0 0', lineHeight: '1.5' }}>{inlineQuiz.explanation}</p>
+                <p style={{ margin: 0, color: 'var(--color-text-primary)' }}>{inlineQuiz.explanation}</p>
               </div>
             )}
           </div>
         )}
 
         {/* Private Study Notes Drawer */}
-        <div style={{ borderTop: '1px solid var(--color-border)', paddingTop: '16px', marginTop: '16px' }}>
+        <div className="section-notes-drawer">
           {editingNoteSection === section.sectionNumber ? (
             <div>
               <textarea
                 value={noteInput}
                 onChange={(e) => setNoteInput(e.target.value)}
                 placeholder="Type your personal private study notes here..."
-                style={{
-                  width: '100%',
-                  height: '80px',
-                  padding: '12px',
-                  fontSize: '0.85rem',
-                  borderRadius: '4px',
-                  border: '1px solid var(--color-border)',
-                  backgroundColor: 'var(--bg-secondary)',
-                  color: 'var(--text-primary)',
-                  outline: 'none',
-                  marginBottom: '12px',
-                  fontFamily: 'var(--font-sans)'
-                }}
+                className="section-notes-textarea"
+                aria-label={`Study notes for ${section.sectionNumber}`}
               />
-              <div style={{ display: 'flex', gap: '8px' }}>
+              <div className="section-notes-actions">
                 <button
+                  type="button"
                   onClick={() => handleSaveNote(section.sectionNumber)}
                   style={{
-                    backgroundColor: 'var(--color-success)',
-                    color: 'white',
+                    backgroundColor: 'var(--color-accent-forest, #1F4D3A)',
+                    color: '#ffffff',
                     border: 'none',
                     padding: '6px 14px',
                     borderRadius: '4px',
                     cursor: 'pointer',
-                    fontSize: '0.75rem',
-                    fontWeight: 'bold'
+                    fontSize: '0.78rem',
+                    fontWeight: '700'
                   }}
                 >
                   Save Note
                 </button>
                 <button
+                  type="button"
                   onClick={() => setEditingNoteSection(null)}
                   style={{
                     backgroundColor: 'transparent',
                     border: '1px solid var(--color-border)',
-                    color: 'var(--text-secondary)',
+                    color: 'var(--color-text-secondary)',
                     padding: '6px 14px',
                     borderRadius: '4px',
                     cursor: 'pointer',
-                    fontSize: '0.75rem'
+                    fontSize: '0.78rem'
                   }}
                 >
                   Cancel
@@ -951,40 +1065,42 @@ function Laws() {
             </div>
           ) : (
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
-              <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+              <div style={{ fontSize: '0.82rem', color: 'var(--color-text-secondary)' }}>
                 {noteText ? (
                   <span>
-                    <strong>Study Note:</strong> "{noteText}"
+                    <strong>Personal Study Note:</strong> "{noteText}"
                   </span>
                 ) : (
-                  <span style={{ color: 'var(--text-muted)' }}>No study notes attached.</span>
+                  <span style={{ color: 'var(--color-text-muted)' }}>No private study notes attached to this section.</span>
                 )}
               </div>
               <div style={{ display: 'flex', gap: '12px' }}>
                 <button
+                  type="button"
                   onClick={() => handleStartEditingNote(section.sectionNumber)}
                   style={{
                     backgroundColor: 'transparent',
                     border: 'none',
-                    color: 'var(--color-accent)',
+                    color: 'var(--color-accent-forest, #1F4D3A)',
                     textDecoration: 'underline',
-                    fontSize: '0.75rem',
+                    fontSize: '0.78rem',
                     cursor: 'pointer',
                     padding: 0,
-                    fontWeight: 'bold'
+                    fontWeight: '700'
                   }}
                 >
-                  {noteText ? 'Edit' : '+ Add Note'}
+                  {noteText ? 'Edit Note' : '+ Add Study Note'}
                 </button>
                 {noteText && (
                   <button
+                    type="button"
                     onClick={() => handleDeleteNote(section.sectionNumber)}
                     style={{
                       backgroundColor: 'transparent',
                       border: 'none',
-                      color: 'var(--color-error)',
+                      color: 'var(--color-danger, #9B3E35)',
                       textDecoration: 'underline',
-                      fontSize: '0.75rem',
+                      fontSize: '0.78rem',
                       cursor: 'pointer',
                       padding: 0
                     }}
@@ -997,211 +1113,240 @@ function Laws() {
           )}
         </div>
 
-        {/* Footer review section (Simplified - No border) */}
-        <div style={{
-          marginTop: '20px',
-          paddingTop: '12px',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          fontSize: '0.75rem',
-          color: 'var(--text-muted)',
-          flexWrap: 'wrap',
-          gap: '8px'
-        }}>
+        {/* Card Footer Review & Reference */}
+        <div className="section-card-footer">
           <span>
             Last Reviewed: {new Date(section.lastReviewed || Date.now()).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}
           </span>
           {section.officialSourceId && (
             <span>
-              Official Source: <a href={section.officialSourceId.url} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'underline', color: 'var(--color-accent)', fontWeight: 'bold' }}>
+              Official Source: <a href={section.officialSourceId.url} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'underline', color: 'var(--color-accent-forest, #1F4D3A)', fontWeight: '700' }}>
                 {section.officialSourceId.title} ({section.officialSourceId.authority})
               </a>
             </span>
           )}
         </div>
-
-      </div>
+      </article>
     );
   };
 
+  const filteredSituations = compassSituations.filter(
+    (sit) => compassCategory === 'all' || sit.category === compassCategory
+  );
+
   return (
-    <div className="container" style={{ padding: 'var(--space-xl) 0', fontFamily: 'var(--font-sans)', color: 'var(--text-primary)' }}>
-      
+    <div className="container laws-page-container">
       {/* Editorial Header */}
       <EditorialPageHeader
-        eyebrow="Statutory Index"
-        title="Indian Digital Law Index"
-        subtitle='"Understanding the provision is the first step. Understanding where it matters is the next."'
-        description="Explore India's IT governance, data privacy statutes, and judicial interpretations. Connect statutory clauses to real-world incidents, toggle legal drafts, and bookmark provisions."
+        eyebrow="Statutory Protections & Citizen Rights"
+        title="Understand Your Digital Rights"
+        subtitle='"Knowing the law is the first line of defense against online fraud, privacy loss, and cyber exploitation."'
+        description="Explore India's IT legislation, data protection rules, penal provisions, and landmark court precedents. Read provisions in plain English or official statutory text, find the right law for your situation, and test your understanding with quick checks."
+        className="laws-editorial-header"
       >
         <WorkspaceBreadcrumb />
 
-        {/* Disclaimer Panel */}
-        <div style={{
-          borderLeft: '3px solid var(--color-primary)',
-          backgroundColor: 'var(--bg-secondary)',
-          padding: '14px 18px',
-          borderRadius: '4px',
-          fontSize: '0.85rem',
-          lineHeight: '1.6',
-          marginTop: '20px',
-          color: 'var(--text-secondary)'
-        }}>
-          <strong>Educational Notice:</strong> This index is compiled for public legal literacy and security awareness. It maps potentially relevant statutes to scenarios, but is <strong>not legal advice</strong>. Refer to official India Code publications for statutory filings.
+        {/* Educational Disclaimer Notice */}
+        <div className="laws-disclaimer-box">
+          <strong style={{ color: 'var(--color-text-primary)' }}>Educational Notice: </strong>
+          This index is compiled for public legal literacy and cybersecurity awareness. It maps relevant statutory provisions to real-life situations, but does <strong>not constitute formal legal advice</strong>. Refer to official India Code publications and gazettes for statutory filings.
         </div>
 
         {/* Statutory Transition & Operational Status Guide */}
-        <div style={{
-          backgroundColor: 'var(--color-surface-card, #FCFAF5)',
-          border: '1px solid var(--color-border)',
-          borderRadius: '6px',
-          padding: '16px 20px',
-          marginTop: '16px',
-          boxShadow: '0 1px 3px rgba(0,0,0,0.03)'
-        }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', flexWrap: 'wrap', gap: '8px' }}>
-            <span style={{ fontSize: '0.75rem', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '0.8px', color: 'var(--color-text-primary, #302B27)' }}>
-              How Active Laws Apply Today
+        <div className="laws-framework-board">
+          <div className="laws-framework-header">
+            <span className="laws-framework-title">
+              <span aria-hidden="true">🏛️</span>
+              <span>How Active Laws Apply Today</span>
             </span>
-            <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
-              Clear rules based on official Government notifications and Supreme Court rulings
+            <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>
+              Verified against Central Government Gazette Notifications and Supreme Court rulings
             </span>
           </div>
 
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
-            gap: '14px',
-            fontSize: '0.82rem',
-            lineHeight: '1.5'
-          }}>
+          <div className="laws-framework-grid">
             {/* IT Act 43A vs DPDP 44(2) */}
-            <div style={{
-              padding: '12px',
-              backgroundColor: 'var(--bg-secondary)',
-              borderRadius: '4px',
-              borderLeft: '3px solid var(--color-success, #536F61)'
-            }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px' }}>
-                <span style={{ fontWeight: '700', color: 'var(--text-primary)' }}>IT Act § 43A</span>
-                <span style={{ fontSize: '0.68rem', fontWeight: '800', backgroundColor: 'rgba(16, 185, 129, 0.12)', color: '#047857', padding: '2px 6px', borderRadius: '3px' }}>
-                  ACTIVE LAW
-                </span>
+            <div className="laws-framework-card status-active">
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '6px' }}>
+                <strong style={{ fontSize: '0.9rem', color: 'var(--color-text-primary)' }}>IT Act § 43A</strong>
+                <span className="laws-framework-pill pill-active">ACTIVE LAW</span>
               </div>
-              <p style={{ margin: 0, color: 'var(--text-secondary)' }}>
-                Governs compensation for corporate failure to protect sensitive data under <strong>SPDI Rules (2011)</strong>. While DPDP Act § 44(2) slates § 43A for omission, DPDP § 1(2) mandates separate Gazette commencement notifications. Until notified, <strong>Section 43A remains currently enforceable</strong>.
+              <p style={{ margin: 0, fontSize: '0.82rem', lineHeight: '1.55', color: 'var(--color-text-secondary)' }}>
+                Governs compensation for corporate failure to protect sensitive data under <strong>SPDI Rules (2011)</strong>. While DPDP Act § 44(2) slates § 43A for omission, Section 44(2) commencement has not been gazetted. Section 43A remains currently enforceable.
               </p>
             </div>
 
             {/* BNS 2023 */}
-            <div style={{
-              padding: '12px',
-              backgroundColor: 'var(--bg-secondary)',
-              borderRadius: '4px',
-              borderLeft: '3px solid var(--color-accent-gold, #B18A55)'
-            }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px' }}>
-                <span style={{ fontWeight: '700', color: 'var(--text-primary)' }}>BNS 2023</span>
-                <span style={{ fontSize: '0.68rem', fontWeight: '800', backgroundColor: 'rgba(59, 130, 246, 0.12)', color: '#1d4ed8', padding: '2px 6px', borderRadius: '3px' }}>
-                  ACTIVE LAW (FROM 1 JULY 2024)
-                </span>
+            <div className="laws-framework-card status-penal">
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '6px' }}>
+                <strong style={{ fontSize: '0.9rem', color: 'var(--color-text-primary)' }}>BNS, 2023</strong>
+                <span className="laws-framework-pill pill-penal">FROM 1 JULY 2024</span>
               </div>
-              <p style={{ margin: 0, color: 'var(--text-secondary)' }}>
-                Operationalized nationwide via Ministry of Home Affairs Notification <strong>S.O. 850(E)</strong> on 1 July 2024. Applies to offenses committed on or after this date (e.g. § 318 cheating, § 319 impersonation) concurrently with IT Act penal sections.
+              <p style={{ margin: 0, fontSize: '0.82rem', lineHeight: '1.55', color: 'var(--color-text-secondary)' }}>
+                Operationalized nationwide via MHA Notification <strong>S.O. 850(E)</strong>. Applies to penal cyber offences committed on or after 1 July 2024 (§ 318 cheating, § 319 impersonation) concurrently with IT Act penal sections.
               </p>
             </div>
 
             {/* IT Act 66A */}
-            <div style={{
-              padding: '12px',
-              backgroundColor: 'var(--bg-secondary)',
-              borderRadius: '4px',
-              borderLeft: '3px solid var(--color-danger, #A34D43)'
-            }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px' }}>
-                <span style={{ fontWeight: '700', color: 'var(--text-primary)' }}>IT Act § 66A</span>
-                <span style={{ fontSize: '0.68rem', fontWeight: '800', backgroundColor: 'rgba(239, 68, 68, 0.12)', color: '#b91c1c', padding: '2px 6px', borderRadius: '3px' }}>
-                  STRUCK DOWN (INOPERATIVE)
-                </span>
+            <div className="laws-framework-card status-struck">
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '6px' }}>
+                <strong style={{ fontSize: '0.9rem', color: 'var(--color-text-primary)' }}>IT Act § 66A</strong>
+                <span className="laws-framework-pill pill-struck">STRUCK DOWN (VOID)</span>
               </div>
-              <p style={{ margin: 0, color: 'var(--text-secondary)' }}>
-                Struck down completely by the Supreme Court in <em>Shreya Singhal (2015)</em> and reaffirmed in <em>PUCL (2022)</em>. This section has no legal power, and no police FIR, investigation, or prosecution under § 66A is lawful.
+              <p style={{ margin: 0, fontSize: '0.82rem', lineHeight: '1.55', color: 'var(--color-text-secondary)' }}>
+                Struck down completely by the Supreme Court in <em>Shreya Singhal (2015)</em> as unconstitutional under Article 19(1)(a). It has no legal power, and no police FIR, investigation, or prosecution under § 66A is lawful.
               </p>
             </div>
           </div>
         </div>
       </EditorialPageHeader>
 
+      {/* SEARCH INTEGRATION */}
       <PortalSearch
-        placeholder="Search laws, sections, or legal topics"
+        placeholder="Search laws, sections, penal codes, or topics (e.g. 66C, consent, privacy)..."
         searchQuery={searchQuery}
         onSearchChange={(val) => setSearchQuery(val)}
         onClear={() => setSearchQuery('')}
         results={filteredLaws}
-        resultTypeLabel="provisions matched"
+        resultTypeLabel="statutory provisions matched"
         emptyHeader="NO MATCHING PROVISIONS"
-        emptyText="Try searching for a different law section, legal term, or keyword (e.g. 66C, privacy, contract)."
-        suggestions={['66C', '66D', 'privacy', 'consent', 'identity']}
-        showFiltersToggle={true}
-        showFilters={true} // keep open by default to match original UX
-        onFiltersToggle={() => {}}
-        filtersDrawerContent={
-          <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', width: '100%' }}>
-            <div style={{ minWidth: '220px' }}>
-              <span style={{ display: 'block', fontSize: '0.75rem', fontWeight: 'bold', color: 'var(--text-secondary)', textTransform: 'uppercase', marginBottom: '8px', letterSpacing: '0.5px' }}>
-                Filter by Status
-              </span>
-              <div style={{ display: 'flex', gap: '6px' }}>
-                {['All', 'CURRENT', 'OMITTED', 'NOT_YET_IN_FORCE'].map((stat) => (
-                  <button
-                    key={stat}
-                    onClick={() => setActiveStatus(stat)}
-                    style={{
-                      padding: '8px 12px',
-                      borderRadius: 'var(--radius-sm)',
-                      border: activeStatus === stat ? '1px solid var(--color-primary)' : '1px solid var(--color-border)',
-                      backgroundColor: activeStatus === stat ? 'var(--color-primary)' : 'var(--bg-white)',
-                      color: activeStatus === stat ? 'white' : 'var(--text-secondary)',
-                      fontSize: '0.75rem',
-                      fontWeight: 'bold',
-                      cursor: 'pointer',
-                      transition: 'all 0.15s ease'
-                    }}
-                  >
-                    {stat.replace(/_/g, ' ')}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
-        }
-        activeFiltersContent={
-          (activeStatus !== 'All' || selectedChapter || searchQuery) && (
-            <div style={{ display: 'flex', justifyContent: 'flex-start', marginBottom: 'var(--space-md)' }}>
-              <button
-                onClick={() => {
-                  setActiveStatus('All');
-                  setSelectedChapter(null);
-                  setSearchQuery('');
-                }}
-                style={{
-                  backgroundColor: 'transparent',
-                  border: 'none',
-                  color: 'var(--color-accent)',
-                  textDecoration: 'underline',
-                  cursor: 'pointer',
-                  fontSize: '0.85rem',
-                  fontWeight: 'bold',
-                  padding: 0
-                }}
-              >
-                Clear Active Filters & Reset Search
-              </button>
-            </div>
-          )
-        }
+        emptyText="Try searching for a different law section, statutory term, or keyword (e.g. 66C, privacy, DPDP, consent)."
+        suggestions={['66C', '66D', 'privacy', 'consent', 'identity', 'DPDP']}
+        showFiltersToggle={false}
       />
+
+      {/* STATUTE FAMILY CATEGORY SWITCHER TABS */}
+      <div className="laws-category-tabs-bar" role="tablist" aria-label="Statute Families">
+        <button
+          type="button"
+          role="tab"
+          aria-selected={selectedFamilyCategory === 'all'}
+          onClick={() => {
+            setSelectedFamilyCategory('all');
+            setSelectedChapter(null);
+          }}
+          className={`laws-category-tab ${selectedFamilyCategory === 'all' ? 'tab-active' : ''}`}
+        >
+          <span>All Legislation & Rulings</span>
+          <span className="laws-tab-count">{laws.length}</span>
+        </button>
+
+        {lawFamilies.map((fam) => {
+          const count = laws.filter(fam.filter).length;
+          const isActive = selectedFamilyCategory === fam.id;
+
+          return (
+            <button
+              key={fam.id}
+              type="button"
+              role="tab"
+              aria-selected={isActive}
+              onClick={() => {
+                setSelectedFamilyCategory(fam.id);
+                setActiveFamilyId(fam.id);
+                setSelectedChapter(null);
+              }}
+              className={`laws-category-tab ${isActive ? 'tab-active' : ''}`}
+            >
+              <span>{fam.shortName}</span>
+              <span className="laws-tab-count">{count}</span>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* QUICK STATUS & CHAPTER FILTERS ROW */}
+      <div className="laws-quick-filters-row">
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+          <span className="laws-filter-label">Legal Status:</span>
+          <div className="laws-filter-chips">
+            {[
+              { id: 'All', label: 'All Statuses' },
+              { id: 'CURRENT', label: 'In Force' },
+              { id: 'OMITTED', label: 'Struck Down / Omitted' },
+              { id: 'NOT_YET_IN_FORCE', label: 'Pending Commencement' }
+            ].map((stat) => (
+              <button
+                key={stat.id}
+                type="button"
+                onClick={() => setActiveStatus(stat.id)}
+                className={`laws-filter-chip ${activeStatus === stat.id ? 'chip-active' : ''}`}
+              >
+                {stat.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Chapter shortcut chips */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+          <span className="laws-filter-label">IT Act Chapters:</span>
+          <div className="laws-filter-chips">
+            <button
+              type="button"
+              onClick={() => setSelectedChapter(null)}
+              className={`laws-filter-chip ${!selectedChapter ? 'chip-active' : ''}`}
+            >
+              All Chapters
+            </button>
+            {itActChapters.map((ch) => (
+              <button
+                key={ch.id}
+                type="button"
+                onClick={() => {
+                  setSelectedChapter(ch.id);
+                  setSelectedFamilyCategory('it-act');
+                  setActiveFamilyId('it-act');
+                }}
+                className={`laws-filter-chip ${selectedChapter === ch.id ? 'chip-active' : ''}`}
+              >
+                {ch.id}
+              </button>
+            ))}
+          </div>
+
+          {/* Bookmarks Toggle Pill */}
+          {bookmarks.length > 0 && (
+            <button
+              type="button"
+              onClick={() => setShowBookmarkedOnly(!showBookmarkedOnly)}
+              className={`laws-filter-chip ${showBookmarkedOnly ? 'chip-active' : ''}`}
+              style={{
+                marginLeft: '6px',
+                borderColor: showBookmarkedOnly ? 'var(--color-accent-forest)' : 'var(--color-accent-gold)'
+              }}
+            >
+              ⭐ {showBookmarkedOnly ? 'Showing Saved' : `Saved (${bookmarks.length})`}
+            </button>
+          )}
+
+          {/* Clear Filters Reset */}
+          {(activeStatus !== 'All' || selectedChapter || selectedFamilyCategory !== 'all' || showBookmarkedOnly || searchQuery) && (
+            <button
+              type="button"
+              onClick={() => {
+                setActiveStatus('All');
+                setSelectedChapter(null);
+                setSelectedFamilyCategory('all');
+                setShowBookmarkedOnly(false);
+                setSearchQuery('');
+              }}
+              style={{
+                backgroundColor: 'transparent',
+                border: 'none',
+                color: 'var(--color-accent-terracotta, #805B43)',
+                textDecoration: 'underline',
+                fontSize: '0.75rem',
+                fontWeight: '700',
+                cursor: 'pointer',
+                padding: '4px 8px'
+              }}
+            >
+              Reset All Filters
+            </button>
+          )}
+        </div>
+      </div>
 
       {error && (
         <div className="alert alert-error" style={{ marginBottom: 'var(--space-md)' }}>
@@ -1209,77 +1354,49 @@ function Laws() {
         </div>
       )}
 
-      {/* DYNAMIC LAYOUT GRID */}
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: isMobile ? '1fr' : '260px 1fr',
-        gap: '40px',
-        alignItems: 'flex-start'
-      }}>
-        
-        {/* SIDEBAR T.O.C. NAVIGATION (Desktop sticky / Mobile dropdown) */}
+      {/* DYNAMIC TWO-COLUMN LAYOUT (SIDEBAR + CONTENT) */}
+      <div className="laws-layout-grid">
+        {/* MOBILE SELECTOR / JUMP DRAWER (< 992px) */}
         {isMobile ? (
-          /* Mobile selector dropdown drawer block */
-          <div style={{
-            backgroundColor: 'var(--bg-secondary)',
-            padding: '16px 20px',
-            borderRadius: '4px',
-            marginBottom: '16px',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '12px'
-          }}>
-            <div>
-              <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 'bold', color: 'var(--text-secondary)', textTransform: 'uppercase', marginBottom: '6px' }}>
-                Jump to Law Family
-              </label>
+          <div className="laws-mobile-jump-drawer">
+            <div className="laws-mobile-drawer-header">
+              <span aria-hidden="true">📋</span>
+              <span>Quick Statutory Navigator</span>
+            </div>
+
+            <div className="laws-mobile-select-group">
+              <label htmlFor="mobile-family-select">Statutory Family Navigator</label>
               <select
+                id="mobile-family-select"
                 value={activeFamilyId}
                 onChange={(e) => {
                   const targetFamily = e.target.value;
                   setActiveFamilyId(targetFamily);
+                  setSelectedFamilyCategory(targetFamily);
                   scrollToElement(`family-heading-${targetFamily}`, null, targetFamily);
                 }}
-                style={{
-                  width: '100%',
-                  padding: '10px',
-                  borderRadius: '4px',
-                  border: '1px solid var(--color-border-dark)',
-                  backgroundColor: 'var(--bg-white)',
-                  fontSize: '0.9rem',
-                  color: 'var(--text-primary)'
-                }}
+                className="laws-mobile-select"
               >
-                {lawFamilies.map(fam => (
+                {lawFamilies.map((fam) => (
                   <option key={fam.id} value={fam.id}>{fam.displayName}</option>
                 ))}
               </select>
             </div>
 
-            {/* Quick Section jump dropdown */}
-            <div>
-              <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 'bold', color: 'var(--text-secondary)', textTransform: 'uppercase', marginBottom: '6px' }}>
-                Quick Jump to Section
-              </label>
+            <div className="laws-mobile-select-group">
+              <label htmlFor="mobile-section-select">Jump Directly to Section</label>
               <select
+                id="mobile-section-select"
                 onChange={(e) => {
                   const targetSec = e.target.value;
                   if (targetSec) {
                     scrollToElement(`section-card-${targetSec.replace(/\s+/g, '-')}`, targetSec, activeFamilyId);
                   }
                 }}
-                style={{
-                  width: '100%',
-                  padding: '10px',
-                  borderRadius: '4px',
-                  border: '1px solid var(--color-border-dark)',
-                  backgroundColor: 'var(--bg-white)',
-                  fontSize: '0.9rem',
-                  color: 'var(--text-primary)'
-                }}
+                className="laws-mobile-select"
               >
-                <option value="">-- Select Section --</option>
-                {getSectionsByFamily(lawFamilies.find(f => f.id === activeFamilyId) || lawFamilies[0]).map(sec => (
+                <option value="">-- Select a Section to Jump --</option>
+                {getSectionsByFamily(lawFamilies.find((f) => f.id === activeFamilyId) || lawFamilies[0]).map((sec) => (
                   <option key={sec._id} value={sec.sectionNumber}>
                     {sec.sectionNumber} - {sec.officialTitle}
                   </option>
@@ -1288,360 +1405,396 @@ function Laws() {
             </div>
           </div>
         ) : (
-          /* Desktop sticky sidebar context navigation */
-          <div style={{
-            position: 'sticky',
-            top: '90px',
-            maxHeight: 'calc(100vh - 120px)',
-            overflowY: 'auto',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '24px',
-            paddingRight: '12px',
-            borderRight: '1px solid var(--color-border)'
-          }}>
-            <div>
-              <span style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 'bold', display: 'block', marginBottom: '12px', letterSpacing: '0.5px' }}>
-                Law Families Index
-              </span>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                {lawFamilies.map((fam) => {
-                  const isFamActive = activeFamilyId === fam.id;
-                  const sectionsList = getSectionsByFamily(fam);
-
-                  return (
-                    <div key={fam.id} style={{ display: 'flex', flexDirection: 'column' }}>
-                      <button
-                        onClick={() => scrollToElement(`family-heading-${fam.id}`, null, fam.id)}
-                        style={{
-                          textAlign: 'left',
-                          padding: '10px 12px',
-                          borderRadius: 'var(--radius-sm)',
-                          borderLeft: isFamActive ? '3px solid var(--color-primary)' : '3px solid transparent',
-                          backgroundColor: isFamActive ? 'var(--color-primary-light)' : 'transparent',
-                          color: isFamActive ? 'var(--color-primary)' : 'var(--text-secondary)',
-                          fontWeight: isFamActive ? 'bold' : '500',
-                          fontSize: '0.85rem',
-                          cursor: 'pointer',
-                          transition: 'all 0.15s ease',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'space-between',
-                          paddingLeft: isFamActive ? '10px' : '13px'
-                        }}
-                      >
-                        <span>{fam.displayName.split(',')[0]}</span>
-                        {isFamActive && <span style={{ fontSize: '0.65rem' }}>●</span>}
-                      </button>
-
-                      {/* Nested section anchors */}
-                      {isFamActive && sectionsList.length > 0 && (
-                        <div style={{
-                          display: 'flex',
-                          flexDirection: 'column',
-                          gap: '2px',
-                          paddingLeft: '16px',
-                          marginTop: '4px',
-                          marginBottom: '8px',
-                          borderLeft: '1.5px solid var(--color-primary)'
-                        }}>
-                          {sectionsList.map((sec) => {
-                            const isSecActive = activeSectionId === sec.sectionNumber;
-                            const secId = sec.sectionNumber.replace(/\s+/g, '-');
-                            return (
-                              <button
-                                key={sec._id}
-                                id={`nav-item-${secId}`}
-                                onClick={() => scrollToElement(`section-card-${secId}`, sec.sectionNumber, fam.id)}
-                                style={{
-                                  textAlign: 'left',
-                                  padding: '5px 8px',
-                                  borderRadius: '2px',
-                                  border: 'none',
-                                  backgroundColor: isSecActive ? 'var(--color-primary-light)' : 'transparent',
-                                  color: isSecActive ? 'var(--color-primary)' : 'var(--text-muted)',
-                                  fontWeight: isSecActive ? 'bold' : 'normal',
-                                  fontSize: '0.75rem',
-                                  cursor: 'pointer',
-                                  transition: 'all 0.1s ease',
-                                  whiteSpace: 'nowrap',
-                                  overflow: 'hidden',
-                                  textOverflow: 'ellipsis'
-                                }}
-                                title={`${sec.sectionNumber}: ${sec.officialTitle}`}
-                              >
-                                {sec.sectionNumber}
-                              </button>
-                            );
-                          })}
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Chapter quick shortcuts */}
-            <div>
-              <span style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 'bold', display: 'block', marginBottom: '10px' }}>
-                Chapters explorer
-              </span>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                <button
-                  onClick={() => setSelectedChapter(null)}
-                  style={{
-                    textAlign: 'left',
-                    padding: '6px 10px',
-                    borderRadius: '4px',
-                    border: '1px solid var(--color-border)',
-                    backgroundColor: !selectedChapter ? 'var(--color-primary-light)' : 'var(--bg-white)',
-                    color: 'var(--text-secondary)',
-                    fontSize: '0.75rem',
-                    fontWeight: !selectedChapter ? 'bold' : 'normal',
-                    cursor: 'pointer'
-                  }}
-                >
-                  All chapters
-                </button>
-                {itActChapters.map(ch => (
+          /* DESKTOP STICKY SIDEBAR INDEX (>= 992px) — MINIMALIST STATUTORY TOC */
+          <aside className="laws-sidebar-sticky" aria-label="Statutes Table of Contents">
+            <div className="legislation-index-header">
+              <h2 className="legislation-index-title">Legislation Index</h2>
+              <div className="legislation-index-search-wrap">
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Filter sections..."
+                  className="legislation-index-search-input"
+                  aria-label="Filter sections in Legislation Index"
+                />
+                {searchQuery && (
                   <button
-                    key={ch.id}
-                    onClick={() => {
-                      setSelectedChapter(ch.id);
-                      setActiveFamilyId('it-act');
-                      scrollToElement('family-heading-it-act', null, 'it-act');
-                    }}
-                    style={{
-                      textAlign: 'left',
-                      padding: '8px 10px',
-                      borderRadius: '4px',
-                      border: '1px solid var(--color-border)',
-                      backgroundColor: selectedChapter === ch.id ? 'var(--color-primary-light)' : 'var(--bg-white)',
-                      color: 'var(--text-secondary)',
-                      fontSize: '0.75rem',
-                      cursor: 'pointer'
-                    }}
+                    type="button"
+                    onClick={() => setSearchQuery('')}
+                    className="legislation-index-search-clear"
+                    aria-label="Clear section filter"
                   >
-                    <strong style={{ display: 'block', color: 'var(--color-primary)', fontSize: '0.7rem' }}>{ch.id}</strong>
-                    <span style={{ fontSize: '0.65rem', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {ch.title.split(': ')[1]}
-                    </span>
+                    ✕
                   </button>
-                ))}
+                )}
               </div>
             </div>
 
-            {/* Bookmarks Counter box */}
+            <nav className="legislation-index-families" aria-label="Statute Families Index">
+              {lawFamilies.map((fam) => {
+                const isFamActive = (selectedFamilyCategory === fam.id) || (selectedFamilyCategory === 'all' && activeFamilyId === fam.id);
+                const sectionsList = getSectionsByFamily(fam);
+
+                return (
+                  <div key={fam.id} className="legislation-index-family-item">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelectedFamilyCategory(fam.id);
+                        setActiveFamilyId(fam.id);
+                        scrollToElement(`family-heading-${fam.id}`, null, fam.id);
+                      }}
+                      className={`laws-sidebar-family-btn legislation-index-family-btn ${isFamActive ? 'family-active' : ''}`}
+                    >
+                      <span className="family-name">{fam.shortName}</span>
+                      <span className="laws-sidebar-count family-count">({sectionsList.length})</span>
+                    </button>
+
+                    {/* Compact Section Links */}
+                    {isFamActive && sectionsList.length > 0 && (
+                      <div className="laws-sidebar-sections-nested legislation-index-sections-list">
+                        {sectionsList.map((sec) => {
+                          const isSecActive = activeSectionId === sec.sectionNumber;
+                          const secId = sec.sectionNumber.replace(/\s+/g, '-');
+                          return (
+                            <button
+                              key={sec._id}
+                              id={`nav-item-${secId}`}
+                              type="button"
+                              onClick={() => scrollToElement(`section-card-${secId}`, sec.sectionNumber, fam.id)}
+                              className={`laws-sidebar-sec-link legislation-index-sec-btn ${isSecActive ? 'sec-active' : ''}`}
+                              title={`${sec.sectionNumber}: ${sec.officialTitle}`}
+                            >
+                              {sec.sectionNumber}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </nav>
+
+            {/* Restrained Saved Provisions Filter Toggle (No heavy nested boxes) */}
             {bookmarks.length > 0 && (
-              <div style={{ backgroundColor: 'var(--bg-secondary)', padding: '14px', borderRadius: '4px', marginTop: '16px' }}>
-                <span style={{ fontSize: '0.8rem', color: 'var(--color-success)', fontWeight: 'bold', display: 'block' }}>
-                  {bookmarks.length} Bookmarks Saved
-                </span>
-                <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', margin: '4px 0 0 0', lineHeight: '1.3' }}>
-                  Provisions flagged for offline study. Click star to toggle.
-                </p>
+              <div className="legislation-index-saved-bar">
+                <button
+                  type="button"
+                  onClick={() => setShowBookmarkedOnly(!showBookmarkedOnly)}
+                  className={`legislation-index-saved-btn ${showBookmarkedOnly ? 'active' : ''}`}
+                >
+                  <span>⭐ {showBookmarkedOnly ? 'Showing Saved' : 'Saved Provisions'}</span>
+                  <span className="family-count">({bookmarks.length})</span>
+                </button>
               </div>
             )}
-          </div>
+          </aside>
         )}
 
-        {/* RIGHT LAW REFERENCE DOCUMENT PANEL */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '48px', maxWidth: '850px', width: '100%' }}>
-          
-          {/* SECTION A: LAW COMPASS GUIDED WIZARD */}
-          <div style={{
-            backgroundColor: 'var(--bg-white)',
-            border: '1px solid var(--color-border)',
-            borderLeft: '4px solid var(--color-primary)',
-            borderRadius: '4px',
-            padding: '24px',
-            boxShadow: '0 1px 3px rgba(0,0,0,0.02)'
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
-              
-              <h2 style={{ fontSize: '1.25rem', fontWeight: 'bold', color: 'var(--text-primary)', margin: 0, letterSpacing: '0.5px' }}>
-                LAW COMPASS: SITUATION SEARCH WIZARD
-              </h2>
+        {/* RIGHT CONTENT PANEL (DUAL-PATHWAY DISCOVERY + LAW COMPASS + PROVISIONS) */}
+        <main className="laws-content-panel">
+          {/* TWO PRIMARY WAYS OF FINDING LEGISLATION */}
+          <div className="laws-discovery-pathways" role="region" aria-label="Two ways to explore Indian Cyber Law">
+            <div className="discovery-pathways-info">
+              <span className="discovery-pathways-eyebrow">Two Complementary Ways to Explore</span>
+              <p className="discovery-pathways-desc">
+                Browse legislation directly through the <strong>Statute Catalog</strong> below, or use the <strong>Law Compass</strong> to diagnose applicable laws from a real-world situation.
+              </p>
             </div>
-            <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', fontStyle: 'italic', margin: '0 0 20px 0' }}>
-              "Select what happened to find the applicable statutory clauses and rules."
-            </p>
+            <div className="discovery-pathways-controls">
+              <button
+                type="button"
+                onClick={() => setIsCompassExpanded(!isCompassExpanded)}
+                className={`discovery-compass-toggle-btn compass-single-toggle-btn ${isCompassExpanded ? 'expanded' : 'collapsed'}`}
+                aria-expanded={isCompassExpanded}
+                aria-controls="law-compass-section"
+              >
+                <span aria-hidden="true">🧭</span>
+                <span>{isCompassExpanded ? 'Hide Law Compass' : 'Show Law Compass'}</span>
+                <span className="toggle-indicator-arrow" aria-hidden="true">{isCompassExpanded ? '▲' : '▼'}</span>
+              </button>
+              <a
+                href="#statutory-catalog-start"
+                className="discovery-catalog-jump-link"
+              >
+                <span aria-hidden="true">📜</span>
+                <span>Jump to Catalog ({filteredLaws.length}) &darr;</span>
+              </a>
+            </div>
+          </div>
 
-            {compassStep === 1 ? (
-              <div>
-                <p style={{ fontSize: '0.9rem', fontWeight: '600', marginBottom: '12px', color: 'var(--text-primary)' }}>
-                  Step 1: Choose a situation that matches your enquiry:
-                </p>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  {compassSituations.map((sit) => (
-                    <button
-                      key={sit.id}
-                      onClick={() => {
-                        setSelectedSituation(sit);
-                        setCompassStep(2);
-                      }}
-                      style={{
-                        textAlign: 'left',
-                        padding: '12px 16px',
-                        borderRadius: '4px',
-                        backgroundColor: 'var(--bg-white)',
-                        border: '1px solid var(--color-border)',
-                        color: 'var(--text-primary)',
-                        fontSize: '0.85rem',
-                        cursor: 'pointer',
-                        transition: 'all 0.15s ease',
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center'
-                      }}
-                    >
-                      <span style={{ fontWeight: '500' }}>{sit.title}</span>
-                      <strong style={{ color: 'var(--color-primary)', fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                        {sit.type} &rarr;
-                      </strong>
-                    </button>
-                  ))}
+          {/* LAW COMPASS GUIDED WIZARD */}
+          {isCompassExpanded && (
+            <section id="law-compass-section" className="law-compass-card" aria-label="Law Compass Guided Situation Finder">
+              <div className="compass-header">
+                <div className="compass-title-area">
+                  <span style={{ fontSize: '1.25rem' }} aria-hidden="true">🧭</span>
+                  <h2 className="compass-title">
+                    Law Compass: Find the Law for Your Situation
+                  </h2>
                 </div>
+                <span className="compass-step-pill">
+                  Step {compassStep} of 2
+                </span>
               </div>
-            ) : (
-              selectedSituation && (
-                <div style={{ backgroundColor: 'var(--bg-white)', padding: '20px', borderRadius: '4px', border: '1px solid var(--color-border)' }}>
-                  <h4 style={{ color: 'var(--text-primary)', fontWeight: 'bold', marginBottom: '14px', fontSize: '1.05rem', borderBottom: '1px solid var(--color-border)', paddingBottom: '8px' }}>
-                    Compass Audit: {selectedSituation.type}
-                  </h4>
-                  
-                  <div style={{ display: 'grid', gridTemplateColumns: window.innerWidth > 576 ? '1fr 1fr' : '1fr', gap: '20px', marginBottom: '20px', fontSize: '0.85rem' }}>
-                    <div>
-                      <span style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 'bold', marginBottom: '6px' }}>
-                        Applicable Statutory Sections
-                      </span>
-                      <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-                        {selectedSituation.provisions.map((prov) => (
-                          <span
-                            key={prov}
-                            onClick={() => {
-                              setSearchQuery(prov); // set search box to provision to jump there
-                              scrollToElement(`section-card-${prov.replace(/\s+/g, '-')}`, prov, activeFamilyId);
-                            }}
-                            style={{
-                              fontSize: '0.7rem',
-                              fontWeight: 'bold',
-                              backgroundColor: 'var(--color-primary-light)',
-                              color: 'var(--color-primary)',
-                              padding: '3px 8px',
-                              borderRadius: '4px',
-                              cursor: 'pointer',
-                              border: '1px solid var(--color-border)',
-                              transition: 'all 0.1s ease'
-                            }}
-                          >
-                            {prov}
+
+              <p className="compass-subtitle">
+                Select what happened or what you experienced to identify the applicable statutory clauses, liabilities, and next steps under Indian law.
+              </p>
+
+              {compassStep === 1 ? (
+                <div>
+                  {/* Subtle Category Grouping Filter Pills */}
+                  <div className="compass-category-filters" role="tablist" aria-label="Filter situations by threat type">
+                    {compassCategories.map((cat) => (
+                      <button
+                        key={cat.id}
+                        type="button"
+                        role="tab"
+                        aria-selected={compassCategory === cat.id}
+                        onClick={() => setCompassCategory(cat.id)}
+                        className={`compass-category-pill ${compassCategory === cat.id ? 'active' : ''}`}
+                      >
+                        {cat.label}
+                      </button>
+                    ))}
+                  </div>
+
+                  <div className="compass-situations-list">
+                    {filteredSituations.map((sit) => (
+                      <button
+                        key={sit.id}
+                        type="button"
+                        onClick={() => {
+                          setSelectedSituation(sit);
+                          setCompassStep(2);
+                        }}
+                        className={`compass-situation-btn ${selectedSituation?.id === sit.id ? 'selected' : ''}`}
+                        aria-pressed={selectedSituation?.id === sit.id}
+                      >
+                        <div className="compass-situation-header">
+                          <span className="compass-situation-title">{sit.title}</span>
+                        </div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 'auto' }}>
+                          <span className="compass-situation-tag">{sit.type}</span>
+                          <span style={{ fontSize: '0.75rem', fontWeight: '700', color: 'var(--color-accent-terracotta)' }} aria-hidden="true">
+                            Analyze &rarr;
                           </span>
-                        ))}
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                selectedSituation && (
+                  <div className="compass-result-panel">
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                      <h4 className="compass-result-title" style={{ margin: 0, padding: 0, border: 'none' }}>
+                        Compass Analysis: {selectedSituation.type}
+                      </h4>
+                      <span className="compass-situation-tag">{selectedSituation.title}</span>
+                    </div>
+
+                    <div className="compass-result-meta-grid">
+                      <div>
+                        <span className="compass-meta-heading">
+                          Applicable Statutory Sections (Click to Jump)
+                        </span>
+                        <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                          {selectedSituation.provisions.map((prov) => (
+                            <button
+                              key={prov}
+                              type="button"
+                              onClick={() => {
+                                setSelectedFamilyCategory('all');
+                                const targetLaw = laws.find(l => l.sectionNumber === prov);
+                                const targetFamilyId = targetLaw
+                                  ? (lawFamilies.find(f => f.filter(targetLaw))?.id || activeFamilyId)
+                                  : activeFamilyId;
+                                setTimeout(() => {
+                                  scrollToElement(`section-card-${prov.replace(/\s+/g, '-')}`, prov, targetFamilyId);
+                                }, 50);
+                              }}
+                              className="compass-provision-badge"
+                              title={`Jump to ${prov}`}
+                            >
+                              {prov} &darr;
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div>
+                        <span className="compass-meta-heading">
+                          Related Cybercrime Category
+                        </span>
+                        <Link
+                          to={selectedSituation.crimeSlug ? `${getContextPath('/crimes')}#${selectedSituation.crimeSlug}` : getContextPath('/crimes')}
+                          style={{
+                            color: 'var(--color-accent-forest, #1F4D3A)',
+                            fontWeight: '700',
+                            textDecoration: 'underline',
+                            fontSize: '0.88rem'
+                          }}
+                        >
+                          {selectedSituation.crime} &rarr;
+                        </Link>
                       </div>
                     </div>
 
-                    <div>
-                      <span style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 'bold', marginBottom: '6px' }}>
-                        Related Cybercrime Category
-                      </span>
-                      <Link
-                        to={getContextPath('/crimes')}
-                        style={{
-                          color: 'var(--color-accent)',
-                          fontWeight: 'bold',
-                          textDecoration: 'underline'
-                        }}
-                      >
-                        {selectedSituation.crime} &rarr;
-                      </Link>
+                    <div className="compass-context-box">
+                      <strong style={{ color: 'var(--color-text-primary)' }}>Legal Context & Guidance: </strong>
+                      {selectedSituation.advice}
                     </div>
-                  </div>
 
-                  <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', backgroundColor: 'var(--bg-secondary)', padding: '12px 16px', borderRadius: '4px', marginBottom: '20px', lineHeight: '1.5' }}>
-                    <strong>Legal Context Summary:</strong> {selectedSituation.advice}
-                  </div>
-
-                  <div style={{ display: 'flex', gap: '10px' }}>
-                    <button
-                      onClick={() => {
-                        setCompassStep(1);
-                        setSelectedSituation(null);
-                      }}
-                      style={{
-                        padding: '8px 16px',
-                        borderRadius: '4px',
-                        backgroundColor: 'transparent',
-                        border: '1px solid var(--color-border-dark)',
-                        color: 'var(--text-secondary)',
-                        fontSize: '0.8rem',
-                        fontWeight: 'bold',
-                        cursor: 'pointer'
-                      }}
-                    >
-                      Reset Compass
-                    </button>
-                    {selectedSituation.caseStudy && (
-                      <Link
-                        to={getContextPath('/cases')}
+                    <div className="compass-actions-row">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setCompassStep(1);
+                          setSelectedSituation(null);
+                        }}
                         style={{
                           padding: '8px 16px',
-                          borderRadius: '4px',
-                          backgroundColor: 'var(--color-primary)',
-                          color: 'white',
-                          textDecoration: 'none',
+                          borderRadius: '6px',
+                          backgroundColor: 'transparent',
+                          border: '1px solid var(--color-border-strong, #8F7B5E)',
+                          color: 'var(--color-text-primary, #26352B)',
                           fontSize: '0.8rem',
-                          fontWeight: 'bold',
-                          textAlign: 'center'
+                          fontWeight: '700',
+                          cursor: 'pointer'
                         }}
                       >
-                        Examine Case Study &rarr;
-                      </Link>
-                    )}
+                        ← Choose Another Situation
+                      </button>
+                      {selectedSituation.caseStudy && (
+                        <Link
+                          to={getContextPath('/cases')}
+                          style={{
+                            padding: '8px 16px',
+                            borderRadius: '6px',
+                            backgroundColor: 'var(--color-accent-forest, #1F4D3A)',
+                            color: '#ffffff',
+                            textDecoration: 'none',
+                            fontSize: '0.8rem',
+                            fontWeight: '700',
+                            textAlign: 'center',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '6px'
+                          }}
+                        >
+                          Examine Real Case Study &rarr;
+                        </Link>
+                      )}
+                    </div>
                   </div>
-                </div>
-              )
-            )}
+                )
+              )}
+            </section>
+          )}
+
+          {/* Accessible Screen Reader Announcer for Dynamic Filter State */}
+          <div className="sr-only" role="status" aria-live="polite">
+            {loading
+              ? 'Loading statutory provisions...'
+              : `${filteredLaws.length} statutory provision${filteredLaws.length === 1 ? '' : 's'} displayed for ${selectedFamilyCategory === 'all' ? 'All Legislation' : selectedFamilyCategory}.`}
           </div>
 
-          {/* SECTION B: PROVISIONS CONTINUOUS DOCUMENT */}
+          {/* STATUTORY CATALOG SECTION HEADER */}
+          <div id="statutory-catalog-start" className="laws-catalog-header-bar">
+            <div>
+              <span className="catalog-header-eyebrow">Primary Statutory Index</span>
+              <h2 className="catalog-header-title">
+                {selectedFamilyCategory === 'all'
+                  ? 'All Legislation & Subordinate Rules'
+                  : lawFamilies.find((f) => f.id === selectedFamilyCategory)?.displayName}
+              </h2>
+            </div>
+            <span className="catalog-header-count-badge">
+              {filteredLaws.length} {filteredLaws.length === 1 ? 'provision' : 'provisions'} active
+            </span>
+          </div>
+
+          {/* EMPTY SEARCH / FILTER STATE */}
           {!loading && filteredLaws.length === 0 && (
-            <div style={{ textAlign: 'center', padding: '60px 40px', backgroundColor: 'var(--bg-secondary)', border: '1px dashed var(--color-border)', borderRadius: '4px' }}>
-              <p style={{ color: 'var(--text-muted)', fontSize: '1.1rem', margin: 0 }}>No matching provisions found. Try resetting search filters.</p>
+            <div style={{ textAlign: 'center', padding: '60px 40px', backgroundColor: 'var(--color-surface-secondary, #FAF4EA)', border: '1px dashed var(--color-border, #D9CBB1)', borderRadius: '12px' }}>
+              <p style={{ color: 'var(--color-text-muted)', fontSize: '1.05rem', margin: '0 0 16px 0' }}>
+                No matching provisions found with the active search or filters.
+              </p>
+              <button
+                type="button"
+                onClick={() => {
+                  setActiveStatus('All');
+                  setSelectedChapter(null);
+                  setSelectedFamilyCategory('all');
+                  setShowBookmarkedOnly(false);
+                  setSearchQuery('');
+                }}
+                style={{
+                  padding: '8px 18px',
+                  borderRadius: '6px',
+                  backgroundColor: 'var(--color-accent-forest, #1F4D3A)',
+                  color: '#ffffff',
+                  border: 'none',
+                  fontSize: '0.85rem',
+                  fontWeight: '700',
+                  cursor: 'pointer'
+                }}
+              >
+                Reset All Filters
+              </button>
             </div>
           )}
 
-          {!loading && lawFamilies.map(family => {
+          {/* CONTINUOUS PROVISIONS CATALOG GROUPED BY LEGISLATION FAMILY */}
+          {!loading && lawFamilies.map((family) => {
+            // If user selected a specific family category tab, only render that family
+            if (selectedFamilyCategory !== 'all' && selectedFamilyCategory !== family.id) {
+              return null;
+            }
+
             const sections = getSectionsByFamily(family);
             if (sections.length === 0) return null;
 
             return (
-              <div key={family.id} id={`family-heading-${family.id}`} style={{ marginBottom: '32px' }}>
-                {/* Family Header */}
-                <h2 style={{
-                  fontSize: '1.8rem',
-                  fontWeight: '700',
-                  color: 'var(--text-primary)',
-                  borderBottom: '2px solid var(--color-primary)',
-                  paddingBottom: '12px',
-                  marginBottom: '28px',
-                  letterSpacing: '0.5px'
+              <section key={family.id} id={`family-heading-${family.id}`} style={{ marginBottom: '36px' }}>
+                {/* Family Sub-Header */}
+                <div style={{
+                  borderBottom: '1.5px solid var(--color-border, #D9CBB1)',
+                  paddingBottom: '10px',
+                  marginBottom: '24px'
                 }}>
-                  {family.displayName}
-                </h2>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', flexWrap: 'wrap', gap: '8px' }}>
+                    <h3 style={{
+                      fontSize: '1.45rem',
+                      fontWeight: '700',
+                      color: 'var(--color-text-primary, #26352B)',
+                      margin: 0,
+                      letterSpacing: '-0.015em'
+                    }}>
+                      {family.displayName}
+                    </h3>
+                    <span style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)', fontWeight: '600' }}>
+                      {sections.length} {sections.length === 1 ? 'provision' : 'provisions'}
+                    </span>
+                  </div>
+                  <p style={{ fontSize: '0.86rem', color: 'var(--color-text-secondary)', margin: '6px 0 0 0', lineHeight: '1.5' }}>
+                    {family.description}
+                  </p>
+                </div>
 
                 {/* Provision cards list */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
-                  {sections.map(section => renderSectionCard(section, family.id))}
+                <div>
+                  {sections.map((section) => renderSectionCard(section, family.id))}
                 </div>
-              </div>
+              </section>
             );
           })}
-        </div>
-
+        </main>
       </div>
-
     </div>
   );
 }

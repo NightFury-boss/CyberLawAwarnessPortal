@@ -1,0 +1,1128 @@
+/* ==========================================================================
+   DIGITAL SAFETY QUICK-GUIDE (PREVENTION) — THE CONSTITUTIONAL ATELIER
+   Visual Identity: Editorial Field Manual, Precision Craft, Institutional Trust
+   Palette: Warm Ivory (#FFFDF8), Cream (#FAF4EA), Terracotta (#805B43),
+            Forest Green (#1F4D3A), Charcoal (#26352B), Alert Crimson (#9B3E35)
+   ========================================================================== */
+
+.prevention-page-container {
+  max-width: 1040px;
+  width: 100%;
+  margin: 0 auto;
+  padding: var(--space-xl, 32px) var(--space-md, 16px) var(--space-xxl, 48px);
+  color: var(--color-text-primary, #26352B);
+  font-family: var(--font-sans, 'Inter', -apple-system, BlinkMacSystemFont, sans-serif);
+  box-sizing: border-box;
+  overflow-x: hidden;
+}
+
+.prevention-anchor-target {
+  position: relative;
+  top: -24px;
+  visibility: hidden;
+  height: 0;
+  margin: 0;
+  padding: 0;
+}
+
+/* --------------------------------------------------------------------------
+   URGENT EMERGENCY JUMP STRIP
+   -------------------------------------------------------------------------- */
+
+.prevention-urgent-strip {
+  margin-top: 18px;
+  margin-bottom: 28px;
+  padding: 12px 18px;
+  background-color: var(--color-surface-secondary, #FAF4EA);
+  border: 1px solid var(--color-border, #D9CBB1);
+  border-left: 4px solid var(--color-accent-terracotta, #805B43);
+  border-radius: var(--radius-md, 6px);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  box-sizing: border-box;
+  width: 100%;
+}
+
+.prevention-urgent-text {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  box-sizing: border-box;
+}
+
+.prevention-urgent-beacon {
+  color: #9B3E35;
+  display: inline-flex;
+  align-items: center;
+}
+
+.prevention-urgent-label {
+  font-size: 0.86rem;
+  font-weight: 700;
+  color: var(--color-text-primary, #26352B);
+}
+
+.prevention-urgent-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  box-sizing: border-box;
+}
+
+.prevention-urgent-chip {
+  padding: 6px 14px;
+  min-height: 40px;
+  background-color: var(--color-surface-card, #FFFDF8);
+  border: 1px solid var(--color-border-strong, #8F7B5E);
+  border-radius: var(--radius-sm, 4px);
+  color: var(--color-text-primary, #26352B);
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  box-sizing: border-box;
+  transition: all 0.15s ease;
+}
+
+.prevention-urgent-chip:hover {
+  background-color: #FAF4EA;
+  border-color: var(--color-accent-forest, #1F4D3A);
+  color: var(--color-accent-forest, #1F4D3A);
+}
+
+.prevention-urgent-chip.is-danger {
+  background-color: #FDF5F4;
+  border-color: rgba(155, 62, 53, 0.4);
+  color: #9B3E35;
+  font-weight: 700;
+}
+
+.prevention-urgent-chip.is-danger:hover {
+  background-color: #FBECEB;
+  border-color: #9B3E35;
+}
+
+/* --------------------------------------------------------------------------
+   SECTIONS CONTAINER & HEADINGS
+   -------------------------------------------------------------------------- */
+
+.prevention-quick-sections {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2xl, 44px);
+  box-sizing: border-box;
+  width: 100%;
+}
+
+.prevention-quick-section {
+  box-sizing: border-box;
+  width: 100%;
+}
+
+.prevention-section-header {
+  margin-bottom: 22px;
+  border-bottom: 1px solid var(--color-border, #D9CBB1);
+  padding-bottom: 14px;
+  box-sizing: border-box;
+}
+
+.prevention-section-eyebrow-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.prevention-section-eyebrow {
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--color-accent-terracotta, #805B43);
+}
+
+.prevention-section-status-tag {
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 2px 8px;
+  border-radius: 3px;
+  background-color: var(--color-surface-secondary, #FAF4EA);
+  border: 1px solid var(--color-border, #D9CBB1);
+  color: var(--color-text-secondary, #626B61);
+}
+
+.prevention-section-status-tag.is-alert {
+  background-color: #FDF5F4;
+  border-color: rgba(155, 62, 53, 0.3);
+  color: #9B3E35;
+}
+
+.prevention-section-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--color-text-primary, #26352B);
+  margin: 0 0 6px 0;
+  font-family: var(--font-serif, 'Playfair Display', Georgia, serif);
+  letter-spacing: -0.2px;
+}
+
+.prevention-section-lead {
+  font-size: 0.92rem;
+  color: var(--color-text-secondary, #626B61);
+  margin: 0;
+  line-height: 1.5;
+}
+
+.prevention-inline-link {
+  color: var(--color-accent-forest, #1F4D3A);
+  font-weight: 700;
+  text-decoration: underline;
+  transition: color 0.15s ease;
+}
+
+.prevention-inline-link:hover {
+  color: #173B2C;
+}
+
+/* --------------------------------------------------------------------------
+   SECTION 1: PROTECT YOURSELF (FOUNDATIONAL DEFENSE LEDGER)
+   -------------------------------------------------------------------------- */
+
+.prevention-anchor-habits-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 18px;
+  margin-bottom: 18px;
+  box-sizing: border-box;
+  width: 100%;
+}
+
+.prevention-anchor-card {
+  background-color: var(--color-surface-secondary, #FAF4EA);
+  border: 1px solid var(--color-border, #D9CBB1);
+  border-top: 4px solid var(--color-accent-forest, #1F4D3A);
+  border-radius: var(--radius-md, 6px);
+  padding: 22px 24px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.prevention-anchor-card:hover {
+  border-color: var(--color-accent-forest, #1F4D3A);
+  box-shadow: 0 4px 14px rgba(31, 77, 58, 0.06);
+}
+
+.prevention-anchor-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  box-sizing: border-box;
+}
+
+.prevention-anchor-numeral {
+  font-size: 1.35rem;
+  font-weight: 800;
+  font-family: var(--font-serif, serif);
+  color: var(--color-accent-terracotta, #805B43);
+  opacity: 0.85;
+}
+
+.prevention-anchor-tag {
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  color: var(--color-accent-forest, #1F4D3A);
+  background-color: rgba(31, 77, 58, 0.08);
+  padding: 2px 8px;
+  border-radius: 3px;
+}
+
+.prevention-anchor-icon {
+  color: var(--color-accent-forest, #1F4D3A);
+  margin-bottom: 8px;
+  display: inline-flex;
+}
+
+.prevention-anchor-title {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--color-text-primary, #26352B);
+  margin: 0 0 8px 0;
+  line-height: 1.35;
+}
+
+.prevention-anchor-highlight {
+  font-size: 0.86rem;
+  font-weight: 700;
+  color: var(--color-accent-terracotta, #805B43);
+  margin-bottom: 8px;
+  line-height: 1.45;
+}
+
+.prevention-anchor-action {
+  font-size: 0.86rem;
+  color: var(--color-text-secondary, #626B61);
+  line-height: 1.5;
+  margin: 0;
+}
+
+.prevention-safeguards-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+  box-sizing: border-box;
+  width: 100%;
+}
+
+.prevention-safeguard-card {
+  background-color: var(--color-surface-card, #FFFDF8);
+  border: 1px solid var(--color-border, #D9CBB1);
+  border-left: 3px solid var(--color-border-strong, #8F7B5E);
+  border-radius: var(--radius-sm, 4px);
+  padding: 16px 18px;
+  box-sizing: border-box;
+  transition: border-color 0.15s ease, transform 0.15s ease;
+}
+
+.prevention-safeguard-card:hover {
+  border-color: var(--color-accent-forest, #1F4D3A);
+  border-left-color: var(--color-accent-forest, #1F4D3A);
+  transform: translateY(-1px);
+}
+
+.prevention-safeguard-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.prevention-safeguard-badge {
+  font-size: 0.66rem;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: var(--color-text-secondary, #626B61);
+}
+
+.prevention-safeguard-icon {
+  color: var(--color-accent-forest, #1F4D3A);
+  display: inline-flex;
+}
+
+.prevention-safeguard-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--color-text-primary, #26352B);
+  margin: 0 0 6px 0;
+  line-height: 1.35;
+}
+
+.prevention-safeguard-action {
+  font-size: 0.85rem;
+  color: var(--color-text-secondary, #626B61);
+  line-height: 1.5;
+  margin: 0;
+}
+
+/* --------------------------------------------------------------------------
+   SECTION 2: KNOW THE WARNING SIGNS (RED-FLAG FIELD GUIDE)
+   -------------------------------------------------------------------------- */
+
+.prevention-psych-flags-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+  margin-bottom: 18px;
+  box-sizing: border-box;
+  width: 100%;
+}
+
+.prevention-psych-flag-card {
+  background-color: var(--color-surface-card, #FFFDF8);
+  border: 1px solid var(--color-border, #D9CBB1);
+  border-left: 4px solid var(--color-accent-terracotta, #805B43);
+  border-radius: var(--radius-md, 6px);
+  padding: 18px 20px;
+  box-sizing: border-box;
+}
+
+.prevention-psych-flag-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.prevention-psych-marker {
+  color: var(--color-accent-terracotta, #805B43);
+  margin-top: 2px;
+  display: inline-flex;
+}
+
+.prevention-psych-code {
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  color: var(--color-accent-terracotta, #805B43);
+  display: block;
+}
+
+.prevention-psych-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--color-text-primary, #26352B);
+  margin: 2px 0 0 0;
+  line-height: 1.35;
+}
+
+.prevention-psych-pretext {
+  margin: 0 0 8px 0;
+  padding: 8px 12px;
+  background-color: var(--color-surface-secondary, #FAF4EA);
+  border-left: 2px solid var(--color-border-strong, #8F7B5E);
+  font-style: italic;
+  font-size: 0.82rem;
+  color: var(--color-text-primary, #26352B);
+  line-height: 1.45;
+}
+
+.prevention-psych-reality {
+  font-size: 0.84rem;
+  color: var(--color-text-secondary, #626B61);
+  line-height: 1.5;
+}
+
+.prevention-tactical-register {
+  border: 1px solid var(--color-border, #D9CBB1);
+  border-radius: var(--radius-md, 6px);
+  overflow: hidden;
+  box-sizing: border-box;
+  width: 100%;
+}
+
+.prevention-register-title {
+  padding: 10px 18px;
+  background-color: var(--color-surface-secondary, #FAF4EA);
+  font-size: 0.76rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--color-text-secondary, #626B61);
+  border-bottom: 1px solid var(--color-border, #D9CBB1);
+}
+
+.prevention-register-rows {
+  display: flex;
+  flex-direction: column;
+}
+
+.prevention-register-row {
+  padding: 14px 18px;
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  background-color: var(--color-surface-card, #FFFDF8);
+  border-bottom: 1px solid var(--color-border-subtle, rgba(38, 53, 43, 0.08));
+  transition: background-color 0.15s ease;
+  box-sizing: border-box;
+}
+
+.prevention-register-row:last-child {
+  border-bottom: none;
+}
+
+.prevention-register-row:hover {
+  background-color: #FAF6EF;
+}
+
+.prevention-register-code {
+  font-size: 0.7rem;
+  font-weight: 800;
+  font-family: monospace;
+  color: var(--color-accent-terracotta, #805B43);
+  background-color: rgba(128, 91, 67, 0.08);
+  padding: 2px 6px;
+  border-radius: 3px;
+  white-space: nowrap;
+  display: inline-block;
+  margin-top: 2px;
+}
+
+.prevention-register-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.prevention-register-sign {
+  font-size: 0.94rem;
+  font-weight: 700;
+  color: var(--color-text-primary, #26352B);
+  margin: 0 0 3px 0;
+  line-height: 1.35;
+}
+
+.prevention-register-explanation {
+  font-size: 0.84rem;
+  color: var(--color-text-secondary, #626B61);
+  margin: 0;
+  line-height: 1.45;
+}
+
+.prevention-explore-banner {
+  margin-top: 16px;
+  padding: 14px 18px;
+  background-color: var(--color-surface-secondary, #FAF4EA);
+  border: 1px solid var(--color-border, #D9CBB1);
+  border-radius: var(--radius-sm, 4px);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  box-sizing: border-box;
+}
+
+.prevention-explore-text {
+  font-size: 0.85rem;
+  color: var(--color-text-secondary, #626B61);
+  line-height: 1.45;
+  flex: 1 1 400px;
+}
+
+.prevention-explore-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 14px;
+  min-height: 44px;
+  color: var(--color-accent-forest, #1F4D3A);
+  font-weight: 700;
+  font-size: 0.85rem;
+  text-decoration: underline;
+  white-space: nowrap;
+  box-sizing: border-box;
+}
+
+.prevention-explore-btn:hover {
+  color: #173B2C;
+}
+
+/* --------------------------------------------------------------------------
+   SECTION 3: WHAT TO DO IMMEDIATELY (INCIDENT RESPONSE PROTOCOLS)
+   -------------------------------------------------------------------------- */
+
+.prevention-emergency-hero-panel {
+  background-color: var(--color-surface-card, #FFFDF8);
+  border: 2px solid rgba(155, 62, 53, 0.4);
+  border-top: 5px solid #9B3E35;
+  border-radius: var(--radius-md, 6px);
+  padding: 24px 26px;
+  box-shadow: 0 4px 18px rgba(155, 62, 53, 0.06);
+  box-sizing: border-box;
+  width: 100%;
+}
+
+.prevention-emergency-hero-badge-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+}
+
+.prevention-emergency-hero-badge {
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: #FFFFFF;
+  background-color: #9B3E35;
+  padding: 2px 8px;
+  border-radius: 3px;
+}
+
+.prevention-emergency-hero-tag {
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: #9B3E35;
+  background-color: rgba(155, 62, 53, 0.08);
+  padding: 2px 8px;
+  border-radius: 3px;
+}
+
+.prevention-emergency-hero-title {
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: var(--color-text-primary, #26352B);
+  margin: 0 0 6px 0;
+  font-family: var(--font-serif, 'Playfair Display', Georgia, serif);
+}
+
+.prevention-emergency-hero-summary {
+  font-size: 0.9rem;
+  color: var(--color-text-secondary, #626B61);
+  margin: 0 0 18px 0;
+  line-height: 1.5;
+}
+
+.prevention-emergency-hero-callout {
+  background-color: #FDF5F4;
+  border: 1px solid rgba(155, 62, 53, 0.25);
+  border-radius: var(--radius-sm, 4px);
+  padding: 16px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-bottom: 20px;
+  box-sizing: border-box;
+}
+
+.prevention-callout-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1 1 300px;
+}
+
+.prevention-callout-eyebrow {
+  font-size: 0.68rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: #9B3E35;
+}
+
+.prevention-callout-number {
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: #9B3E35;
+  font-family: monospace;
+  letter-spacing: 1px;
+}
+
+.prevention-callout-desc {
+  font-size: 0.8rem;
+  color: var(--color-text-secondary, #626B61);
+  line-height: 1.4;
+}
+
+.prevention-callout-actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+  box-sizing: border-box;
+}
+
+.prevention-callout-dial-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 18px;
+  min-height: 44px;
+  background-color: #9B3E35;
+  color: #FFFFFF !important;
+  font-weight: 700;
+  font-size: 0.88rem;
+  border-radius: var(--radius-sm, 4px);
+  text-decoration: none;
+  box-sizing: border-box;
+  transition: background-color 0.15s ease;
+}
+
+.prevention-callout-dial-btn:hover {
+  background-color: #802E26;
+}
+
+.prevention-callout-copy-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 14px;
+  min-height: 44px;
+  background-color: #FFFDF8;
+  border: 1px solid rgba(155, 62, 53, 0.4);
+  color: #9B3E35;
+  font-weight: 700;
+  font-size: 0.84rem;
+  border-radius: var(--radius-sm, 4px);
+  cursor: pointer;
+  box-sizing: border-box;
+  transition: all 0.15s ease;
+}
+
+.prevention-callout-copy-btn:hover {
+  background-color: #FDF5F4;
+  border-color: #9B3E35;
+}
+
+.prevention-emergency-steps-timeline {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+  box-sizing: border-box;
+  width: 100%;
+}
+
+.prevention-timeline-step-card {
+  padding: 14px 16px;
+  background-color: var(--color-surface-secondary, #FAF4EA);
+  border: 1px solid var(--color-border, #D9CBB1);
+  border-radius: var(--radius-sm, 4px);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  box-sizing: border-box;
+}
+
+.prevention-timeline-phase-marker {
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: #9B3E35;
+}
+
+.prevention-timeline-phase-action {
+  font-size: 0.82rem;
+  color: var(--color-text-secondary, #626B61);
+  margin: 0;
+  line-height: 1.45;
+}
+
+.prevention-protocols-grid {
+  margin-top: 24px;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+  box-sizing: border-box;
+  width: 100%;
+}
+
+.prevention-protocol-card {
+  background-color: var(--color-surface-card, #FFFDF8);
+  border: 1px solid var(--color-border, #D9CBB1);
+  border-radius: var(--radius-md, 6px);
+  padding: 20px 22px;
+  box-sizing: border-box;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.prevention-protocol-card:hover {
+  border-color: var(--color-accent-forest, #1F4D3A);
+  box-shadow: 0 4px 12px rgba(31, 77, 58, 0.05);
+}
+
+.prevention-protocol-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 14px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--color-border-subtle, rgba(38, 53, 43, 0.1));
+}
+
+.prevention-protocol-icon {
+  color: var(--color-accent-forest, #1F4D3A);
+  margin-top: 2px;
+  display: inline-flex;
+}
+
+.prevention-protocol-code {
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  color: var(--color-accent-terracotta, #805B43);
+  display: block;
+}
+
+.prevention-protocol-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--color-text-primary, #26352B);
+  margin: 2px 0 0 0;
+  line-height: 1.35;
+}
+
+.prevention-protocol-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.prevention-protocol-step-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.prevention-step-badge {
+  font-size: 0.62rem;
+  font-weight: 800;
+  font-family: monospace;
+  color: var(--color-accent-forest, #1F4D3A);
+  background-color: rgba(31, 77, 58, 0.08);
+  padding: 2px 6px;
+  border-radius: 3px;
+  white-space: nowrap;
+  margin-top: 2px;
+}
+
+.prevention-step-content {
+  font-size: 0.84rem;
+  color: var(--color-text-secondary, #626B61);
+  line-height: 1.45;
+  flex: 1;
+}
+
+.prevention-step-label {
+  color: var(--color-text-primary, #26352B);
+}
+
+.prevention-qualification-box {
+  margin-top: 18px;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 18px;
+  background-color: var(--color-surface-secondary, #FAF4EA);
+  border: 1px solid var(--color-border, #D9CBB1);
+  border-left: 4px solid var(--color-accent-terracotta, #805B43);
+  border-radius: var(--radius-sm, 4px);
+  box-sizing: border-box;
+}
+
+.prevention-qualification-icon {
+  color: var(--color-accent-terracotta, #805B43);
+  margin-top: 2px;
+  display: inline-flex;
+}
+
+.prevention-qualification-text {
+  font-size: 0.82rem;
+  color: var(--color-text-secondary, #626B61);
+  line-height: 1.5;
+  flex: 1;
+}
+
+/* --------------------------------------------------------------------------
+   SECTION 4: KEEP THE IMPORTANT DETAILS (FORENSIC EVIDENCE BOARD)
+   -------------------------------------------------------------------------- */
+
+.prevention-forensic-board {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+  box-sizing: border-box;
+  width: 100%;
+}
+
+.prevention-specimen-card {
+  background-color: var(--color-surface-card, #FFFDF8);
+  border: 1px dashed var(--color-border, #D9CBB1);
+  border-radius: var(--radius-md, 6px);
+  padding: 16px 18px;
+  box-sizing: border-box;
+  transition: border-color 0.15s ease, transform 0.15s ease, background-color 0.15s ease;
+}
+
+.prevention-specimen-card:hover {
+  border-color: var(--color-accent-forest, #1F4D3A);
+  border-style: solid;
+  transform: translateY(-2px);
+  background-color: #FAF6EF;
+}
+
+.prevention-specimen-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.prevention-specimen-tag {
+  font-size: 0.65rem;
+  font-weight: 800;
+  font-family: monospace;
+  letter-spacing: 0.6px;
+  color: var(--color-accent-terracotta, #805B43);
+}
+
+.prevention-specimen-icon {
+  color: var(--color-accent-forest, #1F4D3A);
+  display: inline-flex;
+}
+
+.prevention-specimen-title {
+  font-size: 0.96rem;
+  font-weight: 700;
+  color: var(--color-text-primary, #26352B);
+  margin: 0 0 6px 0;
+  line-height: 1.35;
+}
+
+.prevention-specimen-cue {
+  font-size: 0.82rem;
+  color: var(--color-text-secondary, #626B61);
+  margin: 0;
+  line-height: 1.45;
+}
+
+.prevention-bsa-notice {
+  margin-top: 18px;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 18px;
+  background-color: var(--color-surface-inset, #EEF4F0);
+  border: 1px solid var(--color-accent-sage, #6C8F71);
+  border-radius: var(--radius-sm, 4px);
+  box-sizing: border-box;
+}
+
+.prevention-bsa-icon {
+  color: var(--color-accent-forest, #1F4D3A);
+  margin-top: 2px;
+  display: inline-flex;
+}
+
+.prevention-bsa-text {
+  font-size: 0.84rem;
+  color: var(--color-text-secondary, #626B61);
+  line-height: 1.5;
+  flex: 1;
+}
+
+/* --------------------------------------------------------------------------
+   SECTION 5: DOCUMENT YOUR INCIDENT (DOCKET WORKSPACE)
+   -------------------------------------------------------------------------- */
+
+.prevention-docket-workspace-card {
+  background-color: var(--color-surface-secondary, #FAF4EA);
+  border: 1px solid var(--color-border, #D9CBB1);
+  border-radius: var(--radius-md, 8px);
+  padding: 22px 24px;
+  box-sizing: border-box;
+  width: 100%;
+}
+
+.prevention-docket-workspace-banner {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 16px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--color-border, #D9CBB1);
+  margin-bottom: 20px;
+  box-sizing: border-box;
+}
+
+.prevention-docket-tool-badge {
+  font-size: 0.68rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--color-accent-forest, #1F4D3A);
+  background-color: rgba(31, 77, 58, 0.08);
+  padding: 3px 8px;
+  border-radius: 3px;
+  display: inline-block;
+  margin-bottom: 4px;
+}
+
+.prevention-docket-workspace-heading {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--color-text-primary, #26352B);
+  margin: 2px 0 6px 0;
+  font-family: var(--font-serif, 'Playfair Display', Georgia, serif);
+}
+
+.prevention-docket-workspace-desc {
+  font-size: 0.86rem;
+  color: var(--color-text-secondary, #626B61);
+  margin: 0;
+  line-height: 1.5;
+  max-width: 680px;
+}
+
+.prevention-docket-privacy-stamp {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background-color: #FFFDF8;
+  border: 1px solid var(--color-border-strong, #8F7B5E);
+  border-radius: 4px;
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: var(--color-accent-forest, #1F4D3A);
+  white-space: nowrap;
+}
+
+.prevention-docket-workspace-body {
+  box-sizing: border-box;
+  width: 100%;
+}
+
+.prevention-docket-workspace-body #emergency-incident-docket {
+  margin-top: 0 !important;
+  border: none !important;
+  box-shadow: none !important;
+  background-color: transparent !important;
+  padding: 0 !important;
+}
+
+/* --------------------------------------------------------------------------
+   CLOSING REFERRAL: NEED OFFICIAL HELP?
+   -------------------------------------------------------------------------- */
+
+.prevention-referral-card {
+  margin-top: var(--space-2xl, 44px);
+  padding: 24px 28px;
+  background-color: var(--color-surface-secondary, #FAF4EA);
+  border: 1px solid var(--color-border, #D9CBB1);
+  border-radius: var(--radius-md, 6px);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 18px;
+  box-sizing: border-box;
+  width: 100%;
+}
+
+.prevention-referral-seal {
+  color: var(--color-accent-forest, #1F4D3A);
+  display: inline-flex;
+}
+
+.prevention-referral-text {
+  flex: 1 1 480px;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.prevention-referral-title {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--color-text-primary, #26352B);
+  margin: 0 0 4px 0;
+}
+
+.prevention-referral-desc {
+  font-size: 0.88rem;
+  color: var(--color-text-secondary, #626B61);
+  margin: 0;
+  line-height: 1.5;
+}
+
+.prevention-referral-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 22px;
+  min-height: 44px;
+  background-color: var(--color-accent-forest, #1F4D3A);
+  color: #FFFFFF !important;
+  font-size: 0.88rem;
+  font-weight: 700;
+  border-radius: var(--radius-sm, 4px);
+  text-decoration: none;
+  white-space: nowrap;
+  box-sizing: border-box;
+  transition: background-color 0.15s ease;
+}
+
+.prevention-referral-btn:hover {
+  background-color: #173B2C;
+}
+
+/* --------------------------------------------------------------------------
+   RESPONSIVE BREAKPOINTS
+   -------------------------------------------------------------------------- */
+
+@media (max-width: 900px) {
+  .prevention-forensic-board {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .prevention-emergency-steps-timeline {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .prevention-page-container {
+    padding: var(--space-lg, 24px) var(--space-sm, 12px) var(--space-xl, 32px);
+  }
+
+  .prevention-anchor-habits-grid,
+  .prevention-safeguards-grid,
+  .prevention-psych-flags-grid,
+  .prevention-protocols-grid,
+  .prevention-forensic-board {
+    grid-template-columns: 1fr;
+  }
+
+  .prevention-urgent-strip {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .prevention-urgent-actions {
+    width: 100%;
+  }
+
+  .prevention-urgent-chip {
+    flex: 1 1 auto;
+    justify-content: center;
+  }
+
+  .prevention-emergency-hero-callout {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .prevention-callout-actions {
+    width: 100%;
+  }
+
+  .prevention-callout-dial-btn,
+  .prevention-callout-copy-btn {
+    flex: 1 1 auto;
+    justify-content: center;
+  }
+
+  .prevention-referral-card {
+    padding: 18px 16px;
+  }
+
+  .prevention-referral-btn {
+    width: 100%;
+    justify-content: center;
+  }
+}

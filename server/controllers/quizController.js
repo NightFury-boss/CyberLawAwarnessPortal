@@ -894,18 +894,18 @@ exports.submitQuizRecall = async (req, res) => {
     const userId = req.user._id;
     const { questionId, answer } = req.body;
 
-    if (!questionId) {
+    if (!questionId || !mongoose.Types.ObjectId.isValid(questionId)) {
       return res.status(400).json({
         success: false,
-        error: { code: 'INVALID_PARAMETERS', message: 'questionId is required.' }
+        error: { code: 'INVALID_PARAMETERS', message: 'A valid questionId is required.' }
       });
     }
 
     const question = await QuizQuestion.findById(questionId);
-    if (!question) {
+    if (!question || question.published === false) {
       return res.status(404).json({
         success: false,
-        error: { code: 'QUESTION_NOT_FOUND', message: 'Question not found.' }
+        error: { code: 'QUESTION_NOT_FOUND', message: 'Question not found or not published.' }
       });
     }
 
@@ -914,6 +914,17 @@ exports.submitQuizRecall = async (req, res) => {
       return res.status(404).json({
         success: false,
         error: { code: 'PROGRESS_NOT_FOUND', message: 'User progress not found.' }
+      });
+    }
+
+    // Verify learner has an unresolved recall entry in quizRecallItems
+    const recallItem = (progress.quizRecallItems || []).find(
+      it => it.questionId.toString() === questionId.toString() && !it.mastered && !it.isResolved
+    );
+    if (!recallItem) {
+      return res.status(400).json({
+        success: false,
+        error: { code: 'NO_DUE_RECALL', message: 'No unresolved recall item found for this question.' }
       });
     }
 

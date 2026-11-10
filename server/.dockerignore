@@ -1,0 +1,27 @@
+# ==============================================================================
+# Cyber Law Awareness Portal — Server Docker Build Ignore
+# Excludes local secrets, dependencies, Git metadata, and development artifacts
+# ==============================================================================
+
+# Local environment and secret files
+.env
+.env.*
+*.local
+
+# Node dependencies (installed via npm ci in container)
+node_modules
+npm-debug.log*
+
+# Test suites, development data, and historical backups
+tests
+scratch
+*.test.js
+*.spec.js
+data/db.json
+
+# Git and editor metadata
+.git
+.gitignore
+.vscode
+.idea
+

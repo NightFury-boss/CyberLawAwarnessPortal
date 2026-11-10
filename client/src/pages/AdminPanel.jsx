@@ -758,7 +758,7 @@ function AdminPanel({ user }) {
         zIndex: 100
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-          <img src="/logo/cyber-law-logo-horizontal.svg" alt="Logo" style={{ height: '32px', width: 'auto', filter: 'brightness(0) invert(1)' }} />
+          <img src="/logo/cyber-law-logo-dark.svg" alt="Cyber Law Awareness Portal" style={{ height: '32px', width: 'auto' }} />
           <div style={{ borderLeft: '1px solid rgba(255,255,255,0.2)', paddingLeft: '14px' }}>
             <span style={{ fontSize: '0.85rem', fontWeight: '700', color: 'var(--color-surface-secondary, #EFE8DC)', letterSpacing: '0.5px', display: 'flex', alignItems: 'center', gap: '8px' }}>
               ADMINISTRATION CONSOLE

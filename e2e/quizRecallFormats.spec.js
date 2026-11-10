@@ -428,7 +428,12 @@ test.describe('Stage 5: Multi-Format Concept Recall & Learner Independence E2E S
         return;
       }
 
-      await route.continue();
+      await route.fulfill({
+        status: 200,
+        headers: corsHeaders,
+        contentType: 'application/json',
+        body: JSON.stringify({ success: true })
+      });
     });
   });
 
@@ -474,7 +479,7 @@ test.describe('Stage 5: Multi-Format Concept Recall & Learner Independence E2E S
     await checkBtn.click();
 
     // Verify neutral feedback on incorrect submission
-    await expect(modalDialog.locator('text=⚠️ Incorrect')).toBeVisible();
+    await expect(modalDialog.locator('text=✕ Incorrect')).toBeVisible();
     const solutionBox = modalDialog.locator('text=Authoritative Correct Answer:').locator('..');
     await expect(solutionBox).toBeVisible();
     await expect(solutionBox.locator('text=Negligence in implementing reasonable security practices')).toBeVisible();

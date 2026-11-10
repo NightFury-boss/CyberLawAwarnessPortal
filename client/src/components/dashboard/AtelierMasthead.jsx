@@ -72,12 +72,13 @@ export default function AtelierMasthead({
             summary: `All ${totalLessonsCount} curriculum chapters read and ${completedFocusCount} coaching pathways completed.`
           };
         }
+        const chaptersTotal = totalLessonsCount > 0 ? totalLessonsCount : 'synchronizing';
         return {
           status: 'current',
           badge: 'Active Focus',
           summary: totalFocusCount > 0
-            ? `${completedFocusCount} of ${totalFocusCount} coaching pathways completed • ${lessonsCompletedCount} of ${totalLessonsCount || 18} chapters read.`
-            : `${lessonsCompletedCount} of ${totalLessonsCount || 18} chapters read • Coaching pathways curating.`
+            ? `${completedFocusCount} of ${totalFocusCount} coaching pathways completed • ${lessonsCompletedCount} of ${chaptersTotal} chapters read.`
+            : `${lessonsCompletedCount} of ${chaptersTotal} chapters read • Coaching pathways curating.`
         };
 
       case 3: // Final Check (Longitudinal Benchmark)

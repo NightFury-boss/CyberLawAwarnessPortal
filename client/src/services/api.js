@@ -328,16 +328,21 @@ const api = {
   },
 
   submitAssessmentStep: async (assessmentSessionId, stageId, decisionId, signalProbeDecisionId, idempotencyKey) => {
+    const payload = {
+      assessmentSessionId,
+      stageId,
+      decisionId
+    };
+    if (signalProbeDecisionId) {
+      payload.signalProbeDecisionId = signalProbeDecisionId;
+    }
+    if (idempotencyKey) {
+      payload.idempotencyKey = idempotencyKey;
+    }
     const res = await fetchWithTimeout(`${API_URL}/assessments/submit-step`, {
       method: 'POST',
       headers: getHeaders(),
-      body: JSON.stringify({
-        assessmentSessionId,
-        stageId,
-        decisionId,
-        ...(signalProbeDecisionId ? { signalProbeDecisionId } : {}),
-        ...(idempotencyKey ? { idempotencyKey } : {})
-      })
+      body: JSON.stringify(payload)
     });
     return handleResponse(res);
   },
