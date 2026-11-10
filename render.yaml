@@ -1,0 +1,49 @@
+# ==============================================================================
+# Cyber Law Awareness Portal — Render Blueprint Configuration
+# Defines the backend Web Service deployment on Render's free tier
+# ==============================================================================
+
+services:
+  - type: web
+    name: cyberlaw-portal-backend
+    runtime: node
+    plan: free
+    rootDir: server
+    buildCommand: npm install
+    startCommand: node server.js
+    healthCheckPath: /api/health
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: HOST
+        value: 0.0.0.0
+      - key: TRUST_PROXY
+        value: "1"
+      - key: ASSERT_STAGING_DB
+        value: "true"
+      - key: EXPECTED_STAGING_DB_NAME
+        value: cyber_law_staging
+      - key: SPACED_RETRIEVAL_DELAY_DAYS
+        value: "7"
+      - key: SCORING_V2_CUTOVER_DATE
+        value: "2026-11-04T00:00:00.000Z"
+      - key: RATE_LIMIT_AUTH_MAX
+        value: "20"
+      - key: RATE_LIMIT_AUTH_WINDOW_MS
+        value: "900000"
+      - key: RATE_LIMIT_ASSISTANT_MAX
+        value: "30"
+      - key: RATE_LIMIT_ASSISTANT_WINDOW_MS
+        value: "60000"
+      # Sensitive credentials (never hardcoded in blueprint; entered via Render Dashboard)
+      - key: CLIENT_URL
+        sync: false
+      - key: MONGODB_URI
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: ADMIN_EMAIL
+        sync: false
+      - key: ADMIN_PASSWORD
+        sync: false
