@@ -38,12 +38,19 @@ export function getExperiencedSituationIndex(stageOrder) {
  * 
  * Priority Ladder:
  * 1. PRE_BASELINE: Learner must take First Check (Your Digital Day) to establish baseline.
- * 2. RESUME_PATHWAY: Learner started a lesson (Step 1 or 2 complete) and should finish what was started.
- * 3. READY_FOR_FINAL: All recommended lessons finished; ready to measure habit shift in Final Check.
- * 4. DUE_SPACED_REVIEW: A 7-day retention check is ready (~2 min check to keep habits sharp).
- * 5. START_PATHWAY: Start the next unstarted recommended lesson.
- * 6. REINFORCE_HABIT: Final check revealed a habit needing reinforcement; targeted practice is ready.
- * 7. ALL_CAUGHT_UP: Everything currently recommended or due is completed. Secondary practice available.
+ * 2. RESUME_FINAL: Active interrupted Final Assessment session in progress.
+ * 3. RESUME_PATHWAY: Learner started a lesson (Step 1 or 2 complete) and should finish what was started.
+ * 4. READY_FOR_FINAL: All recommended lessons finished; ready to measure habit shift in Final Check.
+ * 5. RESUME_LESSON: Learner started reading a curriculum chapter.
+ * 6. START_PATHWAY: Start the next unstarted recommended lesson.
+ * 7. START_LESSON: Start recommended curriculum lesson.
+ * 8. DUE_QUIZ_RECALL: Optional missed concept review (learner-initiated, ~2 min check).
+ * 9. REINFORCE_HABIT: Final check revealed a habit needing reinforcement; targeted practice is ready.
+ * 10. PRACTICE_WEAK_QUIZ: Practice weak quiz topic in Quiz Studio.
+ * 11. ALL_CAUGHT_UP: Everything currently recommended is completed. Practice anytime at your own pace.
+ * 
+ * Note: Scheduled spaced-repetition return obligations (DUE_SPACED_REVIEW) have been removed in accordance
+ * with Stage 5 Learner Independence. All revision is optional and learner-initiated.
  * 
  * @param {object} params
  * @param {boolean} [params.hasBaseline]
@@ -106,48 +113,10 @@ export function selectPrimaryNextAction({
     };
   }
 
-  // 2. Due Pathway Spaced Retrieval (Time-sensitive retention check)
-  if (Array.isArray(dueSpacedReviews) && dueSpacedReviews.length > 0 && dueSpacedReviews[0]) {
-    const dueItem = dueSpacedReviews[0];
-    const habitTitle = resolvePathwayTitle(dueItem.pathwayId, dueItem.habitTitle);
-
-    return {
-      type: 'DUE_SPACED_REVIEW',
-      eyebrow: 'Follow-Up Review Due (~2 min)',
-      title: `Quick Review: ${habitTitle}`,
-      description: 'A short retention check is ready. Checking what you remember helps safe habits stay second nature.',
-      actionLabel: 'Start Quick Review \u2192',
-      actionType: 'SPACED_MODAL',
-      destination: null,
-      targetItem: dueItem,
-      estimatedMinutes: 2,
-      steps: null
-    };
-  }
-
-  // 3. Due Missed Quiz Concept Recall (~2 min quiz concept review)
-  if (Array.isArray(dueQuizRecalls) && dueQuizRecalls.length > 0 && dueQuizRecalls[0]) {
-    const recallItem = dueQuizRecalls[0];
-    const categoryName = recallItem.category || recallItem.question?.category || 'Cyber Law';
-
-    return {
-      type: 'DUE_QUIZ_RECALL',
-      eyebrow: 'Concept Recall Ready (~2 min)',
-      title: `Review Missed Concept: ${categoryName}`,
-      description: `You recently missed a question on ${categoryName}. Reviewing this concept now reinforces statutory rules and prevents future security mistakes.`,
-      actionLabel: 'Review Concept Now \u2192',
-      actionType: 'QUIZ_RECALL_MODAL',
-      destination: null,
-      targetItem: recallItem,
-      estimatedMinutes: 2,
-      steps: null
-    };
-  }
-
   // Find active in-progress pathway (Step 1 or 2 complete, but not Step 3)
   const inProgressItem = (pathwaysWithStatus || []).find(p => p && p.isInProgress && p.rec && p.rec.pathwayId);
 
-  // 4. Resume Pathway (Active in-progress lesson has highest momentum)
+  // 2. Resume Pathway (Active in-progress lesson has highest momentum)
   if (!hasFinal && inProgressItem && inProgressItem.rec) {
     const rec = inProgressItem.rec;
     const completedRecord = inProgressItem.completedRecord;
@@ -186,26 +155,10 @@ export function selectPrimaryNextAction({
     };
   }
 
-  // 5. Resume In-Progress Curriculum Lesson
-  if (inProgressLesson && inProgressLesson.slug) {
-    return {
-      type: 'RESUME_LESSON',
-      eyebrow: 'Curriculum Lesson in Progress',
-      title: `Resume: ${inProgressLesson.title || 'Curriculum Lesson'}`,
-      description: inProgressLesson.summary || 'Pick up where you left off in your structured study of Indian cyber law provisions.',
-      actionLabel: 'Continue Reading \u2192',
-      actionType: 'LINK',
-      destination: `/modules/${inProgressLesson.slug}`,
-      targetItem: inProgressLesson,
-      estimatedMinutes: 5,
-      steps: null
-    };
-  }
-
   // Find next unstarted recommended pathway
   const nextIncompleteItem = (pathwaysWithStatus || []).find(p => p && !p.isFullyCompleted && p.rec && p.rec.pathwayId);
 
-  // 6. Ready for Final Assessment (All recommended lessons complete, but Final Check not taken)
+  // 4. Ready for Final Assessment (All recommended lessons complete, but Final Check not taken)
   const allFocusComplete = safeTotal > 0 && safeCompleted >= safeTotal;
   if (!hasFinal && (allFocusComplete || (!nextIncompleteItem && (pathwaysWithStatus || []).length > 0))) {
     return {
@@ -217,6 +170,22 @@ export function selectPrimaryNextAction({
       actionType: 'LINK',
       destination: '/assessment/final',
       targetItem: null,
+      estimatedMinutes: 5,
+      steps: null
+    };
+  }
+
+  // 5. Resume In-Progress Curriculum Lesson
+  if (inProgressLesson && inProgressLesson.slug) {
+    return {
+      type: 'RESUME_LESSON',
+      eyebrow: 'Curriculum Lesson in Progress',
+      title: `Resume: ${inProgressLesson.title || 'Curriculum Lesson'}`,
+      description: inProgressLesson.summary || 'Pick up where you left off in your structured study of Indian cyber law provisions.',
+      actionLabel: 'Continue Reading \u2192',
+      actionType: 'LINK',
+      destination: `/modules/${inProgressLesson.slug}`,
+      targetItem: inProgressLesson,
       estimatedMinutes: 5,
       steps: null
     };
@@ -245,7 +214,7 @@ export function selectPrimaryNextAction({
     };
   }
 
-  // 8. Start Recommended Curriculum Lesson
+  // 7. Start Recommended Curriculum Lesson
   if (recommendedLesson && recommendedLesson.slug) {
     return {
       type: 'START_LESSON',
@@ -257,6 +226,26 @@ export function selectPrimaryNextAction({
       destination: `/modules/${recommendedLesson.slug}`,
       targetItem: recommendedLesson,
       estimatedMinutes: 6,
+      steps: null
+    };
+  }
+
+  // 8. Optional Missed Quiz Concept Review (~2 min concept review)
+  // Kept below required core journey steps (resumption, final readiness, and unstarted lessons)
+  if (Array.isArray(dueQuizRecalls) && dueQuizRecalls.length > 0 && dueQuizRecalls[0]) {
+    const recallItem = dueQuizRecalls[0];
+    const categoryName = recallItem.category || recallItem.question?.category || 'Cyber Law';
+
+    return {
+      type: 'DUE_QUIZ_RECALL',
+      eyebrow: 'Optional Concept Practice (~2 min)',
+      title: `Clarify Missed Concept: ${categoryName}`,
+      description: `Revisit this question on ${categoryName} at your convenience to explore statutory explanations and strengthen your legal awareness.`,
+      actionLabel: 'Review Missed Concept \u2192',
+      actionType: 'QUIZ_RECALL_MODAL',
+      destination: null,
+      targetItem: recallItem,
+      estimatedMinutes: 2,
       steps: null
     };
   }
@@ -292,7 +281,7 @@ export function selectPrimaryNextAction({
       description: `Your accuracy in this domain is currently ${frequentlyMissedQuizTopic.accuracy}%. A short topic-wise quiz will help cement key provisions and evidence standards.`,
       actionLabel: 'Practice Subject \u2192',
       actionType: 'LINK',
-      destination: '/quizzes',
+      destination: `/quizzes?mode=topic_wise&topic=${encodeURIComponent(frequentlyMissedQuizTopic.topic)}`,
       targetItem: frequentlyMissedQuizTopic,
       estimatedMinutes: 4,
       steps: null

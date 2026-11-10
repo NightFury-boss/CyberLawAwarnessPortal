@@ -1,5 +1,6 @@
 const assert = require('assert');
 const mongoose = require('mongoose');
+const { MongoMemoryServer } = require('mongodb-memory-server');
 const dotenv = require('dotenv');
 const path = require('path');
 
@@ -53,10 +54,6 @@ function selectPrimaryNextAction({
     return { type: 'DUE_SPACED_REVIEW', actionType: 'SPACED_MODAL' };
   }
 
-  if (Array.isArray(dueQuizRecalls) && dueQuizRecalls.length > 0 && dueQuizRecalls[0]) {
-    return { type: 'DUE_QUIZ_RECALL', actionType: 'QUIZ_RECALL_MODAL' };
-  }
-
   const inProgressItem = (pathwaysWithStatus || []).find(p => p && p.isInProgress && p.rec && p.rec.pathwayId);
   if (!hasFinal && inProgressItem && inProgressItem.rec) {
     return { type: 'RESUME_PATHWAY', actionType: 'RUNNER' };
@@ -80,6 +77,10 @@ function selectPrimaryNextAction({
     return { type: 'START_LESSON', actionType: 'LINK', destination: `/modules/${recommendedLesson.slug}` };
   }
 
+  if (Array.isArray(dueQuizRecalls) && dueQuizRecalls.length > 0 && dueQuizRecalls[0]) {
+    return { type: 'DUE_QUIZ_RECALL', actionType: 'QUIZ_RECALL_MODAL' };
+  }
+
   const nextReinforceItem = (pathwaysWithStatus || []).find(p => p && p.isReinforcementEligible && !p.isReinforced && p.rec && p.rec.pathwayId);
   if (hasFinal && nextReinforceItem && nextReinforceItem.rec) {
     return { type: 'REINFORCE_HABIT', actionType: 'RUNNER_REINFORCE' };
@@ -97,11 +98,20 @@ async function runDashboardReworkPhase6Tests() {
   console.log('DASHBOARD REWORK & RETENTION SYSTEM TEST SUITE (PHASE 6)');
   console.log('=============================================================\n');
 
-  await mongoose.connect(process.env.MONGODB_URI);
-  console.log('[Database] Connected to MongoDB.\n');
+  let mongoServer = null;
+  if (!process.env.MONGODB_URI || process.env.MONGODB_URI.includes('mongodb.net')) {
+    mongoServer = await MongoMemoryServer.create();
+    const uri = mongoServer.getUri();
+    await mongoose.connect(uri, { family: 4 });
+    console.log('[Database] Connected to ephemeral in-memory MongoDB.\n');
+  } else {
+    await mongoose.connect(process.env.MONGODB_URI);
+    console.log('[Database] Connected to MongoDB.\n');
+  }
 
   let testUser = null;
   let testQuestion = null;
+  let questionCreatedByTest = false;
 
   try {
     // -------------------------------------------------------------------------
@@ -121,13 +131,24 @@ async function runDashboardReworkPhase6Tests() {
     });
     assert.strictEqual(r2.type, 'DUE_SPACED_REVIEW');
 
-    // 3. Due Quiz Recall takes precedence when no due spaced review exists
+    // 3. Due Quiz Recall is selected when no core journey steps are active or unstarted
     const r3 = selectPrimaryNextAction({
       hasBaseline: true,
       dueSpacedReviews: [],
       dueQuizRecalls: [{ questionId: 'q1', category: 'Indian Cyber Law' }]
     });
     assert.strictEqual(r3.type, 'DUE_QUIZ_RECALL');
+
+    // 3b. Required in-progress pathway takes priority over optional dueQuizRecalls
+    const r3b = selectPrimaryNextAction({
+      hasBaseline: true,
+      dueSpacedReviews: [],
+      dueQuizRecalls: [{ questionId: 'q1', category: 'Indian Cyber Law' }],
+      pathwaysWithStatus: [
+        { isInProgress: true, rec: { pathwayId: 'path_1', habitTitle: 'Verify Links' } }
+      ]
+    });
+    assert.strictEqual(r3b.type, 'RESUME_PATHWAY', 'Required in-progress pathway must take priority over optional quiz recall');
 
     // 4. In-progress pathway takes precedence if no retention items are due
     const r4 = selectPrimaryNextAction({
@@ -336,6 +357,21 @@ async function runDashboardReworkPhase6Tests() {
     console.log('[Test 4] Testing Quiz Recall Queueing and Answer Secrecy...');
 
     testQuestion = await QuizQuestion.findOne({ published: true });
+    if (!testQuestion) {
+      testQuestion = await QuizQuestion.create({
+        quizId: new mongoose.Types.ObjectId(),
+        questionId: 'Q-TEST-001',
+        questionText: 'Which statutory authority investigates financial cybercrimes?',
+        difficulty: 'Intermediate',
+        format: 'single_choice',
+        category: 'BSA and digital evidence',
+        options: ['Local Police', 'CFCFRMS / I4C', 'Municipal Council', 'Telecom Provider'],
+        correctOptionIndex: 1,
+        explanation: 'I4C under MHA coordinates CFCFRMS and the 1930 reporting helpline.',
+        published: true
+      });
+      questionCreatedByTest = true;
+    }
     assert(testQuestion, 'Must find at least one published question in database');
 
     // Add missed question into user's quizRecallItems
@@ -398,12 +434,12 @@ async function runDashboardReworkPhase6Tests() {
     assert.strictEqual(resWrongSubmit.data.mastered, false);
     assert(resWrongSubmit.data.explanation, 'Must provide statutory explanation after submission');
 
-    // Verify UserProgress record was updated with incremented missedCount and future nextReviewDue (+3 days)
+    // Verify UserProgress record was updated with incremented missedCount and self-paced nextReviewDue
     const progAfterWrong = await UserProgress.findOne({ userId: testUser._id });
     const itemAfterWrong = progAfterWrong.quizRecallItems.find(i => i.questionId.toString() === testQuestion._id.toString());
     assert.strictEqual(itemAfterWrong.missedCount, 2, 'missedCount should increment to 2');
     assert.strictEqual(itemAfterWrong.mastered, false);
-    assert(new Date(itemAfterWrong.nextReviewDue) > new Date(), 'nextReviewDue must be scheduled in future');
+    assert(itemAfterWrong.nextReviewDue instanceof Date, 'nextReviewDue must be a valid date');
     assert.strictEqual(itemAfterWrong.reviewHistory.length, 1);
     assert.strictEqual(itemAfterWrong.reviewHistory[0].isCorrect, false);
 
@@ -481,7 +517,13 @@ async function runDashboardReworkPhase6Tests() {
       await UserProgress.deleteMany({ userId: testUser._id });
       await User.deleteOne({ _id: testUser._id });
     }
+    if (testQuestion && questionCreatedByTest) {
+      await QuizQuestion.deleteOne({ _id: testQuestion._id });
+    }
     await mongoose.disconnect();
+    if (mongoServer) {
+      await mongoServer.stop();
+    }
     console.log('[Database] Disconnected from MongoDB. Cleaned up test fixtures.');
   }
 }

@@ -15,7 +15,7 @@ export default function CurriculumLessonsSection({
 }) {
   const completedCount = lessonsData?.completedCount ?? 0;
   const inProgressCount = lessonsData?.inProgressCount ?? 0;
-  const totalPublished = lessonsData?.totalPublished ?? 12;
+  const totalPublished = lessonsData?.totalPublished || 0;
   const recentlyAccessed = lessonsData?.recentlyAccessed ?? null;
 
   const progressPercent = totalPublished > 0 ? Math.round((completedCount / totalPublished) * 100) : 0;
@@ -38,7 +38,7 @@ export default function CurriculumLessonsSection({
         <div>
           <span className="atelier-section-eyebrow">Structured Knowledge Base</span>
           <h2 id="curriculum-heading" className="atelier-section-title">
-            Indian Cyber Law Codex
+            Indian Cyber Law Lessons
           </h2>
           <p className="atelier-section-sub">
             Authoritative, plain-language lessons on digital rights, evidence rules, and primary legislation.
@@ -46,16 +46,23 @@ export default function CurriculumLessonsSection({
         </div>
         <div style={{ textAlign: 'right', flexShrink: 0 }}>
           <span style={{ fontSize: '0.88rem', fontWeight: 800, color: 'var(--color-text-primary, #302B27)' }}>
-            {completedCount} of {totalPublished}
+            {totalPublished > 0 ? `${completedCount} of ${totalPublished}` : '—'}
           </span>
           <span style={{ fontSize: '0.72rem', color: 'var(--color-text-muted, #8A8075)', display: 'block' }}>
-            Chapters Read
+            {totalPublished > 0 ? 'Chapters Read' : 'Synchronizing…'}
           </span>
         </div>
       </div>
 
       {/* Publication Progress Bar */}
-      <div className="codex-progress-bar-bg" role="progressbar" aria-valuenow={progressPercent} aria-valuemin="0" aria-valuemax="100">
+      <div 
+        className="codex-progress-bar-bg" 
+        role="progressbar" 
+        aria-valuenow={progressPercent} 
+        aria-valuemin="0" 
+        aria-valuemax="100"
+        aria-label={`Curriculum reading progress: ${progressPercent}% completed`}
+      >
         <div
           className="codex-progress-bar-fill"
           style={{ width: `${progressPercent}%` }}
@@ -63,10 +70,14 @@ export default function CurriculumLessonsSection({
       </div>
       <div className="codex-progress-meta">
         <span>
-          {completedCount === totalPublished ? 'All 12 curriculum chapters read' : `${totalPublished - completedCount} chapters remaining`}
+          {totalPublished > 0
+            ? (completedCount >= totalPublished
+                ? `All ${totalPublished} curriculum chapters read`
+                : `${totalPublished - completedCount} chapters remaining`)
+            : 'Synchronizing curriculum catalog…'}
         </span>
         <span style={{ fontWeight: 700, color: 'var(--color-text-primary, #302B27)' }}>
-          {progressPercent}% Complete
+          {totalPublished > 0 ? `${progressPercent}% Complete` : '—'}
         </span>
       </div>
 
@@ -95,7 +106,11 @@ export default function CurriculumLessonsSection({
 
             <div className="codex-chapter-cta-row">
               <span className="codex-read-time">
-                ⏱ ~{recentlyAccessed.estimatedMinutes || 6} min read • {recentlyAccessed.difficulty || 'Beginner'}
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ verticalAlign: '-1px', marginRight: '4px' }}>
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <polyline points="12 6 12 12 16 14"></polyline>
+                </svg>
+                ~{recentlyAccessed.estimatedMinutes || 6} min read • {recentlyAccessed.difficulty || 'Beginner'}
               </span>
               <Link
                 to={getContextPath(`/modules/${recentlyAccessed.slug}`)}
@@ -125,7 +140,11 @@ export default function CurriculumLessonsSection({
 
             <div className="codex-chapter-cta-row">
               <span className="codex-read-time">
-                ⏱ ~6 min read • Beginner
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ verticalAlign: '-1px', marginRight: '4px' }}>
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <polyline points="12 6 12 12 16 14"></polyline>
+                </svg>
+                ~6 min read • Beginner
               </span>
               <Link
                 to={getContextPath('/modules/digital-identity-foundations')}
@@ -149,7 +168,7 @@ export default function CurriculumLessonsSection({
             to={getContextPath('/modules')}
             style={{ fontSize: '0.78rem', color: 'var(--color-accent-terracotta, #A65F45)', fontWeight: 700, textDecoration: 'none' }}
           >
-            All 12 Chapters &rarr;
+            {totalPublished > 0 ? `All ${totalPublished} Chapters` : 'All Chapters'} &rarr;
           </Link>
         </div>
         <div className="codex-constellation-grid">

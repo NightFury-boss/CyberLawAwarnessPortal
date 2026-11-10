@@ -205,10 +205,10 @@ function FirstVisitTriadDossier() {
         <h2 className="dossier-title">What happens when you finish?</h2>
         <div className="dossier-premise">A calibrated baseline and tailored defense pathways</div>
         <p className="dossier-desc">
-          Your results establish your starting baseline. The portal immediately unlocks your targeted remediation pathways, the 12-chapter statutory curriculum codex, and 5 dedicated practice modes.
+          Your results establish your starting baseline. The portal immediately unlocks your targeted remediation pathways, the complete statutory curriculum lessons, and 5 dedicated practice modes.
         </p>
         <div className="dossier-tag">
-          <span>Tailored Codex • 5 Practice Modes</span>
+          <span>Curriculum Lessons • 5 Practice Modes</span>
         </div>
       </div>
     </div>

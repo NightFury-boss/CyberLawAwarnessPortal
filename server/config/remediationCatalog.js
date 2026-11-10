@@ -19,8 +19,8 @@ const remediationCatalog = [
     metricKey: 'unreviewedAcceptance',
     dimensionCode: 'UA',
     dimensionName: 'Unreviewed Acceptance Control',
-    dimensionShortName: 'Autopilot Control',
-    habitTitle: 'Autopilot Control & UPI PIN Safety',
+    dimensionShortName: 'Unreviewed Acceptance Control',
+    habitTitle: 'Unreviewed Acceptance & UPI PIN Safety',
     pedagogicalFocus: 'Eliminating reflexive approvals, auditing device permissions, and mastering UPI transaction mechanics.',
     observedBehaviorExplanation: 'During the assessment, payment prompts and device permissions were authorized without verifying whether the request was an incoming credit or an outgoing debit.',
     whyItMatters: 'Scammers exploit reflexive taps. Approving a request without reading the debit amount or entering a UPI PIN for a "reward" results in immediate, irreversible financial loss.',
@@ -550,8 +550,8 @@ const remediationCatalog = [
     primaryLawSectionNumber: null, // Intentionally null; Section 72A removed
     legalReferences: [],           // Intentionally empty; pure alert triage
     curriculumLesson: {
-      slug: 'reporting-cybercrime-evidence-preservation',
-      title: 'Reporting Cybercrime and Preserving Evidence in India',
+      slug: 'citizen-cyber-remedies-reporting-portals',
+      title: 'Citizen Cyber Remedies & Reporting Portals',
       category: 'Defensive Practice',
       relevanceReason: 'Teaches evidence collection, distinguishing authentic receipts from fraudulent coercion, and statutory procedures under BSA Section 63.'
     },

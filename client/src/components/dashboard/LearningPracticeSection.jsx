@@ -9,9 +9,7 @@ import { formatRecentActivityEvents, resolvePathwayTitle } from '../../utils/evi
 export function TargetedInterventionsPanel({
   hasBaseline,
   pathwaysWithStatus = [],
-  dueSpacedReviews = [],
   onLaunchRunner,
-  onLaunchSpacedRetrieval,
   completedFocusCount = 0,
   totalFocusCount = 0
 }) {
@@ -38,33 +36,6 @@ export function TargetedInterventionsPanel({
           </div>
         )}
       </div>
-
-      {/* Follow-up Spaced Review Notice */}
-      {hasBaseline && (
-        dueSpacedReviews.length > 0 ? (
-          <div className="atelier-recall-card" style={{ marginTop: '14px', marginBottom: '16px' }}>
-            <div className="atelier-recall-top">
-              <span className="atelier-recall-tag">Follow-Up Review Due</span>
-              <span className="atelier-recall-count">~2 min check</span>
-            </div>
-            <p className="atelier-recall-desc">
-              A retention check is ready for <strong>{resolvePathwayTitle(dueSpacedReviews[0].pathwayId, dueSpacedReviews[0].habitTitle)}</strong>.
-            </p>
-            <button
-              type="button"
-              className="atelier-recall-btn"
-              onClick={() => onLaunchSpacedRetrieval && onLaunchSpacedRetrieval(dueSpacedReviews[0])}
-              aria-label={`Start quick review for ${resolvePathwayTitle(dueSpacedReviews[0].pathwayId, dueSpacedReviews[0].habitTitle)}`}
-            >
-              Start Review &rarr;
-            </button>
-          </div>
-        ) : (
-          <div style={{ fontSize: '0.76rem', color: 'var(--color-text-muted, #8A8075)', marginTop: '6px', marginBottom: '14px' }}>
-            ✓ Follow-up reviews: All scheduled checks are up to date (opens 7 days post-completion).
-          </div>
-        )
-      )}
 
       {/* Pathways List or Pre-Baseline Preview */}
       {hasBaseline ? (

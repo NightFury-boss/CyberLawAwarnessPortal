@@ -1,10 +1,40 @@
-const API_URL = (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_API_URL)
-  ? import.meta.env.VITE_API_URL
-  : (typeof window !== 'undefined' && window.location && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') && window.location.port !== '5000'
-      ? 'http://localhost:5000/api'
-      : (typeof window !== 'undefined' && window.location && window.location.origin
-          ? `${window.location.origin}/api`
-          : 'http://localhost:5000/api'));
+/**
+ * Normalizes and resolves the base API endpoint URL.
+ * Supports:
+ * - Full URLs: https://backend.onrender.com -> https://backend.onrender.com/api
+ * - URLs already ending in /api: https://backend.onrender.com/api -> https://backend.onrender.com/api
+ * - Relative paths: /api or /api/ -> /api
+ * - Trailing slash trimming
+ * - Local development fallback: http://localhost:5000/api
+ * - Same-origin fallback: {window.location.origin}/api
+ */
+function resolveApiUrl(rawEnvUrl) {
+  const envUrl = (typeof rawEnvUrl === 'string'
+    ? rawEnvUrl
+    : (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_API_URL
+        ? String(import.meta.env.VITE_API_URL)
+        : '')
+  ).trim();
+
+  if (envUrl) {
+    const cleanUrl = envUrl.replace(/\/+$/, '');
+    return cleanUrl.endsWith('/api') ? cleanUrl : `${cleanUrl}/api`;
+  }
+
+  if (typeof window !== 'undefined' && window.location) {
+    const isLocalDev = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') && window.location.port !== '5000';
+    if (isLocalDev) {
+      return 'http://localhost:5000/api';
+    }
+    if (window.location.origin) {
+      return `${window.location.origin}/api`;
+    }
+  }
+
+  return 'http://localhost:5000/api';
+}
+
+const API_URL = resolveApiUrl();
 
 // Helper to get headers
 function getHeaders() {
@@ -328,16 +358,21 @@ const api = {
   },
 
   submitAssessmentStep: async (assessmentSessionId, stageId, decisionId, signalProbeDecisionId, idempotencyKey) => {
+    const payload = {
+      assessmentSessionId,
+      stageId,
+      decisionId
+    };
+    if (signalProbeDecisionId) {
+      payload.signalProbeDecisionId = signalProbeDecisionId;
+    }
+    if (idempotencyKey) {
+      payload.idempotencyKey = idempotencyKey;
+    }
     const res = await fetchWithTimeout(`${API_URL}/assessments/submit-step`, {
       method: 'POST',
       headers: getHeaders(),
-      body: JSON.stringify({
-        assessmentSessionId,
-        stageId,
-        decisionId,
-        ...(signalProbeDecisionId ? { signalProbeDecisionId } : {}),
-        ...(idempotencyKey ? { idempotencyKey } : {})
-      })
+      body: JSON.stringify(payload)
     });
     return handleResponse(res);
   },
@@ -716,4 +751,5 @@ const api = {
   }
 };
 
+export { API_URL, resolveApiUrl };
 export default api;

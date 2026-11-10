@@ -26,6 +26,13 @@ const connectDB = async () => {
     return mongoose.connection;
   }
   const targetUri = getDatabaseUri();
+
+  // Enforce staging database guard when explicitly configured
+  if (process.env.ASSERT_STAGING_DB === 'true' || process.env.EXPECTED_STAGING_DB_NAME) {
+    const { assertApprovedStagingDatabase } = require('./stagingDatabaseGuard');
+    assertApprovedStagingDatabase(targetUri);
+  }
+
   console.log(`[Database] Attempting connection to target host: ${getObfuscatedURI(targetUri)}`);
 
   // Event Listeners for robust monitoring

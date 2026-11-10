@@ -38,7 +38,7 @@ async function getOrCreateUserProgress(userId) {
 function getOrCreateLessonEntry(progress, slug) {
   let entry = progress.lessonProgress.find(lp => lp.slug === slug);
   if (!entry) {
-    entry = {
+    progress.lessonProgress.push({
       slug,
       status: 'not_started',
       readCompleted: false,
@@ -46,10 +46,14 @@ function getOrCreateLessonEntry(progress, slug) {
       knowledgeCheckStatus: 'unattempted',
       knowledgeCheckScore: null,
       lastAnswerIndex: null,
+      checkResults: [],
       lastAccessedAt: new Date(),
       firstStartedAt: new Date()
-    };
-    progress.lessonProgress.push(entry);
+    });
+    entry = progress.lessonProgress[progress.lessonProgress.length - 1];
+  }
+  if (!Array.isArray(entry.checkResults)) {
+    entry.checkResults = [];
   }
   return entry;
 }
@@ -185,8 +189,11 @@ exports.getModuleBySlug = async (req, res) => {
     let relatedLaws = [];
     if (Array.isArray(moduleDoc.relatedLawSections) && moduleDoc.relatedLawSections.length > 0) {
       relatedLaws = await LawSection.find({
-        sectionNumber: { $in: moduleDoc.relatedLawSections }
-      }).select('sectionNumber officialTitle actName plainLanguageExplanation whyItMatters penaltyOrLegalEffect legalStatus');
+        $or: [
+          { sectionNumber: { $in: moduleDoc.relatedLawSections } },
+          { slug: { $in: moduleDoc.relatedLawSections } }
+        ]
+      }).select('sectionNumber slug officialTitle actName plainLanguageExplanation whyItMatters penaltyOrLegalEffect legalStatus');
     }
 
     // Populate cross-referenced cybercrimes
@@ -231,6 +238,7 @@ exports.getModuleBySlug = async (req, res) => {
         status: deriveLessonStatus(entry),
         knowledgeCheckStatus: entry.knowledgeCheckStatus || 'not_attempted',
         lastAnswerIndex: entry.lastAnswerIndex,
+        checkResults: entry.checkResults || [],
         readCompleted: Boolean(entry.readCompleted),
         learnerProgress: {
           status: deriveLessonStatus(entry),
@@ -239,6 +247,7 @@ exports.getModuleBySlug = async (req, res) => {
           knowledgeCheckStatus: entry.knowledgeCheckStatus || 'not_attempted',
           knowledgeCheckScore: entry.knowledgeCheckScore,
           lastAnswerIndex: entry.lastAnswerIndex,
+          checkResults: entry.checkResults || [],
           lastAccessedAt: entry.lastAccessedAt
         },
         isCompleted: entry.readCompleted || entry.knowledgeCheckStatus === 'passed',
@@ -285,27 +294,102 @@ exports.recordModuleProgress = async (req, res) => {
     // ACTION 1: KNOWLEDGE CHECK SUBMISSION
     // =========================================================================
     if (action === 'knowledge_check' || typeof selectedIndex === 'number') {
-      const correctIndex = moduleDoc.quickCheck?.correctIndex ?? 0;
-      const isCorrect = Number(selectedIndex) === Number(correctIndex);
+      const activeChecks = (Array.isArray(moduleDoc.quickChecks) && moduleDoc.quickChecks.length > 0)
+        ? moduleDoc.quickChecks
+        : (moduleDoc.quickCheck?.question ? [moduleDoc.quickCheck] : []);
 
-      entry.lastAnswerIndex = Number(selectedIndex);
-      if (isCorrect) {
+      // Validate checkIndex as an integer within the available checks
+      let checkIdx = 0;
+      if (req.body.checkIndex !== undefined && req.body.checkIndex !== null) {
+        if (!Number.isInteger(req.body.checkIndex) || req.body.checkIndex < 0 || req.body.checkIndex >= Math.max(1, activeChecks.length)) {
+          return res.status(400).json({ success: false, message: 'Invalid checkIndex: out of range' });
+        }
+        checkIdx = req.body.checkIndex;
+      }
+
+      const targetCheck = activeChecks[checkIdx] || moduleDoc.quickCheck;
+      if (!targetCheck) {
+        return res.status(400).json({ success: false, message: 'No knowledge check found for this module' });
+      }
+
+      const optionsCount = Array.isArray(targetCheck.options) ? targetCheck.options.length : 0;
+      const isIntegerIndex = typeof selectedIndex === 'number'
+        ? Number.isInteger(selectedIndex)
+        : (typeof selectedIndex === 'string' && selectedIndex.trim() !== '' && Number.isInteger(Number(selectedIndex)));
+      const parsedIndex = Number(selectedIndex);
+
+      if (
+        selectedIndex === undefined ||
+        selectedIndex === null ||
+        typeof selectedIndex === 'boolean' ||
+        !isIntegerIndex ||
+        parsedIndex < 0 ||
+        (optionsCount > 0 && parsedIndex >= optionsCount)
+      ) {
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid selectedIndex: must be an integer within target check options range'
+        });
+      }
+
+      const correctIndex = targetCheck.correctIndex ?? targetCheck.correctOptionIndex ?? 0;
+      const isCorrect = parsedIndex === Number(correctIndex);
+
+      // Initialize checkResults if not present
+      if (!Array.isArray(entry.checkResults)) {
+        entry.checkResults = [];
+      }
+
+      // Update only the selected check's result
+      let existingCheckResult = entry.checkResults.find(cr => cr.checkIndex === checkIdx);
+      if (existingCheckResult) {
+        existingCheckResult.lastAnswerIndex = parsedIndex;
+        existingCheckResult.isCorrect = isCorrect;
+        existingCheckResult.checkId = targetCheck.id || `check-${checkIdx + 1}`;
+        existingCheckResult.attemptedAt = new Date();
+      } else {
+        entry.checkResults.push({
+          checkIndex: checkIdx,
+          checkId: targetCheck.id || `check-${checkIdx + 1}`,
+          lastAnswerIndex: parsedIndex,
+          isCorrect: isCorrect,
+          attemptedAt: new Date()
+        });
+      }
+
+      entry.lastAnswerIndex = parsedIndex;
+
+      // Derive lesson's passed status only when every configured check has passed
+      const totalChecks = Math.max(1, activeChecks.length);
+      const passedCount = activeChecks.filter((_, idx) => {
+        const cr = entry.checkResults.find(r => r.checkIndex === idx);
+        return cr && cr.isCorrect;
+      }).length;
+
+      const attemptedCount = entry.checkResults.length;
+      const allPassed = passedCount === totalChecks;
+
+      if (allPassed) {
         entry.knowledgeCheckStatus = 'passed';
         entry.knowledgeCheckScore = 100;
         entry.status = entry.readCompleted ? 'knowledge_check_passed' : 'in_progress';
       } else {
-        entry.knowledgeCheckStatus = 'failed';
-        entry.knowledgeCheckScore = 0;
+        entry.knowledgeCheckStatus = (attemptedCount > 0) ? 'attempted' : 'unattempted';
+        entry.knowledgeCheckScore = Math.round((passedCount / totalChecks) * 100);
         entry.status = 'knowledge_check_attempted';
       }
 
+      progress.markModified('lessonProgress');
       await progress.save();
 
       return res.json({
         success: true,
+        checkIndex: checkIdx,
         isCorrect,
-        explanation: moduleDoc.quickCheck?.explanation || '',
+        explanation: targetCheck.explanation || moduleDoc.quickCheck?.explanation || '',
         knowledgeCheckStatus: entry.knowledgeCheckStatus,
+        knowledgeCheckScore: entry.knowledgeCheckScore,
+        checkResults: entry.checkResults,
         status: deriveLessonStatus(entry),
         readCompleted: entry.readCompleted
       });

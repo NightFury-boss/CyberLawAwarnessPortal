@@ -61,13 +61,13 @@ function Sidebar({ user, isCollapsed, setIsCollapsed, isOpen, setIsOpen }) {
           >
             {isCollapsed ? (
               <img
-                src="/logo/cyber-law-logo-icon.svg"
+                src="/logo/cyber-law-logo-icon-dark.svg"
                 alt="CL"
                 style={{ height: '30px', width: 'auto' }}
               />
             ) : (
               <img
-                src="/logo/cyber-law-logo-horizontal.svg"
+                src="/logo/cyber-law-logo-dark.svg"
                 alt="Cyber Law Awareness Portal"
                 style={{ height: '32px', width: 'auto' }}
               />

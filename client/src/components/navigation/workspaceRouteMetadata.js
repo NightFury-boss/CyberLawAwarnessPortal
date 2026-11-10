@@ -27,6 +27,11 @@ export const WORKSPACE_ROUTE_METADATA = {
     label: 'Resources',
     path: '/workspace/resources',
     description: 'Official Cyber & Legal Resources'
+  },
+  '/workspace/quizzes': {
+    label: 'Quizzes',
+    path: '/workspace/quizzes',
+    description: 'Cyber Law Quizzes'
   }
 };
 

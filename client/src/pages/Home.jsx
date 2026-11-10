@@ -2,36 +2,32 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import HomeHero from '../components/home/HomeHero';
 import DigitalMomentsSection from '../components/home/DigitalMomentsSection';
-import EditorialRule from '../components/common/EditorialRule';
 import Reveal from '../components/common/Reveal';
 import ScrollLinkedIncidentCase from '../components/common/ScrollLinkedIncidentCase';
 
 /**
  * Public Homepage for Cyber Law Awareness Portal.
  * 
- * Complies with Homepage Visual Revival & Refined Motion Pass:
- * 1. Editorial Hero (Headline dominant, warm off-white canvas, quiet 4-step Learning Flow)
+ * Minimal Editorial Architecture:
+ * 1. Editorial Hero (Headline dominant, warm off-white canvas, right-hand understated 5-step Learning Progression spine)
  * 2. Everyday Digital Situations (Curated, behaviorally precise moments)
  * 3. Explore Portal Map (Editorial directory/list of 5 core public pillars with interactive hover underlines)
  * 4. Case & Prevention Value (Incident Analysis vs. Directional Three Prevention Phases)
  * 5. Trust & Authority (4 factual dimensions with settled 1930 Helpline callout)
- * 6. Closing Invitation CTA (Calm, echoing the 4-step learning path minimally)
+ * 6. Closing Invitation CTA (Calm, echoing the learning path minimally)
+ * 7. Discreet Emergency Resources Navigation (Unobtrusive text-based link to Resources emergency desk)
  */
 function Home({ user }) {
   return (
     <div className="homepage-wrapper">
       
-      {/* 1. HERO SECTION: Dominant Headline, Warm Off-White Canvas, Quiet Learning Flow */}
+      {/* 1. HERO SECTION: Dominant Headline, Spacious Editorial Layout & 5-Step Spine */}
       <HomeHero user={user} />
 
       {/* 2. DEDICATED SECTION: EVERYDAY DIGITAL SITUATIONS */}
       <DigitalMomentsSection />
 
-      <div className="container">
-        <EditorialRule spacing="lg" />
-      </div>
-
-      {/* 3. CONCRETE PORTAL MAP: EXPLORE WHAT YOU CAN LEARN (EDITORIAL DIRECTORY) */}
+      {/* 5. CONCRETE PORTAL MAP: EXPLORE WHAT YOU CAN LEARN (EDITORIAL DIRECTORY) */}
       <section 
         id="explore" 
         className="portal-explore-section" 
@@ -95,17 +91,17 @@ function Home({ user }) {
               <div className="explore-row-num" aria-hidden="true">03</div>
               <div className="explore-row-body">
                 <div className="explore-row-title-wrap">
-                  <h3 className="explore-row-name">Case Studies</h3>
-                  <span className="explore-row-tag">Real Incident Analysis</span>
+                  <h3 className="explore-row-name">Cyber Cases</h3>
+                  <span className="explore-row-tag">Lessons from the Real World</span>
                 </div>
                 <p className="explore-row-desc">
-                  Examine how real digital incidents unfold, see which warning indicators were missed, and evaluate how safer decision points change the outcome.
+                  Explore landmark court decisions that shaped digital rights, alongside documented inquiries where institutional delays or evidence hurdles left victims seeking justice.
                 </p>
                 <div className="explore-row-underline" aria-hidden="true" />
               </div>
               <div className="explore-row-action">
-                <Link to="/cases" className="explore-row-link" aria-label="Explore Case Studies archive">
-                  <span>Explore Case Studies</span>
+                <Link to="/cases" className="explore-row-link" aria-label="Explore Cyber Cases and Real Incident Lessons">
+                  <span>Explore Cases</span>
                   <span className="link-arrow" aria-hidden="true">&rarr;</span>
                 </Link>
               </div>
@@ -156,11 +152,7 @@ function Home({ user }) {
         </div>
       </section>
 
-      <div className="container">
-        <EditorialRule spacing="lg" />
-      </div>
-
-      {/* 4. CASE & PREVENTION VALUE SECTION: "From Legal Rules to Safer Decisions" */}
+      {/* 6. CASE & PREVENTION VALUE SECTION: "From Legal Rules to Safer Decisions" */}
       <section 
         className="homepage-value-section" 
         aria-labelledby="value-heading"
@@ -250,11 +242,7 @@ function Home({ user }) {
         </div>
       </section>
 
-      <div className="container">
-        <EditorialRule spacing="lg" />
-      </div>
-
-      {/* 5. TRUST & AUTHORITY SECTION: Factual Dimensions & Calm Settled Callout */}
+      {/* 7. TRUST & AUTHORITY SECTION: Factual Dimensions & Calm Settled Callout */}
       <section 
         className="homepage-trust-section" 
         aria-labelledby="trust-heading"
@@ -271,34 +259,42 @@ function Home({ user }) {
           <div className="trust-pillars-grid">
             <Reveal variant="fade-up" delay={60} className="trust-pillar-card">
               <div className="pillar-num">01</div>
-              <h3 className="pillar-title">Legal Framework</h3>
-              <p className="pillar-desc">
-                Derived directly from primary legislation including the Information Technology Act (2000), digital amendment rules, and corresponding penal provisions.
-              </p>
+              <div className="pillar-body">
+                <h3 className="pillar-title">Legal Framework</h3>
+                <p className="pillar-desc">
+                  Derived directly from primary legislation including the Information Technology Act (2000), digital amendment rules, and corresponding penal provisions.
+                </p>
+              </div>
             </Reveal>
 
             <Reveal variant="fade-up" delay={120} className="trust-pillar-card">
               <div className="pillar-num">02</div>
-              <h3 className="pillar-title">Case Studies & Incident Analysis</h3>
-              <p className="pillar-desc">
-                Deconstructed from documented cyber incident reports and judicial rulings to illustrate how attacks develop and how legal liabilities apply.
-              </p>
+              <div className="pillar-body">
+                <h3 className="pillar-title">Case Studies & Incident Analysis</h3>
+                <p className="pillar-desc">
+                  Deconstructed from documented cyber incident reports and judicial rulings to illustrate how attacks develop and how legal liabilities apply.
+                </p>
+              </div>
             </Reveal>
 
             <Reveal variant="fade-up" delay={180} className="trust-pillar-card">
               <div className="pillar-num">03</div>
-              <h3 className="pillar-title">Practical Prevention</h3>
-              <p className="pillar-desc">
-                Defensive hygiene guidelines follow standard information security best practices, zero-trust verification, and incident mitigation standards.
-              </p>
+              <div className="pillar-body">
+                <h3 className="pillar-title">Practical Prevention</h3>
+                <p className="pillar-desc">
+                  Defensive hygiene guidelines follow standard information security best practices, zero-trust verification, and incident mitigation standards.
+                </p>
+              </div>
             </Reveal>
 
             <Reveal variant="fade-up" delay={240} className="trust-pillar-card">
               <div className="pillar-num">04</div>
-              <h3 className="pillar-title">Official Reporting & Response</h3>
-              <p className="pillar-desc">
-                Distinguishes immediate victim assistance through the National Cyber Crime Helpline (<span className="helpline-num-badge"><span className="helpline-pulse-dot" aria-hidden="true" />1930</span>) from national incident coordination via CERT-In.
-              </p>
+              <div className="pillar-body">
+                <h3 className="pillar-title">Official Reporting & Response</h3>
+                <p className="pillar-desc">
+                  Distinguishes immediate victim assistance through the National Cyber Crime Helpline (<span className="helpline-num-badge"><span className="helpline-pulse-dot" aria-hidden="true" />1930</span>) from national incident coordination via CERT-In.
+                </p>
+              </div>
             </Reveal>
           </div>
 
@@ -315,17 +311,37 @@ function Home({ user }) {
       <section className="homepage-closing-cta" aria-labelledby="cta-heading">
         <div className="container">
           <Reveal variant="fade-up" className="closing-cta-card">
-            <span className="closing-cta-eyebrow">Next Steps</span>
+            {/* Learning Progression Pill Header */}
+            <div className="closing-cta-progress-container">
+              <span className="closing-cta-eyebrow">Next Steps</span>
 
-            {/* Minimal Learning Path Echo (Law → Situation → Verification → Safer Action) */}
-            <div className="cta-path-echo" aria-hidden="true">
-              <span className="echo-node">01 Law</span>
-              <span className="echo-sep">&rarr;</span>
-              <span className="echo-node">02 Real Situation</span>
-              <span className="echo-sep">&rarr;</span>
-              <span className="echo-node">03 Verification</span>
-              <span className="echo-sep">&rarr;</span>
-              <span className="echo-node echo-node-active">04 Safer Action</span>
+              {/* Four-Step Progression Pill: Law → Real Situation → Verification → Safer Action */}
+              <div 
+                className="cta-path-echo" 
+                role="list" 
+                aria-label="Four-step learning pathway: 01 Law, 02 Real Situation, 03 Verification, 04 Safer Action"
+              >
+                <div className="echo-node" role="listitem">
+                  <span className="echo-step-num">01</span>
+                  <span className="echo-step-name">Law</span>
+                </div>
+                <span className="echo-sep" aria-hidden="true">&rarr;</span>
+                <div className="echo-node" role="listitem">
+                  <span className="echo-step-num">02</span>
+                  <span className="echo-step-name">Real Situation</span>
+                </div>
+                <span className="echo-sep" aria-hidden="true">&rarr;</span>
+                <div className="echo-node" role="listitem">
+                  <span className="echo-step-num">03</span>
+                  <span className="echo-step-name">Verification</span>
+                </div>
+                <span className="echo-sep" aria-hidden="true">&rarr;</span>
+                <div className="echo-node echo-node-active" role="listitem" aria-current="step">
+                  <span className="echo-active-dot" aria-hidden="true">●</span>
+                  <span className="echo-step-num">04</span>
+                  <span className="echo-step-name">Safer Action</span>
+                </div>
+              </div>
             </div>
 
             <h2 id="cta-heading" className="closing-cta-title">
@@ -351,6 +367,26 @@ function Home({ user }) {
               </Link>
             </div>
           </Reveal>
+        </div>
+      </section>
+
+      {/* 7. DISCREET EMERGENCY RESOURCES NAVIGATION (Unobtrusive text-based option) */}
+      <section className="homepage-discreet-emergency" aria-label="Incident assistance resources">
+        <div className="container">
+          <div className="discreet-emergency-box">
+            <div className="discreet-emergency-text">
+              <span className="discreet-emergency-title">Need help with a cybercrime incident?</span>
+              <span className="discreet-emergency-desc">Find emergency helplines, reporting instructions and practical resources.</span>
+            </div>
+            <Link 
+              to="/resources#emergency-help" 
+              className="discreet-emergency-link"
+              aria-label="Explore Emergency Resources on the Resources page"
+            >
+              <span>Explore Emergency Resources</span>
+              <span className="link-arrow" aria-hidden="true">&rarr;</span>
+            </Link>
+          </div>
         </div>
       </section>
 

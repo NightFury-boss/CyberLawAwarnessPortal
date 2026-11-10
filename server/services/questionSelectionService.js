@@ -31,13 +31,16 @@ function sanitizeQuestionForClient(q) {
   if (['single_choice', 'multiple_choice', 'true_false', 'scenario_decision', 'legal_application'].includes(format)) {
     base.options = q.options || [];
   } else if (format === 'matching') {
-    // Expose left and right items separately with right items scrambled
-    const pairs = q.matchingPairs || [];
-    base.leftItems = pairs.map(p => p.left);
-    base.rightItems = shuffle(pairs.map(p => p.right));
+    // Expose left and right items separately in shuffled presentation order while preserving item associations
+    const pairs = Array.isArray(q.matchingPairs) ? q.matchingPairs : [];
+    const lefts = pairs.length > 0 ? pairs.map(p => p.left) : (Array.isArray(q.leftItems) ? q.leftItems : []);
+    const rights = pairs.length > 0 ? pairs.map(p => p.right) : (Array.isArray(q.rightItems) ? q.rightItems : []);
+    base.leftItems = shuffle(lefts);
+    base.rightItems = shuffle(rights);
   } else if (format === 'ordering') {
-    // Scramble the sequence items so the client cannot read the correct order
-    base.sequenceItems = shuffle(q.sequenceItems || []);
+    // Scramble sequence items so the client cannot read the authoritative order
+    const seq = Array.isArray(q.sequenceItems) ? q.sequenceItems : [];
+    base.sequenceItems = shuffle(seq);
   } else if (format === 'indicator_identification') {
     base.textToInspect = q.textToInspect || '';
     // Strip isSuspicious and explanation

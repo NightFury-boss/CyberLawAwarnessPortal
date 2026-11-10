@@ -17,7 +17,6 @@ export default function PrimaryFocus({
   hasActiveFinal = false,
   activeFinalStage = null,
   pathwaysWithStatus = [],
-  dueSpacedReviews = [],
   dueQuizRecalls = [],
   inProgressLesson = null,
   recommendedLesson = null,
@@ -27,7 +26,6 @@ export default function PrimaryFocus({
   nextIncompletePathway,
   nextReinforcePathway,
   onLaunchRunner,
-  onLaunchSpacedRetrieval,
   onLaunchQuizRecall,
   onOpenPortfolioModal
 }) {
@@ -44,7 +42,6 @@ export default function PrimaryFocus({
     hasActiveFinal,
     activeFinalStage,
     pathwaysWithStatus: effectivePathways,
-    dueSpacedReviews,
     dueQuizRecalls,
     inProgressLesson,
     recommendedLesson,
@@ -55,7 +52,6 @@ export default function PrimaryFocus({
 
   const getDossierClass = () => {
     switch (action.type) {
-      case 'DUE_SPACED_REVIEW':
       case 'DUE_QUIZ_RECALL':
         return 'atelier-dossier-card state-recall';
       case 'READY_FOR_FINAL':
@@ -69,7 +65,6 @@ export default function PrimaryFocus({
   };
 
   const hasSecondaryQuizRecall = action.type !== 'DUE_QUIZ_RECALL' && dueQuizRecalls.length > 0;
-  const hasSecondarySpacedReview = action.type !== 'DUE_SPACED_REVIEW' && dueSpacedReviews.length > 0;
 
   const renderActionButton = () => {
     if (action.actionType === 'LINK') {
@@ -77,19 +72,6 @@ export default function PrimaryFocus({
         <Link to={action.destination} className="atelier-dossier-btn">
           <span>{action.actionLabel}</span>
         </Link>
-      );
-    }
-
-    if (action.actionType === 'SPACED_MODAL') {
-      return (
-        <button
-          type="button"
-          onClick={() => onLaunchSpacedRetrieval && onLaunchSpacedRetrieval(action.targetItem)}
-          className="atelier-dossier-btn"
-          aria-label={action.actionLabel}
-        >
-          <span>{action.actionLabel}</span>
-        </button>
       );
     }
 
@@ -132,7 +114,7 @@ export default function PrimaryFocus({
   };
 
   return (
-    <section aria-labelledby="dossier-heading">
+    <section aria-labelledby="primary-focus-heading">
       <div className={getDossierClass()}>
         {/* Eyebrow & Estimated Duration */}
         <div className="atelier-dossier-top">
@@ -141,7 +123,11 @@ export default function PrimaryFocus({
           </span>
           {action.estimatedMinutes && (
             <span className="atelier-dossier-time">
-              ⏱ ~{action.estimatedMinutes} min duration
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ verticalAlign: '-1px', marginRight: '4px' }}>
+                <circle cx="12" cy="12" r="10"></circle>
+                <polyline points="12 6 12 12 16 14"></polyline>
+              </svg>
+              ~{action.estimatedMinutes} min duration
             </span>
           )}
         </div>
@@ -149,7 +135,7 @@ export default function PrimaryFocus({
         {/* Content & Action Row */}
         <div className="atelier-dossier-body">
           <div className="atelier-dossier-copy">
-            <h2 id="dossier-heading" className="atelier-dossier-title">
+            <h2 id="primary-focus-heading" className="atelier-dossier-title">
               {action.title}
             </h2>
             <p className="atelier-dossier-desc">
@@ -183,30 +169,22 @@ export default function PrimaryFocus({
         </div>
 
         {/* Secondary Non-Competing Companion Notice */}
-        {(hasSecondaryQuizRecall || hasSecondarySpacedReview) && (
+        {hasSecondaryQuizRecall && (
           <div className="atelier-dossier-companion print-hidden">
             <span>
-              💡 <strong>Retention check ready:</strong>{' '}
-              {hasSecondaryQuizRecall
-                ? `You also have ${dueQuizRecalls.length} missed quiz ${dueQuizRecalls.length === 1 ? 'concept' : 'concepts'} ready for quick recall review.`
-                : 'A scheduled follow-up retention check is also ready.'}
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#2563eb" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ verticalAlign: '-2px', marginRight: '6px' }}>
+                <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"></path>
+              </svg>
+              <strong>Optional Concept Practice:</strong>{' '}
+              You have {dueQuizRecalls.length} missed quiz {dueQuizRecalls.length === 1 ? 'concept' : 'concepts'} available for optional review whenever you choose.
             </span>
-            {hasSecondaryQuizRecall && onLaunchQuizRecall && (
+            {onLaunchQuizRecall && (
               <button
                 type="button"
                 onClick={onLaunchQuizRecall}
                 className="atelier-companion-action"
               >
                 Review Concepts Now &rarr;
-              </button>
-            )}
-            {!hasSecondaryQuizRecall && hasSecondarySpacedReview && onLaunchSpacedRetrieval && (
-              <button
-                type="button"
-                onClick={() => onLaunchSpacedRetrieval(dueSpacedReviews[0])}
-                className="atelier-companion-action"
-              >
-                Review Follow-Up Now &rarr;
               </button>
             )}
           </div>

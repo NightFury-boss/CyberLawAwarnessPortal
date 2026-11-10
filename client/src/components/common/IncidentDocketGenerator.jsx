@@ -135,7 +135,7 @@ export default function IncidentDocketGenerator({ initialCategory = 'unauthorize
       try {
         sessionStorage.removeItem(OPTIN_STORAGE_KEY);
         sessionStorage.removeItem(SESSION_STORAGE_KEY);
-      } catch (e) {}
+      } catch (e) { }
       setPersistSession(false);
       setFormData(getDefaultFormData());
       setCopyFeedback({ success: false, error: false, message: '' });
@@ -845,19 +845,24 @@ OPERATIONAL & PRIVACY DISCLAIMER:
         )}
 
         {/* Live Output View */}
-        <div style={{
-          backgroundColor: 'var(--bg-secondary)',
-          border: '1px solid var(--color-border)',
-          borderRadius: '6px',
-          padding: '16px',
-          fontFamily: 'monospace',
-          fontSize: '0.84rem',
-          lineHeight: '1.6',
-          whiteSpace: 'pre-wrap',
-          maxHeight: '400px',
-          overflowY: 'auto',
-          color: 'var(--text-primary)'
-        }}>
+        <div
+          tabIndex={0}
+          role="region"
+          aria-label="Generated incident docket preview"
+          style={{
+            backgroundColor: 'var(--bg-secondary)',
+            border: '1px solid var(--color-border)',
+            borderRadius: '6px',
+            padding: '16px',
+            fontFamily: 'monospace',
+            fontSize: '0.84rem',
+            lineHeight: '1.6',
+            whiteSpace: 'pre-wrap',
+            maxHeight: '400px',
+            overflowY: 'auto',
+            color: 'var(--text-primary)'
+          }}
+        >
           {activeTab === 'callScript' ? generateCallScript() : generateWrittenDocket()}
         </div>
 

@@ -2,13 +2,15 @@ import React from 'react';
 import { selectJourneyStage } from '../../utils/dashboardJourneySelectors.js';
 
 /**
- * AtelierMasthead Component — The Editorial Opening & Milestone Constellation
+ * AtelierMasthead Component — Editorial Opening & Learning Journey Map
  * 
  * Philosophy:
  * - High-credibility, magazine-style masthead for Indian Cyber Law education.
- * - An integrated Milestone Constellation Map rendering the 5 macro phases with verified states.
- * - Integrated 4-pillar Orientation Ledger unifying curriculum, pathways, quizzes, and retention checks.
- * - Direct trigger for the certified Defensive Portfolio / Learning Record.
+ * - An integrated 4-Stage Learning Journey Map showing the relationship between First Check,
+ *   Curriculum Lessons & Pathways, Final Check, and Longitudinal Defensive Evolution.
+ * - Integrated 4-pillar Orientation Ledger unifying curriculum, pathways, quizzes, and concept practice.
+ * - Direct trigger for the certified Defensive Portfolio / Verified Learning Record.
+ * - Fully neutral, self-paced, learner-initiated practice presentation (zero scheduling/overdue pressure).
  */
 export default function AtelierMasthead({
   displayName,
@@ -19,11 +21,12 @@ export default function AtelierMasthead({
   completedFocusCount = 0,
   totalFocusCount = 0,
   lessonsCompletedCount = 0,
-  totalLessonsCount = 12,
+  totalLessonsCount = 0,
   quizAttemptsCount = 0,
   completedRecallCount = 0,
   passedRecallCount = 0,
-  dueRecallCount = 0,
+  conceptRecallCount = 0,
+  dueRecallCount = 0, // Backward-compatibility fallback
   onOpenPortfolioModal
 }) {
   const stage = selectJourneyStage({
@@ -35,40 +38,103 @@ export default function AtelierMasthead({
     totalFocusCount
   });
 
-  // Calculate 5 milestone status states
-  const getMilestoneState = (milestoneKey) => {
-    switch (milestoneKey) {
-      case 'baseline':
-        return hasBaseline ? { status: 'done', label: 'Completed' } : { status: 'current', label: 'First Step' };
-      case 'lessons':
-        if (!hasBaseline) return { status: 'upcoming', label: 'Upcoming' };
-        if (lessonsCompletedCount >= totalLessonsCount) return { status: 'done', label: 'Completed' };
-        return { status: 'current', label: `${lessonsCompletedCount}/${totalLessonsCount} Read` };
-      case 'final':
-        if (!hasBaseline) return { status: 'upcoming', label: 'Locked' };
-        if (hasFinal) return { status: 'done', label: 'Completed' };
-        if (totalFocusCount > 0 && completedFocusCount >= totalFocusCount) return { status: 'current', label: 'Ready' };
-        return { status: 'upcoming', label: 'Requires Pathways' };
-      case 'practice':
-        if (quizAttemptsCount > 0) return { status: 'done', label: `${quizAttemptsCount} Taken` };
-        return { status: 'current', label: 'Active' };
-      case 'retention':
-        if (hasTrajectoryReassessment) return { status: 'done', label: 'Longitudinal' };
-        if (dueRecallCount > 0) return { status: 'current', label: `${dueRecallCount} Due` };
-        return { status: 'upcoming', label: 'Monitoring' };
+  // Calculate 4 canonical journey stage states
+  const getStageState = (stageNum) => {
+    switch (stageNum) {
+      case 1: // First Check (Baseline Diagnostic)
+        if (hasBaseline) {
+          return {
+            status: 'done',
+            badge: 'Completed',
+            summary: 'Initial diagnostic simulation completed. 6 behavioral dimensions established.'
+          };
+        }
+        return {
+          status: 'current',
+          badge: 'First Step',
+          summary: 'Simulated digital day to diagnose behavioral instincts and discover blindspots.'
+        };
+
+      case 2: // Lessons & Targeted Pathways
+        if (!hasBaseline) {
+          return {
+            status: 'upcoming',
+            badge: 'Upcoming',
+            summary: 'Unlocks after completing your First Check diagnostic.'
+          };
+        }
+        const pathwaysDone = totalFocusCount > 0 && completedFocusCount >= totalFocusCount;
+        const lessonsDone = totalLessonsCount > 0 && lessonsCompletedCount >= totalLessonsCount;
+        if (pathwaysDone && lessonsDone) {
+          return {
+            status: 'done',
+            badge: 'Completed',
+            summary: `All ${totalLessonsCount} curriculum chapters read and ${completedFocusCount} coaching pathways completed.`
+          };
+        }
+        const chaptersTotal = totalLessonsCount > 0 ? totalLessonsCount : 'synchronizing';
+        return {
+          status: 'current',
+          badge: 'Active Focus',
+          summary: totalFocusCount > 0
+            ? `${completedFocusCount} of ${totalFocusCount} coaching pathways completed • ${lessonsCompletedCount} of ${chaptersTotal} chapters read.`
+            : `${lessonsCompletedCount} of ${chaptersTotal} chapters read • Coaching pathways curating.`
+        };
+
+      case 3: // Final Check (Longitudinal Benchmark)
+        if (!hasBaseline) {
+          return {
+            status: 'upcoming',
+            badge: 'Locked',
+            summary: 'Requires First Check and coaching pathways.'
+          };
+        }
+        if (hasFinal) {
+          return {
+            status: 'done',
+            badge: 'Completed',
+            summary: 'Post-learning benchmark complete. Decision shifts under pressure verified.'
+          };
+        }
+        if (totalFocusCount > 0 && completedFocusCount >= totalFocusCount) {
+          return {
+            status: 'current',
+            badge: 'Ready to Begin',
+            summary: 'All recommended safety lessons complete. Ready to benchmark your decision improvements.'
+          };
+        }
+        return {
+          status: 'upcoming',
+          badge: 'Requires Pathways',
+          summary: 'Complete your recommended safety lessons before benchmarking.'
+        };
+
+      case 4: // Longitudinal Growth & Verified Portfolio
+        if (hasFinal) {
+          return {
+            status: 'current',
+            badge: hasTrajectoryReassessment ? 'Verified Record' : 'Active Growth',
+            summary: 'Longitudinal decision evolution active. Verified Defensive Learning Portfolio ready.'
+          };
+        }
+        return {
+          status: 'upcoming',
+          badge: 'Future Stage',
+          summary: 'Six-dimension behavioral comparison and verified learning record.'
+        };
+
       default:
-        return { status: 'upcoming', label: 'Pending' };
+        return { status: 'upcoming', badge: 'Pending', summary: '' };
     }
   };
 
-  const mBaseline = getMilestoneState('baseline');
-  const mLessons = getMilestoneState('lessons');
-  const mFinal = getMilestoneState('final');
-  const mPractice = getMilestoneState('practice');
-  const mRetention = getMilestoneState('retention');
+  const stage1 = getStageState(1);
+  const stage2 = getStageState(2);
+  const stage3 = getStageState(3);
+  const stage4 = getStageState(4);
 
   const getStageTagClass = () => {
-    if (!hasBaseline || dueRecallCount > 0) return 'atelier-stage-pill attention';
+    if (!hasBaseline) return 'atelier-stage-pill attention';
     if (hasFinal) return 'atelier-stage-pill complete';
     return 'atelier-stage-pill';
   };
@@ -80,7 +146,7 @@ export default function AtelierMasthead({
         <div className="atelier-edition-badge">
           <span>Cyber Law Awareness Portal</span>
           <span className="edition-dot" aria-hidden="true">•</span>
-          <span>Personal Study Journal</span>
+          <span>Personal Learning Workspace</span>
           <span className="edition-dot" aria-hidden="true">•</span>
           <span>Indian Statutory Defense</span>
         </div>
@@ -89,9 +155,8 @@ export default function AtelierMasthead({
         </div>
       </div>
 
-      {/* Hero: Two-Part Asymmetric Composition */}
+      {/* Hero: Editorial Intro & Verified Portfolio Action */}
       <div className="atelier-masthead-hero">
-        {/* Left: Expressive Editorial Intro */}
         <div className="atelier-hero-text">
           <h1>
             {displayName ? `Welcome to your learning desk, ${displayName}.` : 'Your Personal Learning Journal'}
@@ -107,7 +172,7 @@ export default function AtelierMasthead({
               className="atelier-portfolio-trigger print-hidden"
               aria-label="View and print your verified learning record"
             >
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                 <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
                 <polyline points="14 2 14 8 20 8"></polyline>
                 <line x1="16" y1="13" x2="8" y2="13"></line>
@@ -117,88 +182,115 @@ export default function AtelierMasthead({
             </button>
           )}
         </div>
+      </div>
 
-        {/* Right: Milestone Constellation Progression Map */}
-        <div className="atelier-milestone-map" aria-label="Five core learning milestones">
-          <div className="atelier-map-heading">
-            <span>5 Core Learning Milestones</span>
-            <span style={{ fontSize: '0.68rem', color: 'var(--color-text-muted, #8A8075)' }}>Linear Progression</span>
+      {/* Redesigned 4-Stage Learning Journey Map (Structured Editorial Timeline) */}
+      <section className="atelier-journey-track" aria-label="Four core learning stages of your defense progression">
+        <div className="atelier-journey-track-header">
+          <span className="atelier-journey-eyebrow">Learning Milestones</span>
+          <span className="atelier-journey-sub">Four-stage progressive mastery of Indian cyber law &amp; defense</span>
+        </div>
+
+        <div className="atelier-journey-stages">
+          {/* Stage 1: First Check */}
+          <div className={`atelier-journey-step is-${stage1.status}`} aria-current={stage1.status === 'current' ? 'step' : undefined}>
+            <div className="journey-step-indicator">
+              <span className="journey-step-num">{stage1.status === 'done' ? '✓' : '1'}</span>
+            </div>
+            <div className="journey-step-content">
+              <div className="journey-step-top">
+                <span className="journey-step-title">First Check (Diagnostic)</span>
+                <span className={`journey-step-badge badge-${stage1.status}`}>{stage1.badge}</span>
+              </div>
+              <p className="journey-step-desc">{stage1.summary}</p>
+            </div>
           </div>
 
-          <div className="atelier-milestone-nodes">
-            {/* Milestone 1: First Check */}
-            <div className={`atelier-milestone-node is-${mBaseline.status}`}>
-              <div className="milestone-icon-bubble">1</div>
-              <div className="milestone-node-info">
-                <span className="milestone-node-title">First Check (Your Digital Day)</span>
-                <span className="milestone-node-sub">Establish baseline behavioral instincts</span>
-              </div>
-              <span className="milestone-node-badge">{mBaseline.label}</span>
-            </div>
+          {/* Step Connector 1 -> 2 */}
+          <div className={`journey-step-connector ${stage1.status === 'done' ? 'is-complete' : ''}`} aria-hidden="true"></div>
 
-            {/* Milestone 2: Core Lessons */}
-            <div className={`atelier-milestone-node is-${mLessons.status}`}>
-              <div className="milestone-icon-bubble">2</div>
-              <div className="milestone-node-info">
-                <span className="milestone-node-title">Core Curriculum Lessons</span>
-                <span className="milestone-node-sub">12 plain-language statutory chapters</span>
-              </div>
-              <span className="milestone-node-badge">{mLessons.label}</span>
+          {/* Stage 2: Lessons & Pathways */}
+          <div className={`atelier-journey-step is-${stage2.status}`} aria-current={stage2.status === 'current' ? 'step' : undefined}>
+            <div className="journey-step-indicator">
+              <span className="journey-step-num">{stage2.status === 'done' ? '✓' : '2'}</span>
             </div>
-
-            {/* Milestone 3: Final Check */}
-            <div className={`atelier-milestone-node is-${mFinal.status}`}>
-              <div className="milestone-icon-bubble">3</div>
-              <div className="milestone-node-info">
-                <span className="milestone-node-title">Final Check (Longitudinal Benchmark)</span>
-                <span className="milestone-node-sub">Measure decision improvements under pressure</span>
+            <div className="journey-step-content">
+              <div className="journey-step-top">
+                <span className="journey-step-title">Lessons &amp; Pathways</span>
+                <span className={`journey-step-badge badge-${stage2.status}`}>{stage2.badge}</span>
               </div>
-              <span className="milestone-node-badge">{mFinal.label}</span>
+              <p className="journey-step-desc">{stage2.summary}</p>
             </div>
+          </div>
 
-            {/* Milestone 4: Practice Studio */}
-            <div className={`atelier-milestone-node is-${mPractice.status}`}>
-              <div className="milestone-icon-bubble">4</div>
-              <div className="milestone-node-info">
-                <span className="milestone-node-title">Practice Studio</span>
-                <span className="milestone-node-sub">5 modes: scenarios, drills, challenge</span>
-              </div>
-              <span className="milestone-node-badge">{mPractice.label}</span>
+          {/* Step Connector 2 -> 3 */}
+          <div className={`journey-step-connector ${stage2.status === 'done' ? 'is-complete' : ''}`} aria-hidden="true"></div>
+
+          {/* Stage 3: Final Check */}
+          <div className={`atelier-journey-step is-${stage3.status}`} aria-current={stage3.status === 'current' ? 'step' : undefined}>
+            <div className="journey-step-indicator">
+              <span className="journey-step-num">{stage3.status === 'done' ? '✓' : '3'}</span>
             </div>
-
-            {/* Milestone 5: Habits Over Time */}
-            <div className={`atelier-milestone-node is-${mRetention.status}`}>
-              <div className="milestone-icon-bubble">5</div>
-              <div className="milestone-node-info">
-                <span className="milestone-node-title">Habits Over Time</span>
-                <span className="milestone-node-sub">Spaced recall & 6-dimension trajectory</span>
+            <div className="journey-step-content">
+              <div className="journey-step-top">
+                <span className="journey-step-title">Final Check (Benchmark)</span>
+                <span className={`journey-step-badge badge-${stage3.status}`}>{stage3.badge}</span>
               </div>
-              <span className="milestone-node-badge">{mRetention.label}</span>
+              <p className="journey-step-desc">{stage3.summary}</p>
+            </div>
+          </div>
+
+          {/* Step Connector 3 -> 4 */}
+          <div className={`journey-step-connector ${stage3.status === 'done' ? 'is-complete' : ''}`} aria-hidden="true"></div>
+
+          {/* Stage 4: Longitudinal Growth */}
+          <div className={`atelier-journey-step is-${stage4.status}`} aria-current={stage4.status === 'current' ? 'step' : undefined}>
+            <div className="journey-step-indicator">
+              <span className="journey-step-num">{stage4.status === 'done' ? '✓' : '4'}</span>
+            </div>
+            <div className="journey-step-content">
+              <div className="journey-step-top">
+                <span className="journey-step-title">Defensive Habits &amp; Portfolio</span>
+                <span className={`journey-step-badge badge-${stage4.status}`}>{stage4.badge}</span>
+              </div>
+              <p className="journey-step-desc">{stage4.summary}</p>
             </div>
           </div>
         </div>
-      </div>
+      </section>
 
       {/* Integrated Orientation Ledger (4 Distinct Balanced Columns) */}
       <div className="atelier-orientation-ledger" aria-label="Orientation metrics summary">
         <div className="ledger-column">
           <span className="ledger-label">Curriculum Lessons</span>
           <span className="ledger-value">
-            {lessonsCompletedCount} <span style={{ fontSize: '0.9rem', color: 'var(--color-text-muted, #8A8075)', fontWeight: 500 }}>/ {totalLessonsCount}</span>
+            {totalLessonsCount > 0 ? (
+              <>
+                {lessonsCompletedCount} <span style={{ fontSize: '0.9rem', color: 'var(--color-text-muted, #8A8075)', fontWeight: 500 }}>/ {totalLessonsCount}</span>
+              </>
+            ) : (
+              <span style={{ fontSize: '1rem', color: 'var(--color-text-muted, #8A8075)' }}>—</span>
+            )}
           </span>
           <span className="ledger-sub">
-            {lessonsCompletedCount === totalLessonsCount ? 'All chapters read' : `${totalLessonsCount - lessonsCompletedCount} chapters remaining`}
+            {totalLessonsCount > 0
+              ? (lessonsCompletedCount >= totalLessonsCount
+                  ? 'All chapters read'
+                  : `${totalLessonsCount - lessonsCompletedCount} chapters remaining`)
+              : 'Synchronizing catalog…'}
           </span>
         </div>
 
         <div className="ledger-column">
           <span className="ledger-label">Targeted Pathways</span>
           <span className="ledger-value">
-            {hasBaseline ? `${completedFocusCount} / ${totalFocusCount}` : '—'}
+            {hasBaseline ? (totalFocusCount > 0 ? `${completedFocusCount} / ${totalFocusCount}` : '—') : '—'}
           </span>
           <span className="ledger-sub">
             {hasBaseline 
-              ? (completedFocusCount >= totalFocusCount && totalFocusCount > 0 ? 'All pathways completed' : 'Personalized coaching')
+              ? (totalFocusCount > 0
+                  ? (completedFocusCount >= totalFocusCount ? 'All pathways completed' : 'Personalized coaching')
+                  : 'Curating pathways…')
               : 'Requires First Check'}
           </span>
         </div>
@@ -214,24 +306,19 @@ export default function AtelierMasthead({
         </div>
 
         <div className="ledger-column">
-          <span className="ledger-label">Retention Reviews</span>
+          <span className="ledger-label">Concept Revision</span>
           <span className="ledger-value">
-            {dueRecallCount > 0 ? (
-              <span style={{ color: 'var(--color-warning, #B17A38)' }}>{dueRecallCount} Due</span>
+            {completedRecallCount > 0 ? (
+              <span>{completedRecallCount} <span style={{ fontSize: '0.9rem', color: 'var(--color-text-muted, #8A8075)', fontWeight: 500 }}>completed</span></span>
             ) : (
-              <span style={{ color: 'var(--color-success, #536F61)', fontSize: '1.25rem' }}>All Current</span>
+              <span style={{ color: 'var(--color-accent-terracotta, #9A503A)', fontSize: '1.05rem', fontWeight: 600 }}>Self-Paced</span>
             )}
           </span>
           <span className="ledger-sub">
-            {completedRecallCount > 0 ? (
-              <span>{completedRecallCount} follow-ups completed</span>
-            ) : (
-              <span>7-day spaced recall active</span>
-            )}
+            {passedRecallCount > 0 ? `${passedRecallCount} passed checks` : 'Optional concept revision'}
           </span>
         </div>
       </div>
     </header>
   );
 }
-

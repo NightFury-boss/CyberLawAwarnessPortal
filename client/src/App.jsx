@@ -262,6 +262,14 @@ function AppContent() {
                     } 
                   />
                   <Route 
+                    path="/workspace/dashboard" 
+                    element={<Navigate to="/dashboard" replace />} 
+                  />
+                  <Route 
+                    path="/workspace/quizzes" 
+                    element={user ? <Quizzes user={user} updateProgressTrigger={triggerProgressUpdate} /> : <Navigate to="/login" />} 
+                  />
+                  <Route 
                     path="/workspace/laws" 
                     element={user ? <Laws /> : <Navigate to="/login" replace />} 
                   />

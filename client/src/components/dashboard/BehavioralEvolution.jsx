@@ -317,14 +317,9 @@ function BehavioralEvolution({
                 return (
                   <g
                     key={dim.key}
-                    tabIndex={0}
-                    role="button"
-                    aria-label={`${dim.label} (${dim.key})`}
                     onMouseEnter={() => setHoveredDimKey(dim.key)}
                     onMouseLeave={() => setHoveredDimKey(null)}
-                    onFocus={() => setHoveredDimKey(dim.key)}
-                    onBlur={() => setHoveredDimKey(null)}
-                    style={{ cursor: 'pointer', outline: 'none' }}
+                    style={{ cursor: 'default' }}
                   >
                     <text
                       x={labelCoord.x}

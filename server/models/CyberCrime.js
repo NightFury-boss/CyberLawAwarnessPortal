@@ -78,7 +78,7 @@ const CyberCrimeSchema = new mongoose.Schema({
   ],
   redFlagLevel: {
     type: String,
-    enum: ['Low', 'Moderate', 'High', 'Very High'],
+    enum: ['Low', 'Moderate', 'High', 'Very High', 'Critical'],
     default: 'High'
   },
   attackVectors: [

@@ -249,7 +249,7 @@ async function runPortfolioContractTests() {
     const data8 = await res8.json();
     assert.strictEqual(data8.interventions.spacedReviews.length, 1);
     assert.strictEqual(data8.interventions.spacedReviews[0].pathwayId, 'pathway-ua-upi-consent');
-    assert.strictEqual(data8.interventions.spacedReviews[0].habitTitle, 'Autopilot Control & UPI PIN Safety');
+    assert.strictEqual(data8.interventions.spacedReviews[0].habitTitle, 'Unreviewed Acceptance & UPI PIN Safety');
     assert.strictEqual(data8.interventions.spacedReviews[0].passed, true);
     assert.strictEqual(data8.interventions.spacedReviews[0].checkpointScore, 100);
     assert.strictEqual(data8.interventions.summary.totalSpacedReviews, 1);

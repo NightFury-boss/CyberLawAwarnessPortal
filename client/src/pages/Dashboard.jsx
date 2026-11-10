@@ -12,29 +12,27 @@ import DashboardQuizPractice from '../components/dashboard/DashboardQuizPractice
 import BehavioralEvolution from '../components/dashboard/BehavioralEvolution';
 import DashboardHistory from '../components/dashboard/DashboardHistory';
 import DefensivePortfolioModal from '../components/dashboard/DefensivePortfolioModal';
-import SpacedRetrievalModal from '../components/dashboard/SpacedRetrievalModal';
 import QuizRecallModal from '../components/dashboard/QuizRecallModal';
 import { selectAuthoritativeRecallCounts } from '../utils/evidenceSelectors';
 
 /**
  * Dashboard Page Container — Personal Learning Workspace
  * 
- * Architecture & Design Philosophy:
- * - Editorial masthead with integrated 4-pillar orientation ledger and 5-step macro compass.
- * - Primary Focus "Study Dossier" providing unambiguous next-step clarity across all 11 states.
- * - Dynamic Two-Column Learning Studio:
- *     Left: Structured Curriculum Lessons & Targeted Diagnostic Pathways
- *     Right: Practice Studio (5 Quiz Modes & Due Recall Alert) & Recent Activity Stream
- * - Full-Width Behavioral Evolution Studio preserving the 6 canonical dimensions without synthetic averaging.
- * - Archival Methodology & Session History Drawer.
- * - Zero composite gamified scores; strict server-side grading and version isolation.
+ * Strict Visual & Pedagogical Hierarchy (Stage 6 Final Acceptance):
+ * 1. Primary Orientation: Where am I in my learning journey? (AtelierMasthead & 4-Stage Journey Map)
+ * 2. Primary Action: What should I do next? (PrimaryFocus Study Dossier)
+ * 3. Learning Content: Which lessons or pathways can I explore? (Curriculum Lessons & Targeted Defense Pathways)
+ * 4. Practical Application: How can I recognize and respond to real-world threats? (Practical Online Safety Scenarios & Quiz Studio)
+ * 5. Learning Progress: What have I completed and learned? (Behavioral Evolution Studio across 6 dimensions)
+ * 6. Supporting Information: Verified Activity Stream & Defensive Portfolio Records
+ * 
+ * Zero composite gamified scores; strict server-side grading, zero scheduled review pressure.
  */
 function Dashboard({ user, progressTrigger }) {
   const [progress, setProgress] = useState(null);
   const [remediationData, setRemediationData] = useState(null);
   const [portfolioData, setPortfolioData] = useState(null);
   const [trajectoryData, setTrajectoryData] = useState(null);
-  const [dueSpacedReviews, setDueSpacedReviews] = useState([]);
   const [quizHistoryData, setQuizHistoryData] = useState(null);
   const [dueQuizRecalls, setDueQuizRecalls] = useState([]);
   const [isQuizRecallModalOpen, setIsQuizRecallModalOpen] = useState(false);
@@ -43,8 +41,8 @@ function Dashboard({ user, progressTrigger }) {
   const [showFullStudio, setShowFullStudio] = useState(false);
   const [loadState, setLoadState] = useState('LOADING'); // 'LOADING' | 'RESOLVED' | 'ERROR'
   const [errorMessage, setErrorMessage] = useState('');
+  const [actionNotice, setActionNotice] = useState(null);
   const [activePathwayForRunner, setActivePathwayForRunner] = useState(null);
-  const [activeSpacedModal, setActiveSpacedModal] = useState(null);
   const [isPortfolioModalOpen, setIsPortfolioModalOpen] = useState(false);
   const [portfolioInitialPillar, setPortfolioInitialPillar] = useState(null);
 
@@ -58,23 +56,23 @@ function Dashboard({ user, progressTrigger }) {
     setPortfolioInitialPillar(null);
   };
 
-  const fetchDashboardData = useCallback(async () => {
-    setLoadState('LOADING');
-    setErrorMessage('');
+  const fetchDashboardData = useCallback(async (silent = false) => {
+    if (!silent) {
+      setLoadState('LOADING');
+      setErrorMessage('');
+    }
     try {
       // 1. Authoritative identity and assessment status checks MUST succeed.
-      // If either fails due to network/server failure, we MUST NOT assume the learner is new or has completed anything.
       const [prog, baseStatus, finStatus] = await Promise.all([
         api.getProgress(),
         api.getAssessmentStatus('baseline'),
         api.getAssessmentStatus('final').catch(() => null)
       ]);
 
-      // 2. Secondary enrichment data (portfolio, trajectory, recalls, etc.) may degrade gracefully
-      const [port, traj, spacedRes, quizHistRes, quizRecallRes] = await Promise.all([
+      // 2. Secondary enrichment data (portfolio, trajectory, recalls, etc.) degrades gracefully
+      const [port, traj, quizHistRes, quizRecallRes] = await Promise.all([
         api.getPortfolio().catch(() => null),
         api.getTrajectory().catch(() => null),
-        api.getDueSpacedRetrievals().catch(() => ({ dueReviews: [] })),
         api.getQuizHistory().catch(() => null),
         api.getDueQuizRecalls().catch(() => ({ dueItems: [], totalDue: 0 }))
       ]);
@@ -84,13 +82,13 @@ function Dashboard({ user, progressTrigger }) {
       setFinalStatus(finStatus);
       setPortfolioData(port);
       setTrajectoryData(traj);
-      setDueSpacedReviews(spacedRes?.dueReviews || []);
       setQuizHistoryData(quizHistRes);
       setDueQuizRecalls(quizRecallRes?.dueItems || []);
 
-      if (prog?.latestSessionId) {
+      const sessionForRemediation = prog?.latestSessionId || baseStatus?.sessionId;
+      if (sessionForRemediation) {
         try {
-          const rem = await api.getAssessmentRemediation(prog.latestSessionId);
+          const rem = await api.getAssessmentRemediation(sessionForRemediation);
           setRemediationData(rem);
         } catch (_re) {
           // Non-blocking: recommendations may be pending completion of diagnostic
@@ -99,8 +97,10 @@ function Dashboard({ user, progressTrigger }) {
 
       setLoadState('RESOLVED');
     } catch (err) {
-      setErrorMessage(err.message || 'Unable to connect to the learning portal. Please check your network connection.');
-      setLoadState('ERROR');
+      if (!silent) {
+        setErrorMessage(err.message || 'Unable to connect to the learning portal. Please check your network connection.');
+        setLoadState('ERROR');
+      }
     }
   }, []);
 
@@ -115,7 +115,7 @@ function Dashboard({ user, progressTrigger }) {
   if (loadState === 'LOADING') {
     return (
       <div className="desk-space-redesign page-entry" style={{ padding: 'var(--space-3xl, 64px) 0', textAlign: 'center' }}>
-        <p style={{ color: 'var(--text-secondary, #56565c)', fontSize: '0.95rem' }}>
+        <p style={{ color: 'var(--color-text-secondary, #3A443B)', fontSize: '0.95rem' }}>
           Opening your personal learning workspace...
         </p>
       </div>
@@ -136,21 +136,38 @@ function Dashboard({ user, progressTrigger }) {
           textAlign: 'center',
           boxShadow: '0 4px 16px rgba(12, 29, 46, 0.04)'
         }}>
-          <div style={{ fontSize: '2rem', marginBottom: '16px' }} aria-hidden="true">📡</div>
-          <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#7a8898', textTransform: 'uppercase', letterSpacing: '0.08em', display: 'block', marginBottom: '8px' }}>
-            Connection Interruption • {learnerName}
-          </span>
-          <h2 style={{ fontSize: '1.28rem', color: '#0c1d2e', margin: '0 0 12px 0', fontWeight: 800, letterSpacing: '-0.02em' }}>
-            Unable to verify your learning progress
+          <div style={{ marginBottom: '16px', display: 'flex', justifyContent: 'center' }} aria-hidden="true">
+            <div style={{
+              width: '48px',
+              height: '48px',
+              borderRadius: '50%',
+              backgroundColor: 'rgba(12, 29, 46, 0.05)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: '#475569'
+            }}>
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#64748b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="1" y1="1" x2="23" y2="23"></line>
+                <path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55"></path>
+                <path d="M5 12.55a10.94 10.94 0 0 1 5.17-2.39"></path>
+                <path d="M10.71 5.05A16 16 0 0 1 22.58 9"></path>
+                <path d="M1.42 9a15.91 15.91 0 0 1 4.7-2.88"></path>
+                <path d="M8.53 16.11a6 6 0 0 1 6.95 0"></path>
+                <line x1="12" y1="20" x2="12.01" y2="20"></line>
+              </svg>
+            </div>
+          </div>
+          <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#0c1d2e', marginBottom: '8px' }}>
+            Learning Workspace Unavailable
           </h2>
-          <p style={{ fontSize: '0.92rem', color: '#52606d', lineHeight: 1.6, margin: '0 0 24px 0' }}>
-            We could not reach the server to synchronize your session data. Your authenticated account and historical learning records remain secure.
+          <p style={{ fontSize: '0.92rem', color: '#56565c', lineHeight: 1.55, marginBottom: '24px' }}>
+            Hello {learnerName}. We could not synchronize your progress records with the central knowledge repository. Your previously completed lessons, quiz scores, and verified learning records remain safely preserved on the server.
           </p>
-          <div style={{ display: 'flex', justifyContent: 'center', gap: '14px', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', justifyContent: 'center', gap: '12px', flexWrap: 'wrap' }}>
             <button
-              type="button"
-              onClick={fetchDashboardData}
-              className="first-visit-primary-btn"
+              onClick={() => fetchDashboardData(false)}
+              className="btn btn-primary"
               style={{ padding: '10px 24px', minHeight: '42px', fontSize: '0.92rem', cursor: 'pointer' }}
             >
               Retry Connection
@@ -213,7 +230,6 @@ function Dashboard({ user, progressTrigger }) {
     const isReinforced = Boolean(reinforcementRecord);
     const shiftState = rec.habitShiftState || rec.state;
     const isReinforcementEligible = hasFinal && (shiftState === 'continued_practice' || shiftState === 'emerging_gap');
-    const isSpacedRetrievalDue = dueSpacedReviews.some(dr => dr.pathwayId === rec.pathwayId);
 
     return {
       rec,
@@ -221,7 +237,6 @@ function Dashboard({ user, progressTrigger }) {
       isInProgress,
       isReinforced,
       isReinforcementEligible,
-      isSpacedRetrievalDue,
       completedRecord,
       reinforcementRecord,
       shiftState
@@ -237,39 +252,36 @@ function Dashboard({ user, progressTrigger }) {
     progress
   });
 
-  // Total due recall count combines due quiz recalls and due spaced reviews
-  const totalDueRecallCount = (dueQuizRecalls?.length || 0) + (dueSpacedReviews?.length || 0);
+  // Optional concept recall count for missed quiz provisions
+  const conceptRecallCount = dueQuizRecalls?.length || 0;
 
   // Next Action Selection based strictly on authoritative state
   const nextIncompletePathway = pathwaysWithStatus.find(p => !p.isFullyCompleted);
   const nextReinforcePathway = pathwaysWithStatus.find(p => p.isReinforcementEligible && !p.isReinforced);
 
-  const handleLaunchSpacedRetrieval = (itemOrDue) => {
-    const pathwayId = itemOrDue.pathwayId || itemOrDue.rec?.pathwayId;
-    const sourceSessionId = itemOrDue.sourceSessionId || itemOrDue.completedRecord?.sourceSessionId || progress?.latestSessionId;
-    if (!pathwayId) return;
-    setActiveSpacedModal({
-      pathwayId,
-      sourceSessionId
-    });
-  };
-
   const handleLaunchRunner = (pathwayItem, isReinforce = false) => {
-    if (!progress?.latestSessionId) {
-      setError('To start a pathway, please complete your First Check first so we can personalize your learning.');
+    const launchSessionId = progress?.latestSessionId || baselineStatus?.sessionId;
+    if (!launchSessionId) {
+      setActionNotice('To start a pathway, please complete your First Check first so we can personalize your learning.');
       return;
     }
     if (!pathwayItem?.rec?.pathwayId) {
-      setError('This lesson could not be opened right now. Please refresh the page or try again in a moment.');
+      setActionNotice('This lesson could not be opened right now. Please refresh the page or try again in a moment.');
       return;
     }
 
     setActivePathwayForRunner({
-      pathway: pathwayItem.rec,
-      sourceSessionId: progress.latestSessionId,
+      pathway: {
+        pathwayId: pathwayItem.rec.pathwayId,
+        habitTitle: pathwayItem.rec.habitTitle,
+        pedagogicalFocus: pathwayItem.rec.pedagogicalFocus,
+        coreRule: pathwayItem.rec.coreRule
+      },
+      sourceSessionId: pathwayItem.completedRecord?.sourceSessionId || launchSessionId,
       initialProgress: {
-        completedAt: pathwayItem.completedRecord?.completedAt || null,
+        currentStep: pathwayItem.isInProgress ? 2 : 1,
         stepsCompleted: pathwayItem.completedRecord?.stepsCompleted || { caseStudy: false, prevention: false, checkpointQuiz: false },
+        isCompleted: pathwayItem.isFullyCompleted,
         isReinforced: pathwayItem.isReinforced,
         checkpointScore: pathwayItem.completedRecord?.checkpointScore || null
       },
@@ -282,6 +294,45 @@ function Dashboard({ user, progressTrigger }) {
 
   return (
     <div className="atelier-dashboard-canvas desk-space-redesign page-entry">
+
+      {actionNotice && (
+        <div
+          role="alert"
+          style={{
+            maxWidth: '1200px',
+            margin: '0 auto 20px auto',
+            backgroundColor: '#eff6ff',
+            border: '1px solid #bfdbfe',
+            borderRadius: '8px',
+            padding: '12px 18px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: '12px',
+            boxShadow: '0 2px 8px rgba(37, 99, 235, 0.08)'
+          }}
+        >
+          <span style={{ fontSize: '0.88rem', color: '#1e40af', fontWeight: 500 }}>
+            {actionNotice}
+          </span>
+          <button
+            type="button"
+            onClick={() => setActionNotice(null)}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: '#1e40af',
+              fontWeight: 700,
+              cursor: 'pointer',
+              fontSize: '0.82rem',
+              padding: '4px 8px'
+            }}
+            aria-label="Dismiss notice"
+          >
+            Dismiss
+          </button>
+        </div>
+      )}
 
       {/* ========================================================================= */}
       {/* 1. DIVERGENT EXPERIENCE: FIRST-TIME LEARNER ORIENTATION VS. ESTABLISHED   */}
@@ -297,15 +348,13 @@ function Dashboard({ user, progressTrigger }) {
             hasExpiredSession={hasExpiredBaseline}
             expiredSession={expiredBaselineSession}
             onViewFullStudio={() => setShowFullStudio(prev => !prev)}
-            showFullStudio={showFullStudio}
           />
 
-          {/* Progressive Disclosure: Learner elects to explore complete studio before First Check */}
           {showFullStudio && (
-            <div className="first-visit-studio-reveal" style={{ marginTop: '36px' }}>
-              <div style={{ padding: '16px 0', borderBottom: '1px solid rgba(12, 29, 46, 0.1)', marginBottom: '28px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
-                <span style={{ fontSize: '0.82rem', fontWeight: 800, color: '#7a8898', textTransform: 'uppercase', letterSpacing: '0.07em' }}>
-                  Full Learning Studio • Library &amp; Modules Overview
+            <div style={{ marginTop: '32px', borderTop: '2px dashed var(--color-border)', paddingTop: '32px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                <span style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-secondary)' }}>
+                  PREVIEWING FULL LEARNING STUDIO (STAGE 1 UNLOCKED)
                 </span>
                 <button
                   type="button"
@@ -316,7 +365,7 @@ function Dashboard({ user, progressTrigger }) {
                 </button>
               </div>
 
-              {/* Atelier Masthead & Metrics */}
+              {/* 1. Primary Orientation */}
               <AtelierMasthead
                 displayName={firstName}
                 hasBaseline={hasBaseline}
@@ -326,55 +375,63 @@ function Dashboard({ user, progressTrigger }) {
                 completedFocusCount={completedFocusCount}
                 totalFocusCount={totalFocusCount}
                 lessonsCompletedCount={progress?.lessons?.completedCount ?? (progress?.completedModules?.length || 0)}
-                totalLessonsCount={progress?.lessons?.totalPublished ?? 12}
+                totalLessonsCount={progress?.lessons?.totalPublished ?? 0}
                 quizAttemptsCount={quizAttemptsList.length}
                 completedRecallCount={completedRecallCount}
                 passedRecallCount={passedRecallCount}
-                dueRecallCount={totalDueRecallCount}
+                conceptRecallCount={conceptRecallCount}
                 onOpenPortfolioModal={() => handleOpenPortfolioModal()}
               />
 
-              {/* Editorial Threat Deconstruction */}
-              <DigitalMomentsStorySection />
-
-              {/* Central Studio Grid */}
-              <div className="atelier-studio-grid desk-studio-grid">
-                <div className="atelier-column desk-studio-panel">
-                  <CurriculumLessonsSection
-                    lessonsData={progress?.lessons}
-                    isWorkspace={true}
-                  />
-                  <TargetedInterventionsPanel
-                    hasBaseline={hasBaseline}
-                    pathwaysWithStatus={pathwaysWithStatus}
-                    dueSpacedReviews={dueSpacedReviews}
-                    onLaunchRunner={handleLaunchRunner}
-                    onLaunchSpacedRetrieval={handleLaunchSpacedRetrieval}
-                    completedFocusCount={completedFocusCount}
-                    totalFocusCount={totalFocusCount}
-                  />
+              {/* 3. Learning Content */}
+              <div className="atelier-learning-content-section" style={{ margin: '28px 0' }}>
+                <div className="atelier-studio-grid desk-studio-grid">
+                  <div className="atelier-column desk-studio-panel">
+                    <CurriculumLessonsSection
+                      lessonsData={progress?.lessons}
+                      isWorkspace={true}
+                    />
+                  </div>
+                  <div className="atelier-column desk-studio-panel">
+                    <TargetedInterventionsPanel
+                      hasBaseline={hasBaseline}
+                      pathwaysWithStatus={pathwaysWithStatus}
+                      onLaunchRunner={handleLaunchRunner}
+                      completedFocusCount={completedFocusCount}
+                      totalFocusCount={totalFocusCount}
+                    />
+                  </div>
                 </div>
-                <div className="atelier-column desk-studio-panel">
+              </div>
+
+              {/* 4. Practical Application */}
+              <div className="atelier-practical-application-section" style={{ marginBottom: '32px' }}>
+                <DigitalMomentsStorySection />
+                <div style={{ marginTop: '24px' }}>
                   <DashboardQuizPractice
                     quizHistoryData={quizHistoryData}
                     dueRecallsCount={dueQuizRecalls.length}
                     onLaunchQuizRecall={() => setIsQuizRecallModalOpen(true)}
                   />
-                  <RecentActivityStream
-                    completedPathwaysList={completedPathwaysList}
-                    reinforcementsList={reinforcementsList}
-                    quizAttemptsList={quizAttemptsList}
-                    spacedReviewsList={progress?.spacedReviews || []}
-                  />
                 </div>
               </div>
 
-              {/* Behavioral Habit Blueprint & History */}
+              {/* 5. Learning Progress */}
               <BehavioralEvolution
                 trajectoryData={trajectoryData}
                 hasBaseline={hasBaseline}
                 hasFinal={hasFinal}
               />
+
+              {/* 6. Supporting Information */}
+              <div style={{ margin: '24px 0' }}>
+                <RecentActivityStream
+                  completedPathwaysList={completedPathwaysList}
+                  reinforcementsList={reinforcementsList}
+                  quizAttemptsList={quizAttemptsList}
+                  spacedReviewsList={progress?.spacedReviews || []}
+                />
+              </div>
               <DashboardHistory
                 hasBaseline={hasBaseline}
                 hasFinal={hasFinal}
@@ -387,10 +444,11 @@ function Dashboard({ user, progressTrigger }) {
         </>
       ) : (
         <>
-          {/* Established Learner: Full Atelier Personal Study Journal */}
+          {/* ========================================================================= */}
+          {/* 1. PRIMARY ORIENTATION: WHERE AM I IN MY LEARNING JOURNEY?                */}
+          {/* ========================================================================= */}
           <AtelierMasthead
-
-displayName={firstName}
+            displayName={firstName}
             hasBaseline={hasBaseline}
             hasFinal={hasFinal}
             nextReinforcePathway={nextReinforcePathway}
@@ -398,21 +456,23 @@ displayName={firstName}
             completedFocusCount={completedFocusCount}
             totalFocusCount={totalFocusCount}
             lessonsCompletedCount={progress?.lessons?.completedCount ?? (progress?.completedModules?.length || 0)}
-            totalLessonsCount={progress?.lessons?.totalPublished ?? 12}
+            totalLessonsCount={progress?.lessons?.totalPublished ?? 0}
             quizAttemptsCount={quizAttemptsList.length}
             completedRecallCount={completedRecallCount}
             passedRecallCount={passedRecallCount}
-            dueRecallCount={totalDueRecallCount}
+            conceptRecallCount={conceptRecallCount}
             onOpenPortfolioModal={() => handleOpenPortfolioModal()}
           />
 
+          {/* ========================================================================= */}
+          {/* 2. PRIMARY ACTION: WHAT SHOULD I DO NEXT? (STUDY DOSSIER)                 */}
+          {/* ========================================================================= */}
           <PrimaryFocus
             hasBaseline={hasBaseline}
             hasFinal={hasFinal}
             hasActiveFinal={hasActiveFinal}
             activeFinalStage={activeFinalStage}
             pathwaysWithStatus={pathwaysWithStatus}
-            dueSpacedReviews={dueSpacedReviews}
             dueQuizRecalls={dueQuizRecalls}
             inProgressLesson={progress?.lessons?.recentlyAccessed?.status === 'in_progress' ? progress.lessons.recentlyAccessed : null}
             recommendedLesson={progress?.lessons?.nextLesson || null}
@@ -422,49 +482,67 @@ displayName={firstName}
             nextIncompletePathway={nextIncompletePathway}
             nextReinforcePathway={nextReinforcePathway}
             onLaunchRunner={handleLaunchRunner}
-            onLaunchSpacedRetrieval={handleLaunchSpacedRetrieval}
             onLaunchQuizRecall={() => setIsQuizRecallModalOpen(true)}
             onOpenPortfolioModal={() => handleOpenPortfolioModal()}
           />
 
-          <DigitalMomentsStorySection />
-
-          <div className="atelier-studio-grid desk-studio-grid">
-            <div className="atelier-column desk-studio-panel">
-              <CurriculumLessonsSection
-                lessonsData={progress?.lessons}
-                isWorkspace={true}
-              />
-              <TargetedInterventionsPanel
-                hasBaseline={hasBaseline}
-                pathwaysWithStatus={pathwaysWithStatus}
-                dueSpacedReviews={dueSpacedReviews}
-                onLaunchRunner={handleLaunchRunner}
-                onLaunchSpacedRetrieval={handleLaunchSpacedRetrieval}
-                completedFocusCount={completedFocusCount}
-                totalFocusCount={totalFocusCount}
-              />
+          {/* ========================================================================= */}
+          {/* 3. LEARNING CONTENT: STATUTORY LESSONS & PERSONALIZED COACHING PATHWAYS   */}
+          {/* ========================================================================= */}
+          <div className="atelier-learning-content-section" style={{ marginBottom: '32px' }}>
+            <div className="atelier-studio-grid desk-studio-grid">
+              <div className="atelier-column desk-studio-panel">
+                <CurriculumLessonsSection
+                  lessonsData={progress?.lessons}
+                  isWorkspace={true}
+                />
+              </div>
+              <div className="atelier-column desk-studio-panel">
+                <TargetedInterventionsPanel
+                  hasBaseline={hasBaseline}
+                  pathwaysWithStatus={pathwaysWithStatus}
+                  onLaunchRunner={handleLaunchRunner}
+                  completedFocusCount={completedFocusCount}
+                  totalFocusCount={totalFocusCount}
+                />
+              </div>
             </div>
-            <div className="atelier-column desk-studio-panel">
+          </div>
+
+          {/* ========================================================================= */}
+          {/* 4. PRACTICAL APPLICATION: REAL-WORLD THREAT DILEMMAS & PRACTICE STUDIO    */}
+          {/* ========================================================================= */}
+          <div className="atelier-practical-application-section" style={{ marginBottom: '32px' }}>
+            <DigitalMomentsStorySection />
+            <div style={{ marginTop: '24px' }}>
               <DashboardQuizPractice
                 quizHistoryData={quizHistoryData}
                 dueRecallsCount={dueQuizRecalls.length}
                 onLaunchQuizRecall={() => setIsQuizRecallModalOpen(true)}
               />
-              <RecentActivityStream
-                completedPathwaysList={completedPathwaysList}
-                reinforcementsList={reinforcementsList}
-                quizAttemptsList={quizAttemptsList}
-                spacedReviewsList={progress?.spacedReviews || []}
-              />
             </div>
           </div>
 
+          {/* ========================================================================= */}
+          {/* 5. LEARNING PROGRESS: SIX-DIMENSIONAL BEHAVIORAL HABIT EVOLUTION          */}
+          {/* ========================================================================= */}
           <BehavioralEvolution
             trajectoryData={trajectoryData}
             hasBaseline={hasBaseline}
             hasFinal={hasFinal}
           />
+
+          {/* ========================================================================= */}
+          {/* 6. SUPPORTING INFORMATION: VERIFIED ACTIVITY STREAM & DEFENSIVE PORTFOLIO */}
+          {/* ========================================================================= */}
+          <div className="atelier-supporting-stream-wrapper" style={{ marginBottom: '32px' }}>
+            <RecentActivityStream
+              completedPathwaysList={completedPathwaysList}
+              reinforcementsList={reinforcementsList}
+              quizAttemptsList={quizAttemptsList}
+              spacedReviewsList={progress?.spacedReviews || []}
+            />
+          </div>
 
           <DashboardHistory
             hasBaseline={hasBaseline}
@@ -491,48 +569,29 @@ displayName={firstName}
         />
       )}
 
-      {/* Spaced Retrieval Follow-Up Learning Modal */}
-      {activeSpacedModal && (
-        <SpacedRetrievalModal
-          isOpen={Boolean(activeSpacedModal)}
-          onClose={() => {
-            const wasCompleted = Boolean(activeSpacedModal?.completed);
-            setActiveSpacedModal(null);
-            if (wasCompleted) {
-              fetchDashboardData();
-            }
-          }}
-          pathwayId={activeSpacedModal.pathwayId}
-          sourceSessionId={activeSpacedModal.sourceSessionId}
-          onReviewCompleted={() => {
-            setActiveSpacedModal(prev => (prev ? { ...prev, completed: true } : null));
-          }}
-        />
-      )}
+      {/* Missed Quiz Concept Recall Modal (Optional, Learner-Initiated Revision) */}
+      <QuizRecallModal
+        isOpen={isQuizRecallModalOpen}
+        dueRecalls={dueQuizRecalls}
+        onClose={() => {
+          setIsQuizRecallModalOpen(false);
+          fetchDashboardData(true);
+        }}
+        onRecallCompleted={() => {
+          // Defer full dashboard refresh until modal is closed to preserve learner's feedback
+        }}
+      />
 
-      {/* Missed Quiz Concept Recall Modal */}
-      {isQuizRecallModalOpen && dueQuizRecalls.length > 0 && (
-        <QuizRecallModal
-          isOpen={isQuizRecallModalOpen}
-          onClose={() => setIsQuizRecallModalOpen(false)}
-          dueRecalls={dueQuizRecalls}
-          onRecallCompleted={() => {
-            fetchDashboardData();
-          }}
-        />
-      )}
-
-      {/* Certified Defensive Portfolio Record & Printable Statement Modal */}
+      {/* Official Verified Defensive Learning Portfolio Modal */}
       <DefensivePortfolioModal
         isOpen={isPortfolioModalOpen}
         onClose={handleClosePortfolioModal}
+        portfolioData={portfolioData}
+        initialPillar={portfolioInitialPillar}
         user={user}
         progress={progress}
-        portfolioData={portfolioData}
         trajectoryData={trajectoryData}
-        initialPillar={portfolioInitialPillar}
       />
-
     </div>
   );
 }

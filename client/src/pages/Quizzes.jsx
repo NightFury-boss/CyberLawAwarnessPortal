@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import api from '../services/api';
 import WorkspaceBreadcrumb from '../components/WorkspaceBreadcrumb';
 import EditorialPageHeader from '../components/common/EditorialPageHeader';
@@ -67,6 +67,9 @@ const DEFAULT_MODES = [
 ];
 
 function Quizzes({ user, updateProgressTrigger }) {
+  const [searchParams] = useSearchParams();
+  const hasHandledQueryModeRef = useRef(false);
+
   // Navigation & View Mode
   const [activeTab, setActiveTab] = useState('modes'); // 'modes' or 'catalog'
   const [quizzes, setQuizzes] = useState([]);
@@ -208,16 +211,17 @@ function Quizzes({ user, updateProgressTrigger }) {
   };
 
   // 1. Start Mode-Aware Session
-  const handleStartModeSession = async (modeObj) => {
+  const handleStartModeSession = async (modeObj, topicOverride = null) => {
     setLoading(true);
     setError('');
     try {
+      const activeTopic = topicOverride || selectedTopic;
       const payload = {
         mode: modeObj.id,
         difficulty: selectedDifficulty
       };
       if (modeObj.id === 'topic_wise') {
-        payload.topic = selectedTopic;
+        payload.topic = activeTopic;
       }
 
       const res = await api.startQuizSession(payload);
@@ -230,7 +234,7 @@ function Quizzes({ user, updateProgressTrigger }) {
         mode: modeObj.id,
         title: modeObj.title,
         badge: modeObj.badge,
-        category: modeObj.id === 'topic_wise' ? selectedTopic : 'Multi-Subject Practice',
+        category: modeObj.id === 'topic_wise' ? activeTopic : 'Multi-Subject Practice',
         difficulty: selectedDifficulty,
         questions: res.questions,
         timed: modeObj.timed,
@@ -242,6 +246,24 @@ function Quizzes({ user, updateProgressTrigger }) {
       setLoading(false);
     }
   };
+
+  // 1b. Handle query parameter mode deep-linking (?mode=...&topic=...)
+  useEffect(() => {
+    if (!loading && !activeQuiz && !hasHandledQueryModeRef.current && !savedSessionToResume) {
+      const modeParam = searchParams.get('mode');
+      const topicParam = searchParams.get('topic');
+      if (modeParam) {
+        const targetMode = (modesList && modesList.length > 0 ? modesList : DEFAULT_MODES).find(m => m.id === modeParam) || DEFAULT_MODES.find(m => m.id === modeParam);
+        if (targetMode) {
+          hasHandledQueryModeRef.current = true;
+          if (topicParam) {
+            setSelectedTopic(topicParam);
+          }
+          handleStartModeSession(targetMode, topicParam);
+        }
+      }
+    }
+  }, [loading, activeQuiz, searchParams, modesList, savedSessionToResume]);
 
   // 2. Start Catalog Quiz
   const handleSelectCatalogQuiz = async (quiz) => {
@@ -664,6 +686,7 @@ function Quizzes({ user, updateProgressTrigger }) {
                 <button
                   type="button"
                   onClick={() => {
+                    hasHandledQueryModeRef.current = true;
                     setActiveQuiz(savedSessionToResume.activeQuiz);
                     setAnswersMap(savedSessionToResume.answersMap || {});
                     startTimeRef.current = savedSessionToResume.startTime || Date.now();
@@ -813,10 +836,15 @@ function Quizzes({ user, updateProgressTrigger }) {
                     {mode.id === 'topic_wise' && (
                       <div style={{ margin: '8px 0 16px 0', display: 'flex', flexDirection: 'column', gap: '8px' }} onClick={e => e.stopPropagation()}>
                         <div>
-                          <label style={{ fontSize: '0.75rem', fontWeight: '700', color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>
+                          <label 
+                            htmlFor="quiz-topic-select"
+                            style={{ fontSize: '0.75rem', fontWeight: '700', color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}
+                          >
                             SELECT TOPIC:
                           </label>
                           <select
+                            id="quiz-topic-select"
+                            aria-label="Filter quiz practice by topic"
                             value={selectedTopic}
                             onChange={(e) => setSelectedTopic(e.target.value)}
                             style={{
@@ -834,10 +862,15 @@ function Quizzes({ user, updateProgressTrigger }) {
                           </select>
                         </div>
                         <div>
-                          <label style={{ fontSize: '0.75rem', fontWeight: '700', color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>
+                          <label 
+                            htmlFor="quiz-difficulty-select"
+                            style={{ fontSize: '0.75rem', fontWeight: '700', color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}
+                          >
                             DIFFICULTY:
                           </label>
                           <select
+                            id="quiz-difficulty-select"
+                            aria-label="Filter quiz practice by difficulty level"
                             value={selectedDifficulty}
                             onChange={(e) => setSelectedDifficulty(e.target.value)}
                             style={{
@@ -1725,6 +1758,7 @@ function renderInteractiveQuestionBody({
                   value={chosenRight}
                   onChange={(e) => handleMatchingPairChange(qIndex, left, e.target.value)}
                   className="quiz-matching-select"
+                  aria-label={`Select matching definition for item ${idx + 1}: ${left}`}
                 >
                   <option value="">-- Choose matching definition --</option>
                   {rightOptions.map((opt, rIdx) => (

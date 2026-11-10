@@ -24,6 +24,7 @@ const Resource = require('../models/Resource');
 const UserProgress = require('../models/UserProgress');
 const LearningModule = require('../models/LearningModule');
 const learningModulesData = require('./seedModulesData');
+const remediationCatalog = require('./remediationCatalog');
 
 async function seed(isReset = false) {
   try {
@@ -206,6 +207,28 @@ async function seed(isReset = false) {
       });
     }
 
+    let sourceBNSS = await LegalSource.findOne({ title: /Bharatiya Nagarik Suraksha Sanhita/ });
+    if (!sourceBNSS) {
+      sourceBNSS = await LegalSource.create({
+        title: 'Bharatiya Nagarik Suraksha Sanhita, 2023 Text',
+        authority: 'Ministry of Home Affairs, Government of India',
+        url: 'https://www.mha.gov.in',
+        sourceType: 'legislation',
+        description: 'Statutory criminal procedure code of India, including Section 173 Zero FIR, Section 106 property seizure, and Section 503 property disposal.'
+      });
+    }
+
+    let sourceCopyright = await LegalSource.findOne({ title: /Copyright Act/ });
+    if (!sourceCopyright) {
+      sourceCopyright = await LegalSource.create({
+        title: 'Copyright Act, 1957 Text',
+        authority: 'Ministry of Law and Justice, Government of India',
+        url: 'https://www.indiacode.nic.in',
+        sourceType: 'legislation',
+        description: 'Statutory law governing copyright, fair dealing exceptions under Section 52, technological protection measures under Section 65A, and rights management information under Section 65B.'
+      });
+    }
+
     // Clean up any historical duplicate legal source entries by title
     const uniqueSourceTitles = await LegalSource.distinct('title');
     for (const t of uniqueSourceTitles) {
@@ -224,13 +247,13 @@ async function seed(isReset = false) {
         actName: 'Information Technology Act, 2000',
         officialTitle: 'Compensation for failure to protect data',
         role: 'Core Cyber Law',
-        plainLanguageExplanation: 'If a body corporate possessing sensitive personal data is negligent in maintaining reasonable security practices, causing wrongful loss or wrongful gain to any person, they are liable to pay compensation to the affected user.',
+        plainLanguageExplanation: 'If a body corporate possessing sensitive personal data is negligent in implementing and maintaining reasonable security practices and procedures, causing wrongful loss or wrongful gain to any person, it is liable to pay compensation to the affected person (fault-based negligence, not strict liability).',
         officialText: 'Where a body corporate, possessing, dealing or handling any sensitive personal data or information in a computer resource which it owns, controls or operates, is negligent in implementing and maintaining reasonable security practices and procedures and thereby causes wrongful loss or wrongful gain to any person, such body corporate shall be liable to pay damages by way of compensation to the person so affected.',
         whyItMatters: 'Holds businesses accountable. If a service provider leaks your personal data or credit card numbers due to poor security, you can sue for compensation.',
         exampleScenario: 'An online delivery application stores customer credit cards in raw text. A database hack leaks 10,000 credit profiles. The company is liable under Section 43A.',
-        penaltyOrLegalEffect: 'Civil compensation damages to victims. No statutory maximum upper limit.',
+        penaltyOrLegalEffect: 'Civil compensation damages to victims without a statutory upper ceiling; claims up to ₹5 crore are adjudicated by the State IT Secretary / Adjudicating Officer under Section 46(1A), while claims exceeding ₹5 crore lie before the competent civil court.',
         legalStatus: 'CURRENT',
-        commencementStatus: 'In force. Notified on 27th October 2009 via G.S.R. 775(E). Slated for omission under Section 44(2) of the DPDP Act, 2023 once gazetted; remains operative until official commencement.',
+        commencementStatus: 'In force. Notified on 27 October 2009 via G.S.R. 775(E). Slated for omission under Section 44(2) of the DPDP Act, 2023 after 18 months (commencing 13 May 2027 pursuant to G.S.R. 843(E)); actively operative on the 6 November 2026 baseline.',
         amendmentStatus: 'Inserted via the IT Amendment Act, 2008. Slated for omission under DPDP Act 2023 s. 44(2) upon official gazette appointment.',
         keywords: ['data leak', 'negligence', 'compensation', 'sensitive personal data', 'privacy'],
         relatedCyberCrimes: ['identity-theft', 'data-breach'],
@@ -415,13 +438,13 @@ async function seed(isReset = false) {
         officialTitle: 'Grievance redressal by online intermediaries',
         role: 'Government Rule / Notification',
         plainLanguageExplanation: 'Mandates social media platforms and messaging apps to set up grievance officers and remove illegal content within strict timelines.',
-        officialText: 'An intermediary shall observe due diligence... including publishing privacy policy, terms of use, and acting on reports of offensive content, deepfakes, or impersonations within 24-36 hours.',
+        officialText: 'An intermediary shall observe due diligence under Section 79(2)(c)... including publishing privacy policy and user agreement, removing unlawful information upon receipt of a court order or qualifying government intimation under Rule 3(1)(d) within three hours (or thirty-six hours under general track), resolving user grievances under Rule 3(2)(a) with 24-hour acknowledgement and disposal within seven days (or thirty-six hours for specified harms), and removing non-consensual intimate, sexually explicit, or morphed imagery within two hours under Rule 3(2)(b) as amended by G.S.R. 120(E).',
         whyItMatters: 'Gives you the power to force social media platforms to take down deepfakes or impersonating profiles.',
-        exampleScenario: 'You find a fake profile using your photos on Instagram. Under the Intermediary Rules, the platform must take it down within 24-36 hours of notification.',
+        exampleScenario: 'If you discover a generic impersonating profile on Instagram, the platform must acknowledge your grievance within 24 hours and dispose of it under Rule 3(2)(a) (within 7 days, or 36 hours for expedited tracks). However, if the fake profile or harassment involves non-consensual intimate, sexually explicit, or morphed imagery, Rule 3(2)(b) strictly requires the intermediary to remove or disable access within 2 hours of receipt of the complaint.',
         penaltyOrLegalEffect: 'Loss of Safe Harbour immunity under Section 79 of the IT Act if platforms fail to comply.',
         legalStatus: 'CURRENT',
         commencementStatus: 'Notified on 25th February 2021. In force.',
-        amendmentStatus: 'Amended subsequently in 2022 and 2023.',
+        amendmentStatus: 'Amended subsequently in 2022, 2023, and February 2026 (G.S.R. 120(E)).',
         keywords: ['intermediaries', 'facebook', 'instagram', 'deepfakes', 'take down request', 'safe harbour'],
         relatedCyberCrimes: ['online-harassment', 'identity-theft'],
         relatedCaseStudies: [],
@@ -560,6 +583,289 @@ async function seed(isReset = false) {
         relatedCaseStudies: [],
         relatedModules: ['privacy-governance'],
         officialSourceId: sourceBNS._id
+      },
+      // =========================================================================
+      // STAGE 4: DIGITAL RIGHTS & PRIVACY STATUTES (WAVE 1 ADDITIONS: 14 SECTIONS)
+      // =========================================================================
+      {
+        sectionNumber: 'Section 70B (Cert-In Directions)',
+        slug: 'in-it-certin',
+        actName: 'Information Technology Act, 2000',
+        officialTitle: 'Mandatory Cybersecurity Incident Reporting and Log Retention (CERT-In Directions)',
+        role: 'Government Rule / Notification',
+        plainLanguageExplanation: 'Mandates system service providers, intermediaries, data centres, and bodies corporate to report specified cybersecurity incidents to CERT-In within 6 hours of notice, and maintain server logs within Indian jurisdiction for 180 days under Section 70B(6).',
+        officialText: 'Any service provider, intermediaries, data centres, body corporate or person who fails to provide the information called for or comply with the direction issued under sub-section (6), shall be punishable with imprisonment for a term which may extend to one year or with fine which may extend to one lakh rupees, or with both.',
+        whyItMatters: 'Establishes rapid statutory incident reporting to contain national security threats, botnets, ransomware outbreaks, and infrastructure attacks across Indian cyberspace.',
+        exampleScenario: 'A cloud hosting provider discovers an active ransomware encryption event impacting customer servers at 9:00 AM. Under CERT-In directions, the incident must be formally reported to CERT-In by 3:00 PM.',
+        penaltyOrLegalEffect: 'Imprisonment up to 1 year or fine up to ₹1,00,000, or both under Section 70B(7) for failure to comply with directions.',
+        legalStatus: 'CURRENT',
+        commencementStatus: 'In force. Section 70B inserted via IT Amendment Act, 2008. CERT-In Directions notified on 28 April 2022.',
+        amendmentStatus: 'Operative statutory framework under Section 70B.',
+        keywords: ['cert-in', 'incident reporting', '6 hours', 'log retention', 'section 70b', 'cybersecurity'],
+        relatedCyberCrimes: ['ransomware', 'data-breach', 'ddos-attack'],
+        relatedCaseStudies: [],
+        relatedModules: ['citizen-cyber-remedies-reporting-portals', 'incident-response-remedies'],
+        officialSourceId: sourceCERTIn._id
+      },
+      {
+        sectionNumber: 'BNSS Section 173',
+        slug: 'in-bnss-173-zero-fir',
+        actName: 'Bharatiya Nagarik Suraksha Sanhita, 2023',
+        officialTitle: 'Information in cognizable cases and Zero FIR mechanism',
+        role: 'Related Criminal Law',
+        plainLanguageExplanation: 'Codifies the statutory right to register a Zero FIR: police stations must record information regarding a cognizable cyber offence irrespective of territorial jurisdiction, and transfer it to the jurisdictional police station.',
+        officialText: 'Every information relating to the commission of a cognizable offence, irrespective of the area where the offence is committed, may be given orally or by electronic communication... and recorded by the officer in charge of a police station.',
+        whyItMatters: 'Prevents police jurisdictional refusal in multi-state cyber crimes, phishing rings, and online financial frauds.',
+        exampleScenario: 'A resident of Lucknow is defrauded by an online scammer operating from Jamtara. The victim walks into a local Lucknow police station; the officer is statutorily bound under BNSS Section 173 to register a Zero FIR.',
+        penaltyOrLegalEffect: 'Statutory mandate for registration of cognizable offences (Zero FIR); refusal by a public servant attracts penal action under BNS Section 199(c) strictly for enumerated offences (principally offences against women and children). For non-enumerated cyber/financial offences, BNSS Section 173(4) provides the statutory escalation path: a written complaint by post to the Superintendent of Police, followed by an application to the Magistrate.',
+        legalStatus: 'CURRENT',
+        commencementStatus: 'In force. Notified effective 1 July 2024 vide S.O. 851(E), replacing CrPC Section 154.',
+        amendmentStatus: 'Substantive criminal procedure code replacing CrPC, 1973.',
+        keywords: ['zero fir', 'bnss 173', 'cognizable offence', 'jurisdiction', 'crpc 154', 'cybercrime reporting'],
+        relatedCyberCrimes: ['upi-payment-fraud', 'digital-arrest-scam', 'cyber-extortion'],
+        relatedCaseStudies: [],
+        relatedModules: ['citizen-cyber-remedies-reporting-portals', 'incident-response-remedies'],
+        officialSourceId: sourceBNSS._id
+      },
+      {
+        sectionNumber: 'Section 43A (SPDI Framework)',
+        slug: 'in-it-43a-spdi',
+        actName: 'Information Technology Act, 2000',
+        officialTitle: 'Compensation for failure to protect sensitive personal data (SPDI Rules, 2011)',
+        role: 'Data Protection',
+        plainLanguageExplanation: 'Holds incorporated bodies corporate liable to pay compensation to victims when negligent in implementing and maintaining reasonable security practices and procedures while handling sensitive personal data, causing wrongful loss or wrongful gain (fault-based negligence, not strict liability).',
+        officialText: 'Where a body corporate, possessing, dealing or handling any sensitive personal data or information in a computer resource which it owns, controls or operates, is negligent in implementing and maintaining reasonable security practices and procedures and thereby causes wrongful loss or wrongful gain to any person, such body corporate shall be liable to pay damages by way of compensation to the person so affected.',
+        whyItMatters: 'Active statutory protection on 6 November 2026. Because DPDP Act Section 44(2) has not commenced, Section 43A and SPDI Rules 2011 remain the governing corporate data negligence law.',
+        exampleScenario: 'An online pharmacy fails to implement encryption on its patient diagnostic server. The database is breached, exposing prescription histories and causing blackmail. The pharmacy is liable under Section 43A.',
+        penaltyOrLegalEffect: 'Civil compensation damages to victims without a statutory ceiling on damages; claims up to ₹5 crore are adjudicated by the State IT Secretary / Adjudicating Officer under Section 46(1A), while claims exceeding ₹5 crore lie before the competent civil court.',
+        legalStatus: 'CURRENT',
+        commencementStatus: 'In force. Notified on 27 October 2009. Slated for omission under DPDP Act Section 44(2) after 18 months (13 May 2027); actively operative on 6 November 2026 baseline.',
+        amendmentStatus: 'Governing law pending commencement of DPDP Act Section 44(2).',
+        keywords: ['section 43a', 'spdi rules 2011', 'body corporate', 'reasonable security practices', 'compensation', 'negligence'],
+        relatedCyberCrimes: ['data-breach', 'identity-theft'],
+        relatedCaseStudies: [],
+        relatedModules: ['digital-identity-data-protection', 'credential-safety'],
+        officialSourceId: sourceIndiaCode._id
+      },
+      {
+        sectionNumber: 'DPDP Sections 1-4',
+        slug: 'in-dpdp-identity-scope',
+        actName: 'Digital Personal Data Protection Act, 2023',
+        officialTitle: 'Application, Scope, and Digital Personal Data Processing Principles',
+        role: 'Data Protection',
+        plainLanguageExplanation: 'Defines the statutory boundaries of digital personal data: applies to digital personal data processed within India, and outside India if offering goods/services to Indian citizens. Mandates processing only for lawful purposes with consent or legitimate uses.',
+        officialText: 'Subject to the provisions of this Act, personal data may be processed only in accordance with the provisions of this Act and for a lawful purpose,— (a) for which the Data Principal has given or is deemed to have given her consent in accordance with the provisions of this Act; or (b) for certain legitimate uses.',
+        whyItMatters: 'Establishes the foundational scope of India comprehensive data privacy law, governing corporate fiduciaries, algorithms, and automated cross-border profiling.',
+        exampleScenario: 'A foreign video streaming app collects viewing patterns of subscribers located in Mumbai. The app is subject to the DPDP Act even though its servers are located in Ireland.',
+        penaltyOrLegalEffect: 'Violation of core processing principles triggers financial penalties up to ₹250 crore under Section 33 upon commencement.',
+        legalStatus: 'NOT_YET_IN_FORCE',
+        commencementStatus: 'Enacted on 11 August 2023. Notified under G.S.R. 843(E) on 13 November 2025; scheduled for commencement after 18 months (13 May 2027). Awaiting commencement on 6 November 2026 baseline.',
+        amendmentStatus: 'Substantive DPDP regime awaiting 18-month commencement.',
+        keywords: ['dpdp scope', 'personal data', 'extraterritorial', 'lawful purpose', 'processing principles'],
+        relatedCyberCrimes: ['data-breach', 'identity-theft'],
+        relatedCaseStudies: [],
+        relatedModules: ['digital-identity-data-protection'],
+        officialSourceId: sourceDPDP._id
+      },
+      {
+        sectionNumber: 'DPDP Sections 11-14',
+        slug: 'in-dpdp-principal-rights',
+        actName: 'Digital Personal Data Protection Act, 2023',
+        officialTitle: 'Rights of Data Principal: Access, Correction, Erasure, Grievance & Nomination',
+        role: 'Data Protection',
+        plainLanguageExplanation: 'Enacts citizen data rights: right to access summary of data processed, right to correction and completion, right to erasure (subject to statutory retention laws), right of grievance redressal, and right to nominate a representative upon death or incapacity.',
+        officialText: 'The Data Principal shall have the right to obtain from the Data Fiduciary... a summary of personal data... the identities of all other Data Fiduciaries and Data Processors with whom the personal data has been shared... and correction, completion, updating and erasure.',
+        whyItMatters: 'Empowers individuals with sovereign control over their digital dossiers, forcing companies to purge outdated records unless retention is required by law.',
+        exampleScenario: 'A former subscriber demands an online retail platform delete their home address and credit card history. The company must erase the data unless retention is mandatory under tax or commercial accounting laws.',
+        penaltyOrLegalEffect: 'Failure to facilitate Data Principal rights subject to penalty up to ₹50 crore under Section 33.',
+        legalStatus: 'NOT_YET_IN_FORCE',
+        commencementStatus: 'Notified under G.S.R. 843(E) on 13 November 2025; scheduled for commencement on 13 May 2027. Awaiting commencement on 6 November 2026 baseline.',
+        amendmentStatus: 'Prospective statutory rights scheduled for 18-month commencement.',
+        keywords: ['data principal rights', 'right to erasure', 'right to correction', 'nomination', 'grievance redressal'],
+        relatedCyberCrimes: ['data-breach'],
+        relatedCaseStudies: [],
+        relatedModules: ['data-principal-rights-child-safeguards'],
+        officialSourceId: sourceDPDP._id
+      },
+      {
+        sectionNumber: 'DPDP Section 9 & Rule 12',
+        slug: 'in-dpdp-child-safety',
+        actName: 'Digital Personal Data Protection Act, 2023',
+        officialTitle: 'Processing Personal Data of Children & Fourth Schedule Safety Exemptions',
+        role: 'Data Protection',
+        plainLanguageExplanation: 'Mandates verifiable parental consent before processing children personal data (Section 9(1)) and strictly prohibits tracking, behavioural monitoring, and targeted advertising directed at children (Section 9(3)). Rule 12 Fourth Schedule Part A exempts educational institutions and child transport providers strictly for institutional education and transit safety, but excludes commercial advertising.',
+        officialText: 'A Data Fiduciary shall not undertake tracking or behavioural monitoring of children or targeted advertising directed at children... provided that the Central Government may prescribe classes of Data Fiduciaries to whom sub-sections (1) and (3) shall not apply.',
+        whyItMatters: 'Protects minors from predatory behavioral algorithms, commercial micro-targeting, and online surveillance, while allowing essential educational and transit safety tracking.',
+        exampleScenario: 'A school bus contractor tracks bus GPS to alert parents during morning pickup. This is lawful under Fourth Schedule Part A. However, selling student route telemetry to advertising brokers is illegal.',
+        penaltyOrLegalEffect: 'Breach of Section 9 obligations attracts maximum penalty up to ₹200 crore under Section 33.',
+        legalStatus: 'NOT_YET_IN_FORCE',
+        commencementStatus: 'Notified under G.S.R. 843(E) on 13 November 2025; scheduled for commencement on 13 May 2027. Awaiting commencement on 6 November 2026 baseline.',
+        amendmentStatus: 'Statutory child privacy safeguards scheduled for 18-month commencement.',
+        keywords: ['child data', 'section 9', 'parental consent', 'fourth schedule', 'behavioural monitoring', 'targeted advertising'],
+        relatedCyberCrimes: ['cyber-stalking', 'online-harassment'],
+        relatedCaseStudies: [],
+        relatedModules: ['data-principal-rights-child-safeguards'],
+        officialSourceId: sourceDPDP._id
+      },
+      {
+        sectionNumber: 'DPDP Section 5 & Rule 3',
+        slug: 'in-dpdp-notice-consent',
+        actName: 'Digital Personal Data Protection Act, 2023',
+        officialTitle: 'Notice Requirements, Plain Language Options & Consent Conditions',
+        role: 'Data Protection',
+        plainLanguageExplanation: 'Requires consent requests to be accompanied by an itemized, clear notice giving the user the option to view it in English or any of the 22 languages in the Eighth Schedule. Consent under Section 6(1) must be free, specific, informed, unconditional, and unambiguous.',
+        officialText: 'Every request for consent shall be presented to the Data Principal in a clear and plain language, giving her the option to access such request in English or any language specified in the Eighth Schedule to the Constitution of India.',
+        whyItMatters: 'Abolishes bundled, deceptive terms-of-service walls. Companies cannot condition essential services on consent to collect unrelated personal data.',
+        exampleScenario: 'A flashlight mobile utility app requires users to consent to contact list harvesting before turning on the LED. Under Section 6(1), this condition vitiates consent and violates the law.',
+        penaltyOrLegalEffect: 'Failure to provide compliant notice or obtain valid consent subject to penalties up to ₹50 crore under Section 33.',
+        legalStatus: 'NOT_YET_IN_FORCE',
+        commencementStatus: 'Notified under G.S.R. 843(E) on 13 November 2025; scheduled for commencement on 13 May 2027. Awaiting commencement on 6 November 2026 baseline.',
+        amendmentStatus: 'Core consent architecture scheduled for 18-month commencement.',
+        keywords: ['consent notice', 'eighth schedule', 'unbundled consent', 'section 5', 'section 6', 'dark patterns'],
+        relatedCyberCrimes: ['data-breach'],
+        relatedCaseStudies: [],
+        relatedModules: ['notice-consent-fiduciary-obligations'],
+        officialSourceId: sourceDPDP._id
+      },
+      {
+        sectionNumber: 'DPDP Section 8 & Section 10',
+        slug: 'in-dpdp-fiduciary-duties',
+        actName: 'Digital Personal Data Protection Act, 2023',
+        officialTitle: 'General Obligations of Data Fiduciaries, Breach Intimation & Significant Fiduciaries',
+        role: 'Data Protection',
+        plainLanguageExplanation: 'Mandates reasonable security safeguards to prevent data breaches. Under Section 8(6), fiduciaries must intimate every personal data breach to the Board and affected users. Significant Data Fiduciaries (Section 10) must appoint a resident DPO and conduct Data Protection Impact Assessments (DPIA).',
+        officialText: 'A Data Fiduciary shall protect personal data in its possession or under its control... by taking reasonable security safeguards to prevent personal data breach... and in the event of a personal data breach, give the Board and each affected Data Principal intimation.',
+        whyItMatters: 'Establishes positive corporate accountability, mandatory public breach disclosure, and structural algorithmic governance for high-volume data platforms.',
+        exampleScenario: 'A fintech platform suffers an unauthorized API credential leak exposing 50,000 PAN numbers. Under Section 8(6), the company must immediately intimate the Board and all 50,000 affected customers.',
+        penaltyOrLegalEffect: 'Failure to take reasonable security safeguards to prevent data breaches subject to penalties up to ₹250 crore under Section 33.',
+        legalStatus: 'NOT_YET_IN_FORCE',
+        commencementStatus: 'Notified under G.S.R. 843(E) on 13 November 2025; scheduled for commencement on 13 May 2027. Awaiting commencement on 6 November 2026 baseline.',
+        amendmentStatus: 'Corporate fiduciary governance scheduled for 18-month commencement.',
+        keywords: ['data fiduciary duties', 'breach notification', 'section 8', 'significant data fiduciary', 'dpia', 'dpo'],
+        relatedCyberCrimes: ['data-breach'],
+        relatedCaseStudies: [],
+        relatedModules: ['notice-consent-fiduciary-obligations'],
+        officialSourceId: sourceDPDP._id
+      },
+      {
+        sectionNumber: 'Section 79',
+        slug: 'in-it-safe-harbour-79',
+        actName: 'Information Technology Act, 2000',
+        officialTitle: 'Exemption from liability of intermediaries in certain cases (Safe Harbour Immunity)',
+        role: 'Core Cyber Law',
+        plainLanguageExplanation: 'Provides conditional safe harbour immunity to internet intermediaries for third-party content. Immunity under Section 79(1) is conditioned upon observing statutory due diligence under Section 79(2)(c) and the IT Rules, 2021. Failure of due diligence strips safe harbour immunity but does not automatically create criminal guilt; substantive liability depends on general law.',
+        officialText: 'An intermediary shall not be liable for any third party information, data, or communication link made available or hosted by him... provided that the intermediary observes due diligence while discharging his duties under this Act and observes other guidelines prescribed.',
+        whyItMatters: 'Cornerstone of internet freedom and platform accountability. Balances open communications with strict legal liability when platforms fail to address illegal content.',
+        exampleScenario: 'A social media platform ignores a valid court order directing the removal of defamatory content. The platform loses its Section 79 immunity and can be sued directly as a co-defendant.',
+        penaltyOrLegalEffect: 'Loss of safe harbour protection under Section 79(3) and Rule 7, exposing intermediary to liability under IPC/BNS, Copyright Act, or tort law.',
+        legalStatus: 'CURRENT',
+        commencementStatus: 'In force. Substituted by IT Amendment Act, 2008. Interpreted in Shreya Singhal (2015).',
+        amendmentStatus: 'Operative baseline statutory provision governing intermediaries.',
+        keywords: ['safe harbour', 'section 79', 'intermediary liability', 'due diligence', 'shreya singhal', 'third party content'],
+        relatedCyberCrimes: ['online-harassment', 'cyber-stalking', 'defamation'],
+        relatedCaseStudies: [],
+        relatedModules: ['platform-governance-intermediary-due-diligence'],
+        officialSourceId: sourceIndiaCode._id
+      },
+      {
+        sectionNumber: 'IT Rules (February 2026 Amendments)',
+        slug: 'in-it-rules-takedowns',
+        actName: 'Information Technology (Intermediary Guidelines) Rules, 2021',
+        officialTitle: 'Expedited Takedowns (2h NCII, 3h Executive Orders, 36h Track) & SGI Framework (Rule 3(3) / 4(1A))',
+        role: 'Government Rule / Notification',
+        plainLanguageExplanation: 'Establishes strict procedural due diligence: 2-hour takedown for non-consensual intimate imagery (Rule 3(2)(b)); 3-hour takedown for court or qualifying written government/police orders (Rule 3(1)(d)); 36-hour resolution for Rule 3(1)(b) grievances (excluding IP infringement which has 7 days); and dedicated Rule 3(3) & 4(1A) synthetic media requirements.',
+        officialText: 'The intermediary shall remove or disable access within two hours of receipt of grievance regarding sexually explicit content... and within three hours upon receipt of a qualifying written intimation... and observe dedicated synthetic information due diligence.',
+        whyItMatters: 'Prevents viral dissemination of deepfake sexual abuse, non-consensual nudity, and imminent national security incitement in Indian digital spaces.',
+        exampleScenario: 'A user uploads morphed sexually explicit images of a co-worker to a video network. Upon receiving a grievance from the victim, the platform must disable access within two hours.',
+        penaltyOrLegalEffect: 'Forfeiture of Section 79 safe harbour protection under Rule 7.',
+        legalStatus: 'CURRENT',
+        commencementStatus: 'In force. February 2026 amendments notified vide G.S.R. 120(E) on 10 February 2026, effective from 20 February 2026.',
+        amendmentStatus: 'Latest operative due diligence rules under Section 79(2)(c).',
+        keywords: ['it rules 2021', 'gsr 120e', '2 hours ncii', '3 hours takedown', '36 hours track', 'sgi framework', 'deepfakes'],
+        relatedCyberCrimes: ['online-harassment', 'identity-theft'],
+        relatedCaseStudies: [],
+        relatedModules: ['platform-governance-intermediary-due-diligence'],
+        officialSourceId: sourceITRules._id
+      },
+      {
+        sectionNumber: 'Copyright Section 52(1)(a)(ii)',
+        slug: 'in-copyright-fair-dealing',
+        actName: 'Copyright Act, 1957',
+        officialTitle: 'Fair Dealing for Criticism, Review, and Personal Research in Digital Works',
+        role: 'Electronic Commerce / Digital Transactions',
+        plainLanguageExplanation: 'Provides that fair dealing with any literary, dramatic, musical, artistic, or cinematographic work for the purpose of criticism, review, or private personal research does not constitute copyright infringement. Application is fact-sensitive, evaluating substantiality and market competition.',
+        officialText: 'The following acts shall not constitute an infringement of copyright, namely:— (a) a fair dealing with any work... (ii) for the purpose of criticism or review, whether of that work or of any other work.',
+        whyItMatters: 'Vital for digital creators, journalists, educators, and software researchers. Protects legitimate commentary and critical analysis from abusive copyright strikes.',
+        exampleScenario: 'A digital creator uses a 20-second clip of a copyrighted film in an analytical video examining cinematic color grading. The use is protected under fair dealing provided it does not substitute for the film.',
+        penaltyOrLegalEffect: 'Affirmative statutory defence against civil damages (§ 55) and criminal prosecution (§ 63).',
+        legalStatus: 'CURRENT',
+        commencementStatus: 'In force. Substituted by Copyright Amendment Act, 2012.',
+        amendmentStatus: 'Operative statutory exception under Section 52.',
+        keywords: ['copyright', 'fair dealing', 'section 52', 'criticism', 'review', 'digital rights', 'creative commons'],
+        relatedCyberCrimes: [],
+        relatedCaseStudies: [],
+        relatedModules: ['digital-copyright-fair-dealing-tpm'],
+        officialSourceId: sourceCopyright._id
+      },
+      {
+        sectionNumber: 'Copyright Section 65A & 65B',
+        slug: 'in-copyright-tpm-65a',
+        actName: 'Copyright Act, 1957',
+        officialTitle: 'Protection of Technological Measures (TPM) and Rights Management Information (RMI)',
+        role: 'Electronic Commerce / Digital Transactions',
+        plainLanguageExplanation: 'Criminalizes actual circumvention of effective technological protection measures (TPMs) with the intention of infringing copyright (Section 65A(1)). Explicitly exempts security testing conducted with the authorization of the system owner/operator (Section 65A(2)(d)). Section 65B penalizes tampering with digital watermarks and rights metadata (RMI).',
+        officialText: 'Any person who circumvents an effective technological measure applied for the purpose of protecting any of the rights conferred by this Act, with the intention of infringing such right, shall be punishable with imprisonment... provided that nothing shall prevent any person from doing anything for the purpose of testing the security of that computer with authorization.',
+        whyItMatters: 'Governs DRM, software cracking, game modification, and establishes safe harbors for legitimate ethical cybersecurity penetration testing.',
+        exampleScenario: 'A security auditor hired under a written contract by a bank bypasses app code obfuscation to report zero-day flaws. This is protected under Section 65A(2)(d).',
+        penaltyOrLegalEffect: 'Section 65A: Imprisonment up to 2 years and fine. Section 65B: Imprisonment up to 2 years and fine.',
+        legalStatus: 'CURRENT',
+        commencementStatus: 'In force. Inserted by Copyright Amendment Act, 2012.',
+        amendmentStatus: 'Operative digital anti-circumvention provisions.',
+        keywords: ['tpm', 'section 65a', 'section 65b', 'rmi', 'drm', 'anti-circumvention', 'security research exception'],
+        relatedCyberCrimes: ['data-breach'],
+        relatedCaseStudies: [],
+        relatedModules: ['digital-copyright-fair-dealing-tpm'],
+        officialSourceId: sourceCopyright._id
+      },
+      {
+        sectionNumber: 'Section 72A & Section 72',
+        slug: 'in-it-72a-contract-breach',
+        actName: 'Information Technology Act, 2000',
+        officialTitle: 'Disclosure of Personal Information in Breach of Lawful Contract & Statutory Confidentiality',
+        role: 'Core Cyber Law',
+        plainLanguageExplanation: 'Section 72A penalizes any person who secures access to personal information while providing services under a lawful contract and discloses it without consent or in breach of contract, with intent or knowledge to cause wrongful loss or gain (penalty up to ₹25 lakh under Jan Vishwas Act). Section 72 penalizes disclosure of electronic records secured under powers conferred by the Act without consent (penalty up to ₹5 lakh).',
+        officialText: 'Save as otherwise provided in this Act or any other law for the time being in force, any person the terms of a lawful contract has secured access to any material containing personal information about another person, with the intent to cause or knowing that he is likely to cause wrongful loss or wrongful gain, discloses, without the consent of the person concerned, or in breach of the lawful contract... shall be liable to a penalty which may extend to twenty-five lakh rupees.',
+        whyItMatters: 'Primary workplace cyber governance statute targeting rogue IT employees, contractors, customer care executives, and service providers who sell customer databases.',
+        exampleScenario: 'A call center employee sells customer bank account numbers and phone directories to a telemarketing cartel. Liable under Section 72A up to ₹25 lakh.',
+        penaltyOrLegalEffect: 'Section 72A: Civil penalty up to ₹25,00,000. Section 72: Civil penalty up to ₹5,00,000. Adjudicated under Chapter IX by Section 46 Adjudicating Officer.',
+        legalStatus: 'CURRENT',
+        commencementStatus: 'In force. Decriminalized and converted to civil penalties via the Jan Vishwas (Amendment of Provisions) Act, 2023.',
+        amendmentStatus: 'Amended by Act 18 of 2023.',
+        keywords: ['section 72a', 'section 72', 'breach of contract', 'personal information', 'wrongful gain', 'jan vishwas act', 'workplace privacy'],
+        relatedCyberCrimes: ['identity-theft', 'data-breach'],
+        relatedCaseStudies: [],
+        relatedModules: ['malware-professional-confidentiality-defensive-citizenship'],
+        officialSourceId: sourceIndiaCode._id
+      },
+      {
+        sectionNumber: 'RBI Customer Liability Framework',
+        slug: 'in-rbi-customer-liability',
+        actName: 'Reserve Bank of India Master Directions',
+        officialTitle: 'Limiting Customer Liability in Unauthorised Electronic Banking Transactions',
+        role: 'Sector Regulation',
+        plainLanguageExplanation: 'Codifies customer protection rules: Zero liability for bank deficiency (Commercial Banks/SFBs Para 67(1), Payments Banks Para 24(1), RRBs Para 119(1), PPIs Para 17.4(a)). Conditional zero liability for third-party breaches where the customer notifies within 3 working days and deficiency lies neither with bank nor customer. Limited liability capped for reporting between 4 to 7 working days. Mandates conditional provisional shadow reversal within 10 working days (10 calendar days for non-bank PPIs under MD-PPI Para 17.7), and complaint resolution within 90 days. Burden of proof rests upon the bank/institution.',
+        officialText: 'A customer shall have zero liability where the unauthorized transaction occurs in the following events: (a) Contributory fraud/negligence/deficiency on the part of the bank; (b) Third party breach where the deficiency lies neither with the bank nor with the customer... and customer notifies within three working days... bank shall credit shadow reversal within 10 working days.',
+        whyItMatters: 'Establishes an essential conditional regulatory consumer protection framework against electronic banking fraud, shielding victims from bearing losses when unauthorized transactions result from third-party breaches reported within prescribed deadlines.',
+        exampleScenario: 'A savings account holder loses ₹40,000 to an unauthorized net-banking transfer due to a third-party payment gateway breach. Reporting to the bank within 2 working days establishes entitlement to zero customer liability under third-party breach rules and a conditional shadow credit within 10 working days, provided the customer did not share credentials or act negligently.',
+        penaltyOrLegalEffect: 'Regulatory mandate enforceable by the RBI Ombudsman under the Reserve Bank - Integrated Ombudsman Scheme, 2021.',
+        legalStatus: 'CURRENT',
+        commencementStatus: 'In force. Preserving foundational framework of Circular DBR.No.Leg.BC.78/09.07.005/2017-18 dated July 6, 2017 consolidated into operative RBC Master Directions.',
+        amendmentStatus: 'Operative RBI Master Directions framework.',
+        keywords: ['rbi customer liability', 'zero liability', 'shadow reversal', '3 working days', '10 working days', 'commercial banks para 67', 'rrb para 119', 'md-ppi para 17'],
+        relatedCyberCrimes: ['upi-payment-fraud'],
+        relatedCaseStudies: ['classified-marketplace-qr-fraud'],
+        relatedModules: ['malware-professional-confidentiality-defensive-citizenship'],
+        officialSourceId: sourceRBI._id
       }
     ];
 
@@ -1414,7 +1720,7 @@ async function seed(isReset = false) {
         ],
         actionSteps: [
           'Create digital hashes of the imagery using StopNCII.org to prevent distribution across major participating platforms (Meta, Instagram, TikTok, Reddit).',
-          'Under Rule 3(2)(b) of the IT Intermediary Rules, intermediaries are legally mandated to remove non-consensual intimate imagery within 24 hours of receiving a report.'
+          'Under Rule 3(2)(b) of the IT Intermediary Rules (as amended by G.S.R. 120(E)), intermediaries are legally mandated to remove or disable access to non-consensual intimate imagery within two hours of receiving a report, and take reasonable measures to prevent recurrence.'
         ],
         avoidSteps: [
           'Never pay money to extortionists or online intermediaries promising removal.',
@@ -1425,7 +1731,7 @@ async function seed(isReset = false) {
           'Invoke IT Act Section 66E (privacy violation) and Section 67A (sexually explicit content).'
         ],
         mythFacts: [
-          { myth: 'Social media platforms have 30 days to review intimate image removal complaints.', fact: 'Under Rule 3(2)(b) of the IT Intermediary Rules, platforms MUST remove or disable access to non-consensual intimate or morphed imagery within 24 hours.' }
+          { myth: 'Social media platforms have 30 days to review intimate image removal complaints.', fact: 'Under Rule 3(2)(b) of the IT Intermediary Rules (amended by G.S.R. 120(E)), platforms MUST remove or disable access to non-consensual intimate or morphed imagery within two hours.' }
         ],
         spotTheFlags: {
           messageType: 'Extortion Email / DM',
@@ -1439,20 +1745,20 @@ async function seed(isReset = false) {
           questionText: 'You discover that an acquaintance has created a morphed intimate picture of you and posted it online. Under Indian law, what is the platform\'s legal obligation?',
           options: [
             { optionText: 'The platform can take up to 30 days to decide whether to remove it.', isCorrect: false, explanation: 'Incorrect! 30 days applies to general grievances, not intimate imagery.' },
-            { optionText: 'Under Rule 3(2)(b) of the IT Intermediary Rules, the platform is legally obligated to take down the intimate content within 24 hours of notification.', isCorrect: true, explanation: 'Correct! Indian rules mandate emergency 24-hour takedown for non-consensual intimate imagery.' }
+            { optionText: 'Under Rule 3(2)(b) of the IT Intermediary Rules (amended 2026), the platform is legally obligated to take down the intimate content within two hours of notification.', isCorrect: true, explanation: 'Correct! Indian rules mandate emergency two-hour takedown for non-consensual intimate imagery under Rule 3(2)(b) as amended.' }
           ]
         },
         quickCheckQuestions: [
           {
-            questionText: 'Under the Information Technology (Intermediary Guidelines) Rules, 2021, within what timeframe must a social media platform remove non-consensual intimate or morphed imagery once reported?',
+            questionText: 'Under the Information Technology (Intermediary Guidelines) Rules, 2021 (as amended February 2026), within what timeframe must a social media platform remove non-consensual intimate or morphed imagery once reported?',
             options: [
               '7 days',
-              '72 hours',
               '24 hours',
+              '2 hours',
               '15 days'
             ],
             correctOptionIndex: 2,
-            explanation: 'Rule 3(2)(b) strictly requires intermediaries to remove or disable access to non-consensual intimate imagery within 24 hours of receipt of complaint.'
+            explanation: 'Rule 3(2)(b) of the IT Rules, 2021 (as amended by G.S.R. 120(E)) strictly requires intermediaries to remove or disable access to non-consensual intimate imagery within two hours of receipt of complaint.'
           }
         ]
       }
@@ -2871,8 +3177,18 @@ async function seed(isReset = false) {
     if (fs.existsSync(p3Path)) {
       qPart3 = JSON.parse(fs.readFileSync(p3Path, 'utf8'));
     }
-    const quizQuestionsData = [...qPart1, ...qPart2, ...qPart3];
 
+    // Stage 4 Wave 2: Expanded Assessment Bank (21 questions across 7 pillars)
+    let stage4Questions = [];
+    const expandedQuestionsPath = path.join(__dirname, 'seedQuestionsExpanded.js');
+    if (fs.existsSync(expandedQuestionsPath)) {
+      const expExport = require(expandedQuestionsPath);
+      stage4Questions = Array.isArray(expExport) ? expExport : (expExport.expandedQuestions || []);
+    }
+
+    const quizQuestionsData = [...qPart1, ...qPart2, ...qPart3, ...stage4Questions];
+
+    const authoredQuestionIds = new Set();
     let questionIdx = 1;
     for (let qData of quizQuestionsData) {
       let targetCategory = qData.category;
@@ -2887,7 +3203,10 @@ async function seed(isReset = false) {
         throw new Error(`Quiz not found for category: ${qData.category}`);
       }
       qData.quizId = dbQuiz._id;
-      if (!qData.questionId) {
+      const hasAuthoredId = Boolean(qData.questionId);
+      if (hasAuthoredId) {
+        authoredQuestionIds.add(qData.questionId);
+      } else {
         const catPrefix = qData.category.replace(/[^A-Za-z]/g, '').substring(0, 5).toUpperCase();
         qData.questionId = `QZ-${catPrefix}-${String(questionIdx).padStart(3, '0')}`;
       }
@@ -2906,16 +3225,27 @@ async function seed(isReset = false) {
       }
       questionIdx++;
 
+      // Match authored IDs by questionId to maintain stability, and generated IDs by questionText to prevent collisions on positional shifts
+      const query = hasAuthoredId
+        ? { questionId: qData.questionId }
+        : { questionText: qData.questionText };
+
       await QuizQuestion.findOneAndUpdate(
-        { questionText: qData.questionText },
+        query,
         qData,
         { upsert: true, new: true }
       );
     }
 
-    // Synchronize questions: remove legacy questions whose questionText is no longer in the fixture bank
+    // Synchronize questions: protect authored IDs by questionId, and generated-ID questions strictly by questionText
     const activeQuestionTexts = new Set(quizQuestionsData.map(q => q.questionText));
-    await QuizQuestion.deleteMany({ questionText: { $nin: Array.from(activeQuestionTexts) } });
+    const activeQuestionIds = authoredQuestionIds;
+    await QuizQuestion.deleteMany({
+      $and: [
+        { questionText: { $nin: Array.from(activeQuestionTexts) } },
+        { questionId: { $nin: Array.from(activeQuestionIds) } }
+      ]
+    });
 
     // 8. Scenario Engine Seeding (Baseline & Branching Final)
     console.log('- Seeding scenario engine nodes...');
@@ -3101,7 +3431,93 @@ async function seed(isReset = false) {
       await Resource.findOneAndUpdate({ title: resData.title }, resData, { upsert: true, new: true });
     }
 
-    console.log('- Seeding Learning Modules (12 Structured Lessons)...');
+    console.log('- Seeding Learning Modules (18 Structured Lessons)...');
+
+    // Verify all remediationCatalog curriculumLesson slugs exist in learningModulesData
+    for (const pathway of remediationCatalog) {
+      if (pathway.curriculumLesson?.slug) {
+        const found = learningModulesData.some(m => m.slug === pathway.curriculumLesson.slug);
+        if (!found) {
+          throw new Error(`Remediation catalog lesson slug '${pathway.curriculumLesson.slug}' in pathway '${pathway.pathwayId}' not found in learningModulesData`);
+        }
+      }
+    }
+
+    // Non-destructive seed migration for replacement Module 12 slug
+    const legacyModule12Slug = 'reporting-cybercrime-evidence-preservation';
+    const newModule12Slug = 'citizen-cyber-remedies-reporting-portals';
+
+    const legacyModuleDoc = await LearningModule.findOne({ slug: legacyModule12Slug });
+    if (legacyModuleDoc) {
+      await LearningModule.updateOne(
+        { slug: legacyModule12Slug },
+        { published: false, order: 999 }
+      );
+    }
+
+    const affectedProgress = await UserProgress.find({
+      $or: [
+        { completedModules: legacyModule12Slug },
+        { 'lessonProgress.slug': legacyModule12Slug }
+      ]
+    });
+
+    for (let uProg of affectedProgress) {
+      let changed = false;
+      if (Array.isArray(uProg.completedModules) && uProg.completedModules.includes(legacyModule12Slug)) {
+        uProg.completedModules = uProg.completedModules.filter(s => s !== legacyModule12Slug);
+        if (!uProg.completedModules.includes(newModule12Slug)) {
+          uProg.completedModules.push(newModule12Slug);
+        }
+        changed = true;
+      }
+      if (Array.isArray(uProg.lessonProgress)) {
+        const legacyEntry = uProg.lessonProgress.find(lp => lp.slug === legacyModule12Slug);
+        if (legacyEntry) {
+          const newEntry = uProg.lessonProgress.find(lp => lp.slug === newModule12Slug);
+          if (!newEntry) {
+            legacyEntry.slug = newModule12Slug;
+          } else {
+            if (legacyEntry.readCompleted) newEntry.readCompleted = true;
+            if (!newEntry.readCompletedAt && legacyEntry.readCompletedAt) {
+              newEntry.readCompletedAt = legacyEntry.readCompletedAt;
+            }
+            if (legacyEntry.knowledgeCheckStatus === 'passed') {
+              newEntry.knowledgeCheckStatus = 'passed';
+            }
+            if (legacyEntry.knowledgeCheckScore != null && (newEntry.knowledgeCheckScore == null || legacyEntry.knowledgeCheckScore > newEntry.knowledgeCheckScore)) {
+              newEntry.knowledgeCheckScore = legacyEntry.knowledgeCheckScore;
+            }
+            if (newEntry.lastAnswerIndex == null && legacyEntry.lastAnswerIndex != null) {
+              newEntry.lastAnswerIndex = legacyEntry.lastAnswerIndex;
+            }
+            if ((!newEntry.checkResults || newEntry.checkResults.length === 0) && legacyEntry.checkResults && legacyEntry.checkResults.length > 0) {
+              newEntry.checkResults = legacyEntry.checkResults;
+            }
+            // Recompute status
+            if (newEntry.readCompleted && newEntry.knowledgeCheckStatus === 'passed') {
+              newEntry.status = 'completed';
+            } else if (newEntry.readCompleted || newEntry.knowledgeCheckStatus === 'passed' || newEntry.lastAnswerIndex != null) {
+              newEntry.status = 'in_progress';
+            }
+            uProg.lessonProgress = uProg.lessonProgress.filter(lp => lp.slug !== legacyModule12Slug);
+          }
+          changed = true;
+        }
+      }
+      if (changed) {
+        uProg.markModified('completedModules');
+        uProg.markModified('lessonProgress');
+        await uProg.save();
+      }
+    }
+
+    await LawSection.updateMany(
+      { relatedModules: legacyModule12Slug },
+      { $set: { 'relatedModules.$[elem]': newModule12Slug } },
+      { arrayFilters: [{ elem: legacyModule12Slug }] }
+    );
+
     for (let lm of learningModulesData) {
       await LearningModule.findOneAndUpdate({ slug: lm.slug }, lm, { upsert: true, new: true });
     }

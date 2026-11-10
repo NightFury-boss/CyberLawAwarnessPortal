@@ -1,0 +1,30 @@
+# ==============================================================================
+# Cyber Law Awareness Portal — Client Docker Build Ignore
+# Excludes local secrets, dependencies, Git metadata, and caches from Docker context
+# ==============================================================================
+
+# Local environment and secret files
+.env
+.env.*
+*.local
+
+# Node dependencies (installed via npm ci in builder stage)
+node_modules
+npm-debug.log*
+
+# Build outputs and caches
+dist
+build
+.cache
+
+# Git and editor metadata
+.git
+.gitignore
+.vscode
+.idea
+
+# Test outputs and screenshots
+test-results
+playwright-report
+screenshots
+

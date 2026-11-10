@@ -1,16 +1,235 @@
 import React, { useState, useEffect } from 'react';
+import { Link, useLocation } from 'react-router-dom';
 import WorkspaceBreadcrumb from '../components/WorkspaceBreadcrumb';
 import EditorialPageHeader from '../components/common/EditorialPageHeader';
-import { performStateTransition } from '../utils/transitionUtils';
+import EditorialRule from '../components/common/EditorialRule';
 import IncidentDocketGenerator from '../components/common/IncidentDocketGenerator';
 
-function Prevention() {
-  const [activeTopic, setActiveTopic] = useState('passwords');
-  const [selectedPhase, setSelectedPhase] = useState('all'); // 'all', 'before', 'during', 'after'
-  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
-  const [copiedHelpline, setCopiedHelpline] = useState(false);
-  const [copyFailed, setCopyFailed] = useState(false);
+/**
+ * Digital Safety Quick-Guide (Prevention)
+ * Visual Identity: The Constitutional Atelier (Editorial Field Manual)
+ * Palette: Ivory (#FFFDF8), Cream (#FAF4EA), Terracotta (#805B43),
+ *          Forest Green (#1F4D3A), Charcoal (#26352B), Crimson Alert (#9B3E35)
+ * 
+ * Strict Responsibility Boundary:
+ * - Learner's Space = Learn & understand (curriculum, lessons, scoring, simulated trials).
+ * - Prevention = Act & protect (field manual, red flags, crisis response, evidence, docket).
+ * - Resources = Find official help (verified authorities, portals, helplines).
+ */
 
+// Section 1: Safety Habits (Structured into 2 Primary Anchor Habits + 4 Operational Safeguards)
+const PRIMARY_HABITS = [
+  {
+    id: 'passwords-mfa',
+    number: '01',
+    title: 'Use Strong Passwords & App-Based MFA',
+    highlight: 'Password reuse turns a single compromised service into a total identity breach.',
+    action: 'Create unique, 4-word passphrases (e.g. orchard-velvet-cobalt-harbor) for each account. Use app-based authenticators (Google Authenticator, Microsoft Authenticator, or Bitwarden) instead of SMS OTPs, which are vulnerable to SIM swapping and malware interception.',
+    tag: 'CREDENTIAL DEFENSE'
+  },
+  {
+    id: 'otp-upi-credentials',
+    number: '02',
+    title: 'Never Share OTPs, PINs or UPI Credentials',
+    highlight: 'A UPI PIN or QR scan authorizes outgoing debits only; it is never required to receive money.',
+    action: 'Entering a UPI PIN or scanning a QR code is strictly for sending money, never receiving. Legitimate banks, utility companies, and government officials will never ask for your passwords, OTPs, or card CVV under any pretext.',
+    tag: 'FINANCIAL SWITCH DEFENSE'
+  }
+];
+
+const COMPLEMENTARY_SAFEGUARDS = [
+  {
+    id: 'verify-links-portals',
+    number: '03',
+    title: 'Verify Links & Government Domains',
+    action: 'Genuine Indian government and institutional portals strictly end in .gov.in or .nic.in. Inspect destination hostnames carefully before typing credentials or approving payment requests.',
+    tag: 'DOMAIN HYGIENE'
+  },
+  {
+    id: 'avoid-apks-remote',
+    number: '04',
+    title: 'Avoid Unknown APKs & Remote Tools',
+    action: 'Never install .apk files received via WhatsApp, Telegram, or SMS. Immediately refuse any caller instructions to install remote support applications like AnyDesk, TeamViewer, or QuickSupport.',
+    tag: 'ENDPOINT INTEGRITY'
+  },
+  {
+    id: 'app-permissions',
+    number: '05',
+    title: 'Review App Permissions Regularly',
+    action: 'Regularly audit installed mobile applications and revoke unnecessary access to your camera, microphone, contacts, location, and SMS messages. Keep permissions minimized.',
+    tag: 'PRIVACY CONTROL'
+  },
+  {
+    id: 'aadhaar-biometrics',
+    number: '06',
+    title: 'Lock Aadhaar Biometrics via UIDAI',
+    action: 'Lock your Aadhaar biometrics via the official UIDAI portal (myaadhaar.uidai.gov.in) to prevent unauthorized AePS cash debits. Use Masked Aadhaar for routine identity verification.',
+    tag: 'IDENTITY SHIELD'
+  }
+];
+
+// Section 2: Warning Signs (Divided into Psychological Pretexts vs Tactical Anomalies)
+const PSYCHOLOGICAL_FLAGS = [
+  {
+    id: 'urgency-pressure',
+    sign: 'Urgent threats or pressure to act immediately',
+    pretext: 'Pretext: "Electricity disconnected tonight at 9:30 PM" or "Account suspended within 2 hours."',
+    reality: 'Scammers invent artificial emergencies to induce panic and prevent independent verification through official utility or banking helplines.'
+  },
+  {
+    id: 'fake-authority-calls',
+    sign: 'Threatening calls claiming to be from authorities',
+    pretext: 'Pretext: "Video call from CBI / Police / Customs with narcotics parcel linked to your Aadhaar."',
+    reality: 'Real Indian law enforcement conducts inquiries through formal statutory summons under BNSS Section 35, never through WhatsApp or Skype video calls. Digital Arrest is entirely fabricated.'
+  }
+];
+
+const TACTICAL_FLAGS = [
+  {
+    id: 'otp-confidential',
+    code: 'FLAG 03',
+    sign: 'Requests to share OTPs or confidential credentials',
+    explanation: 'Any caller or message demanding an OTP, netbanking password, or card security code is fraudulent. Genuine organizations never request sensitive credentials.'
+  },
+  {
+    id: 'qr-receive-money',
+    code: 'FLAG 04',
+    sign: 'Requests to scan QR codes or approve collect requests to receive money',
+    explanation: 'Scanning a QR code or entering a UPI PIN strictly authorizes an outgoing payment from your account, never an incoming credit, refund, or cashback.'
+  },
+  {
+    id: 'unexpected-kyc-links',
+    code: 'FLAG 05',
+    sign: 'Unexpected payment or KYC update links',
+    explanation: 'Unsolicited messages warning that your bank account, PAN card, or SIM card is deactivated unless you click a link or download an update are phishing traps.'
+  },
+  {
+    id: 'remote-access-apps',
+    code: 'FLAG 06',
+    sign: 'Requests to install unknown applications or remote desktop software',
+    explanation: 'Callers directing you to download remote support tools (AnyDesk, QuickSupport) or sideloaded APKs intend to monitor your screen and intercept bank verification codes.'
+  },
+  {
+    id: 'unusual-network-drop',
+    code: 'FLAG 07',
+    sign: 'Unusual account activity or sudden loss of mobile network',
+    explanation: 'A sudden loss of cellular service with a prolonged "No Service" status can indicate a SIM-swap attack. Unexpected password reset SMS alerts signal unauthorized login attempts.'
+  }
+];
+
+// Section 3: What to Do Immediately (Situation 3 is the Primary Emergency; others are Action Protocols)
+const EMERGENCY_FINANCIAL_ACTION = {
+  id: 'lost-money',
+  situation: 'Lost Money or Noticed an Unauthorized Transaction',
+  summary: 'Time is the decisive factor in financial cybercrime. Execute these three containment actions immediately:',
+  steps: [
+    {
+      phase: 'Step 1: Immediate Bank Lock',
+      action: 'Contact your bank or payment provider immediately to block debit cards, disable netbanking, and freeze UPI transactions. Prompt notification within 3 working days protects citizens from customer liability under RBI regulations.'
+    },
+    {
+      phase: 'Step 2: Dial Helpline 1930 (Golden Hour)',
+      action: 'Call the National Cybercrime Helpline 1930 promptly. Have your bank account number, exact debit amount, and 12-digit UPI UTR reference ready to trigger Citizen Financial Cyber Fraud Reporting & Management System (CFCFRMS) inter-bank hold alerts.'
+    },
+    {
+      phase: 'Step 3: Formalize on cybercrime.gov.in',
+      action: 'Register an official written complaint docket on the National Cyber Crime Reporting Portal (cybercrime.gov.in) and retain the system acknowledgement number for all subsequent police and banking follow-up.'
+    }
+  ]
+};
+
+const ACTION_PROTOCOLS = [
+  {
+    id: 'clicked-link',
+    protocol: 'PROTOCOL 01 // LINK COMPROMISE',
+    situation: 'Clicked a Suspicious Link',
+    steps: [
+      { label: 'Sever Connection', detail: 'Stop interacting with the page immediately. Close the tab and toggle Airplane Mode ON or disconnect from Wi-Fi and mobile data.' },
+      { label: 'Withhold Information', detail: 'Do not enter any passwords, OTPs, or financial details on the page.' },
+      { label: 'Rotate Credentials', detail: 'If credentials were typed in, use a separate clean device to change passwords and select "Log out of all sessions".' },
+      { label: 'Inspect Downloads', detail: 'Check your device downloads folder for unrecognized files (.apk, .exe) and delete them permanently; run a security scan.' }
+    ]
+  },
+  {
+    id: 'shared-otp',
+    protocol: 'PROTOCOL 02 // CREDENTIAL COMPROMISE',
+    situation: 'Shared an OTP or Password',
+    steps: [
+      { label: 'Reset Master Password', detail: 'Change the affected password immediately and terminate all other active login sessions in account settings.' },
+      { label: 'Lock Payment Channels', detail: 'If banking credentials were shared, call your bank\'s 24x7 toll-free fraud helpline to freeze netbanking access or lock debit cards.' },
+      { label: 'Upgrade to App MFA', detail: 'Secure associated recovery emails and phone numbers, and upgrade authentication from SMS OTP to an app-based authenticator.' }
+    ]
+  },
+  {
+    id: 'sim-swapped',
+    protocol: 'PROTOCOL 03 // TELECOM CLONING',
+    situation: 'Account Compromised or SIM Swapped',
+    steps: [
+      { label: 'Halt Carrier Swap', detail: 'If your mobile phone abruptly shows "No Service" in an area with coverage, contact your telecom carrier store immediately to halt unauthorized SIM replacement.' },
+      { label: 'Recover Accounts', detail: 'Use verified backup email or offline recovery codes to regain account ownership. Never trust paid "account recovery" scammers.' },
+      { label: 'Alert Financial Institutions', detail: 'Inform your bank immediately if financial accounts or recovery channels are tied to the compromised phone number.' }
+    ]
+  },
+  {
+    id: 'blackmail-extortion',
+    protocol: 'PROTOCOL 04 // DIGITAL EXTORTION',
+    situation: 'Experiencing Blackmail or Image-Based Abuse',
+    steps: [
+      { label: 'Zero Monetary Compliance', detail: 'Never comply with extortion threats or send money. Paying does not end extortion; it confirms vulnerability and triggers escalated demands.' },
+      { label: 'Preserve Raw Evidence', detail: 'Capture full uncropped screenshots of messages, profile handles, phone numbers, and payment details before blocking perpetrators.' },
+      { label: 'Official Reporting & Hash Shield', detail: 'Report immediately to cybercrime.gov.in (supports confidential filing for women/child-related abuse) and generate cryptographic hashes at StopNCII.org.' }
+    ]
+  }
+];
+
+// Section 4: Forensic Evidence Board (6 Specimen Categories)
+const FORENSIC_SPECIMENS = [
+  {
+    id: 'ev-screenshots',
+    code: 'SPECIMEN 01',
+    label: 'Full Screenshots',
+    cue: 'Uncropped device frame showing mobile status bar (time, battery, network), sender phone numbers, WhatsApp handles, and profile links.'
+  },
+  {
+    id: 'ev-transactions',
+    code: 'SPECIMEN 02',
+    label: 'Transaction Identifiers',
+    cue: 'Exact 12-digit UPI UTR numbers, bank account statements, debit SMS notifications, payee Virtual Payment Addresses (VPAs), and transaction receipts.'
+  },
+  {
+    id: 'ev-contacts',
+    code: 'SPECIMEN 03',
+    label: 'Communications & Headers',
+    cue: 'Complete incoming caller phone numbers, SMS header codes, and full raw exported email files (.eml or .msg) containing server routing data.'
+  },
+  {
+    id: 'ev-urls',
+    code: 'SPECIMEN 04',
+    label: 'Suspicious URLs & Domains',
+    cue: 'Full website link addresses, spoofed domain names, and QR code image files sent by fraudsters.'
+  },
+  {
+    id: 'ev-timestamps',
+    code: 'SPECIMEN 05',
+    label: 'Chronological Timestamps',
+    cue: 'Precise chronological log recording when each message was received, link was clicked, call took place, and debit occurred.'
+  },
+  {
+    id: 'ev-files',
+    code: 'SPECIMEN 06',
+    label: 'Original Files & Audio Logs',
+    cue: 'Raw downloaded APK files, audio recordings, and exported chat transcripts without editing, cropping, or altering metadata.'
+  }
+];
+
+export default function Prevention() {
+  const location = useLocation();
+  const isWorkspaceContext = location.pathname.startsWith('/workspace');
+  const getContextPath = (p) => (isWorkspaceContext ? `/workspace${p}` : p);
+
+  const [copiedHelpline, setCopiedHelpline] = useState(false);
+
+  // Copy Helpline 1930 with graceful clipboard fallback
   const handleCopyHelpline = async () => {
     let success = false;
     try {
@@ -36,860 +255,624 @@ function Prevention() {
 
     if (success) {
       setCopiedHelpline(true);
-      setCopyFailed(false);
       setTimeout(() => setCopiedHelpline(false), 2500);
-    } else {
-      setCopyFailed(true);
-      setCopiedHelpline(false);
-      setTimeout(() => setCopyFailed(false), 3000);
     }
   };
 
-  const handlePhaseChange = (phase) => {
-    performStateTransition(() => {
-      setSelectedPhase(phase);
-    });
-  };
-
+  // Smooth scroll to targeted anchor hash or query phase with legacy fallback mapping
   useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth <= 768);
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
+    const anchorMap = {
+      habits: 'protect',
+      passwords: 'protect',
+      payments: 'protect',
+      browsing: 'protect',
+      signals: 'warning-signs',
+      playbooks: 'immediately',
+      wrong: 'immediately',
+      'lost-money': 'lost-money-card',
+      evidence: 'evidence',
+      reporting: 'docket',
+      docket: 'docket'
+    };
 
-  // Support ?phase= query param (e.g. from Home page or direct links)
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const p = params.get('phase');
-    if (p && ['before', 'during', 'after', 'all'].includes(p)) {
-      setSelectedPhase(p);
-    }
-  }, []);
+    const phaseMap = {
+      before: 'protect',
+      during: 'warning-signs',
+      after: 'immediately'
+    };
 
-  // Handle deep-linked hash anchor navigation (e.g., /prevention#payments)
-  useEffect(() => {
-    if (window.location.hash) {
-      const id = window.location.hash.replace('#', '');
-      const el = document.getElementById(id);
-      if (el) {
-        setTimeout(() => {
-          el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-          setActiveTopic(id);
-        }, 150);
+    // Precedence: explicit hash takes priority over query parameter
+    let targetId = null;
+    if (location.hash) {
+      const rawHash = location.hash.replace('#', '');
+      targetId = anchorMap[rawHash] || rawHash;
+    } else if (location.search) {
+      const searchParams = new URLSearchParams(location.search);
+      const phase = searchParams.get('phase');
+      if (phase && phaseMap[phase]) {
+        targetId = phaseMap[phase];
       }
     }
-  }, []);
 
-  // IntersectionObserver to auto-update active navigation link on scroll
-  useEffect(() => {
-    const sections = ['passwords', 'payments', 'browsing', 'evidence', 'wrong', 'reporting'];
-    const observerOptions = {
-      root: null,
-      rootMargin: '-20% 0px -60% 0px',
-      threshold: 0
-    };
+    if (targetId) {
+      let attempts = 0;
+      const maxAttempts = 10;
+      let timerId = null;
+      let rafId = null;
 
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach((entry) => {
-        if (entry.isIntersecting) {
-          setActiveTopic(entry.target.id);
+      const tryScroll = () => {
+        const el = document.getElementById(targetId);
+        if (el) {
+          const header = document.querySelector('.top-header, .workspace-topbar');
+          const headerHeight = header ? header.offsetHeight : 72;
+          const topOffset = el.getBoundingClientRect().top + window.pageYOffset - (headerHeight + 20);
+          window.scrollTo({ top: Math.max(0, topOffset), behavior: 'smooth' });
+        } else if (attempts < maxAttempts) {
+          attempts += 1;
+          timerId = setTimeout(() => {
+            rafId = requestAnimationFrame(tryScroll);
+          }, 50);
         }
-      });
-    }, observerOptions);
+      };
 
-    sections.forEach((id) => {
-      const el = document.getElementById(id);
-      if (el) observer.observe(el);
-    });
+      rafId = requestAnimationFrame(tryScroll);
 
-    return () => {
-      sections.forEach((id) => {
-        const el = document.getElementById(id);
-        if (el) observer.unobserve(el);
-      });
-    };
-  }, []);
+      return () => {
+        if (rafId) cancelAnimationFrame(rafId);
+        if (timerId) clearTimeout(timerId);
+      };
+    }
+  }, [location.hash, location.search]);
 
-  const scrollToSection = (id) => {
+  const scrollToAnchor = (id) => {
     const el = document.getElementById(id);
     if (el) {
       el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      setActiveTopic(id);
     }
   };
 
-  const navItems = [
-    { id: 'passwords', label: 'Passwords' },
-    { id: 'payments', label: 'Payments' },
-    { id: 'browsing', label: 'Browsing' },
-    { id: 'evidence', label: 'Evidence' },
-    { id: 'wrong', label: 'If Targeted' },
-    { id: 'reporting', label: 'Reporting' }
-  ];
-
   return (
-    <div className="container page-entry" style={{ padding: 'var(--space-xl) 0', fontFamily: 'var(--font-sans)', color: 'var(--text-primary)' }}>
-      
-      {/* Editorial Hero Header */}
+    <div className="prevention-page-container">
+      {/* ------------------------------------------------------------------
+          PAGE HEADER (MASTHEAD)
+          ------------------------------------------------------------------ */}
       <EditorialPageHeader
-        eyebrow="Stay Safe Online"
-        title="Online Safety & Prevention Guide"
-        subtitle='"Knowledge helps most when it changes what we do."'
-        description="Practical guidance for protecting your accounts, devices, personal information, and digital transactions — and knowing what to do when something goes wrong."
+        eyebrow="CITIZEN DIGITAL DEFENSE FIELD MANUAL · QUICK-GUIDE"
+        title="Digital Safety Quick-Guide"
+        subtitle="Practical actions to protect yourself and respond immediately if targeted."
+        description="A concise reference for essential everyday habits, recognizing deception before harm occurs, immediate crisis response, and preserving admissible digital evidence."
       >
         <WorkspaceBreadcrumb />
       </EditorialPageHeader>
 
-      {/* BEFORE / DURING / AFTER EDITORIAL FRAMEWORK WITH INTENTIONAL STATE TRANSITIONS */}
-      <div style={{ marginBottom: 'var(--space-2xl)' }}>
-        <div className="prevention-phase-filter-bar">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-            <span style={{ fontSize: '0.76rem', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.5px', color: 'var(--color-primary)' }}>
-              Step-by-Step Defense:
-            </span>
-            <div className="portal-state-sequence-bar" style={{ margin: 0 }}>
-              <button 
-                type="button"
-                onClick={() => handlePhaseChange('all')}
-                className={`portal-state-sequence-node ${selectedPhase === 'all' ? 'active' : ''}`}
-                style={{ cursor: 'pointer' }}
-                aria-pressed={selectedPhase === 'all'}
-              >
-                All Advice
-              </button>
-              <span className="portal-state-sequence-arrow" aria-hidden="true">&rarr;</span>
-              <button 
-                type="button"
-                onClick={() => handlePhaseChange('before')}
-                className={`portal-state-sequence-node ${selectedPhase === 'before' ? 'active' : ''}`}
-                style={{ cursor: 'pointer' }}
-                aria-pressed={selectedPhase === 'before'}
-              >
-                01 Before an Incident
-              </button>
-              <span className="portal-state-sequence-arrow" aria-hidden="true">&rarr;</span>
-              <button 
-                type="button"
-                onClick={() => handlePhaseChange('during')}
-                className={`portal-state-sequence-node ${selectedPhase === 'during' ? 'active' : ''}`}
-                style={{ cursor: 'pointer' }}
-                aria-pressed={selectedPhase === 'during'}
-              >
-                02 If Targeted
-              </button>
-              <span className="portal-state-sequence-arrow" aria-hidden="true">&rarr;</span>
-              <button 
-                type="button"
-                onClick={() => handlePhaseChange('after')}
-                className={`portal-state-sequence-node ${selectedPhase === 'after' ? 'active' : ''}`}
-                style={{ cursor: 'pointer' }}
-                aria-pressed={selectedPhase === 'after'}
-              >
-                03 After an Attack
-              </button>
-            </div>
-          </div>
+      <EditorialRule />
 
-          <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', fontFamily: 'monospace' }}>
-            {selectedPhase === 'all' && 'All 3 Safety Stages'}
-            {selectedPhase === 'before' && 'Stage 01: Protecting Yourself Beforehand'}
-            {selectedPhase === 'during' && 'Stage 02: Pausing & Verifying Under Pressure'}
-            {selectedPhase === 'after' && 'Stage 03: Fast Action & Helpline 1930'}
-          </div>
+      {/* ------------------------------------------------------------------
+          URGENT EMERGENCY JUMP STRIP (FOR ACTIVE INCIDENTS)
+          ------------------------------------------------------------------ */}
+      <nav className="prevention-urgent-strip" aria-label="Quick jump to emergency incident actions">
+        <div className="prevention-urgent-text">
+          <span className="prevention-urgent-beacon" aria-hidden="true">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+            </svg>
+          </span>
+          <span className="prevention-urgent-label">Facing an active cyber incident right now?</span>
         </div>
 
-        {/* Thin progression line representing active lifecycle position */}
-        <div className="portal-progression-track" style={{ marginBottom: '14px' }} aria-hidden="true">
-          <div 
-            className="portal-progression-indicator" 
-            style={{ 
-              width: selectedPhase === 'all' ? '100%' : selectedPhase === 'before' ? '33.33%' : selectedPhase === 'during' ? '66.66%' : '100%'
-            }} 
-          />
-        </div>
-
-        {/* Persistent Connected 3-Phase Lifecycle Track */}
-        <div className="prevention-ruled-docket" style={{ marginBottom: '16px' }}>
-          <div 
-            className="prevention-phases-row" 
-            role="tablist"
-            aria-label="Incident response lifecycle phases"
-            style={{
-              display: 'grid',
-              gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr 1fr',
-              gap: '16px'
-            }}
+        <div className="prevention-urgent-actions">
+          <button
+            type="button"
+            onClick={() => scrollToAnchor('lost-money-card')}
+            className="prevention-urgent-chip is-danger"
           >
-            {/* Phase 01: Before */}
-            <div 
-              role="tab"
-              tabIndex={0}
-              aria-selected={selectedPhase === 'before'}
-              aria-controls="prevention-phase-panel"
-              onClick={() => handlePhaseChange('before')}
-              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handlePhaseChange('before'); } }}
-              className={`prevention-phase-card ${selectedPhase === 'before' ? 'is-active-phase' : ''}`}
-              style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}
-              title="Click to view Stage 01: Before steps"
-            >
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span className="phase-indicator">01 / BEFORE</span>
-                {selectedPhase === 'before' && (
-                  <span style={{ fontSize: '0.68rem', fontWeight: 'bold', color: 'var(--color-primary)', textTransform: 'uppercase' }}>Viewing Now</span>
-                )}
-              </div>
-              <h3 style={{ fontSize: '1.15rem', color: 'var(--text-primary)', margin: 0, fontWeight: 'bold' }}>Protect</h3>
-              <p style={{ fontSize: '0.88rem', color: 'var(--text-secondary)', margin: 0, lineHeight: '1.5' }}>
-                Verify unexpected requests. Protect credentials. Build strong defense habits before any contact or system threat occurs.
-              </p>
-              <div style={{ fontSize: '0.78rem', color: 'var(--color-primary)', fontWeight: '600', marginTop: 'auto', paddingTop: '6px', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                <span>{selectedPhase === 'before' ? 'Current View' : 'View Steps'}</span>
-                <span aria-hidden="true">&rarr;</span>
-              </div>
-            </div>
-
-            {/* Phase 02: During */}
-            <div 
-              role="tab"
-              tabIndex={0}
-              aria-selected={selectedPhase === 'during'}
-              aria-controls="prevention-phase-panel"
-              onClick={() => handlePhaseChange('during')}
-              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handlePhaseChange('during'); } }}
-              className={`prevention-phase-card ${selectedPhase === 'during' ? 'is-active-phase' : ''}`}
-              style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}
-              title="Click to view Stage 02: If Targeted steps"
-            >
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span className="phase-indicator">02 / DURING</span>
-                {selectedPhase === 'during' && (
-                  <span style={{ fontSize: '0.68rem', fontWeight: 'bold', color: 'var(--color-warning)', textTransform: 'uppercase' }}>Viewing Now</span>
-                )}
-              </div>
-              <h3 style={{ fontSize: '1.15rem', color: 'var(--text-primary)', margin: 0, fontWeight: 'bold' }}>Pause &amp; Verify</h3>
-              <p style={{ fontSize: '0.88rem', color: 'var(--text-secondary)', margin: 0, lineHeight: '1.5' }}>
-                Pause. Verify independently. Avoid sharing sensitive information or one-time codes when confronted with manufactured urgency.
-              </p>
-              <div style={{ fontSize: '0.78rem', color: 'var(--color-primary)', fontWeight: '600', marginTop: 'auto', paddingTop: '6px', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                <span>{selectedPhase === 'during' ? 'Current View' : 'View Steps'}</span>
-                <span aria-hidden="true">&rarr;</span>
-              </div>
-            </div>
-
-            {/* Phase 03: After */}
-            <div 
-              role="tab"
-              tabIndex={0}
-              aria-selected={selectedPhase === 'after'}
-              aria-controls="prevention-phase-panel"
-              onClick={() => handlePhaseChange('after')}
-              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handlePhaseChange('after'); } }}
-              className={`prevention-phase-card ${selectedPhase === 'after' ? 'is-active-phase' : ''}`}
-              style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}
-              title="Click to view Stage 03: After steps"
-            >
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span className="phase-indicator">03 / AFTER</span>
-                {selectedPhase === 'after' && (
-                  <span style={{ fontSize: '0.68rem', fontWeight: 'bold', color: 'var(--color-success)', textTransform: 'uppercase' }}>Viewing Now</span>
-                )}
-              </div>
-              <h3 style={{ fontSize: '1.15rem', color: 'var(--text-primary)', margin: 0, fontWeight: 'bold' }}>Respond &amp; Recover</h3>
-              <p style={{ fontSize: '0.88rem', color: 'var(--text-secondary)', margin: 0, lineHeight: '1.5' }}>
-                Preserve evidence. Secure affected accounts immediately. Report the incident through National Helpline 1930 and official registries.
-              </p>
-              <div style={{ fontSize: '0.78rem', color: 'var(--color-primary)', fontWeight: '600', marginTop: 'auto', paddingTop: '6px', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                <span>{selectedPhase === 'after' ? 'Current View' : 'View Steps'}</span>
-                <span aria-hidden="true">&rarr;</span>
-              </div>
-            </div>
-          </div>
+            <span>Lost Money &amp; 1930 &darr;</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => scrollToAnchor('immediately')}
+            className="prevention-urgent-chip"
+          >
+            <span>Crisis Action Protocols &darr;</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => scrollToAnchor('docket')}
+            className="prevention-urgent-chip"
+          >
+            <span>Incident Docket Generator &darr;</span>
+          </button>
         </div>
+      </nav>
 
-        {/* Detailed Protocol Panel for Active Phase */}
-        <div id="prevention-phase-panel" key={selectedPhase} className="prevention-active-phase-card prevention-ruled-docket portal-state-progression">
-          {selectedPhase === 'all' && (
-            <div style={{ padding: '4px 0' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', flexWrap: 'wrap', gap: '8px' }}>
-                <span style={{ fontSize: '0.75rem', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '1px', color: 'var(--text-primary)' }}>
-                  Your Complete Online Safety Guide
-                </span>
-                <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
-                  Click any stage above to see specific steps
-                </span>
-              </div>
-              <p style={{ fontSize: '0.94rem', color: 'var(--text-secondary)', lineHeight: '1.6', margin: '0 0 16px 0' }}>
-                Staying safe online happens in three simple stages: setting up strong protection beforehand, taking a calm pause when someone contacts you with urgency, and acting quickly if an incident happens.
-              </p>
-              <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-                <button
-                  type="button"
-                  onClick={() => handlePhaseChange('before')}
-                  className="btn btn-secondary"
-                  style={{ fontSize: '0.82rem', padding: '6px 14px' }}
-                >
-                  See Stage 01: Before &rarr;
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handlePhaseChange('during')}
-                  className="btn btn-secondary"
-                  style={{ fontSize: '0.82rem', padding: '6px 14px' }}
-                >
-                  See Stage 02: If Targeted &rarr;
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handlePhaseChange('after')}
-                  className="btn btn-secondary"
-                  style={{ fontSize: '0.82rem', padding: '6px 14px' }}
-                >
-                  See Stage 03: After an Attack &rarr;
-                </button>
-              </div>
+      {/* ------------------------------------------------------------------
+          FIVE CORE PRACTICAL SECTIONS
+          ------------------------------------------------------------------ */}
+      <div className="prevention-quick-sections">
+
+        {/* ================================================================
+            SECTION 1: PROTECT YOURSELF (FOUNDATIONAL DEFENSE LEDGER)
+            ================================================================ */}
+        <div id="habits" className="prevention-anchor-target" />
+        <section id="protect" className="prevention-quick-section" aria-labelledby="protect-heading">
+          <header className="prevention-section-header">
+            <div className="prevention-section-eyebrow-row">
+              <span className="prevention-section-eyebrow">PRACTICAL DEFENSE · 01</span>
+              <span className="prevention-section-status-tag">BASELINE HYGIENE</span>
             </div>
-          )}
+            <h2 id="protect-heading" className="prevention-section-title">
+              Protect Yourself
+            </h2>
+            <p className="prevention-section-lead">
+              Sensible cyber defense begins before contact occurs. Setting up resilient credentials and device boundaries eliminates vulnerabilities before an attacker makes contact.
+            </p>
+          </header>
 
-          {selectedPhase === 'before' && (
-            <div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', flexWrap: 'wrap', gap: '8px' }}>
-                <span style={{ fontSize: '0.75rem', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '1px', color: 'var(--text-primary)' }}>
-                  Phase 01 · Proactive Defense
-                </span>
-                <div style={{ display: 'flex', gap: '8px' }}>
-                  <button 
-                    onClick={() => handlePhaseChange('all')} 
-                    className="btn btn-outline" 
-                    style={{ fontSize: '0.78rem', padding: '3px 10px' }}
-                  >
-                    View All Phases
-                  </button>
-                  <button 
-                    onClick={() => handlePhaseChange('during')} 
-                    className="btn btn-outline" 
-                    style={{ fontSize: '0.78rem', padding: '3px 10px' }}
-                  >
-                    Next: During Attack &rarr;
-                  </button>
+          {/* Featured Primary Anchor Habits (Two Core Pillars) */}
+          <div className="prevention-anchor-habits-grid">
+            {PRIMARY_HABITS.map((item) => (
+              <article key={item.id} className="prevention-anchor-card">
+                <div className="prevention-anchor-header">
+                  <span className="prevention-anchor-numeral">{item.number}</span>
+                  <span className="prevention-anchor-tag">{item.tag}</span>
                 </div>
-              </div>
-                <h3 style={{ fontSize: '1.35rem', color: 'var(--text-primary)', margin: '0 0 10px 0', fontWeight: 'bold' }}>
-                  01 / BEFORE: Independent Verification & Zero-Trust Hygiene
-                </h3>
-                <p style={{ fontSize: '0.96rem', color: 'var(--text-secondary)', lineHeight: '1.65', marginBottom: '16px' }}>
-                  Proactive security eliminates vulnerabilities before an attacker makes contact. Do not wait for an alert to test whether your accounts and devices are secure.
-                </p>
-                <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)', gap: '14px' }}>
-                  <div style={{ backgroundColor: 'var(--color-surface-card, #FCFAF5)', padding: '16px', borderRadius: '6px', border: '1px solid var(--color-border)', boxShadow: '0 1px 3px rgba(48, 43, 39, 0.04)' }}>
-                    <strong style={{ fontSize: '0.85rem', color: 'var(--text-primary)', display: 'block', marginBottom: '4px' }}>Credential Separation</strong>
-                    <span style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', lineHeight: '1.5' }}>Use distinct, unshared passwords and dedicated passkeys across financial and personal accounts.</span>
+                <div className="prevention-anchor-body">
+                  <div className="prevention-anchor-icon" aria-hidden="true">
+                    {item.id === 'passwords-mfa' ? (
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                        <circle cx="12" cy="10" r="3" />
+                        <path d="M12 13v3" />
+                      </svg>
+                    ) : (
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                        <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                        <line x1="12" y1="15" x2="12" y2="17" />
+                      </svg>
+                    )}
                   </div>
-                  <div style={{ backgroundColor: 'var(--color-surface-card, #FCFAF5)', padding: '16px', borderRadius: '6px', border: '1px solid var(--color-border)', boxShadow: '0 1px 3px rgba(48, 43, 39, 0.04)' }}>
-                    <strong style={{ fontSize: '0.85rem', color: 'var(--text-primary)', display: 'block', marginBottom: '4px' }}>Direct Bookmarking</strong>
-                    <span style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', lineHeight: '1.5' }}>Bookmark trusted bank portals and utilities directly to avoid sponsored deceptive search ads.</span>
-                  </div>
-                  <div style={{ backgroundColor: 'var(--color-surface-card, #FCFAF5)', padding: '16px', borderRadius: '6px', border: '1px solid var(--color-border)', boxShadow: '0 1px 3px rgba(48, 43, 39, 0.04)' }}>
-                    <strong style={{ fontSize: '0.85rem', color: 'var(--text-primary)', display: 'block', marginBottom: '4px' }}>Multi-Factor Authentication</strong>
-                    <span style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', lineHeight: '1.5' }}>Enable app-based authenticator codes or hardware tokens instead of plaintext SMS fallback.</span>
-                  </div>
+                  <h3 className="prevention-anchor-title">{item.title}</h3>
+                  <div className="prevention-anchor-highlight">{item.highlight}</div>
+                  <p className="prevention-anchor-action">{item.action}</p>
                 </div>
-              </div>
-            )}
-
-            {selectedPhase === 'during' && (
-              <div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                  <span style={{ fontSize: '0.75rem', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '1px', color: 'var(--color-warning)' }}>
-                    Phase 02 · Active Engagement
-                  </span>
-                  <div style={{ display: 'flex', gap: '8px' }}>
-                    <button 
-                      onClick={() => handlePhaseChange('before')} 
-                      className="btn btn-outline" 
-                      style={{ fontSize: '0.78rem', padding: '3px 10px' }}
-                    >
-                      &larr; Before
-                    </button>
-                    <button 
-                      onClick={() => handlePhaseChange('after')} 
-                      className="btn btn-outline" 
-                      style={{ fontSize: '0.78rem', padding: '3px 10px' }}
-                    >
-                      Next: After &rarr;
-                    </button>
-                  </div>
-                </div>
-                <h3 style={{ fontSize: '1.35rem', color: 'var(--text-primary)', margin: '0 0 10px 0', fontWeight: 'bold' }}>
-                  02 / DURING: The Critical Pause & Immediate Refusal
-                </h3>
-                <p style={{ fontSize: '0.96rem', color: 'var(--text-secondary)', lineHeight: '1.65', marginBottom: '16px' }}>
-                  When confronted with urgent demands, threats of disconnection, or arrest claims: pause. Urgency is the primary psychological exploit used by cyber criminals.
-                </p>
-                <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)', gap: '14px' }}>
-                  <div style={{ backgroundColor: 'var(--color-surface-card, #FCFAF5)', padding: '16px', borderRadius: '6px', border: '1px solid var(--color-border)', boxShadow: '0 1px 3px rgba(48, 43, 39, 0.04)' }}>
-                    <strong style={{ fontSize: '0.85rem', color: 'var(--text-primary)', display: 'block', marginBottom: '4px' }}>Refuse One-Time Codes</strong>
-                    <span style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', lineHeight: '1.5' }}>No legitimate agency or bank ever asks for your OTP over phone, chat, or email.</span>
-                  </div>
-                  <div style={{ backgroundColor: 'var(--color-surface-card, #FCFAF5)', padding: '16px', borderRadius: '6px', border: '1px solid var(--color-border)', boxShadow: '0 1px 3px rgba(48, 43, 39, 0.04)' }}>
-                    <strong style={{ fontSize: '0.85rem', color: 'var(--text-primary)', display: 'block', marginBottom: '4px' }}>Reject Screen-Sharing</strong>
-                    <span style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', lineHeight: '1.5' }}>Never install remote desktop apps (AnyDesk, TeamViewer) at the request of an incoming caller.</span>
-                  </div>
-                  <div style={{ backgroundColor: 'var(--color-surface-card, #FCFAF5)', padding: '16px', borderRadius: '6px', border: '1px solid var(--color-border)', boxShadow: '0 1px 3px rgba(48, 43, 39, 0.04)' }}>
-                    <strong style={{ fontSize: '0.85rem', color: 'var(--text-primary)', display: 'block', marginBottom: '4px' }}>Break Contact Channel</strong>
-                    <span style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', lineHeight: '1.5' }}>Hang up the incoming call and redial the organization's verified public number independently.</span>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {selectedPhase === 'after' && (
-              <div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                  <span style={{ fontSize: '0.75rem', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '1px', color: 'var(--color-success)' }}>
-                    Phase 03 · Post-Incident Response
-                  </span>
-                  <button 
-                    onClick={() => handlePhaseChange('during')} 
-                    className="btn btn-outline" 
-                    style={{ fontSize: '0.78rem', padding: '3px 10px' }}
-                  >
-                    &larr; Back: During Attack
-                  </button>
-                </div>
-                <h3 style={{ fontSize: '1.35rem', color: 'var(--text-primary)', margin: '0 0 10px 0', fontWeight: 'bold' }}>
-                  03 / AFTER: Immediate Containment & Statutory Reporting
-                </h3>
-                <p style={{ fontSize: '0.96rem', color: 'var(--text-secondary)', lineHeight: '1.65', marginBottom: '16px' }}>
-                  If you suspect an incident has occurred or credentials were compromised, the first 2 hours are critical to freezing unauthorized transactions and preserving legal evidence.
-                </p>
-                <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)', gap: '14px' }}>
-                  <div style={{ backgroundColor: 'var(--color-surface-card, #FCFAF5)', padding: '16px', borderRadius: '6px', border: '1px solid var(--color-border)', boxShadow: '0 1px 3px rgba(48, 43, 39, 0.04)' }}>
-                    <strong style={{ fontSize: '0.85rem', color: 'var(--text-primary)', display: 'block', marginBottom: '4px' }}>National Helpline 1930</strong>
-                    <span style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', lineHeight: '1.5' }}>Dial 1930 immediately to trigger the Citizen Financial Cyber Fraud Reporting System.</span>
-                  </div>
-                  <div style={{ backgroundColor: 'var(--color-surface-card, #FCFAF5)', padding: '16px', borderRadius: '6px', border: '1px solid var(--color-border)', boxShadow: '0 1px 3px rgba(48, 43, 39, 0.04)' }}>
-                    <strong style={{ fontSize: '0.85rem', color: 'var(--text-primary)', display: 'block', marginBottom: '4px' }}>Bank Account Freeze</strong>
-                    <span style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', lineHeight: '1.5' }}>Contact your bank's fraud desk to block cards, freeze internet banking, and revoke active UPI handles.</span>
-                  </div>
-                  <div style={{ backgroundColor: 'var(--color-surface-card, #FCFAF5)', padding: '16px', borderRadius: '6px', border: '1px solid var(--color-border)', boxShadow: '0 1px 3px rgba(48, 43, 39, 0.04)' }}>
-                    <strong style={{ fontSize: '0.85rem', color: 'var(--text-primary)', display: 'block', marginBottom: '4px' }}>Preserve Digital Evidence</strong>
-                    <span style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', lineHeight: '1.5' }}>Capture screenshots of payment messages, transaction UTR numbers, caller logs, and chat histories.</span>
-                  </div>
-                </div>
-              </div>
-            )}
+              </article>
+            ))}
           </div>
-        </div>
 
-      {/* TOPIC NAVIGATION (Desktop sticky / Mobile dropdown) */}
-      <div style={{
-        position: 'sticky',
-        top: '70px',
-        backgroundColor: 'var(--bg-primary)',
-        padding: '12px 0',
-        zIndex: 900,
-        borderBottom: '1px solid var(--color-border)',
-        marginBottom: 'var(--space-xxl)'
-      }}>
-        {isMobile ? (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-            <label style={{ fontSize: '0.75rem', fontWeight: 'bold', color: 'var(--text-primary)', textTransform: 'uppercase' }}>
-              Jump to Handbook Section
-            </label>
-            <select
-              value={activeTopic}
-              onChange={(e) => scrollToSection(e.target.value)}
-              style={{
-                width: '100%',
-                padding: '8px 12px',
-                borderRadius: 'var(--radius-sm)',
-                border: '1px solid var(--color-border-dark)',
-                backgroundColor: 'var(--bg-white)',
-                fontSize: '0.9rem',
-                color: 'var(--text-primary)'
-              }}
-            >
-              {navItems.map(item => (
-                <option key={item.id} value={item.id}>{item.label}</option>
+          {/* Four Complementary Operational Safeguards */}
+          <div className="prevention-safeguards-grid">
+            {COMPLEMENTARY_SAFEGUARDS.map((item) => (
+              <article key={item.id} className="prevention-safeguard-card">
+                <div className="prevention-safeguard-top">
+                  <span className="prevention-safeguard-badge">{item.tag}</span>
+                  <div className="prevention-safeguard-icon" aria-hidden="true">
+                    {item.id === 'verify-links-portals' && (
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <circle cx="12" cy="12" r="10" />
+                        <line x1="2" y1="12" x2="22" y2="12" />
+                        <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+                      </svg>
+                    )}
+                    {item.id === 'avoid-apks-remote' && (
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
+                        <line x1="9" y1="9" x2="15" y2="15" />
+                        <line x1="15" y1="9" x2="9" y2="15" />
+                      </svg>
+                    )}
+                    {item.id === 'app-permissions' && (
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <line x1="4" y1="21" x2="4" y2="14" />
+                        <line x1="4" y1="10" x2="4" y2="3" />
+                        <line x1="12" y1="21" x2="12" y2="12" />
+                        <line x1="12" y1="8" x2="12" y2="3" />
+                        <line x1="20" y1="21" x2="20" y2="16" />
+                        <line x1="20" y1="12" x2="20" y2="3" />
+                        <line x1="1" y1="14" x2="7" y2="14" />
+                        <line x1="9" y1="8" x2="15" y2="8" />
+                        <line x1="17" y1="16" x2="23" y2="16" />
+                      </svg>
+                    )}
+                    {item.id === 'aadhaar-biometrics' && (
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M12 11c0-2.2-1.8-4-4-4s-4 1.8-4 4c0 3.3 2.7 6 6 6" />
+                        <path d="M12 7c1.7 0 3 1.3 3 3v2" />
+                        <rect x="15" y="14" width="7" height="8" rx="1" />
+                        <path d="M17 14v-2a1.5 1.5 0 0 1 3 0v2" />
+                      </svg>
+                    )}
+                  </div>
+                </div>
+                <h3 className="prevention-safeguard-title">{item.title}</h3>
+                <p className="prevention-safeguard-action">{item.action}</p>
+              </article>
+            ))}
+          </div>
+        </section>
+
+        {/* ================================================================
+            SECTION 2: KNOW THE WARNING SIGNS (RED-FLAG FIELD GUIDE)
+            ================================================================ */}
+        <div id="signals" className="prevention-anchor-target" />
+        <section id="warning-signs" className="prevention-quick-section" aria-labelledby="warning-heading">
+          <header className="prevention-section-header">
+            <div className="prevention-section-eyebrow-row">
+              <span className="prevention-section-eyebrow">THREAT RECOGNITION · 02</span>
+              <span className="prevention-section-status-tag">FIELD INDICATORS</span>
+            </div>
+            <h2 id="warning-heading" className="prevention-section-title">
+              Know the Warning Signs
+            </h2>
+            <p className="prevention-section-lead">
+              Social engineering succeeds by exploiting psychological pressure rather than technical flaws. Recognize these seven verified red flags to pause and verify before taking action.
+            </p>
+          </header>
+
+          {/* Two Major Psychological Manipulation Banners */}
+          <div className="prevention-psych-flags-grid">
+            {PSYCHOLOGICAL_FLAGS.map((item, idx) => (
+              <article key={item.id} className="prevention-psych-flag-card">
+                <div className="prevention-psych-flag-header">
+                  <div className="prevention-psych-marker" aria-hidden="true">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                      <polygon points="12 2 22 20 2 20 12 2" />
+                      <line x1="12" y1="9" x2="12" y2="13" />
+                      <line x1="12" y1="17" x2="12.01" y2="17" />
+                    </svg>
+                  </div>
+                  <div>
+                    <span className="prevention-psych-code">PSYCHOLOGICAL LEVERAGE · {idx === 0 ? 'TIME PANIC' : 'LEGAL INTIMIDATION'}</span>
+                    <h3 className="prevention-psych-title">{item.sign}</h3>
+                  </div>
+                </div>
+                <blockquote className="prevention-psych-pretext">
+                  {item.pretext}
+                </blockquote>
+                <div className="prevention-psych-reality">
+                  <strong>Reality Check:</strong> {item.reality}
+                </div>
+              </article>
+            ))}
+          </div>
+
+          {/* Tactical Lures & Anomalies Register */}
+          <div className="prevention-tactical-register">
+            <div className="prevention-register-title">Tactical Lures &amp; Endpoint Anomalies</div>
+            <div className="prevention-register-rows">
+              {TACTICAL_FLAGS.map((item) => (
+                <div key={item.id} className="prevention-register-row">
+                  <div className="prevention-register-badge">
+                    <span className="prevention-register-code">{item.code}</span>
+                  </div>
+                  <div className="prevention-register-content">
+                    <h3 className="prevention-register-sign">{item.sign}</h3>
+                    <p className="prevention-register-explanation">{item.explanation}</p>
+                  </div>
+                </div>
               ))}
-            </select>
+            </div>
           </div>
-        ) : (
-          <div style={{ display: 'flex', gap: '24px', alignItems: 'center' }}>
-            <span style={{ fontSize: '0.75rem', fontWeight: 'bold', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-              Handbook Index:
-            </span>
-            {navItems.map((item) => {
-              const isActive = activeTopic === item.id;
-              return (
-                <button
-                  key={item.id}
-                  onClick={() => scrollToSection(item.id)}
-                  style={{
-                    background: 'none',
-                    border: 'none',
-                    borderBottom: isActive ? '3px solid var(--color-primary)' : '3px solid transparent',
-                    color: isActive ? 'var(--color-primary)' : 'var(--text-secondary)',
-                    fontWeight: isActive ? 'bold' : '500',
-                    fontSize: '0.85rem',
-                    cursor: 'pointer',
-                    padding: '8px 4px',
-                    transition: 'all 0.15s ease'
-                  }}
-                >
-                  {item.label.toUpperCase()}
-                </button>
-              );
-            })}
+
+          <div className="prevention-explore-banner">
+            <div className="prevention-explore-text">
+              <strong>Need a complete technical breakdown of threat mechanisms?</strong>
+              <span> Explore 29 threat models, attack lifecycles, and attacker profiles in the Crimes directory.</span>
+            </div>
+            <Link to={getContextPath('/crimes')} className="prevention-explore-btn">
+              Browse Cyber Crimes Directory &rarr;
+            </Link>
           </div>
-        )}
-      </div>
+        </section>
 
-      {/* HANDBOOK SECTIONS MAIN LAYOUT */}
-      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 280px', gap: '48px', alignItems: 'flex-start' }}>
-        
-        {/* Main handbook column */}
-        <div style={{ maxWidth: '800px' }}>
-          
-          {/* Section 01: Passwords */}
-          <section id="passwords" style={{ marginBottom: 'var(--space-xxl)', borderBottom: '1px solid var(--color-border)', paddingBottom: 'var(--space-xxl)' }}>
-            <div style={{ fontSize: '2.5rem', fontWeight: '300', color: 'var(--text-muted)', fontFamily: 'monospace' }}>01</div>
-            <h2 style={{ fontSize: '2rem', color: 'var(--text-primary)', fontWeight: 'bold', marginTop: '4px', marginBottom: '16px' }}>
-              PASSWORD HYGIENE & MFA
+        {/* ================================================================
+            SECTION 3: WHAT TO DO IMMEDIATELY (INCIDENT RESPONSE PROTOCOLS)
+            ================================================================ */}
+        <div id="playbooks" className="prevention-anchor-target" />
+        <div id="wrong" className="prevention-anchor-target" />
+        <section id="immediately" className="prevention-quick-section" aria-labelledby="immediately-heading">
+          <header className="prevention-section-header">
+            <div className="prevention-section-eyebrow-row">
+              <span className="prevention-section-eyebrow">CRISIS RESPONSE · 03</span>
+              <span className="prevention-section-status-tag is-alert">DECISIVE ACTION</span>
+            </div>
+            <h2 id="immediately-heading" className="prevention-section-title">
+              What to Do Immediately
             </h2>
-            <div style={{ width: '40px', height: '3px', backgroundColor: 'var(--color-primary)', borderRadius: '1.5px', marginBottom: '20px' }} />
-            
-            <p style={{ fontSize: '1rem', lineHeight: '1.6', color: 'var(--text-secondary)', marginBottom: '24px' }}>
-              Password reuse makes you highly vulnerable to credential stuffing. If a hacker breaches one forum, they test your email/password on banking apps.
+            <p className="prevention-section-lead">
+              If an incident has occurred, panic costs critical time. Execute these immediate containment sequences based on your specific situation.
             </p>
+          </header>
 
-            <h4 style={{ fontSize: '0.75rem', fontWeight: 'bold', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '12px' }}>
-              Why It Matters
-            </h4>
-            <div style={{ padding: '16px 20px', backgroundColor: 'var(--bg-secondary)', borderRadius: 'var(--radius-sm)', marginBottom: '24px', borderLeft: '3px solid var(--color-primary)' }}>
-              A single compromised password can lead to account takeovers across multiple unrelated sites. Multi-factor authentication acts as a secondary block even if credentials leak.
-            </div>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
-                <span style={{ fontSize: '0.7rem', fontWeight: 'bold', padding: '2px 8px', borderRadius: '3px', color: 'var(--color-success)', backgroundColor: 'var(--color-success-light)', minWidth: '120px', textAlign: 'center', textTransform: 'uppercase' }}>Good Practice</span>
-                <span style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
-                  <strong>Use passphrases:</strong> Combine 4 random dictionary words (e.g. <code>correct-horse-battery-staple</code>). They are easy to remember but mathematically nearly impossible to brute-force.
-                </span>
+          {/* HIGHEST PRIORITY: EMERGENCY FINANCIAL FRAUD CARD (SITUATION 3) */}
+          <div id="lost-money-card" className="prevention-anchor-target" />
+          <article className="prevention-emergency-hero-panel" aria-labelledby="emergency-hero-title">
+            <div className="prevention-emergency-hero-header">
+              <div className="prevention-emergency-hero-badge-row">
+                <span className="prevention-emergency-hero-badge">CRITICAL EMERGENCY · PRIORITY 1</span>
+                <span className="prevention-emergency-hero-tag">GOLDEN HOUR CONTAINMENT</span>
               </div>
-              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
-                <span style={{ fontSize: '0.7rem', fontWeight: 'bold', padding: '2px 8px', borderRadius: '3px', color: 'var(--color-info)', backgroundColor: 'var(--color-info-light)', minWidth: '120px', textAlign: 'center', textTransform: 'uppercase' }}>Recommended</span>
-                <span style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
-                  <strong>Use a password manager:</strong> Auto-generate distinct, secure passwords for every digital service.
-                </span>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
-                <span style={{ fontSize: '0.7rem', fontWeight: 'bold', padding: '2px 8px', borderRadius: '3px', color: 'var(--color-danger)', backgroundColor: 'var(--color-danger-light)', minWidth: '120px', textAlign: 'center', textTransform: 'uppercase' }}>Important</span>
-                <span style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
-                  <strong>Enable Multi-Factor Authentication (MFA):</strong> Set up Google/Microsoft Authenticator or hardware keys. Avoid SMS OTP if possible, as it is vulnerable to SIM-swapping.
-                </span>
-              </div>
-            </div>
-          </section>
-
-          {/* Section 02: Payments */}
-          <section id="payments" style={{ marginBottom: 'var(--space-xxl)', borderBottom: '1px solid var(--color-border)', paddingBottom: 'var(--space-xxl)' }}>
-            <div style={{ fontSize: '2.5rem', fontWeight: '300', color: 'var(--text-muted)', fontFamily: 'monospace' }}>02</div>
-            <h2 style={{ fontSize: '2rem', color: 'var(--text-primary)', fontWeight: 'bold', marginTop: '4px', marginBottom: '16px' }}>
-              UPI & PAYMENT SECURITY
-            </h2>
-            <div style={{ width: '40px', height: '3px', backgroundColor: 'var(--color-primary)', borderRadius: '1.5px', marginBottom: '20px' }} />
-            
-            <p style={{ fontSize: '1rem', lineHeight: '1.6', color: 'var(--text-secondary)', marginBottom: '24px' }}>
-              UPI payments transfer funds instantly out of your bank account. There is no escrow reversal mechanism.
-            </p>
-
-            <h4 style={{ fontSize: '0.75rem', fontWeight: 'bold', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '12px' }}>
-              Key Rule
-            </h4>
-            <div style={{ padding: '16px 20px', backgroundColor: 'var(--color-danger-light)', color: 'var(--color-danger, #A34D43)', borderRadius: 'var(--radius-sm)', marginBottom: '24px', borderLeft: '3px solid var(--color-danger)' }}>
-              <strong>UPI PIN is for sending money only:</strong> You never need to enter your PIN or scan a QR code to receive money, deposits, or refunds.
-            </div>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
-                <span style={{ fontSize: '0.7rem', fontWeight: 'bold', padding: '2px 8px', borderRadius: '3px', color: 'var(--color-danger)', backgroundColor: 'var(--color-danger-light)', minWidth: '120px', textAlign: 'center', textTransform: 'uppercase' }}>Important</span>
-                <span style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
-                  <strong>Verify recipient name:</strong> Before confirming any UPI transaction, look at the display name inside the app, not just the phone number.
-                </span>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
-                <span style={{ fontSize: '0.7rem', fontWeight: 'bold', padding: '2px 8px', borderRadius: '3px', color: 'var(--color-info)', backgroundColor: 'var(--color-info-light)', minWidth: '120px', textAlign: 'center', textTransform: 'uppercase' }}>Recommended</span>
-                <span style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
-                  <strong>Scan QR codes with caution:</strong> Merchants do not send QR codes to verify incoming credits. Scanning a merchant code is always an outgoing debit.
-                </span>
-              </div>
-            </div>
-          </section>
-
-          {/* Section 03: Browsing */}
-          <section id="browsing" style={{ marginBottom: 'var(--space-xxl)', borderBottom: '1px solid var(--color-border)', paddingBottom: 'var(--space-xxl)' }}>
-            <div style={{ fontSize: '2.5rem', fontWeight: '300', color: 'var(--text-muted)', fontFamily: 'monospace' }}>03</div>
-            <h2 style={{ fontSize: '2rem', color: 'var(--text-primary)', fontWeight: 'bold', marginTop: '4px', marginBottom: '16px' }}>
-              SAFE BROWSING & LINKS
-            </h2>
-            <div style={{ width: '40px', height: '3px', backgroundColor: 'var(--color-primary)', borderRadius: '1.5px', marginBottom: '20px' }} />
-            
-            <p style={{ fontSize: '1rem', lineHeight: '1.6', color: 'var(--text-secondary)', marginBottom: '24px' }}>
-              Fake portals cloning banking/university login pages are hosted on domains registered to look similar.
-            </p>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', marginBottom: '24px' }}>
-              <div style={{ display: 'flex', gap: '16px', alignItems: 'flex-start' }}>
-                <div style={{ width: '24px', height: '24px', borderRadius: '50%', backgroundColor: 'var(--bg-secondary)', color: 'var(--color-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', flexShrink: 0 }}>1</div>
-                <div>
-                  <h4 style={{ fontSize: '1rem', color: 'var(--text-primary)', margin: '0 0 4px 0', fontWeight: 'bold' }}>Check the destination TLD</h4>
-                  <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', margin: 0 }}>Official Indian government portals end in <code>.gov.in</code>. Scammers buy cheap domains like <code>.verify-gov.in</code> to spoof users.</p>
-                </div>
-              </div>
-              <div style={{ display: 'flex', gap: '16px', alignItems: 'flex-start' }}>
-                <div style={{ width: '24px', height: '24px', borderRadius: '50%', backgroundColor: 'var(--bg-secondary)', color: 'var(--color-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', flexShrink: 0 }}>2</div>
-                <div>
-                  <h4 style={{ fontSize: '1rem', color: 'var(--text-primary)', margin: '0 0 4px 0', fontWeight: 'bold' }}>Look for HTTPS</h4>
-                  <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', margin: 0 }}>Never enter credentials on pages labeled "Not Secure" (HTTP) inside the URL bar.</p>
-                </div>
-              </div>
-              <div style={{ display: 'flex', gap: '16px', alignItems: 'flex-start' }}>
-                <div style={{ width: '24px', height: '24px', borderRadius: '50%', backgroundColor: 'var(--bg-secondary)', color: 'var(--color-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', flexShrink: 0 }}>3</div>
-                <div>
-                  <h4 style={{ fontSize: '1rem', color: 'var(--text-primary)', margin: '0 0 4px 0', fontWeight: 'bold' }}>Hover and Inspect URLs</h4>
-                  <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', margin: 0 }}>Hover your mouse over links inside emails and chat logs to view the destination before tapping.</p>
-                </div>
-              </div>
-            </div>
-          </section>
-
-          {/* Section 04: Evidence */}
-          <section id="evidence" style={{ marginBottom: 'var(--space-xxl)', borderBottom: '1px solid var(--color-border)', paddingBottom: 'var(--space-xxl)' }}>
-            <div style={{ fontSize: '2.5rem', fontWeight: '300', color: 'var(--text-muted)', fontFamily: 'monospace' }}>04</div>
-            <h2 style={{ fontSize: '2rem', color: 'var(--text-primary)', fontWeight: 'bold', marginTop: '4px', marginBottom: '16px' }}>
-              DIGITAL EVIDENCE PRESERVATION
-            </h2>
-            <div style={{ width: '40px', height: '3px', backgroundColor: 'var(--color-primary)', borderRadius: '1.5px', marginBottom: '20px' }} />
-            
-            <p style={{ fontSize: '1rem', lineHeight: '1.6', color: 'var(--text-secondary)', marginBottom: '24px' }}>
-              If you fall victim to a cybercrime, preserving evidence is critical to secure an official investigation.
-            </p>
-
-            <div style={{
-              borderLeft: '4px solid var(--color-primary)',
-              backgroundColor: 'var(--bg-secondary)',
-              padding: '20px 24px',
-              borderRadius: 'var(--radius-sm)',
-              marginBottom: '24px'
-            }}>
-              <h4 style={{ fontSize: '0.95rem', fontWeight: 'bold', color: 'var(--text-primary)', textTransform: 'uppercase', letterSpacing: '0.5px', marginTop: 0, marginBottom: '8px' }}>
-                IF SOMETHING HAS ALREADY HAPPENED
-              </h4>
-              <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: 0, lineHeight: '1.5' }}>
-                Stop contact with the target profiles immediately. Do not delete chat files or logs; they are crucial forensic footprints.
+              <h3 id="emergency-hero-title" className="prevention-emergency-hero-title">
+                {EMERGENCY_FINANCIAL_ACTION.situation}
+              </h3>
+              <p className="prevention-emergency-hero-summary">
+                {EMERGENCY_FINANCIAL_ACTION.summary}
               </p>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-              <div style={{ padding: '16px', backgroundColor: 'var(--bg-secondary)', borderRadius: 'var(--radius-sm)' }}>
-                <h5 style={{ fontWeight: 'bold', color: 'var(--text-primary)', margin: '0 0 6px 0', fontSize: '0.9rem' }}>Screenshots</h5>
-                <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', margin: 0 }}>Capture profile handles, phone numbers, threat letters, and chat transcripts.</p>
+            {/* Direct Helpline 1930 Call Action Bar */}
+            <div className="prevention-emergency-hero-callout">
+              <div className="prevention-callout-text">
+                <span className="prevention-callout-eyebrow">NATIONAL CYBERCRIME HELPLINE (MHA / I4C)</span>
+                <span className="prevention-callout-number">Short Code: 1930</span>
+                <span className="prevention-callout-desc">Coordinates immediate transactional hold alerts across banks via CFCFRMS.</span>
               </div>
-              <div style={{ padding: '16px', backgroundColor: 'var(--bg-secondary)', borderRadius: 'var(--radius-sm)' }}>
-                <h5 style={{ fontWeight: 'bold', color: 'var(--text-primary)', margin: '0 0 6px 0', fontSize: '0.9rem' }}>Transactions</h5>
-                <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', margin: 0 }}>Record transaction IDs, debit bank account numbers, UPI references, and timestamps.</p>
-              </div>
-              <div style={{ padding: '16px', backgroundColor: 'var(--bg-secondary)', borderRadius: 'var(--radius-sm)' }}>
-                <h5 style={{ fontWeight: 'bold', color: 'var(--text-primary)', margin: '0 0 6px 0', fontSize: '0.9rem' }}>Headers & Links</h5>
-                <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', margin: 0 }}>Save raw EML files or copy destination spoof hyperlinks without loading them.</p>
-              </div>
-              <div style={{ padding: '16px', backgroundColor: 'var(--bg-secondary)', borderRadius: 'var(--radius-sm)' }}>
-                <h5 style={{ fontWeight: 'bold', color: 'var(--text-primary)', margin: '0 0 6px 0', fontSize: '0.9rem' }}>Alert Logs</h5>
-                <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', margin: 0 }}>Keep SMS alerts, email notification logs, and browser connection warning codes.</p>
-              </div>
-            </div>
-          </section>
-
-          {/* Section 05: If Something Goes Wrong */}
-          <section id="wrong" style={{ marginBottom: 'var(--space-xxl)', borderBottom: '1px solid var(--color-border)', paddingBottom: 'var(--space-xxl)' }}>
-            <div style={{ fontSize: '2.5rem', fontWeight: '300', color: 'var(--text-muted)', fontFamily: 'monospace' }}>05</div>
-            <h2 style={{ fontSize: '2rem', color: 'var(--text-primary)', fontWeight: 'bold', marginTop: '4px', marginBottom: '16px' }}>
-              IF SOMETHING GOES WRONG
-            </h2>
-            <div style={{ width: '40px', height: '3px', backgroundColor: 'var(--color-primary)', borderRadius: '1.5px', marginBottom: '20px' }} />
-            
-            <p style={{ fontSize: '1rem', lineHeight: '1.6', color: 'var(--text-secondary)', marginBottom: '24px' }}>
-              A standard incident response checklist to guide your recovery actions in real time:
-            </p>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-              <div style={{ display: 'flex', gap: '16px', alignItems: 'flex-start' }}>
-                <span style={{ fontSize: '0.7rem', fontWeight: 'bold', padding: '2px 8px', borderRadius: '3px', color: 'var(--color-success)', backgroundColor: 'var(--color-success-light)', minWidth: '100px', textAlign: 'center', textTransform: 'uppercase' }}>Before</span>
-                <div>
-                  <h4 style={{ fontSize: '1rem', color: 'var(--text-primary)', margin: '0 0 4px 0', fontWeight: 'bold' }}>Security Hygiene</h4>
-                  <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', margin: 0 }}>Keep recovery email links updated and enable secondary keys on account credentials.</p>
-                </div>
-              </div>
-              <div style={{ display: 'flex', gap: '16px', alignItems: 'flex-start' }}>
-                <span style={{ fontSize: '0.7rem', fontWeight: 'bold', padding: '2px 8px', borderRadius: '3px', color: 'var(--color-info)', backgroundColor: 'var(--color-info-light)', minWidth: '100px', textAlign: 'center', textTransform: 'uppercase' }}>During</span>
-                <div>
-                  <h4 style={{ fontSize: '1rem', color: 'var(--text-primary)', margin: '0 0 4px 0', fontWeight: 'bold' }}>Pause and Verify</h4>
-                  <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', margin: 0 }}>Refuse transaction deadlines and do not enter authentication codes under duress.</p>
-                </div>
-              </div>
-              <div style={{ display: 'flex', gap: '16px', alignItems: 'flex-start' }}>
-                <span style={{ fontSize: '0.7rem', fontWeight: 'bold', padding: '2px 8px', borderRadius: '3px', color: 'var(--color-danger)', backgroundColor: 'var(--color-danger-light)', minWidth: '100px', textAlign: 'center', textTransform: 'uppercase' }}>After</span>
-                <div>
-                  <h4 style={{ fontSize: '1rem', color: 'var(--text-primary)', margin: '0 0 4px 0', fontWeight: 'bold' }}>Secure, Preserve, Report</h4>
-                  <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', margin: 0 }}>Lock credentials, debited bank links, take screenshots, and raise coordinate flags on official support portals.</p>
-                </div>
+              <div className="prevention-callout-actions">
+                <a
+                  href="tel:1930"
+                  className="prevention-callout-dial-btn"
+                >
+                  <span aria-hidden="true">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
+                    </svg>
+                  </span>
+                  <span>Dial 1930 Now</span>
+                </a>
+                <button
+                  type="button"
+                  onClick={handleCopyHelpline}
+                  className="prevention-callout-copy-btn"
+                >
+                  <span aria-live="polite">
+                    {copiedHelpline ? '✓ Copied' : '📋 Copy 1930'}
+                  </span>
+                </button>
               </div>
             </div>
-          </section>
 
-          {/* Section 06: Reporting */}
-          <section id="reporting" style={{ marginBottom: 'var(--space-xxl)' }}>
-            <div style={{ fontSize: '2.5rem', fontWeight: '300', color: 'var(--text-muted)', fontFamily: 'monospace' }}>06</div>
-            <h2 style={{ fontSize: '2rem', color: 'var(--text-primary)', fontWeight: 'bold', marginTop: '4px', marginBottom: '16px' }}>
-              REPORTING & RESPONSE CHANNELS
-            </h2>
-            <div style={{ width: '40px', height: '3px', backgroundColor: 'var(--color-primary)', borderRadius: '1.5px', marginBottom: '20px' }} />
-            
-            <p style={{ fontSize: '1rem', lineHeight: '1.6', color: 'var(--text-secondary)', marginBottom: '24px' }}>
-              Use official channels to file complaints. Keep reference files ready when registering reports:
-            </p>
+            {/* Sequential 3-Step Action Path */}
+            <div className="prevention-emergency-steps-timeline">
+              {EMERGENCY_FINANCIAL_ACTION.steps.map((st, sIdx) => (
+                <div key={sIdx} className="prevention-timeline-step-card">
+                  <div className="prevention-timeline-phase-marker">{st.phase}</div>
+                  <p className="prevention-timeline-phase-action">{st.action}</p>
+                </div>
+              ))}
+            </div>
+          </article>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '24px' }}>
-              <div style={{
-                padding: '20px 24px',
-                backgroundColor: 'var(--bg-secondary)',
-                borderRadius: 'var(--radius-sm)',
-                borderLeft: '4px solid var(--color-danger, var(--color-danger, #A34D43))',
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'flex-start',
-                flexWrap: 'wrap',
-                gap: '16px'
-              }}>
-                <div style={{ flex: '1 1 360px' }}>
-                  <div style={{ display: 'flex', gap: '8px', alignItems: 'center', marginBottom: '6px' }}>
-                    <span style={{ fontSize: '0.65rem', fontWeight: 'bold', color: 'var(--color-danger, var(--color-danger, #A34D43))', border: '1px solid var(--color-danger, var(--color-danger, #A34D43))', padding: '2px 6px', borderRadius: '3px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                      Emergency Service • Golden Hour Window
-                    </span>
-                    <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>CFCFRMS / MHA</span>
+          {/* Four Distinct Action Protocols (Situations 1, 2, 4, 5) */}
+          <div className="prevention-protocols-grid">
+            {ACTION_PROTOCOLS.map((proto) => (
+              <article key={proto.id} className="prevention-protocol-card">
+                <div className="prevention-protocol-header">
+                  <div className="prevention-protocol-icon" aria-hidden="true">
+                    {proto.id === 'clicked-link' && (
+                      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+                        <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+                        <line x1="2" y1="2" x2="22" y2="22" />
+                      </svg>
+                    )}
+                    {proto.id === 'shared-otp' && (
+                      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                        <path d="M7 11V7a5 5 0 0 1 9.9-1" />
+                        <path d="M2 2l20 20" />
+                      </svg>
+                    )}
+                    {proto.id === 'sim-swapped' && (
+                      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M2 20h.01" />
+                        <path d="M7 20v-4" />
+                        <path d="M12 20v-8" />
+                        <path d="M17 20V4" />
+                        <line x1="1" y1="1" x2="23" y2="23" />
+                      </svg>
+                    )}
+                    {proto.id === 'blackmail-extortion' && (
+                      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                        <line x1="12" y1="8" x2="12" y2="12" />
+                        <line x1="12" y1="16" x2="12.01" y2="16" />
+                      </svg>
+                    )}
                   </div>
-                  <h4 style={{ fontSize: '1.15rem', color: 'var(--text-primary)', margin: '0 0 6px 0', fontWeight: 'bold' }}>
-                    National Cyber Crime Reporting Helpline: 1930
-                  </h4>
-                  <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '8px', lineHeight: '1.5' }}>
-                    Official 24/7 national coordination helpline for financial fraud and unauthorized debits. Reporting within the initial <strong>2–3 hour &quot;Golden Hour&quot;</strong> significantly enhances the chances of coordinating inter-bank hold alerts via the CFCFRMS to restrict illicit withdrawals before funds are dispersed across mule accounts. Fund freezing is not guaranteed and depends on rapid notification. <strong>The Golden Hour is not an exclusion deadline</strong> — reports filed after 3 hours or days later remain vital, officially processed 24/7, and essential for legal remedies.
-                  </p>
-                  <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-                    Official Web Portal: <a href="https://cybercrime.gov.in" target="_blank" rel="noopener noreferrer" aria-label="Open cybercrime.gov.in in a new tab" style={{ fontWeight: '600', color: 'var(--color-primary)', textDecoration: 'underline' }}>cybercrime.gov.in</a>
+                  <div>
+                    <span className="prevention-protocol-code">{proto.protocol}</span>
+                    <h3 className="prevention-protocol-title">{proto.situation}</h3>
                   </div>
                 </div>
-                <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap', alignSelf: 'center' }}>
-                  <a
-                    href="tel:1930"
-                    aria-label="Dial Helpline 1930"
-                    style={{
-                      backgroundColor: 'var(--color-danger, var(--color-danger, #A34D43))',
-                      color: 'white',
-                      padding: '8px 16px',
-                      borderRadius: '4px',
-                      fontWeight: 'bold',
-                      fontSize: '0.82rem',
-                      textDecoration: 'none',
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '4px'
-                    }}
-                  >
-                    📞 Dial 1930
-                  </a>
-                  <button
-                    onClick={handleCopyHelpline}
-                    aria-label={
-                      copiedHelpline
-                        ? 'Helpline number 1930 copied to clipboard'
-                        : copyFailed
-                          ? 'Copy failed, please dial 1930 directly'
-                          : 'Copy National Cyber Crime Helpline Number 1930'
-                    }
-                    style={{
-                      backgroundColor: 'var(--bg-white)',
-                      color: copyFailed ? 'var(--color-danger, var(--color-danger, #A34D43))' : 'var(--text-primary)',
-                      border: copyFailed ? '1px solid var(--color-danger, var(--color-danger, #A34D43))' : '1px solid var(--color-border-dark)',
-                      padding: '7px 14px',
-                      borderRadius: '4px',
-                      fontWeight: '600',
-                      fontSize: '0.82rem',
-                      cursor: 'pointer',
-                      transition: 'all 0.15s ease'
-                    }}
-                  >
-                    <span aria-live="polite">
-                      {copiedHelpline
-                        ? '✓ Copied'
-                        : copyFailed
-                          ? '⚠️ Copy failed — dial 1930'
-                          : '📋 Copy 1930'}
-                    </span>
-                  </button>
+
+                <div className="prevention-protocol-steps">
+                  {proto.steps.map((st, stIdx) => (
+                    <div key={stIdx} className="prevention-protocol-step-item">
+                      <span className="prevention-step-badge">STEP {stIdx + 1}</span>
+                      <div className="prevention-step-content">
+                        <strong className="prevention-step-label">{st.label}: </strong>
+                        <span className="prevention-step-detail">{st.detail}</span>
+                      </div>
+                    </div>
+                  ))}
                 </div>
-              </div>
+              </article>
+            ))}
+          </div>
 
-              {/* Zero-Telemetry Golden Hour Incident Docket Generator */}
-              <div style={{ margin: '20px 0' }}>
-                <IncidentDocketGenerator />
-              </div>
-
-              <div style={{ padding: '16px 20px', backgroundColor: 'var(--bg-secondary)', borderRadius: 'var(--radius-sm)' }}>
-                <h4 style={{ fontSize: '1rem', color: 'var(--text-primary)', margin: '0 0 8px 0', fontWeight: 'bold' }}>RBI Banking Ombudsman</h4>
-                <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '12px' }}>Official ombudsman for resolving banking disputes, unauthorized electronic debits, and UPI merchant claims.</p>
-                <div style={{ fontSize: '0.85rem' }}>
-                  Link: <a href="https://cms.rbi.org.in" target="_blank" rel="noopener noreferrer" style={{ fontWeight: '600', color: 'var(--color-primary)', textDecoration: 'underline' }}>cms.rbi.org.in</a>
-                </div>
-              </div>
+          <div className="prevention-qualification-box">
+            <div className="prevention-qualification-icon" aria-hidden="true">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10" />
+                <line x1="12" y1="16" x2="12" y2="12" />
+                <line x1="12" y1="8" x2="12.01" y2="8" />
+              </svg>
             </div>
-
-            <div className="alert alert-warning" style={{ fontSize: '0.85rem', padding: '16px' }}>
-              <strong>Educational Project Disclaimer:</strong> This portal is compiled for public awareness education and is <strong>not</strong> a government police reporting authority. Do not submit active case details or credentials here. Report crimes directly to the verified links above.
-            </div>
-          </section>
-
-        </div>
-
-        {/* Desktop Optional Right Rail */}
-        {!isMobile && (
-          <div style={{ position: 'sticky', top: '140px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
-            <div style={{ borderLeft: '3px solid var(--color-primary)', paddingLeft: '16px', backgroundColor: 'var(--bg-secondary)', padding: '16px', borderRadius: 'var(--radius-sm)' }}>
-              <h4 style={{ fontSize: '0.8rem', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: '12px', fontWeight: '800', letterSpacing: '0.5px' }}>
-                Quick Checklist
-              </h4>
-              <ul style={{ paddingLeft: '16px', fontSize: '0.8rem', color: 'var(--text-secondary)', display: 'flex', flexDirection: 'column', gap: '8px', margin: 0 }}>
-                <li>Unique Passwords</li>
-                <li>App-based MFA</li>
-                <li>Verify recipient display name</li>
-                <li>Inspect URL domain TLDs</li>
-                <li>Helpline is 1930</li>
-              </ul>
+            <div className="prevention-qualification-text">
+              <strong>Statutory &amp; Operational Reality:</strong> Reporting via Helpline 1930 coordinates urgent communication via CFCFRMS across financial institutions, but <strong>does not guarantee that fraudulent funds will be frozen, reversed, or recovered</strong>. Final restitution depends on prompt notification within the 2–3 hour window, individual bank dispute resolution under RBI Customer Liability Master Directions, and police investigation.
             </div>
           </div>
-        )}
+        </section>
+
+        {/* ================================================================
+            SECTION 4: KEEP THE IMPORTANT DETAILS (FORENSIC EVIDENCE BOARD)
+            ================================================================ */}
+        <section id="evidence" className="prevention-quick-section" aria-labelledby="evidence-heading">
+          <header className="prevention-section-header">
+            <div className="prevention-section-eyebrow-row">
+              <span className="prevention-section-eyebrow">EVIDENCE INTEGRITY · 04</span>
+              <span className="prevention-section-status-tag">BSA 2023 SPECIMENS</span>
+            </div>
+            <h2 id="evidence-heading" className="prevention-section-title">
+              Keep the Important Details
+            </h2>
+            <p className="prevention-section-lead">
+              Digital evidence must be preserved in its original, unaltered form to remain credible and legally admissible. Review the six forensic specimens required for police dockets and banking claims.
+            </p>
+          </header>
+
+          <div className="prevention-forensic-board">
+            {FORENSIC_SPECIMENS.map((item) => (
+              <div key={item.id} className="prevention-specimen-card">
+                <div className="prevention-specimen-top">
+                  <span className="prevention-specimen-tag">{item.code}</span>
+                  <div className="prevention-specimen-icon" aria-hidden="true">
+                    {item.id === 'ev-screenshots' && (
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <rect x="2" y="3" width="20" height="14" rx="2" ry="2" />
+                        <line x1="8" y1="21" x2="16" y2="21" />
+                        <line x1="12" y1="17" x2="12" y2="21" />
+                      </svg>
+                    )}
+                    {item.id === 'ev-transactions' && (
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                        <polyline points="14 2 14 8 20 8" />
+                        <line x1="16" y1="13" x2="8" y2="13" />
+                        <line x1="16" y1="17" x2="8" y2="17" />
+                        <polyline points="10 9 9 9 8 9" />
+                      </svg>
+                    )}
+                    {item.id === 'ev-contacts' && (
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
+                        <polyline points="22,6 12,13 2,6" />
+                      </svg>
+                    )}
+                    {item.id === 'ev-urls' && (
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+                        <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+                      </svg>
+                    )}
+                    {item.id === 'ev-timestamps' && (
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <circle cx="12" cy="12" r="10" />
+                        <polyline points="12 6 12 12 16 14" />
+                      </svg>
+                    )}
+                    {item.id === 'ev-files' && (
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
+                        <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
+                        <line x1="12" y1="22.08" x2="12" y2="12" />
+                      </svg>
+                    )}
+                  </div>
+                </div>
+                <h3 className="prevention-specimen-title">{item.label}</h3>
+                <p className="prevention-specimen-cue">{item.cue}</p>
+              </div>
+            ))}
+          </div>
+
+          <div className="prevention-bsa-notice">
+            <div className="prevention-bsa-icon" aria-hidden="true">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 3v18" />
+                <rect x="3" y="7" width="18" height="4" rx="1" />
+                <path d="M6 11l-2 5a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2l-2-5" />
+                <path d="M18 11l-2 5a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2l-2-5" />
+              </svg>
+            </div>
+            <div className="prevention-bsa-text">
+              <strong>Statutory Admissibility Standard:</strong> Under Section 63 of the Bharatiya Sakshya Adhiniyam, 2023 (BSA), electronic records are admissible in court when their integrity, hash state, and custodial origin are reliably preserved without modification. Never crop, annotate, or filter digital evidence screenshots before submission.{' '}
+              <Link to={`${getContextPath('/laws')}#BSA-Section-63`} className="prevention-inline-link">
+                Learn more about BSA Section 63 in Cyber Laws &rarr;
+              </Link>
+            </div>
+          </div>
+        </section>
+
+        {/* ================================================================
+            SECTION 5: DOCUMENT YOUR INCIDENT (DOCKET WORKSPACE)
+            ================================================================ */}
+        <div id="reporting" className="prevention-anchor-target" />
+        <section id="docket" className="prevention-quick-section" aria-labelledby="docket-heading">
+          <header className="prevention-section-header">
+            <div className="prevention-section-eyebrow-row">
+              <span className="prevention-section-eyebrow">INCIDENT DOCUMENTATION · 05</span>
+              <span className="prevention-section-status-tag">BROWSER WORKSPACE</span>
+            </div>
+            <h2 id="docket-heading" className="prevention-section-title">
+              Document Your Incident
+            </h2>
+            <p className="prevention-section-lead">
+              Organize your incident details into a structured, printable report before reporting to your bank or the cyber police.
+            </p>
+          </header>
+
+          <div className="prevention-docket-workspace-card">
+            <div className="prevention-docket-workspace-banner">
+              <div>
+                <span className="prevention-docket-tool-badge">ZERO-TELEMETRY BROWSER TOOL</span>
+                <h3 className="prevention-docket-workspace-heading">
+                  Citizen Incident Docket Workspace
+                </h3>
+                <p className="prevention-docket-workspace-desc">
+                  This interactive tool runs entirely in your local browser memory. It helps you prepare an organized, court-ready incident dossier for submission to your bank or law enforcement. It does not file a police complaint or guarantee acceptance by an authority.
+                </p>
+              </div>
+              <div className="prevention-docket-privacy-stamp" aria-hidden="true">
+                <span className="prevention-stamp-lock">🔒</span>
+                <span className="prevention-stamp-text">100% Client-Side Privacy Guaranteed</span>
+              </div>
+            </div>
+
+            <div className="prevention-docket-workspace-body">
+              <IncidentDocketGenerator initialCategory="unauthorized_upi" />
+            </div>
+          </div>
+        </section>
 
       </div>
 
-      {/* Dynamic branding tagline at the bottom */}
-      <div style={{ textAlign: 'center', marginTop: 'var(--space-xxl)', paddingTop: '24px', borderTop: '1px dashed var(--color-border)' }}>
-        <span style={{ fontSize: '1rem', fontWeight: '600', color: 'var(--text-secondary)', letterSpacing: '0.5px' }}>
-          Learn. Recognize. Stay Safe.
-        </span>
-      </div>
+      {/* ------------------------------------------------------------------
+          CLOSING REFERRAL: NEED OFFICIAL HELP?
+          ------------------------------------------------------------------ */}
+      <section className="prevention-referral-card" aria-labelledby="referral-heading">
+        <div className="prevention-referral-seal" aria-hidden="true">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+            <path d="M9 12l2 2 4-4" />
+          </svg>
+        </div>
+        <div className="prevention-referral-text">
+          <h2 id="referral-heading" className="prevention-referral-title">
+            Need official help?
+          </h2>
+          <p className="prevention-referral-desc">
+            Find verified cybercrime reporting portals, regulatory ombudsmen, toll-free helplines, and state cyber police desks.
+          </p>
+        </div>
 
+        <Link
+          to={getContextPath('/resources')}
+          className="prevention-referral-btn"
+        >
+          <span>Visit Official Resources Directory &rarr;</span>
+        </Link>
+      </section>
     </div>
   );
 }
-
-export default Prevention;

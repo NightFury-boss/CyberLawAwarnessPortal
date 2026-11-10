@@ -336,20 +336,27 @@ exports.submitQuiz = async (req, res) => {
 
       // Format 2: multiple_choice (Multi-select MCQ)
       else if (format === 'multiple_choice') {
-        const selectedIndices = Array.isArray(ans.selectedOptionIndices) ? ans.selectedOptionIndices : [];
+        const rawIndices = Array.isArray(ans.selectedOptionIndices) ? ans.selectedOptionIndices : [];
+        const numOptions = q.options?.length || 0;
+        const validIntegers = rawIndices.every(idx => Number.isInteger(idx) && idx >= 0 && idx < numOptions);
+        const uniqueIndices = new Set(rawIndices);
+        const hasDuplicates = uniqueIndices.size !== rawIndices.length;
+        const selectedIndices = (!hasDuplicates && validIntegers) ? rawIndices : [];
+
         const correctIndices = Array.isArray(q.correctOptionIndices) ? q.correctOptionIndices : [];
 
-        humanUserAnswer = selectedIndices.length > 0
-          ? selectedIndices.map(i => q.options[i] || `Option ${i + 1}`).join('; ')
+        humanUserAnswer = rawIndices.length > 0
+          ? rawIndices.map(i => q.options[i] || `Option ${i + 1}`).join('; ')
           : 'None selected';
         humanCorrectAnswer = correctIndices.map(i => q.options[i] || `Option ${i + 1}`).join('; ');
 
-        if (selectedIndices.length === 0) {
+        if (rawIndices.length === 0) {
           unansweredCount++;
+        } else if (hasDuplicates || !validIntegers) {
+          incorrectCount++;
+          specificWhyIncorrect = 'Submission contained invalid or duplicate option indices.';
         } else {
           const correctSet = new Set(correctIndices);
-          const selectedSet = new Set(selectedIndices);
-
           let correctHits = 0;
           let wrongHits = 0;
 
@@ -381,32 +388,61 @@ exports.submitQuiz = async (req, res) => {
         const submittedPairs = Array.isArray(ans.selectedPairs) ? ans.selectedPairs : [];
         const authoritativePairs = q.matchingPairs || [];
 
-        humanUserAnswer = submittedPairs.map(p => `${p.left} → ${p.right}`).join('; ');
+        humanUserAnswer = submittedPairs.map(p => `${p?.left} → ${p?.right}`).join('; ');
         humanCorrectAnswer = authoritativePairs.map(p => `${p.left} → ${p.right}`).join('; ');
 
         if (submittedPairs.length === 0) {
           unansweredCount++;
         } else {
-          let matchedCount = 0;
+          const authLeftSet = new Set(authoritativePairs.map(p => p.left));
+          const authRightSet = new Set(authoritativePairs.map(p => p.right));
           const authMap = new Map(authoritativePairs.map(p => [p.left, p.right]));
 
-          submittedPairs.forEach(p => {
-            if (authMap.get(p.left) === p.right) matchedCount++;
-          });
+          const seenLefts = new Set();
+          const seenRights = new Set();
+          let matchedCount = 0;
+          let hasDuplicateOrInvalid = false;
 
-          if (matchedCount === authoritativePairs.length && authoritativePairs.length > 0) {
+          for (const p of submittedPairs) {
+            if (!p || typeof p.left !== 'string' || typeof p.right !== 'string') {
+              hasDuplicateOrInvalid = true;
+              break;
+            }
+            if (seenLefts.has(p.left) || seenRights.has(p.right)) {
+              hasDuplicateOrInvalid = true;
+              break;
+            }
+            if (!authLeftSet.has(p.left) || !authRightSet.has(p.right)) {
+              hasDuplicateOrInvalid = true;
+              break;
+            }
+            if (authMap.get(p.left) === p.right) {
+              matchedCount++;
+            }
+            seenLefts.add(p.left);
+            seenRights.add(p.right);
+          }
+
+          if (
+            !hasDuplicateOrInvalid &&
+            authoritativePairs.length > 0 &&
+            submittedPairs.length === authoritativePairs.length &&
+            matchedCount === authoritativePairs.length
+          ) {
             isCorrect = true;
             partialScore = 1.0;
             correctCount++;
             topicTracker[category].correct++;
-          } else if (matchedCount > 0) {
+          } else if (!hasDuplicateOrInvalid && matchedCount > 0 && submittedPairs.length === authoritativePairs.length) {
             partialScore = Number((matchedCount / authoritativePairs.length).toFixed(2));
             totalScoreEarned += partialScore;
             incorrectCount++;
             specificWhyIncorrect = `Matched ${matchedCount} of ${authoritativePairs.length} pairs correctly.`;
           } else {
             incorrectCount++;
-            specificWhyIncorrect = 'None of the submitted pair associations matched the statutory definitions.';
+            specificWhyIncorrect = hasDuplicateOrInvalid
+              ? 'Matching submission contained duplicate or invalid provision pairings.'
+              : 'None of the submitted pair associations matched the statutory definitions.';
           }
         }
       }
@@ -415,15 +451,21 @@ exports.submitQuiz = async (req, res) => {
       else if (format === 'ordering') {
         const submittedSeq = Array.isArray(ans.selectedSequence) ? ans.selectedSequence : [];
         const authSeq = q.sequenceItems || [];
+        const authSet = new Set(authSeq);
+        const hasDuplicates = new Set(submittedSeq).size !== submittedSeq.length;
+        const allValid = submittedSeq.every(item => typeof item === 'string' && authSet.has(item));
 
         humanUserAnswer = submittedSeq.join(' → ');
         humanCorrectAnswer = authSeq.join(' → ');
 
         if (submittedSeq.length === 0) {
           unansweredCount++;
+        } else if (hasDuplicates || !allValid || submittedSeq.length !== authSeq.length) {
+          incorrectCount++;
+          specificWhyIncorrect = 'Ordering sequence contained invalid, duplicate, or incomplete steps.';
         } else {
           let correctPositions = 0;
-          for (let sIdx = 0; sIdx < Math.min(submittedSeq.length, authSeq.length); sIdx++) {
+          for (let sIdx = 0; sIdx < authSeq.length; sIdx++) {
             if (submittedSeq[sIdx] === authSeq[sIdx]) correctPositions++;
           }
 
@@ -443,23 +485,29 @@ exports.submitQuiz = async (req, res) => {
 
       // Format 5: indicator_identification
       else if (format === 'indicator_identification') {
-        const selectedIndicatorIds = Array.isArray(ans.selectedIndicatorIds) ? ans.selectedIndicatorIds : [];
+        const rawIndicatorIds = Array.isArray(ans.selectedIndicatorIds) ? ans.selectedIndicatorIds : [];
         const indicators = q.indicators || [];
+        const validIdSet = new Set(indicators.map(ind => ind.id));
         const trueSuspiciousIds = indicators.filter(ind => ind.isSuspicious).map(ind => ind.id);
+        const hasDuplicates = new Set(rawIndicatorIds).size !== rawIndicatorIds.length;
+        const allValid = rawIndicatorIds.every(id => typeof id === 'string' && validIdSet.has(id));
 
-        humanUserAnswer = selectedIndicatorIds.length > 0
-          ? indicators.filter(ind => selectedIndicatorIds.includes(ind.id)).map(ind => ind.text).join('; ')
+        humanUserAnswer = rawIndicatorIds.length > 0
+          ? indicators.filter(ind => rawIndicatorIds.includes(ind.id)).map(ind => ind.text).join('; ')
           : 'No indicators flagged';
         humanCorrectAnswer = indicators.filter(ind => ind.isSuspicious).map(ind => ind.text).join('; ');
 
-        if (selectedIndicatorIds.length === 0) {
+        if (rawIndicatorIds.length === 0) {
           unansweredCount++;
+        } else if (hasDuplicates || !allValid) {
+          incorrectCount++;
+          specificWhyIncorrect = 'Submission contained invalid or duplicate indicator identifiers.';
         } else {
           const trueSet = new Set(trueSuspiciousIds);
           let correctFlags = 0;
           let falseAlarms = 0;
 
-          selectedIndicatorIds.forEach(id => {
+          rawIndicatorIds.forEach(id => {
             if (trueSet.has(id)) correctFlags++;
             else falseAlarms++;
           });
@@ -611,10 +659,14 @@ exports.submitQuiz = async (req, res) => {
       }
     }
 
-    // Identify missed questions and add to quizRecallItems for spaced retrieval
+    // Identify missed and correct questions and synchronize with quizRecallItems
     const missedQuestionIds = evaluatedAnswers
       .filter(a => a.isCorrect === false)
-      .map(a => a.questionId);
+      .map(a => a.questionId.toString());
+
+    const correctQuestionIds = evaluatedAnswers
+      .filter(a => a.isCorrect === true)
+      .map(a => a.questionId.toString());
 
     const progressDoc = await UserProgress.findOne({ userId });
     if (progressDoc) {
@@ -622,27 +674,45 @@ exports.submitQuiz = async (req, res) => {
         progressDoc.quizRecallItems = [];
       }
 
-      for (const qId of missedQuestionIds) {
-        const qObj = questionMap.get(qId.toString());
+      for (const qIdStr of missedQuestionIds) {
+        const qObj = questionMap.get(qIdStr);
         const existingIdx = progressDoc.quizRecallItems.findIndex(
-          item => item.questionId.toString() === qId.toString()
+          item => item.questionId.toString() === qIdStr
         );
 
         if (existingIdx !== -1) {
           progressDoc.quizRecallItems[existingIdx].missedCount = (progressDoc.quizRecallItems[existingIdx].missedCount || 1) + 1;
           progressDoc.quizRecallItems[existingIdx].mastered = false;
+          progressDoc.quizRecallItems[existingIdx].isResolved = false;
+          progressDoc.quizRecallItems[existingIdx].lastRecallCorrect = false;
           progressDoc.quizRecallItems[existingIdx].lastAttemptedAt = new Date();
           progressDoc.quizRecallItems[existingIdx].nextReviewDue = new Date();
         } else {
           progressDoc.quizRecallItems.push({
-            questionId: qId,
+            questionId: qObj?._id || qIdStr,
             sourceAttemptId: attempt._id,
             category: qObj?.category || 'General',
             missedCount: 1,
             mastered: false,
+            isResolved: false,
+            lastRecallCorrect: false,
             lastAttemptedAt: new Date(),
             nextReviewDue: new Date()
           });
+        }
+      }
+
+      // Bidirectional sync: if question was previously missed, but answered correctly in regular practice, resolve it
+      for (const qIdStr of correctQuestionIds) {
+        const existingIdx = progressDoc.quizRecallItems.findIndex(
+          item => item.questionId.toString() === qIdStr
+        );
+        if (existingIdx !== -1 && (!progressDoc.quizRecallItems[existingIdx].isResolved || !progressDoc.quizRecallItems[existingIdx].mastered)) {
+          progressDoc.quizRecallItems[existingIdx].mastered = true;
+          progressDoc.quizRecallItems[existingIdx].isResolved = true;
+          progressDoc.quizRecallItems[existingIdx].resolvedAt = new Date();
+          progressDoc.quizRecallItems[existingIdx].lastRecallCorrect = true;
+          progressDoc.quizRecallItems[existingIdx].lastAttemptedAt = new Date();
         }
       }
 
@@ -729,11 +799,10 @@ exports.getQuizHistory = async (req, res) => {
       .filter(ts => ts.accuracy < 70 && ts.totalQuestions >= 3)
       .sort((a, b) => a.accuracy - b.accuracy);
 
-    // Check count of due unmastered quiz recall items
+    // Check count of unmastered/unresolved quiz recall items
     const progress = await UserProgress.findOne({ userId });
-    const now = new Date();
     const dueRecallCount = (progress?.quizRecallItems || []).filter(
-      item => !item.mastered && (!item.nextReviewDue || new Date(item.nextReviewDue) <= now)
+      item => !item.isResolved && !item.mastered
     ).length;
 
     const overallAccuracyPercent = totalQuestionsAttempted > 0
@@ -784,12 +853,11 @@ exports.getDueQuizRecallItems = async (req, res) => {
       return res.json({ success: true, dueItems: [], totalDue: 0 });
     }
 
-    const now = new Date();
     const unmastered = progress.quizRecallItems.filter(item =>
+      !item.isResolved &&
       !item.mastered &&
       item.questionId &&
-      item.questionId.published !== false &&
-      (!item.nextReviewDue || new Date(item.nextReviewDue) <= now)
+      item.questionId.published !== false
     );
 
     // Sanitize questions to enforce strict answer secrecy before evaluation
@@ -826,18 +894,18 @@ exports.submitQuizRecall = async (req, res) => {
     const userId = req.user._id;
     const { questionId, answer } = req.body;
 
-    if (!questionId) {
+    if (!questionId || !mongoose.Types.ObjectId.isValid(questionId)) {
       return res.status(400).json({
         success: false,
-        error: { code: 'INVALID_PARAMETERS', message: 'questionId is required.' }
+        error: { code: 'INVALID_PARAMETERS', message: 'A valid questionId is required.' }
       });
     }
 
     const question = await QuizQuestion.findById(questionId);
-    if (!question) {
+    if (!question || question.published === false) {
       return res.status(404).json({
         success: false,
-        error: { code: 'QUESTION_NOT_FOUND', message: 'Question not found.' }
+        error: { code: 'QUESTION_NOT_FOUND', message: 'Question not found or not published.' }
       });
     }
 
@@ -849,32 +917,111 @@ exports.submitQuizRecall = async (req, res) => {
       });
     }
 
+    // Verify learner has an unresolved recall entry in quizRecallItems
+    const recallItem = (progress.quizRecallItems || []).find(
+      it => it.questionId.toString() === questionId.toString() && !it.mastered && !it.isResolved
+    );
+    if (!recallItem) {
+      return res.status(400).json({
+        success: false,
+        error: { code: 'NO_DUE_RECALL', message: 'No unresolved recall item found for this question.' }
+      });
+    }
+
     const format = question.format || 'single_choice';
     let isCorrect = false;
 
     if (['single_choice', 'true_false', 'scenario_decision', 'legal_application'].includes(format)) {
       const selected = typeof answer === 'object' ? answer?.selectedOptionIndex : answer;
-      isCorrect = (selected === question.correctOptionIndex);
+      const validIndex = Number.isInteger(selected) && selected >= 0 && selected < (question.options?.length || 0);
+      isCorrect = validIndex && (selected === question.correctOptionIndex);
     } else if (format === 'multiple_choice') {
-      const selected = Array.isArray(answer?.selectedOptionIndices) ? answer.selectedOptionIndices : [];
-      const correct = question.correctOptionIndices || [];
-      isCorrect = (selected.length === correct.length && selected.every(idx => correct.includes(idx)));
+      const rawIndices = Array.isArray(answer?.selectedOptionIndices) ? answer.selectedOptionIndices : [];
+      const numOptions = question.options?.length || 0;
+      const validIntegers = rawIndices.every(idx => Number.isInteger(idx) && idx >= 0 && idx < numOptions);
+      const uniqueIndices = new Set(rawIndices);
+      const hasDuplicates = uniqueIndices.size !== rawIndices.length;
+
+      const correctIndices = Array.isArray(question.correctOptionIndices) ? question.correctOptionIndices : [];
+      const correctSet = new Set(correctIndices);
+
+      isCorrect = (
+        correctIndices.length > 0 &&
+        validIntegers &&
+        !hasDuplicates &&
+        rawIndices.length === correctIndices.length &&
+        rawIndices.every(idx => correctSet.has(idx))
+      );
     } else if (format === 'matching') {
       const submittedPairs = Array.isArray(answer?.selectedPairs) ? answer.selectedPairs : [];
-      const authMap = new Map((question.matchingPairs || []).map(p => [p.left, p.right]));
-      let matchCount = 0;
-      submittedPairs.forEach(p => {
-        if (authMap.get(p.left) === p.right) matchCount++;
-      });
-      isCorrect = (matchCount === (question.matchingPairs?.length || 0));
+      const authPairs = Array.isArray(question.matchingPairs) ? question.matchingPairs : [];
+      const authLeftSet = new Set(authPairs.map(p => p.left));
+      const authRightSet = new Set(authPairs.map(p => p.right));
+      const authMap = new Map(authPairs.map(p => [p.left, p.right]));
+
+      if (authPairs.length > 0 && submittedPairs.length === authPairs.length) {
+        const seenLefts = new Set();
+        const seenRights = new Set();
+        let allValidAndMatched = true;
+
+        for (const p of submittedPairs) {
+          if (!p || typeof p.left !== 'string' || typeof p.right !== 'string') {
+            allValidAndMatched = false;
+            break;
+          }
+          if (seenLefts.has(p.left) || seenRights.has(p.right)) {
+            // Rejects duplicate left or duplicate right mapping (requires 1-to-1 unique mapping)
+            allValidAndMatched = false;
+            break;
+          }
+          if (!authLeftSet.has(p.left) || !authRightSet.has(p.right)) {
+            // Rejects invalid keys/values
+            allValidAndMatched = false;
+            break;
+          }
+          if (authMap.get(p.left) !== p.right) {
+            allValidAndMatched = false;
+            break;
+          }
+          seenLefts.add(p.left);
+          seenRights.add(p.right);
+        }
+
+        isCorrect = allValidAndMatched && (seenLefts.size === authPairs.length);
+      } else {
+        isCorrect = false;
+      }
     } else if (format === 'ordering') {
       const submittedSeq = Array.isArray(answer?.selectedSequence) ? answer.selectedSequence : [];
-      const authSeq = question.sequenceItems || [];
-      isCorrect = (submittedSeq.length === authSeq.length && submittedSeq.every((item, i) => item === authSeq[i]));
+      const authSeq = Array.isArray(question.sequenceItems) ? question.sequenceItems : [];
+      const authSet = new Set(authSeq);
+      const hasDuplicates = new Set(submittedSeq).size !== submittedSeq.length;
+      const allValid = submittedSeq.every(item => typeof item === 'string' && authSet.has(item));
+
+      isCorrect = (
+        authSeq.length > 0 &&
+        !hasDuplicates &&
+        allValid &&
+        submittedSeq.length === authSeq.length &&
+        submittedSeq.every((item, i) => item === authSeq[i])
+      );
     } else if (format === 'indicator_identification') {
-      const selectedIds = Array.isArray(answer?.selectedIndicatorIds) ? answer.selectedIndicatorIds : [];
-      const trueSuspicious = (question.indicators || []).filter(ind => ind.isSuspicious).map(ind => ind.id);
-      isCorrect = (selectedIds.length === trueSuspicious.length && selectedIds.every(id => trueSuspicious.includes(id)));
+      const rawIds = Array.isArray(answer?.selectedIndicatorIds) ? answer.selectedIndicatorIds : [];
+      const indicators = Array.isArray(question.indicators) ? question.indicators : [];
+      const validIdSet = new Set(indicators.map(ind => ind.id));
+      const trueSuspicious = indicators.filter(ind => ind.isSuspicious).map(ind => ind.id);
+      const trueSuspiciousSet = new Set(trueSuspicious);
+
+      const allValidStrings = rawIds.every(id => typeof id === 'string' && validIdSet.has(id));
+      const hasDuplicates = new Set(rawIds).size !== rawIds.length;
+
+      isCorrect = (
+        trueSuspicious.length > 0 &&
+        allValidStrings &&
+        !hasDuplicates &&
+        rawIds.length === trueSuspicious.length &&
+        rawIds.every(id => trueSuspiciousSet.has(id))
+      );
     }
 
     // Update progress item
@@ -886,29 +1033,98 @@ exports.submitQuizRecall = async (req, res) => {
       const it = progress.quizRecallItems[itemIdx];
       if (isCorrect) {
         it.mastered = true;
+        it.isResolved = true;
+        it.resolvedAt = new Date();
+        it.lastRecallCorrect = true;
+        it.lastAttemptedAt = new Date();
       } else {
         it.missedCount = (it.missedCount || 1) + 1;
         it.mastered = false;
-        // Schedule next recall 3 days from now
-        it.nextReviewDue = new Date(Date.now() + 3 * 86400000);
+        it.isResolved = false;
+        it.lastRecallCorrect = false;
+        it.lastAttemptedAt = new Date();
+        // Self-paced revision: immediately available without forced lockouts
+        it.nextReviewDue = new Date();
       }
+
+      if (!Array.isArray(it.reviewHistory)) {
+        it.reviewHistory = [];
+      }
+
+      // Normalize selectedAnswer to format-specific structure preventing arbitrary payload retention
+      let normalizedAnswer = null;
+      let selectedOptIdx = null;
+
+      if (['single_choice', 'true_false', 'scenario_decision', 'legal_application'].includes(format)) {
+        const selected = typeof answer === 'object' ? answer?.selectedOptionIndex : answer;
+        const validIndex = Number.isInteger(selected) && selected >= 0 && selected < (question.options?.length || 0);
+        selectedOptIdx = validIndex ? selected : null;
+        normalizedAnswer = { selectedOptionIndex: selectedOptIdx };
+      } else if (format === 'multiple_choice') {
+        const rawIndices = Array.isArray(answer?.selectedOptionIndices) ? answer.selectedOptionIndices : [];
+        const numOptions = question.options?.length || 0;
+        const validIntegers = rawIndices.every(idx => Number.isInteger(idx) && idx >= 0 && idx < numOptions);
+        const uniqueIndices = new Set(rawIndices);
+        const hasDuplicates = uniqueIndices.size !== rawIndices.length;
+        const safeIndices = (!hasDuplicates && validIntegers) ? [...rawIndices].sort((a, b) => a - b) : [];
+        normalizedAnswer = { selectedOptionIndices: safeIndices };
+      } else if (format === 'matching') {
+        const submittedPairs = Array.isArray(answer?.selectedPairs) ? answer.selectedPairs : [];
+        const safePairs = submittedPairs
+          .filter(p => p && typeof p.left === 'string' && typeof p.right === 'string')
+          .map(p => ({ left: p.left, right: p.right }));
+        normalizedAnswer = { selectedPairs: safePairs };
+      } else if (format === 'ordering') {
+        const submittedSeq = Array.isArray(answer?.selectedSequence) ? answer.selectedSequence : [];
+        const safeSeq = submittedSeq.filter(item => typeof item === 'string');
+        normalizedAnswer = { selectedSequence: safeSeq };
+      } else if (format === 'indicator_identification') {
+        const rawIds = Array.isArray(answer?.selectedIndicatorIds) ? answer.selectedIndicatorIds : [];
+        const safeIds = rawIds.filter(id => typeof id === 'string');
+        normalizedAnswer = { selectedIndicatorIds: safeIds };
+      }
+
       it.reviewHistory.push({
         reviewedAt: new Date(),
-        selectedOptionIndex: typeof answer === 'object' ? answer?.selectedOptionIndex : answer,
+        selectedOptionIndex: selectedOptIdx,
+        selectedAnswer: normalizedAnswer,
         isCorrect
       });
+
+      // Cap reviewHistory to last 10 entries to prevent unbounded growth
+      if (it.reviewHistory.length > 10) {
+        it.reviewHistory = it.reviewHistory.slice(-10);
+      }
+
       await progress.save();
     }
 
-    res.json({
+    const hasRecallItem = itemIdx !== -1;
+    const isPublished = question.published !== false;
+    const shouldIncludeSolution = !isCorrect && hasRecallItem && isPublished;
+
+    const responsePayload = {
       success: true,
       isCorrect,
       mastered: isCorrect,
+      isResolved: isCorrect,
       explanation: question.explanation,
       whyIncorrect: isCorrect ? null : (question.whyIncorrect || 'This choice does not align with the established statutory rule.'),
       practicalTakeaway: question.practicalTakeaway || 'Always verify digital communications through trusted independent channels.',
       legalReferences: question.legalReferences || []
-    });
+    };
+
+    if (shouldIncludeSolution) {
+      responsePayload.solution = {
+        correctOptionIndex: question.correctOptionIndex,
+        correctOptionIndices: question.correctOptionIndices || [],
+        matchingPairs: question.matchingPairs || [],
+        sequenceItems: question.sequenceItems || [],
+        indicators: question.indicators || []
+      };
+    }
+
+    res.json(responsePayload);
   } catch (error) {
     res.status(500).json({
       success: false,

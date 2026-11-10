@@ -43,6 +43,30 @@ const UserProgressSchema = new mongoose.Schema({
         type: Number,
         default: null
       },
+      checkResults: [
+        {
+          checkIndex: {
+            type: Number,
+            required: true
+          },
+          checkId: {
+            type: String,
+            trim: true
+          },
+          lastAnswerIndex: {
+            type: Number,
+            default: null
+          },
+          isCorrect: {
+            type: Boolean,
+            default: false
+          },
+          attemptedAt: {
+            type: Date,
+            default: Date.now
+          }
+        }
+      ],
       lastAccessedAt: {
         type: Date,
         default: Date.now
@@ -223,6 +247,17 @@ const UserProgressSchema = new mongoose.Schema({
         type: Boolean,
         default: false
       },
+      isResolved: {
+        type: Boolean,
+        default: false
+      },
+      resolvedAt: {
+        type: Date
+      },
+      lastRecallCorrect: {
+        type: Boolean,
+        default: false
+      },
       lastAttemptedAt: {
         type: Date,
         default: Date.now
@@ -239,6 +274,9 @@ const UserProgressSchema = new mongoose.Schema({
           },
           selectedOptionIndex: {
             type: Number
+          },
+          selectedAnswer: {
+            type: mongoose.Schema.Types.Mixed
           },
           isCorrect: {
             type: Boolean
