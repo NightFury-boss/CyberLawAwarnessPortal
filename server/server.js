@@ -8,6 +8,7 @@ const mongoose = require('mongoose');
 dotenv.config({ path: path.join(__dirname, '.env') });
 
 const { validateProductionConfig, validateClientUrl } = require('./config/productionSecurity');
+const { logSafeServerError, sendStructuredError } = require('./utils/apiErrorResponder');
 
 // Fail-closed validation for production startup
 if (process.env.NODE_ENV === 'production') {
@@ -107,24 +108,22 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-// Error handling middleware to prevent raw stack trace exposure
+// Error handling middleware to prevent raw stack trace or internal DB error exposure
 app.use((err, req, res, next) => {
   if (err.message && err.message.includes('CORS policy')) {
     return res.status(403).json({
       success: false,
       error: {
         code: 'CORS_FORBIDDEN',
-        message: err.message
+        message: 'Access denied: Origin not allowed by CORS policy'
       }
     });
   }
-  console.error(err.stack);
-  res.status(err.status || 500).json({
-    success: false,
-    error: {
-      code: err.code || 'INTERNAL_SERVER_ERROR',
-      message: err.message || 'An internal server error occurred'
-    }
+  return sendStructuredError(res, err, {
+    contextLabel: '[Global Express Error]',
+    defaultStatus: 500,
+    defaultCode: 'INTERNAL_SERVER_ERROR',
+    defaultMessage: 'An internal server error occurred.'
   });
 });
 
@@ -138,12 +137,12 @@ if (require.main === module) {
 
 module.exports = app;
 
-// Process-level monitors for uncaught errors and rejections
-process.on('unhandledRejection', (reason, promise) => {
-  console.error('[Unhandled Rejection] Promise:', promise, 'Reason:', reason);
+// Process-level monitors for uncaught errors and rejections (credential-redacted)
+process.on('unhandledRejection', (reason) => {
+  logSafeServerError('[Unhandled Rejection]', reason instanceof Error ? reason : new Error(String(reason)));
 });
 
 process.on('uncaughtException', (err) => {
-  console.error('[Uncaught Exception] Critical Error:', err);
+  logSafeServerError('[Uncaught Exception]', err);
   process.exit(1);
 });

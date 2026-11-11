@@ -1,12 +1,15 @@
+const mongoose = require('mongoose');
 const LearningModule = require('../models/LearningModule');
 const LawSection = require('../models/LawSection');
 const CyberCrime = require('../models/CyberCrime');
 const CaseStudy = require('../models/CaseStudy');
 const UserProgress = require('../models/UserProgress');
-const AdminAuditLog = require('../models/AdminAuditLog');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
+const auditService = require('../services/auditService');
 const { getJwtSecret } = require('../config/productionSecurity');
+const { sendMessageError } = require('../utils/apiErrorResponder');
+const { sanitizeAdminMutationPayload } = require('../utils/adminPayloadSanitizer');
 
 /**
  * Helper to get or initialize a learner's UserProgress document
@@ -158,8 +161,10 @@ exports.getModules = async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('Error fetching modules:', error);
-    res.status(500).json({ success: false, message: 'Server error retrieving modules', error: error.message });
+    return sendMessageError(res, error, {
+      contextLabel: '[getModules Error]',
+      defaultMessage: 'Server error retrieving modules'
+    });
   }
 };
 
@@ -261,8 +266,10 @@ exports.getModuleBySlug = async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('Error fetching module by slug:', error);
-    res.status(500).json({ success: false, message: 'Server error retrieving module', error: error.message });
+    return sendMessageError(res, error, {
+      contextLabel: '[getModuleBySlug Error]',
+      defaultMessage: 'Server error retrieving module'
+    });
   }
 };
 
@@ -444,8 +451,10 @@ exports.recordModuleProgress = async (req, res) => {
       badgesEarned: progress.badgesEarned
     });
   } catch (error) {
-    console.error('Error updating module progress:', error);
-    res.status(500).json({ success: false, message: 'Server error updating progress', error: error.message });
+    return sendMessageError(res, error, {
+      contextLabel: '[recordModuleProgress Error]',
+      defaultMessage: 'Server error updating progress'
+    });
   }
 };
 
@@ -462,8 +471,10 @@ exports.adminGetModules = async (req, res) => {
       modules
     });
   } catch (error) {
-    console.error('Error in adminGetModules:', error);
-    res.status(500).json({ success: false, message: 'Error retrieving admin modules', error: error.message });
+    return sendMessageError(res, error, {
+      contextLabel: '[adminGetModules Error]',
+      defaultMessage: 'Error retrieving admin modules'
+    });
   }
 };
 
@@ -473,7 +484,7 @@ exports.adminGetModules = async (req, res) => {
  */
 exports.adminCreateModule = async (req, res) => {
   try {
-    const moduleData = req.body;
+    const { payload: moduleData } = sanitizeAdminMutationPayload('module', req.body, { mode: 'create' });
     if (!moduleData.title || !moduleData.summary || !moduleData.content || !moduleData.category) {
       return res.status(400).json({ success: false, message: 'Title, summary, content, and category are required' });
     }
@@ -489,21 +500,24 @@ exports.adminCreateModule = async (req, res) => {
 
     const newModule = await LearningModule.create(moduleData);
 
-    await AdminAuditLog.create({
-      adminId: req.user._id,
-      action: `Created Learning Module "${newModule.title}"`,
+    await auditService.logAdminEvent({
+      req,
       actionType: 'CREATE',
+      action: `Created Learning Module "${newModule.title}"`,
       entityType: 'LearningModule',
       entityId: newModule._id,
       outcome: 'SUCCESS',
       description: `Created new learning module in category "${newModule.category}"`,
-      metadata: { slug: newModule.slug, ip: req.ip }
+      changes: moduleData,
+      metadata: { slug: newModule.slug }
     });
 
     res.status(201).json({ success: true, module: newModule });
   } catch (error) {
-    console.error('Error in adminCreateModule:', error);
-    res.status(500).json({ success: false, message: 'Error creating module', error: error.message });
+    return sendMessageError(res, error, {
+      contextLabel: '[adminCreateModule Error]',
+      defaultMessage: 'Error creating module'
+    });
   }
 };
 
@@ -514,30 +528,44 @@ exports.adminCreateModule = async (req, res) => {
 exports.adminUpdateModule = async (req, res) => {
   try {
     const { id } = req.params;
-    const updateData = req.body;
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ success: false, message: 'Invalid module ID format' });
+    }
 
     const moduleDoc = await LearningModule.findById(id);
     if (!moduleDoc) {
       return res.status(404).json({ success: false, message: 'Module not found' });
     }
 
-    const updatedModule = await LearningModule.findByIdAndUpdate(id, updateData, { new: true, runValidators: true });
+    const { payload, updateDoc } = sanitizeAdminMutationPayload('module', req.body, {
+      mode: 'update',
+      existingDoc: moduleDoc
+    });
 
-    await AdminAuditLog.create({
-      adminId: req.user._id,
-      action: `Updated Learning Module "${updatedModule.title}"`,
+    const updatedModule = await LearningModule.findByIdAndUpdate(id, updateDoc, {
+      new: true,
+      runValidators: true,
+      context: 'query'
+    });
+
+    await auditService.logAdminEvent({
+      req,
       actionType: 'UPDATE',
+      action: `Updated Learning Module "${updatedModule.title}"`,
       entityType: 'LearningModule',
       entityId: updatedModule._id,
       outcome: 'SUCCESS',
       description: `Updated learning module properties`,
-      metadata: { slug: updatedModule.slug, ip: req.ip }
+      changes: payload,
+      metadata: { slug: updatedModule.slug }
     });
 
     res.json({ success: true, module: updatedModule });
   } catch (error) {
-    console.error('Error in adminUpdateModule:', error);
-    res.status(500).json({ success: false, message: 'Error updating module', error: error.message });
+    return sendMessageError(res, error, {
+      contextLabel: '[adminUpdateModule Error]',
+      defaultMessage: 'Error updating module'
+    });
   }
 };
 
@@ -548,6 +576,10 @@ exports.adminUpdateModule = async (req, res) => {
 exports.adminDeleteModule = async (req, res) => {
   try {
     const { id } = req.params;
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ success: false, message: 'Invalid module ID format' });
+    }
+
     const moduleDoc = await LearningModule.findById(id);
     if (!moduleDoc) {
       return res.status(404).json({ success: false, message: 'Module not found' });
@@ -555,20 +587,22 @@ exports.adminDeleteModule = async (req, res) => {
 
     await LearningModule.findByIdAndDelete(id);
 
-    await AdminAuditLog.create({
-      adminId: req.user._id,
-      action: `Deleted Learning Module "${moduleDoc.title}"`,
+    await auditService.logAdminEvent({
+      req,
       actionType: 'DELETE',
+      action: `Deleted Learning Module "${moduleDoc.title}"`,
       entityType: 'LearningModule',
       entityId: moduleDoc._id,
       outcome: 'SUCCESS',
       description: `Deleted learning module slug "${moduleDoc.slug}"`,
-      metadata: { slug: moduleDoc.slug, ip: req.ip }
+      metadata: { slug: moduleDoc.slug }
     });
 
     res.json({ success: true, message: 'Learning module successfully deleted' });
   } catch (error) {
-    console.error('Error in adminDeleteModule:', error);
-    res.status(500).json({ success: false, message: 'Error deleting module', error: error.message });
+    return sendMessageError(res, error, {
+      contextLabel: '[adminDeleteModule Error]',
+      defaultMessage: 'Error deleting module'
+    });
   }
 };

@@ -11,6 +11,7 @@ const {
   selectQuestionsForMode,
   sanitizeQuestionForClient
 } = require('../services/questionSelectionService');
+const { sendStructuredError } = require('../utils/apiErrorResponder');
 
 // The 10 Canonical Subject Categories
 const CANONICAL_TOPICS = [
@@ -54,9 +55,10 @@ exports.getAllQuizzes = async (req, res) => {
     }));
     res.json(populated);
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      error: { code: 'QUIZ_FETCH_ERROR', message: error.message }
+    return sendStructuredError(res, error, {
+      contextLabel: '[getAllQuizzes Error]',
+      defaultCode: 'QUIZ_FETCH_ERROR',
+      defaultMessage: 'Unable to retrieve quizzes.'
     });
   }
 };
@@ -152,9 +154,10 @@ exports.getQuizTopics = async (req, res) => {
 
     res.json({ success: true, topics: topicsData });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      error: { code: 'TOPICS_FETCH_ERROR', message: error.message }
+    return sendStructuredError(res, error, {
+      contextLabel: '[getQuizTopics Error]',
+      defaultCode: 'TOPICS_FETCH_ERROR',
+      defaultMessage: 'Unable to retrieve quiz topics.'
     });
   }
 };
@@ -194,10 +197,10 @@ exports.startQuizSession = async (req, res) => {
       questions: sanitizedQuestions
     });
   } catch (error) {
-    console.error('Error starting quiz session:', error);
-    res.status(500).json({
-      success: false,
-      error: { code: 'START_QUIZ_ERROR', message: error.message }
+    return sendStructuredError(res, error, {
+      contextLabel: '[startQuizSession Error]',
+      defaultCode: 'START_QUIZ_ERROR',
+      defaultMessage: 'Unable to start quiz session.'
     });
   }
 };
@@ -232,9 +235,10 @@ exports.getQuizQuestions = async (req, res) => {
 
     res.json(sanitized);
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      error: { code: 'QUESTIONS_FETCH_ERROR', message: error.message }
+    return sendStructuredError(res, error, {
+      contextLabel: '[getQuizQuestions Error]',
+      defaultCode: 'QUESTIONS_FETCH_ERROR',
+      defaultMessage: 'Unable to retrieve quiz questions.'
     });
   }
 };
@@ -741,10 +745,10 @@ exports.submitQuiz = async (req, res) => {
       explanations
     });
   } catch (error) {
-    console.error('Error submitting quiz:', error);
-    res.status(500).json({
-      success: false,
-      error: { code: 'QUIZ_SUBMIT_ERROR', message: error.message }
+    return sendStructuredError(res, error, {
+      contextLabel: '[submitQuiz Error]',
+      defaultCode: 'QUIZ_SUBMIT_ERROR',
+      defaultMessage: 'Unable to submit quiz.'
     });
   }
 };
@@ -835,9 +839,10 @@ exports.getQuizHistory = async (req, res) => {
       }))
     });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      error: { code: 'QUIZ_HISTORY_ERROR', message: error.message }
+    return sendStructuredError(res, error, {
+      contextLabel: '[getQuizHistory Error]',
+      defaultCode: 'QUIZ_HISTORY_ERROR',
+      defaultMessage: 'Unable to retrieve quiz history.'
     });
   }
 };
@@ -879,9 +884,10 @@ exports.getDueQuizRecallItems = async (req, res) => {
       totalDue: sanitizedList.length
     });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      error: { code: 'DUE_RECALL_ERROR', message: error.message }
+    return sendStructuredError(res, error, {
+      contextLabel: '[getDueQuizRecallItems Error]',
+      defaultCode: 'DUE_RECALL_ERROR',
+      defaultMessage: 'Unable to retrieve due quiz recall items.'
     });
   }
 };
@@ -1126,9 +1132,10 @@ exports.submitQuizRecall = async (req, res) => {
 
     res.json(responsePayload);
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      error: { code: 'SUBMIT_RECALL_ERROR', message: error.message }
+    return sendStructuredError(res, error, {
+      contextLabel: '[submitQuizRecall Error]',
+      defaultCode: 'SUBMIT_RECALL_ERROR',
+      defaultMessage: 'Unable to submit quiz recall.'
     });
   }
 };

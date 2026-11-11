@@ -186,6 +186,7 @@ module.exports = {
   validateStagingDatabaseTarget,
   assertApprovedStagingDatabase,
   APPROVED_STAGING_DATABASE_NAMES,
-  KNOWN_PRODUCTION_NAMES
+  KNOWN_PRODUCTION_NAMES,
+  PROHIBITED_DATABASE_KEYWORDS
 };
 

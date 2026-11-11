@@ -25,6 +25,10 @@ try {
   mongoose = require('../server/node_modules/mongoose');
 }
 
+const { maskEmail } = require('../server/config/stagingAdminProvisioner');
+const { DISALLOWED_SEED_PASSWORDS } = require('../server/config/seedSecurityGuard');
+const { redactSensitiveText } = require('../server/utils/apiErrorResponder');
+
 // Determine env file path (defaults to server/.env if not provided)
 const envPath = process.argv[2] 
   ? path.resolve(process.cwd(), process.argv[2])
@@ -125,7 +129,7 @@ async function runValidation() {
       record('MONGODB_URI', true, 'Handshake successful (ping: ok)');
       await mongoose.disconnect();
     } catch (err) {
-      record('MONGODB_URI', false, `Database connection failed: ${err.message}`, true);
+      record('MONGODB_URI', false, `Database connection failed: ${redactSensitiveText(err?.message || 'Unknown error')}`, true);
     }
   }
 
@@ -147,16 +151,16 @@ async function runValidation() {
   // 7. Administrator Credentials
   const adminEmail = process.env.ADMIN_EMAIL;
   const adminPassword = process.env.ADMIN_PASSWORD;
-  if (!adminEmail || !adminEmail.includes('@')) {
+  if (!adminEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(adminEmail.trim())) {
     record('ADMIN_EMAIL', false, 'Invalid or missing ADMIN_EMAIL', false);
   } else {
-    record('ADMIN_EMAIL', true, `Admin identity: ${adminEmail}`);
+    record('ADMIN_EMAIL', true, `Admin identity: ${maskEmail(adminEmail)}`);
   }
 
   if (!adminPassword || adminPassword.length < 8) {
     record('ADMIN_PASSWORD', false, 'ADMIN_PASSWORD missing or shorter than 8 characters', false);
-  } else if (adminPassword === 'AdminPass123!' && nodeEnv === 'production') {
-    record('ADMIN_PASSWORD', false, 'ADMIN_PASSWORD is set to default development sample. Change for staging/production', false);
+  } else if (DISALLOWED_SEED_PASSWORDS.has(adminPassword.trim().toLowerCase())) {
+    record('ADMIN_PASSWORD', false, 'ADMIN_PASSWORD uses a known insecure placeholder. Change immediately', nodeEnv === 'production');
   } else {
     record('ADMIN_PASSWORD', true, `Password provided (${adminPassword.length} chars)`);
   }

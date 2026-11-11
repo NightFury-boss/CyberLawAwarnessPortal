@@ -2,8 +2,16 @@ const mongoose = require('mongoose');
 const dotenv = require('dotenv');
 const path = require('path');
 
-dotenv.config({ path: path.join(__dirname, '../.env') });
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/cyber_law_portal';
+if (
+  process.env.NODE_ENV !== 'production' &&
+  process.env.NODE_ENV !== 'test' &&
+  process.env.ASSERT_STAGING_DB !== 'true'
+) {
+  dotenv.config({ path: path.join(__dirname, '../.env') });
+}
+
+const { validateSeedExecutionTarget } = require('./seedSecurityGuard');
+const { logSafeServerError } = require('../utils/apiErrorResponder');
 
 // Import all models
 const UserProgress = require('../models/UserProgress');
@@ -15,8 +23,13 @@ const QuizQuestion = require('../models/QuizQuestion');
 const QuizAttempt = require('../models/QuizAttempt');
 
 async function runMigration() {
-  console.log('Connecting to MongoDB...');
-  await mongoose.connect(MONGODB_URI, { family: 4 });
+  const targetGuard = validateSeedExecutionTarget({
+    env: process.env,
+    isReset: false,
+    allowReset: false
+  });
+  console.log(`Connecting to validated migration target: ${targetGuard.redactedUri}`);
+  await mongoose.connect(targetGuard.targetUri, { family: 4 });
   console.log('Connected to MongoDB. Starting Phase 2.1C migrations...');
 
   // 1. Normalize lowercase legalStatus to uppercase in LawSection
@@ -194,7 +207,7 @@ async function runMigration() {
 
 if (require.main === module) {
   runMigration().catch(err => {
-    console.error('Migration failed:', err);
+    logSafeServerError('[Migration Error]', err);
     process.exit(1);
   });
 }

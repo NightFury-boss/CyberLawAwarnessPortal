@@ -3,6 +3,7 @@ const CyberCrime = require('../models/CyberCrime');
 const CaseStudy = require('../models/CaseStudy');
 const Resource = require('../models/Resource');
 const { escapeRegex } = require('../utils/regexUtils');
+const { sendMessageError } = require('../utils/apiErrorResponder');
 
 exports.askAssistant = async (req, res) => {
   try {
@@ -119,6 +120,10 @@ exports.askAssistant = async (req, res) => {
 
     res.json({ reply });
   } catch (error) {
-    res.status(500).json({ message: 'Error processing query', error: error.message });
+    return sendMessageError(res, error, {
+      contextLabel: '[askAssistant Error]',
+      defaultMessage: 'Error processing query',
+      includeSuccessFalse: false
+    });
   }
 };

@@ -4,6 +4,7 @@ const QuizAttempt = require('../models/QuizAttempt');
 const LearningModule = require('../models/LearningModule');
 const spacedRetrievalService = require('../services/spacedRetrievalService');
 const catalog = require('../config/remediationCatalog');
+const { sendMessageError, sendStructuredError } = require('../utils/apiErrorResponder');
 
 exports.getProgress = async (req, res) => {
   try {
@@ -115,7 +116,11 @@ exports.getProgress = async (req, res) => {
       streak: progress.currentStreak
     });
   } catch (error) {
-    res.status(500).json({ message: 'Error retrieving user progress', error: error.message });
+    return sendMessageError(res, error, {
+      contextLabel: '[getProgress Error]',
+      defaultMessage: 'Error retrieving user progress',
+      includeSuccessFalse: false
+    });
   }
 };
 
@@ -274,10 +279,10 @@ exports.recordPathwayStep = async (req, res) => {
       educationalFeedback
     });
   } catch (error) {
-    const status = error.status || 500;
-    res.status(status).json({
-      success: false,
-      error: { code: error.code || 'STEP_RECORD_ERROR', message: error.message }
+    return sendStructuredError(res, error, {
+      contextLabel: '[recordPathwayStep Error]',
+      defaultCode: 'STEP_RECORD_ERROR',
+      defaultMessage: 'Unable to record pathway step.'
     });
   }
 };
@@ -317,10 +322,10 @@ exports.getPathwayCheckpoint = async (req, res) => {
       questions: sanitizedQuestions
     });
   } catch (error) {
-    const status = error.status || 500;
-    res.status(status).json({
-      success: false,
-      error: { code: error.code || 'CHECKPOINT_FETCH_ERROR', message: error.message }
+    return sendStructuredError(res, error, {
+      contextLabel: '[getPathwayCheckpoint Error]',
+      defaultCode: 'CHECKPOINT_FETCH_ERROR',
+      defaultMessage: 'Unable to load pathway checkpoint.'
     });
   }
 };
@@ -397,10 +402,10 @@ exports.getPathwayCheckpointReview = async (req, res) => {
       questions: reviewQuestions
     });
   } catch (error) {
-    const status = error.status || 500;
-    res.status(status).json({
-      success: false,
-      error: { code: error.code || 'REVIEW_FETCH_ERROR', message: error.message }
+    return sendStructuredError(res, error, {
+      contextLabel: '[getPathwayCheckpointReview Error]',
+      defaultCode: 'REVIEW_FETCH_ERROR',
+      defaultMessage: 'Unable to load checkpoint review.'
     });
   }
 };
@@ -517,10 +522,10 @@ exports.submitPathwayCheckpoint = async (req, res) => {
       explanations
     });
   } catch (error) {
-    const status = error.status || 500;
-    res.status(status).json({
-      success: false,
-      error: { code: error.code || 'CHECKPOINT_SUBMIT_ERROR', message: error.message }
+    return sendStructuredError(res, error, {
+      contextLabel: '[submitPathwayCheckpoint Error]',
+      defaultCode: 'CHECKPOINT_SUBMIT_ERROR',
+      defaultMessage: 'Unable to submit checkpoint.'
     });
   }
 };
@@ -725,10 +730,10 @@ exports.reinforcePathway = async (req, res) => {
         : 'Checkpoint not passed: review defensive rule and try again.'
     });
   } catch (error) {
-    const status = error.status || 500;
-    res.status(status).json({
-      success: false,
-      error: { code: error.code || 'REINFORCE_ERROR', message: error.message }
+    return sendStructuredError(res, error, {
+      contextLabel: '[reinforcePathway Error]',
+      defaultCode: 'REINFORCE_ERROR',
+      defaultMessage: 'Unable to submit reinforcement checkpoint.'
     });
   }
 };
@@ -875,9 +880,10 @@ exports.getPortfolio = async (req, res) => {
       behavioralTrajectory
     });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      error: { code: 'PORTFOLIO_ERROR', message: error.message }
+    return sendStructuredError(res, error, {
+      contextLabel: '[getPortfolio Error]',
+      defaultCode: 'PORTFOLIO_ERROR',
+      defaultMessage: 'Unable to load defensive portfolio.'
     });
   }
 };
@@ -917,9 +923,10 @@ exports.getDueSpacedRetrievals = async (req, res) => {
       evidenceNotice: 'Spaced retrieval evaluates delayed statutory rule recall; it is distinct from verified live behavioral transfer.'
     });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      error: { code: 'DUE_SPACED_REVIEWS_ERROR', message: error.message }
+    return sendStructuredError(res, error, {
+      contextLabel: '[getDueSpacedRetrievals Error]',
+      defaultCode: 'DUE_SPACED_REVIEWS_ERROR',
+      defaultMessage: 'Unable to retrieve due spaced reviews.'
     });
   }
 };
@@ -988,10 +995,10 @@ exports.getSpacedRetrievalQuestions = async (req, res) => {
       evidenceNotice: 'Recall the defensive rule before answering. Explanations are revealed upon authoritative grading.'
     });
   } catch (error) {
-    const status = error.status || 500;
-    res.status(status).json({
-      success: false,
-      error: { code: error.code || 'SPACED_QUESTIONS_ERROR', message: error.message }
+    return sendStructuredError(res, error, {
+      contextLabel: '[getSpacedRetrievalQuestions Error]',
+      defaultCode: 'SPACED_QUESTIONS_ERROR',
+      defaultMessage: 'Unable to load spaced retrieval questions.'
     });
   }
 };
@@ -1097,10 +1104,10 @@ exports.submitSpacedRetrieval = async (req, res) => {
         : 'Spaced retrieval not passed: review defensive rule and statutory context.'
     });
   } catch (error) {
-    const status = error.status || 500;
-    res.status(status).json({
-      success: false,
-      error: { code: error.code || 'SPACED_SUBMIT_ERROR', message: error.message }
+    return sendStructuredError(res, error, {
+      contextLabel: '[submitSpacedRetrieval Error]',
+      defaultCode: 'SPACED_SUBMIT_ERROR',
+      defaultMessage: 'Unable to submit spaced retrieval evaluation.'
     });
   }
 };

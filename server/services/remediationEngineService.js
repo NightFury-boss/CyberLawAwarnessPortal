@@ -18,6 +18,7 @@ const LawSection = require('../models/LawSection');
 const UserProgress = require('../models/UserProgress');
 const AssessmentDecision = require('../models/AssessmentDecision');
 const ScenarioStage = require('../models/ScenarioStage');
+const { redactSensitiveText } = require('../utils/apiErrorResponder');
 const ScenarioDecision = require('../models/ScenarioDecision');
 
 // Product severity multipliers (Heuristics reflecting real-world harm potential)
@@ -456,7 +457,7 @@ async function generateRemediation(sessionId, userId) {
       }
     }
   } catch (err) {
-    console.warn(`[RemediationEngine] Decision evidence lookup failed for session ${session._id}:`, err.message);
+    console.warn(`[RemediationEngine] Decision evidence lookup failed for session ${session._id}:`, redactSensitiveText(err?.message || 'Unknown error'));
   }
 
   // Validate referenced DB entities before returning

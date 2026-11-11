@@ -2,13 +2,18 @@ const mongoose = require('mongoose');
 const LawSection = require('../models/LawSection');
 const LegalSource = require('../models/LegalSource');
 const { escapeRegex } = require('../utils/regexUtils');
+const { sendMessageError } = require('../utils/apiErrorResponder');
 
 exports.getAllLaws = async (req, res) => {
   try {
     const laws = await LawSection.find().populate('officialSourceId');
     res.json(laws);
   } catch (error) {
-    res.status(500).json({ message: 'Error fetching laws', error: error.message });
+    return sendMessageError(res, error, {
+      contextLabel: '[getAllLaws Error]',
+      defaultMessage: 'Error fetching laws',
+      includeSuccessFalse: false
+    });
   }
 };
 
@@ -23,7 +28,11 @@ exports.getLawById = async (req, res) => {
     }
     res.json(law);
   } catch (error) {
-    res.status(500).json({ message: 'Error fetching law section', error: error.message });
+    return sendMessageError(res, error, {
+      contextLabel: '[getLawById Error]',
+      defaultMessage: 'Error fetching law section',
+      includeSuccessFalse: false
+    });
   }
 };
 
@@ -52,6 +61,10 @@ exports.searchLaws = async (req, res) => {
 
     res.json(filtered);
   } catch (error) {
-    res.status(500).json({ message: 'Error searching laws', error: error.message });
+    return sendMessageError(res, error, {
+      contextLabel: '[searchLaws Error]',
+      defaultMessage: 'Error searching laws',
+      includeSuccessFalse: false
+    });
   }
 };
