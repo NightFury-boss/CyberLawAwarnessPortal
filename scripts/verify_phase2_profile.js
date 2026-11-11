@@ -53,7 +53,6 @@ async function verifyPhase2Profile() {
     console.log(`Navigating to /assessment/baseline...`);
     await page.goto('http://localhost:5173/assessment/baseline', { waitUntil: 'domcontentloaded' });
     await page.waitForLoadState('networkidle', { timeout: 5000 }).catch(() => {});
-    await page.addStyleTag({ content: '#reticle-root, [class*="reticle"] { display: none !important; }' });
     await page.waitForTimeout(800);
 
     // 3. Verify key elements exist

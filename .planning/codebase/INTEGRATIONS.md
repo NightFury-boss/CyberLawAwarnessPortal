@@ -1,17 +1,19 @@
-# External Integrations & Services
+# External & Simulated Integrations (GSD Planning Reference)
 
-## Database: MongoDB Atlas
+> **Authoritative Specification Pointer**: The definitive platform hosting and runtime infrastructure specifications (Netlify, Render, MongoDB Atlas) reside in [**`docs/architecture/INTEGRATIONS.md`**](../../docs/architecture/INTEGRATIONS.md). This document serves as the internal GSD agent codebase planning reference for simulated threat interfaces and REST contracts.
+
+---
+
+## 1. Database: MongoDB Atlas
 - **Driver**: `mongoose` (v8.2.1)
 - **Connection URI**: Stored securely in `server/.env` (`MONGODB_URI`).
 - **Cluster**: Remote MongoDB Atlas shard cluster (`<atlas-cluster-subdomain>.mongodb.net`).
 - **Connection Strategy**: Single pooled connection initialized via `server/config/db.js` with auto-reconnect and monitor listeners.
-- **Security & Credential Status**:
-  - The repository owner reports database credentials have been fully rotated on MongoDB Atlas.
-  - Active connection tested and verified with current environment credentials.
-  - GitHub Secret Scanning alert is resolved; `server/.env.staging.example` contains sanitized placeholders only.
-  - Git history has not been rewritten; access is secured via Atlas-side credential revocation.
+- **Fail-Closed Staging Guard**: Enforced via `server/config/stagingDatabaseGuard.js` to prevent connection to production databases during staging or test runs.
 
-## Simulated Interface Integrations
+---
+
+## 2. Simulated Interface Integrations
 - **Mock Interfaces**:
   - `browser` / `phishing`: Simulated web pages with URL bar and warning/action mockups.
   - `email`: Authenticated webmail inbox/view mocks with headers, verified sender labels, and responsive layout.
@@ -21,8 +23,10 @@
   - `os_prompt`: Android/iOS permission request dialogs.
 - **Privacy Guarantee**: All simulated interfaces are decorative and illustrative. No user passwords, PINs, OTPs, or financial identifiers are ever captured, logged, or transmitted.
 
-## Client-Server REST Contract
-- **Base URL**: `http://localhost:5000/api`
+---
+
+## 3. Client-Server REST Contract
+- **Base URL**: `/api` (proxied to port 5000 in dev, hosted on Render in staging)
 - **Authentication**: `Authorization: Bearer <JWT>`
 - **Key Assessment Endpoints**:
   - `GET /api/assessments/:code`: Fetches published scenario metadata.

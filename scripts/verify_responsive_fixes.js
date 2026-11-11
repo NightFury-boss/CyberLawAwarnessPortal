@@ -84,7 +84,6 @@ async function verifyAll() {
     console.log(`[1] Verifying Homepage @ ${vp.name}...`);
     await pubPage.goto('http://localhost:5173/', { waitUntil: 'domcontentloaded' });
     await pubPage.waitForLoadState('networkidle', { timeout: 3000 }).catch(() => {});
-    await pubPage.addStyleTag({ content: '#reticle-root, [class*="reticle"] { display: none !important; }' });
     await pubPage.waitForTimeout(600);
 
     const homeData = await checkPageOverflow(pubPage, 'Homepage', vp.name);
@@ -114,7 +113,6 @@ async function verifyAll() {
       authPage.click('button[type="submit"]')
     ]);
     await authPage.waitForTimeout(1000);
-    await authPage.addStyleTag({ content: '#reticle-root, [class*="reticle"] { display: none !important; }' });
 
     // 2. Established Dashboard
     console.log(`[2] Verifying Established Dashboard @ ${vp.name}...`);
@@ -134,7 +132,6 @@ async function verifyAll() {
     console.log(`[3] Verifying Curriculum (/modules) @ ${vp.name}...`);
     await authPage.goto('http://localhost:5173/modules', { waitUntil: 'domcontentloaded' });
     await authPage.waitForLoadState('networkidle', { timeout: 3000 }).catch(() => {});
-    await authPage.addStyleTag({ content: '#reticle-root, [class*="reticle"] { display: none !important; }' });
     await authPage.waitForTimeout(800);
 
     const modData = await checkPageOverflow(authPage, 'Modules', vp.name);
@@ -149,7 +146,6 @@ async function verifyAll() {
     console.log(`[4] Verifying Quizzes (/quizzes) @ ${vp.name}...`);
     await authPage.goto('http://localhost:5173/quizzes', { waitUntil: 'domcontentloaded' });
     await authPage.waitForLoadState('networkidle', { timeout: 3000 }).catch(() => {});
-    await authPage.addStyleTag({ content: '#reticle-root, [class*="reticle"] { display: none !important; }' });
     await authPage.waitForTimeout(800);
 
     const quizData = await checkPageOverflow(authPage, 'Quizzes', vp.name);
@@ -164,7 +160,6 @@ async function verifyAll() {
     console.log(`[5] Verifying Assessment Results (/assessment/baseline) @ ${vp.name}...`);
     await authPage.goto('http://localhost:5173/assessment/baseline', { waitUntil: 'domcontentloaded' });
     await authPage.waitForLoadState('networkidle', { timeout: 3000 }).catch(() => {});
-    await authPage.addStyleTag({ content: '#reticle-root, [class*="reticle"] { display: none !important; }' });
     await authPage.waitForTimeout(800);
 
     const resData = await checkPageOverflow(authPage, 'Assessment Results', vp.name);

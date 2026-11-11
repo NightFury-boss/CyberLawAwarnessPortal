@@ -68,18 +68,6 @@ async function run() {
     localStorage.setItem('token', token);
     localStorage.setItem('user', JSON.stringify(user));
     localStorage.setItem('workspace_sidebar_collapsed', 'false');
-
-    // Suppress external dev tools overlay for pristine visual verification
-    const style = document.createElement('style');
-    style.innerHTML = `
-      #reticle-root, [class*="reticle"], [id*="reticle"], div[data-reticle] {
-        display: none !important;
-        visibility: hidden !important;
-        opacity: 0 !important;
-        pointer-events: none !important;
-      }
-    `;
-    document.head.appendChild(style);
   }, { token, user });
 
   const page = await context.newPage();
@@ -90,7 +78,6 @@ async function run() {
     console.log(`Setting viewport: ${vp.name} (${vp.width}x${vp.height})...`);
     await page.setViewportSize({ width: vp.width, height: vp.height });
     await page.goto('http://localhost:5173/dashboard', { waitUntil: 'networkidle' });
-    await page.addStyleTag({ content: '#reticle-root, [class*="reticle"], [id*="reticle"] { display: none !important; }' });
     await page.waitForTimeout(600);
 
     const firstScreenFile = `firstvisit_screen_${vp.name}.png`;

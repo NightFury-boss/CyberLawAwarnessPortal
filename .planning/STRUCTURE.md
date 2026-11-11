@@ -18,7 +18,8 @@ cyber-law-portal/
 │   │   │   ├── auth/                       # SignInForm, SignUpForm
 │   │   │   ├── common/                     # ErrorBoundary, EditorialRule, UI buttons
 │   │   │   ├── dashboard/                  # AtelierMasthead, PrimaryFocus, CurriculumLessonsSection, etc.
-│   │   │   ├── navigation/                 # Navbar, Sidebar, Breadcrumb
+│   │   │   ├── layout/                     # Canonical shell: Navbar.jsx, Sidebar.jsx, Footer.jsx (with facades)
+│   │   │   ├── navigation/                 # WorkspaceBreadcrumb, Breadcrumb
 │   │   │   ├── scenario/                   # Phone, email, browser, and UPI simulated mockups
 │   │   │   ├── PathwayRunner.jsx           # Self-contained 3-step micro-learning intervention modal runner
 │   │   │   └── RemediationCards.jsx        # Recommendation cards supporting preview and interactive modes
@@ -117,10 +118,9 @@ cyber-law-portal/
 
 ### A. Workspace Shell & Navigation
 * **`App.jsx`**: Top-level routing switchboard. Computes `isWorkspace` layout flag, mounts the workspace `Sidebar` on workspace paths, renders `Navbar` across all pages, and wraps code-split pages in `ErrorBoundary` and `Suspense`.
-* **`Navbar.jsx`**: Serves dual modes:
-  1. *Public Portal Mode*: Horizontal header navigation with links to Laws, Crimes, Cases, Prevention, Resources, and Sign In.
-  2. *Workspace Mode*: Topbar displaying portal badge, learner greeting, mobile drawer toggle button, and quick profile controls.
-* **`Sidebar.jsx`**: Dedicated desktop collapsible sidebar and mobile off-canvas drawer for authenticated workspace navigation (`Dashboard`, `Modules`, `Quizzes`, `Final Check`, `Case Studies`, `Law Library`).
+* **`client/src/components/layout/Navbar.jsx`**: Serves dual modes (Public Portal Mode vs Workspace Mode). Backward-compatible re-export facade maintained at `client/src/components/Navbar.jsx`.
+* **`client/src/components/layout/Sidebar.jsx`**: Dedicated desktop collapsible sidebar and mobile off-canvas drawer. Backward-compatible re-export facade maintained at `client/src/components/Sidebar.jsx`.
+* **`client/src/components/layout/Footer.jsx`**: Institutional editorial footer. Backward-compatible re-export facade maintained at `client/src/components/Footer.jsx`.
 * **`WorkspaceBreadcrumb.jsx`**: Consistent orientation breadcrumb linking sub-pages back to `/dashboard`.
 
 ### B. Assessment & Diagnostic Experiences

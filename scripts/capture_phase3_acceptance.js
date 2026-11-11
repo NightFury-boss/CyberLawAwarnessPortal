@@ -95,13 +95,6 @@ async function run() {
       });
       const page = await context.newPage();
 
-      // Suppress reticle badges in acceptance screenshots
-      await page.addInitScript(() => {
-        const style = document.createElement('style');
-        style.innerHTML = '#reticle-root, [class*="reticle"] { display: none !important; }';
-        document.documentElement.appendChild(style);
-      });
-
       // 1. Authenticate
       console.log('1. Authenticating as demo.returning@cyberlawportal.in...');
       await page.goto(`http://127.0.0.1:${port}/login`, { waitUntil: 'networkidle' });

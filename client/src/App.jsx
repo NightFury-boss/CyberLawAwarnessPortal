@@ -3,9 +3,9 @@ import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'r
 import api from './services/api';
 
 // Components
-import Sidebar from './components/Sidebar';
-import Navbar from './components/Navbar';
-import Footer from './components/Footer';
+import Sidebar from './components/layout/Sidebar';
+import Navbar from './components/layout/Navbar';
+import Footer from './components/layout/Footer';
 import ErrorBoundary from './components/common/ErrorBoundary';
 import ColdStartNotice from './components/common/ColdStartNotice';
 

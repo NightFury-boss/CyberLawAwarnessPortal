@@ -95,7 +95,6 @@ async function runAudit() {
     console.log(`\n[Audit 1: Homepage @ ${vp.name}]`);
     await page.goto('http://localhost:5173/', { waitUntil: 'domcontentloaded' });
     await page.waitForLoadState('networkidle', { timeout: 3000 }).catch(() => {});
-    await page.addStyleTag({ content: '#reticle-root, [class*="reticle"] { display: none !important; }' });
     await page.waitForTimeout(500);
 
     const homeData = await findOverflowElements(page);
@@ -116,7 +115,6 @@ async function runAudit() {
     console.log(`\n[Audit 2: Curriculum /modules @ ${vp.name}]`);
     await page.goto('http://localhost:5173/modules', { waitUntil: 'domcontentloaded' });
     await page.waitForLoadState('networkidle', { timeout: 3000 }).catch(() => {});
-    await page.addStyleTag({ content: '#reticle-root, [class*="reticle"] { display: none !important; }' });
     await page.waitForTimeout(500);
 
     const modulesData = await findOverflowElements(page);
@@ -137,7 +135,6 @@ async function runAudit() {
     console.log(`\n[Audit 3: Quizzes /quizzes @ ${vp.name}]`);
     await page.goto('http://localhost:5173/quizzes', { waitUntil: 'domcontentloaded' });
     await page.waitForLoadState('networkidle', { timeout: 3000 }).catch(() => {});
-    await page.addStyleTag({ content: '#reticle-root, [class*="reticle"] { display: none !important; }' });
     await page.waitForTimeout(500);
 
     const quizzesData = await findOverflowElements(page);
@@ -171,7 +168,6 @@ async function runAudit() {
     await authPage.click('button[type="submit"]');
     await authPage.waitForURL('**/dashboard', { timeout: 8000 });
     await authPage.waitForTimeout(1000);
-    await authPage.addStyleTag({ content: '#reticle-root, [class*="reticle"] { display: none !important; }' });
 
     // 4. Established Dashboard
     console.log(`\n[Audit 4: Established Dashboard @ ${vp.name}]`);
@@ -198,7 +194,6 @@ async function runAudit() {
     console.log(`\n[Audit 5: Assessment Results @ ${vp.name}]`);
     await authPage.goto('http://localhost:5173/assessment/baseline', { waitUntil: 'domcontentloaded' });
     await authPage.waitForLoadState('networkidle', { timeout: 3000 }).catch(() => {});
-    await authPage.addStyleTag({ content: '#reticle-root, [class*="reticle"] { display: none !important; }' });
     await authPage.waitForTimeout(800);
 
     const resData = await findOverflowElements(authPage);

@@ -10593,20 +10593,7 @@ main > .container,
   .desk-trajectory-split,
   .desk-section,
   .portfolio-empty-hint,
-  .btn,
-  /* Narrowly scoped rule to hide Reticle development HUD, dock, and floating action button */
-  [data-reticle-dock],
-  [data-reticle-fab],
-  [data-reticle-hud],
-  [data-reticle-overlay],
-  [data-reticle-cursor],
-  [data-reticle-root],
-  [data-reticle-ambient-glow],
-  [data-reticle-chat-panel],
-  .reticle-hud,
-  .reticle-fab,
-  .reticle-chat-panel,
-  .reticle-toolbar {
+  .btn {
     display: none !important;
   }
 

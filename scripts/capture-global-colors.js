@@ -41,7 +41,6 @@ async function navigateSafely(page, url, selectorToWait = null) {
   if (selectorToWait) {
     await page.waitForSelector(selectorToWait, { timeout: 8000 }).catch(() => {});
   }
-  await page.addStyleTag({ content: '#reticle-root, [class*="reticle"], [id*="reticle"] { display: none !important; }' });
   await page.waitForTimeout(800);
 }
 

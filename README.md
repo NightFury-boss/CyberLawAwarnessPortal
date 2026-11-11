@@ -6,6 +6,22 @@ Rather than presenting laws purely as static text, this portal implements an int
 
 ---
 
+## Documentation & Architecture Hub
+
+Comprehensive technical specifications, deployment runbooks, quality audits, and legal research packages are organized in the [`docs/`](./docs/README.md) directory:
+
+| Section | Focus Area | Key Documents |
+| :--- | :--- | :--- |
+| **[Architecture](./docs/architecture/ARCHITECTURE.md)** | System Design & Contracts | [System Architecture](./docs/architecture/ARCHITECTURE.md) • [Conventions](./docs/architecture/CONVENTIONS.md) • [Integrations](./docs/architecture/INTEGRATIONS.md) |
+| **[Deployment](./deployment/README.md)** | Infrastructure & Hosting | [Deployment Hub](./deployment/README.md) • [Free-Tier Guide](./docs/deployment/FREE_TIER_DEPLOYMENT_GUIDE.md) • [Docker/VPS Guide](./docs/deployment/DOCKER_VPS_DEPLOYMENT.md) |
+| **[Audits](./docs/audits/DESIGN_AUDIT_REPORT.md)** | Quality & Compliance | [Design Audit](./docs/audits/DESIGN_AUDIT_REPORT.md) • [Pre-Beta Validation](./docs/audits/PRE_BETA_VALIDATION_REPORT.md) • [Audit Archive](./docs/audits/archive/) |
+| **[Research](./docs/research/cases-where-justice-fell-short/README.md)** | Statutory Research | [Case Research Master](./docs/research/cases-where-justice-fell-short/CASE_RESEARCH_MASTER.md) • [Judicial Decisions](./docs/research/cases-where-justice-fell-short/PRODUCT_OWNER_DECISIONS.md) |
+| **[Scripts](./scripts/README.md)** | Tooling Catalog | [Script Catalog & Operational Guide](./scripts/README.md) |
+| **[Roadmap](./.planning/ROADMAP.md)** | Autonomous Planning | [Product Roadmap](./.planning/ROADMAP.md) • [Requirements](./.planning/REQUIREMENTS.md) • [Current State](./.planning/STATE.md) |
+| **[Changelog](./docs/CHANGELOG.md)** | History & Milestones | [Project Changelog](./docs/CHANGELOG.md) |
+
+---
+
 ## Core Features
 
 1. **Indian Digital Law Learning Centre:**
@@ -35,6 +51,7 @@ Rather than presenting laws purely as static text, this portal implements an int
 ### 2. Environment Configuration
 Configure environment variables in the backend server directory inside a `.env` file:
 * Specify custom parameters for connection ports, JWT signing secrets, database connection URIs, and fallback administrative credentials.
+* Reference templates: `server/.env.example` and `client/.env.example`.
 
 ### 3. Dependencies Installation
 Install dependencies for both frontend and backend modules:
