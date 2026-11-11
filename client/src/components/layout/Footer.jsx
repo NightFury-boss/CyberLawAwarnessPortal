@@ -29,6 +29,21 @@ export default function Footer() {
               </a>
             </p>
           </div>
+
+          <div className="footer-beta-indicator">
+            <span className="footer-beta-badge">PUBLIC BETA</span>
+            <span className="footer-beta-note">
+              Community evaluation release.{' '}
+              <button 
+                type="button" 
+                onClick={() => window.dispatchEvent(new CustomEvent('cl:open-feedback', { detail: { source: 'footer' } }))}
+                className="footer-beta-feedback-link"
+                aria-label="Open community feedback dialog"
+              >
+                Share Feedback &rarr;
+              </button>
+            </span>
+          </div>
         </div>
 
         {/* Column 2: Explore */}
@@ -60,7 +75,7 @@ export default function Footer() {
           <strong>Educational Awareness Disclaimer:</strong> All curriculum material, case studies, and simulated scenarios provided on this portal are developed exclusively for civic digital literacy and educational awareness. They do not constitute formal legal counsel, statutory interpretation, or personal legal advisory services.
         </div>
         <div className="footer-copyright">
-          &copy; {new Date().getFullYear()} Cyber Law Awareness Portal. Built for Academic and Awareness purposes.
+          &copy; {new Date().getFullYear()} Cyber Law Awareness Portal • Public Beta 1.0. Built for Academic and Awareness purposes.
         </div>
       </div>
     </footer>

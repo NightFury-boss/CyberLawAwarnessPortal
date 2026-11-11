@@ -8,6 +8,7 @@ import Navbar from './components/layout/Navbar';
 import Footer from './components/layout/Footer';
 import ErrorBoundary from './components/common/ErrorBoundary';
 import ColdStartNotice from './components/common/ColdStartNotice';
+import FeedbackModal from './components/common/FeedbackModal';
 
 // Code-split page route components
 const Home = lazy(() => import('./pages/Home'));
@@ -161,6 +162,7 @@ function AppContent() {
   return (
     <div className={isAdminPath ? "" : "app-container"}>
       <ColdStartNotice />
+      <FeedbackModal />
       {/* Learner/Admin Workspace Sidebar is mounted only in workspace routes */}
       {!isAdminPath && isWorkspace && (
         <Sidebar 

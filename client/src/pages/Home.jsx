@@ -4,6 +4,7 @@ import HomeHero from '../components/home/HomeHero';
 import DigitalMomentsSection from '../components/home/DigitalMomentsSection';
 import Reveal from '../components/common/Reveal';
 import ScrollLinkedIncidentCase from '../components/common/ScrollLinkedIncidentCase';
+import PublicBetaAnnouncement from '../components/home/PublicBetaAnnouncement';
 
 /**
  * Public Homepage for Cyber Law Awareness Portal.
@@ -20,6 +21,8 @@ import ScrollLinkedIncidentCase from '../components/common/ScrollLinkedIncidentC
 function Home({ user }) {
   return (
     <div className="homepage-wrapper">
+      {/* Public Beta Announcement: Understated, dismissible community notification */}
+      <PublicBetaAnnouncement />
       
       {/* 1. HERO SECTION: Dominant Headline, Spacious Editorial Layout & 5-Step Spine */}
       <HomeHero user={user} />
