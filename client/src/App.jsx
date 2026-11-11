@@ -7,6 +7,7 @@ import Sidebar from './components/Sidebar';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import ErrorBoundary from './components/common/ErrorBoundary';
+import ColdStartNotice from './components/common/ColdStartNotice';
 
 // Code-split page route components
 const Home = lazy(() => import('./pages/Home'));
@@ -118,6 +119,10 @@ function AppContent() {
 
   useEffect(() => {
     checkAuth();
+    // In staging environment, initiate non-blocking background ping to wake up sleeping Render backend
+    if (api.isStagingEnvironment?.()) {
+      api.checkHealth().catch(() => {});
+    }
   }, []);
 
   const checkAuth = async () => {
@@ -155,6 +160,7 @@ function AppContent() {
 
   return (
     <div className={isAdminPath ? "" : "app-container"}>
+      <ColdStartNotice />
       {/* Learner/Admin Workspace Sidebar is mounted only in workspace routes */}
       {!isAdminPath && isWorkspace && (
         <Sidebar 

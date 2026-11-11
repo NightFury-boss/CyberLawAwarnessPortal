@@ -57,6 +57,9 @@ The following repository components, architectural specifications, and deploymen
   - `X-Frame-Options: SAMEORIGIN`
   - `Referrer-Policy: strict-origin-when-cross-origin`
   - `Cache-Control: public, max-age=31536000, immutable` for `/assets/*`
+- **Environment Detection Heuristics**:
+  - Automatically recognizes `*.netlify.app` and `staging.*` hostnames as staging mode, activating adaptive 60s cold-start timeouts and spin-up notices.
+  - **Important Note for Production on Default Netlify Subdomains**: When running a production instance on a default `*.netlify.app` subdomain (without a custom production domain), `VITE_APP_ENV=production` MUST be set in Netlify site settings to prevent matching the staging heuristic.
 - **Build Verification**: Verified locally using `npm run build --prefix client`. Build completes in 588ms, generating 29 optimized chunks and verifying that `client/dist/_redirects` is populated.
 
 ---
@@ -80,30 +83,39 @@ The following repository components, architectural specifications, and deploymen
 
 ### 5.1 Frontend (Netlify Site Settings > Environment Variables)
 
-| Variable | Staging Setting / Example | Exposure |
-| :--- | :--- | :--- |
-| `VITE_API_URL` | `https://cyberlaw-portal-backend.onrender.com/api` | Public (Embedded into client bundle) |
+| Variable | Staging Setting / Example | Required? | Nature | Default / Fallback in Code | Relevant Source File |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| `VITE_API_URL` | `https://cyberlaw-portal-backend.onrender.com/api` | Optional | Public | Auto-normalized via `resolveApiUrl()`; falls back to window origin or `http://localhost:5000/api` | `client/src/services/api.js:11` |
+| `VITE_APP_ENV` | `staging` (or `production` for prod on `*.netlify.app`) | **Required** for prod on `*.netlify.app` | Config | Unset (defaults to URL/hostname heuristics) | `client/src/services/api.js:62` |
+| `VITE_IS_STAGING` | `true` | Optional | Config | Unset | `client/src/services/api.js:66` |
+| `VITE_API_TIMEOUT_MS` | `15000` | Optional | Config | `15000` (15s default active timeout) | `client/src/services/api.js:96` |
+| `VITE_API_COLD_START_TIMEOUT_MS` | `60000` | Optional | Config | `60000` (60s cold-start timeout) | `client/src/services/api.js:97` |
+
+> [!IMPORTANT] Production on Default `*.netlify.app` Subdomains
+> Production deployments hosted on default `*.netlify.app` subdomains (without a custom domain) will match the staging heuristic unless `VITE_APP_ENV=production` is set in the Netlify site configuration. Explicit `VITE_APP_ENV=production` always takes absolute precedence over hostname detection.
 
 ### 5.2 Backend (Render Service Dashboard > Environment)
 
-| Variable | Staging Setting / Example | Exposure |
-| :--- | :--- | :--- |
-| `NODE_ENV` | `production` | Private |
-| `HOST` | `0.0.0.0` | Private |
-| `CLIENT_URL` | `https://cyberlaw-portal-staging.netlify.app` | Private |
-| `MONGODB_URI` | `mongodb+srv://user:pass@cluster.mongodb.net/cyber_law_staging?retryWrites=true&w=majority` | Secret |
-| `JWT_SECRET` | *(64-hex char secret from `openssl rand -hex 32`)* | Secret |
-| `TRUST_PROXY` | `1` | Private |
-| `ASSERT_STAGING_DB` | `true` | Private |
-| `EXPECTED_STAGING_DB_NAME` | `cyber_law_staging` | Private |
-| `SPACED_RETRIEVAL_DELAY_DAYS`| `7` | Private |
-| `SCORING_V2_CUTOVER_DATE` | `2026-11-04T00:00:00.000Z` | Private |
-| `RATE_LIMIT_AUTH_MAX` | `20` | Private |
-| `RATE_LIMIT_AUTH_WINDOW_MS` | `900000` | Private |
-| `RATE_LIMIT_ASSISTANT_MAX` | `30` | Private |
-| `RATE_LIMIT_ASSISTANT_WINDOW_MS` | `60000` | Private |
-| `ADMIN_EMAIL` | `staging-admin@cyberlawportal.org` | Secret |
-| `ADMIN_PASSWORD` | *(Strong temporary staging admin password)* | Secret |
+| Variable | Staging Setting / Example | Required? | Nature | Default / Fallback in Code | Relevant Source File |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| `NODE_ENV` | `production` | Optional | Config | None (Node runtime default) | `server/server.js:13`, `render.yaml:18` |
+| `HOST` | `0.0.0.0` | Optional | Config | `'0.0.0.0'` | `server/server.js:132`, `render.yaml:20` |
+| `PORT` | Auto-injected by Render (e.g. `10000`) | Optional | Config | `5000` | `server/server.js:131` |
+| `CLIENT_URL` | `https://cyberlaw-portal-staging.netlify.app` | **Required** in prod | Config | Throws fatal error in prod; `'http://localhost:5173'` in dev | `server/config/productionSecurity.js:76`, `server/server.js:53` |
+| `MONGODB_URI` | `mongodb+srv://user:pass@cluster.mongodb.net/cyber_law_staging?retryWrites=true&w=majority` | **Required** | Secret | Checks `MONGO_URI`, then `'mongodb://localhost:27017/cyber_law_portal'` | `server/config/db.js:7`, `render.yaml:42` |
+| `MONGO_URI` | Alternative database URI fallback | Optional | Secret | None | `server/config/db.js:7` |
+| `JWT_SECRET` | *(64-hex char secret from `openssl rand -hex 32`)* | **Required** in prod | Secret | Throws fatal error in prod; dev placeholder in dev/test | `server/config/productionSecurity.js:34`, `render.yaml:44` |
+| `TRUST_PROXY` | `1` | Optional | Config | `'1'` | `server/server.js:35`, `render.yaml:22` |
+| `ASSERT_STAGING_DB` | `true` | **Required** for staging | Config | Unset (guard bypassed if not `'true'`) | `server/config/db.js:8`, `render.yaml:24` |
+| `EXPECTED_STAGING_DB_NAME` | `cyber_law_staging` | Optional | Config | Unset (falls back to broad staging whitelist) | `server/config/stagingDatabaseGuard.js:126`, `render.yaml:26` |
+| `SPACED_RETRIEVAL_DELAY_DAYS`| `7` | Optional | Config | `7` | `server/services/spacedRetrievalService.js:20`, `render.yaml:28` |
+| `SCORING_V2_CUTOVER_DATE` | `2026-11-04T00:00:00.000Z` | **Required** in prod | Config | Throws `CONFIG_CUTOVER_MISSING` in prod; `'2026-11-04T00:00:00.000Z'` in test | `server/config/cutoverConfig.js:8`, `render.yaml:30` |
+| `RATE_LIMIT_AUTH_MAX` | `20` | Optional | Config | `20` | `server/middleware/rateLimitMiddleware.js:111`, `render.yaml:32` |
+| `RATE_LIMIT_AUTH_WINDOW_MS` | `900000` | Optional | Config | `900000` (15 minutes) | `server/middleware/rateLimitMiddleware.js:110`, `render.yaml:34` |
+| `RATE_LIMIT_ASSISTANT_MAX` | `30` | Optional | Config | `30` | `server/middleware/rateLimitMiddleware.js:117`, `render.yaml:36` |
+| `RATE_LIMIT_ASSISTANT_WINDOW_MS` | `60000` | Optional | Config | `60000` (1 minute) | `server/middleware/rateLimitMiddleware.js:116`, `render.yaml:38` |
+| `ADMIN_EMAIL` | `staging-admin@cyberlawportal.org` | Optional | Secret | `'admin@cyberlawportal.test'` (seed script fallback) | `server/config/seed.js:54`, `render.yaml:46` |
+| `ADMIN_PASSWORD` | *(Strong temporary staging admin password)* | Optional | Secret | `'AdminPass123!'` (seed script fallback) | `server/config/seed.js:55`, `render.yaml:48` |
 
 ---
 
@@ -126,6 +138,7 @@ The following repository components, architectural specifications, and deploymen
 
 | Test Suite File | Domain / Scope | Tests Passed | Tests Failed | Total |
 | :--- | :--- | :--- | :--- | :--- |
+| `server/tests/coldStartHandling.test.js` | Render cold start, adaptive timeouts, bounded retries, AbortSignal handling, notification transitions | **14** | **0** | **14** |
 | `server/tests/freeTierDeploymentIntegration.test.js` | API URL resolution, Netlify SPA, Render blueprint, Staging DB guard, Production CORS, Health endpoint | **19** | **0** | **19** |
 | `server/tests/stagingDatabaseGuard.test.js` | Fail-closed database isolation, keyword rejection, whitelist validation | **10** | **0** | **10** |
 | `server/tests/productionHardening.test.js` | JWT entropy, CLIENT_URL validation, Rate limiting, HSTS, Production CORS | **28** | **0** | **28** |
@@ -133,28 +146,31 @@ The following repository components, architectural specifications, and deploymen
 | `server/tests/cyberCrimeValidation.test.js` | Red flag levels, CyberCrime schemas, law definitions | **5** | **0** | **5** |
 | **Client Production Build (`npm run build`)** | Vite 8.2.1 production bundle generation and asset chunking | **Passed (0 errors)** | **0** | **1** |
 | **Client Oxlint Check (`npm run lint`)** | JavaScript & JSX static syntax, linting, and quality analysis | **Passed (0 errors)** | **0** | **1** |
-| **Cumulative Verification Totals** | | **94** | **0** | **94** |
+| **Cumulative Verification Totals** | | **108** | **0** | **108** |
 
 ---
 
 ## 8. Git Branch and Commit Information
 
-- **Working Branch**: `stage-5-learning-consolidation`
-- **Remote Upstream**: `origin/stage-5-learning-consolidation`
-- **Active Pull Request**: PR #1 ([https://github.com/NightFury-boss/CyberLawAwarnessPortal/pull/1](https://github.com/NightFury-boss/CyberLawAwarnessPortal/pull/1))
-- **Base Branch**: `origin/main` (Lineage: Fast-forwardable, 0 behind, 12 commits ahead in PR #1)
-- **Direct Push Protection**: No changes committed directly to `main`. All deployment preparation is packaged within the feature branch for code review and PR synchronization.
+- **Working & Deployment Branch**: `main`
+- **Remote Upstream**: `origin/main`
+- **Merged Releases & PRs**:
+  - PR #1: Staging preparation and Netlify/Render/Atlas readiness ([PR #1](https://github.com/NightFury-boss/CyberLawAwarnessPortal/pull/1)) — *Merged into main*.
+  - PR #2: Unreferenced assets and documentation cleanup ([PR #2](https://github.com/NightFury-boss/CyberLawAwarnessPortal/pull/2)) — *Merged into main*.
+- **Commit Baseline**: `15d8cabc3df35cdd088133c3aa22e638ad4c8f70` (In exact parity with `origin/main`).
+- **Deployment Recommendation**: Deployments must strictly use the reviewed, merged `main` branch. All outdated references suggesting deployment from temporary feature branches (such as `stage-5-learning-consolidation`) have been retired.
+- **Render Auto-Deploy Behavior**: Render's `render.yaml` blueprint specifies `autoDeploy: true`. Future merges or pushes to `main` will automatically trigger fresh builds on Render.
 
 ---
 
 ## 9. Outstanding Deployment Blockers
 
-There are **zero codebase blockers**. All code adjustments, configuration files, build scripts, tests, and guards are complete.
+There are **zero codebase blockers**. All code adjustments, configuration files, build scripts, tests, documentation, and guards are complete.
 
 The only remaining prerequisites are the manual external service setups performed by the repository owner:
-1. Creating the MongoDB Atlas M0 cluster and generating the `cyber_law_staging` connection string.
-2. Linking the GitHub repository in the Render Dashboard and entering the private environment variables.
-3. Linking the GitHub repository in the Netlify Dashboard and setting `VITE_API_URL`.
+1. Creating the MongoDB Atlas M0 cluster, generating the `cyber_law_staging` connection string, and configuring the least-privilege `cyberlaw_staging_app` user.
+2. Linking the GitHub repository in the Render Dashboard (`main` branch) and entering the private environment variables.
+3. Linking the GitHub repository in the Netlify Dashboard (`main` branch) and setting `VITE_API_URL`.
 
 ---
 
@@ -162,17 +178,17 @@ The only remaining prerequisites are the manual external service setups performe
 
 1. **MongoDB Atlas**:
    - Create free M0 cluster in nearest region (e.g. `ap-south-1` Mumbai or `eu-central-1` Frankfurt).
-   - Create database user `cyberlaw_staging_app` with strong password and `readWrite` access to `cyber_law_staging`.
+   - Create database user `cyberlaw_staging_app` with strong password (24+ characters) and granular `readWrite` access scoped strictly to `cyber_law_staging`.
    - Add Network Access rule allowing `0.0.0.0/0` (comment: `Render Free Tier Dynamic Ingress`).
    - Copy connection string: `mongodb+srv://cyberlaw_staging_app:<password>@<cluster>.mongodb.net/cyber_law_staging?retryWrites=true&w=majority`.
 2. **Render**:
-   - Create Web Service from `NightFury-boss/CyberLawAwarnessPortal` (branch: `stage-5-learning-consolidation`).
+   - Create Web Service from `NightFury-boss/CyberLawAwarnessPortal` (branch: **`main`**).
    - Set Root Directory: `server`, Build Command: `npm install`, Start Command: `node server.js`.
    - Set Health Check Path: `/api/health`.
-   - Add environment variables (see Section 5.2). Set `CLIENT_URL` to placeholder or wait for Netlify domain.
+   - Add environment variables (see Section 5.2). Set `CLIENT_URL` to a placeholder or wait for the Netlify assigned domain.
    - Deploy and note assigned URL: `https://cyberlaw-portal-backend.onrender.com`.
 3. **Netlify**:
-   - Create site from `NightFury-boss/CyberLawAwarnessPortal` (branch: `stage-5-learning-consolidation`).
+   - Create site from `NightFury-boss/CyberLawAwarnessPortal` (branch: **`main`**).
    - Base directory: `client`, Build command: `npm run build`, Publish directory: `dist`.
    - Add environment variable: `VITE_API_URL = https://cyberlaw-portal-backend.onrender.com/api`.
    - Deploy site. Note assigned URL: `https://<site-name>.netlify.app`.
@@ -184,7 +200,8 @@ The only remaining prerequisites are the manual external service setups performe
 
 1. **Render Free-Tier Dynamic Outbound IPs**:
    - Because Render free instances do not have static outbound IPs, MongoDB Atlas Network Access cannot be restricted to a single IP address and must allow `0.0.0.0/0`.
-   - *Security Impact*: Evaluated as acceptable for staging when combined with SCRAM-SHA-256 database authentication, strong random passwords, TLS transport encryption, and our fail-closed database name guard. For future live production, a dedicated VPC peering or Render Team tier with static outbound IP is recommended.
+   - *Security Reality & Defense-in-Depth*: Allowing `0.0.0.0/0` accepts connections from anywhere on the internet. While TLS 1.3 and SCRAM-SHA-256 protect queries, they do not prevent denial-of-service connection floods or brute force on Atlas M0. Therefore, the staging database must strictly contain zero production data, use an unguessable 24+ char password, enforce least-privilege scoping, and rely on our fail-closed `ASSERT_STAGING_DB` code guard.
+   - For funded production, a Render Team plan with Static Outbound IP or AWS/GCP VPC Peering should be adopted.
 2. **Render Spin-Down Latency**:
    - Instances sleep after 15 minutes of inactivity. First request will pause for 30–50 seconds while the service boots up.
    - *User Experience Impact*: The frontend must expect occasional cold-start latency when users first access the staging site. Health checks by Render do not keep the free tier awake indefinitely.
