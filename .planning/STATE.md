@@ -1,119 +1,79 @@
-# Project State & Current Position
+# Project State & Execution Snapshot
 
-## 1. Milestone Status & Position
-- **Active Canonical Stage**: **Stage 3 — Counterfactual Scenario Learning (IN PROGRESS — Wave 1 & Wave 2 Formally Accepted)**
-  - `Stage 1`: Core Learner Experience — **COMPLETED & FROZEN** (Milestone 3.3 Closed)
-  - `Stage 2`: Assessment Quality & Reliability — **COMPLETED & FORMALLY CLOSED** (AQ-1, AQ-2, AQ-3, AQ-4 Accepted)
-  - `Stage 3`: Counterfactual Scenario Learning — **IN PROGRESS**
-    - Architecture audit & feasibility evaluation: **COMPLETED**
-    - Final Reconciled Design Proposal: **APPROVED** ([`.planning/STAGE_3_COUNTERFACTUAL_DESIGN_PROPOSAL.md`](file:///c:/Users/Asus/Desktop/cyber-law-portal/.planning/STAGE_3_COUNTERFACTUAL_DESIGN_PROPOSAL.md))
-    - Wave 1 (4 Scenario Data Fixtures): **COMPLETED & FORMALLY ACCEPTED** (Baseline: `92f9602e81754ba4ff4eb399100da070cf343c5e`)
-    - Wave 2 (Studio Components & Local Progress): **COMPLETED & FORMALLY ACCEPTED** (Commit: `bf117c400919923c924aaa75a4ad65052a7606af`)
-    - Wave 3 (Browser & Integration Verification): **UNAUTHORIZED** (Awaiting separate user authorization)
-  - `Stage 4`: Digital Rights & Privacy Education (Original Phase 5) — **PENDING**
-  - `Stage 5`: Spaced Retrieval & Long-Term Retention (RT-1..4) — **PENDING**
-  - `Stage 6`: Dashboard Integration & Refinement (Original Phase 6) — **PENDING**
-- **Preserved Verified Baseline Revisions**:
-  - Implementation Revision: `a196c34acefde13fa6898745fd39ae8f1242a3a8`
-  - Documentation Alignment Revision: `72b7f5ca155681ce2fc18ae676ff38a8ca4695eb`
-  - Review Audit Fix Revision: `5fcf9ee1fe9d6076e66e01333f7e3a1553fa6b8c`
-- **Environment Distinction**:
-  - Locally verified application readiness across all integration and lifecycle suites connected to MongoDB Atlas replica set.
-  - No hosted cloud production deployment (e.g. AWS/Vercel/Render hosting) has been evaluated or established.
-  - The portal is ready for deployment, not production-deployed.
-- **Outstanding Engineering Considerations (Future Non-Blockers)**:
-  - Redis-backed distributed rate limiting (for horizontal multi-instance scaling).
-  - Cloud hosting infrastructure-as-code and automated deployment pipelines.
-  - Production TLS/SSL termination at the ingress or reverse proxy boundary.
-  - Background-tab mobile browser visibilitychange eviction and cache refresh handling.
-- **Separate Deferred Workstream**:
-  - `Post-Development Design Improvement`: **DEFERRED** (Tracked in [`.planning/DESIGN_IMPROVEMENT_BACKLOG.md`](file:///c:/Users/Asus/Desktop/cyber-law-portal/.planning/DESIGN_IMPROVEMENT_BACKLOG.md); initiates only after Stages 1–6 complete).
-- **System Health**: All automated test suites pass 100% with 0 errors. Client Vite production build succeeds with 0 errors (built in ~446ms). MongoDB Atlas cluster healthy and accessible.
-- **Authoritative Model**: Six-Dimensional Behavioral Model (`TR`, `SI`, `VB`, `DQ`, `FP`, `UA`) authoritative, server-enforced, and immutably versioned. Standardized to "Criterion-Referenced Behavioral Diagnostic Rubric".
+**Document Version:** 2.1.0  
+**Last Updated:** 12 November 2026  
+**Repository Branch:** `public-beta-experience`  
+**Preceding Base Commit:** `6bbddbada385d7511724df161711bc1d1f9d689f` (`main` baseline prior to staging/beta branch)  
+**Branch Commit Progression:** `8c503e7` (cold-start/staging prep) ➔ `82e06a2` (Public Beta UX) ➔ `17e2e97` (Staging Tooling) ➔ `33ac6e5` (Stage 1 Security Remediation)  
+**Remote Tracking State:** Unpushed local branch (`public-beta-experience`) pending review/merge  
+**Working Tree Status:** Documentation commit (`docs: update project status and development records`)
 
 ---
 
-## 2. Completed Assessment Refinement Specification (AQ-3 v2.5.1 Amended)
-The implemented and verified design specification establishes:
-1. **Scoring Version Isolation & Cutover Contract**:
-   - `SCORING_V2_CUTOVER_DATE=2026-11-04T00:00:00.000Z` in `server/.env`.
-   - `cutoverConfig.js` enforces synchronous fail-closed validation at startup.
-   - Deterministic resolver preserves explicit versions, maps pre-cutover sessions to v1, stamps new post-cutover sessions as v2 at birth, and rejects unknown versions with `UNSUPPORTED_SCORING_VERSION`.
-2. **Global 16-Point Threat Recognition Budget**:
-   - Both Path 1 (Early Resolution via Stage 7 -> Stage 8 -> Stage 10) and Path 2 (Escalation & Late Recovery via Stage 7 -> Stage 9 -> Stage 10) operate against a strict 16-point denominator.
-   - Stage 7 early termination awards +4 TR and +2 VB; Stage 9 late recovery awards +2 TR and +2 VB.
-3. **Signal Identification Universal Forensic Probes**:
-   - 5 discrete 4-option forensic cue probes deployed across common stages (Stages 2, 3, 10, 11, 12).
-   - Atomic submission: stage submissions missing mandatory probe IDs fail with HTTP 400 (`INCOMPLETE_STAGE_SUBMISSION`) with zero database mutations.
-   - 2-step learner interaction: primary choice renders probe dynamically; learner selects cue before confirming.
-   - Client persists stage idempotency key in `sessionStorage` (`idemp_${sessionId}_${stageId}`) across reloads and retries.
-4. **Construct-Pure Decision Quality (DQ)**:
-   - DQ construct stripped of verification and panic overlaps; evaluated exclusively across Stages 5 and 13 ($N=2, DQ_{\text{max}} = 4$). Stage 14 (Evening Closure) strictly non-scoring.
-5. **Approved UA Model ($N=4, \text{Max Penalty}=8$)**:
-   - Unreviewed Acceptance evaluated across 4 genuine encounters on both paths (Stages 3, 4, 6, 10).
-   - No manufactured 5th encounter; exact path parity.
-6. **Idempotency & Partial Unique Compound Index**:
-   - Unique partial compound index on `AssessmentDecision`: `{ assessmentSessionId: 1, idempotencyKey: 1 }` with `{ unique: true, partialFilterExpression: { idempotencyKey: { $exists: true, $type: "string" } } }`.
-   - Safe retry returns HTTP 200 (`isRetry: true`); mismatched payload or re-submission conflicts return HTTP 409.
-   - Multi-document transactions on MongoDB Atlas replica set ensure atomic rollbacks.
-7. **First-Class Null Representation & Confidence Heuristics**:
-   - Unassessed dimensions ($N=0$) are stored as `null` in `behaviourScores`, excluded from remediation rankings, and rendered as neutral unassessed cards in `DigitalAwarenessProfile.jsx`.
-   - Low-sample heuristic dampener (0.70) applied for $N \in [2, 3]$ with `(Focused sample)` visual badges in the UI.
-   - False Positive cumulative penalty $\le 2$ treated as `STRENGTH` across both 4-encounter and 3-encounter paths.
-   - Scoring transparency blocks for penalty dimensions (`FP` and `UA`) in `DigitalAwarenessProfile.jsx` show accrued penalties, applicable max penalties, evaluated encounters, and the $\le 2$ penalty threshold.
+## 1. Milestone Status & Active Position
+
+- **Active Priority**: **Milestone 7.1 / 7.2 Transition — Review, Merge, Staging Redeploy Verification & Runtime Dependency Maintenance**
+- **Programme 1 Status**: **FORMALLY COMPLETED & CLOSED**
+  - `Stage 1`..`Stage 6`, `Design Workstream`, `Repository Reorganization` (`6bbddba`), and `Render Cold-Start Handling` (`8c503e7`) — **COMPLETED AND VERIFIED**
+- **Programme 2 Completed Workstreams on `public-beta-experience`**:
+  - `Public Beta Announcement & Feedback UI` (`82e06a2`) — **COMPLETED & COMMITTED**
+  - `Guarded Staging Initialization & Admin Provisioning Tooling` (`17e2e97`) — **COMPLETED & COMMITTED** (`651` canonical records initialized in `cyber_law_staging`; `1` staging administrator provisioned; existing learners untouched)
+  - `Stage 1 Backend Security Remediation` (`33ac6e5`) — **COMPLETED & COMMITTED** (seed guards, inactive-account revocation, admin payload sanitization, centralized API/DB/audit error & value redaction, reverse production DB guard, `moduleController` shared audit routing)
 
 ---
 
-## 3. Officially Frozen Learner Experience Structure (Stage 1 Baseline)
-The following structural specifications remain invariant:
-1. **Canonical Learner Journey**:
-   - Six mutually exclusive learner states evaluated deterministically in `PrimaryFocus.jsx` via `client/src/utils/dashboardJourneySelectors.js`.
-2. **Component & Route Ownership**:
-   - `/dashboard` (`Dashboard.jsx`) owns macro orientation, study dossier, pathway execution launching, quiz studio, and portfolio drawer.
-   - `/assessment/baseline` and `/assessment/final` own dedicated simulation flows with CAS atomic concurrency locks.
-   - `DigitalAwarenessProfile.jsx` owns diagnostic interpretation and statutory grounding.
-   - `PathwayRunner.jsx` owns 3-step structured intervention execution as a modal dialog.
-3. **Verified Defensive Learning Portfolio**:
-   - Standardized to "Verified Defensive Learning Portfolio" across three discrete pillars (Interventions, Knowledge Practice, Behavioral Trajectory).
-4. **Statutory Accuracy & Legal Status Taxonomy**:
-   - `IN_FORCE`: IT Act 2000 §§ 43, 66, 66C, 66D; BNS 2023 §§ 318(4), 319; BSA 2023 § 63.
-   - `ENACTED_FUTURE_COMMENCEMENT`: DPDP Act 2023 §§ 6, 8, 11 under G.S.R. 843(E) dated 13 November 2025 (not in force on 3 November 2026).
-   - `STRUCK_DOWN_HISTORICAL`: IT Act 2000 § 66A struck down in *Shreya Singhal v. Union of India (2015)*.
-5. **Cybercrime Emergency Reporting Principles**:
-   - Directs victims immediately to National Cybercrime Helpline **1930** and official portal `https://cybercrime.gov.in`.
-   - Explains prompt reporting supports CFCFRMS inter-bank hold coordination without guaranteeing fund recovery, avoiding fixed "Golden Hour" claims.
+## 2. Deployment & Cloud Infrastructure State
+
+| Infrastructure Layer | Service Provider | Current Operational State | Details & Verification Evidence |
+| :--- | :--- | :--- | :--- |
+| **Repository Codebase** | Git (`public-beta-experience`) | **`READY FOR REVIEW / PR`** | Isolated commits for Public Beta (`82e06a2`), Staging Tooling (`17e2e97`), Stage 1 Security Remediation (`33ac6e5`), and Docs. Unpushed per release controls. |
+| **Frontend SPA** | Netlify Starter | **`DEPLOYED (REDEPLOY PENDING FOR 82e06a2)`** | Live at [**https://cyber-law-awareness-portal.netlify.app**](https://cyber-law-awareness-portal.netlify.app). Local Vite production build passes cleanly (98 modules, 552ms); cloud update awaits branch push/deploy. |
+| **Backend API** | Render Free Web Service | **`DEPLOYED (REDEPLOY PENDING FOR 17e2e97/33ac6e5)`** | Configured via `render.yaml` (`NODE_ENV=production`, `ASSERT_STAGING_DB="true"`, `EXPECTED_STAGING_DB_NAME=cyber_law_staging`, `/api/health`, `sync: false` secrets). Stage 1 security fixes (`33ac6e5`) ready on branch pending cloud redeploy. |
+| **Database Datastore** | MongoDB Atlas M0 | **`STAGING INITIALIZED & PROTECTED`** | `cyber_law_staging` on `cluster0.xxeclfp.mongodb.net` initialized with 651 canonical records across 11 Class A collections (`initializeStagingDatabase.js`) and 1 verified staging admin (`createStagingAdmin.js`); existing learner data preserved. Reverse guard in `server/config/db.js` keeps unapproved `NODE_ENV=production` strictly isolated from staging/test targets. |
 
 ---
 
-## 4. Current Execution Boundary & Immediate Next Action
-- **Current Position**: Stage 3 (Counterfactual Scenario Learning) **IN PROGRESS — Wave 1 & Wave 2 Formally Accepted**. The interactive learning studio (`CounterfactualCatalog`, `CounterfactualExplorer`, `IncidentStimulusView`, `DecisionJunction`, `ConsequenceTimeline`, `ComparativeMatrix`, `DefensiveTakeawayCard`), pure state engine (`counterfactualEngine.js`), dual-mode storage adapter (`counterfactualStorage.js`), logic test suite (6/6 green), and browser-based automated verification suite (13/13 green, 18 screenshot evidence captures) have been formally reviewed, verified, and accepted by the product owner (Baseline: `bf117c400919923c924aaa75a4ad65052a7606af`).
-- **Next Canonical Step**: Await user authorization for Stage 3 Wave 3 (Playwright E2E integration test suite in `e2e/counterfactual.spec.js`) or subsequent stage work.
-- **Strict Authorization Boundary**: Wave 3 (cross-browser integration verification) **remains strictly unauthorized** pending explicit user instruction. Zero visual redesign work or dashboard modifications permitted without explicit authorization.
-- **Strict Invariants**: All Stage 1 and Stage 2 assessment scoring invariants, six-dimensional behavioral rubrics, immutable historical assessment sessions, and visual redesign freeze rules remain strictly enforced.
-- **Deferred Workstream**: Post-Development Design Improvement is strictly deferred to [`.planning/DESIGN_IMPROVEMENT_BACKLOG.md`](file:///c:/Users/Asus/Desktop/cyber-law-portal/.planning/DESIGN_IMPROVEMENT_BACKLOG.md).
+## 3. Automated Test & Code Health Verification
+
+### 3.1 Post-Edit Backend Verification (`33ac6e5`)
+1. `server/tests/stage1SecurityRemediation.test.js` — **24/24 PASSED across 6 suites** (`MongoMemoryServer`, 6,113ms): seed security guards, inactive-account revocation, error/token redaction, admin CRUD allowlists & URL/boolean validation, reverse production DB guard (preserving Render staging), runtime connection error listener redaction, `auditService` string-value redaction, and `moduleController` audit routing.
+2. Offline Staging & DB Guard Suites (`stagingDatabaseGuard.test.js`, `dbIsolationGuards.test.js`, `stagingDatabaseInitialization.test.js`, `stagingAdminProvisioning.test.js`) — **34/34 PASSED across 3 suites** (5,287ms), plus `initializeStagingDatabase.js --dry-run` (`DRY_RUN_READY`, 651 canonical records) and `verifyStagingContentIntegrity.js --offline` (`PASS`).
+3. Deployment & Production Hardening (`freeTierDeploymentIntegration.test.js`, `productionHardening.test.js`) — **47/47 PASSED across 14 suites** (1,066ms).
+4. Public Beta Contract Suite (`publicBetaExperience.test.js`) — **6/6 PASSED** (93ms).
+5. Isolated 10-Suite `MongoMemoryServer` Regression Battery (`adminAudit` 10/10, `adminQuizScenario` 14/14, `crossUserAuthorization` 17/17 across 6 suites, `stagingProductionSmoke` 13/13, plus `stage5Consolidation`, `dashboardReworkPhase6`, `scoring_v2_authoritative`, `scoring_path_equivalence`, `si_idempotency_atomicity`, `behavioralAuthoritativeResult`) — **10/10 SUITES PASSED (`exit 0`)**.
+6. Additional Post-`82e06a2` Offline & Persistence Checks (run prior to final 4-fix commit `33ac6e5` touching only backend files): `coldStartHandling.test.js` (14/14), `casesCollectionIntegrity.test.js` (31/31), `cyberCrimeValidation.test.js` (5/5), `wave1Integrity.test.js` (26/26), `wave2Integrity.test.js` (24/24), `wave3Persistence.test.js` (49/49), `counterfactualEngine.test.js` (6/6), `counterfactualFixtures.test.js` (5/5), `clientStateReliability.test.js` (5/5), `dashboardLearningJourney.test.js` (12/12).
+   - *Note*: `server/tests/statutoryAccuracyCatalog.test.js` (targets live URI in `server/.env`) and live cloud smoke tests were withheld from offline/read-only runs to protect live Atlas staging data.
+
+### 3.2 Frontend Build & Linting Verification
+- **Vite Production Compilation**: `npm run build --prefix client` succeeds in **552ms** emitting 98 transformed modules with **0 errors** (re-verified post-`33ac6e5`).
+- **Oxlint Code Health**: `npm run lint --prefix client` scanned **85 client files** in **652ms** with **0 syntax/lint errors** and 1,002 pre-existing stylistic warnings.
+
+### 3.3 Pending Dependency Security Advisory Triage (`npm audit`, Unpatched)
+- **Server (`4`)**: `proxy-addr` (critical `GHSA-jqcg-44mw-7w3h` via `express`), `body-parser` (high), `mongoose` (high), `qs` (moderate).
+- **Client (`4`)**: `source-map-js` (high), `vite` (high devDependency), `react-router` / `react-router-dom` (moderate).
+- **Root (`1`)**: `shell-quote` (critical dev/CLI via `concurrently`).
 
 ---
 
-## 5. Verification Status Summary
+## 4. Architectural Invariants Preserved
 
-### Counterfactual Scenario Learning (Stage 3 Wave 1 & Wave 2)
-- `node server/tests/counterfactualFixtures.test.js` -> 100% GREEN (5/5 comprehensive test suites passed covering schema conformance, tri-branch consequence depth, safety & privacy constraints across full fixture content, content guardrails [BNSS § 35(3)/§ 530, BNS §§ 308/319, IT Act §§ 66C/43, UPI PIN invariant, RBI 2025 Responsible Business Conduct Directions Part D / Paragraph 68 customer liability framework, credential sharing non-exclusion nuance, customer-approved UPI vs unauthorised transaction distinction, non-guarantee], and recursive deep immutability with zero server/assessment imports).
-- `node server/tests/counterfactualEngine.test.js` -> 100% GREEN (6/6 comprehensive logic suites passed covering initial state, choice selection, rewind state preservation, comparison gating, selective projection, completion conditions, all 8 storage adapter resilience subtests [Outcome A, append preservation, duplicate prevention, reload read-back, Outcome B fallback, SecurityError, QuotaExceededError, input sanitization], and multi-tier source-string boundaries across all 10 Wave 2 files).
-- `node scripts/verify_counterfactual_ui.js` -> 100% GREEN (13/13 browser-based automated verification checkpoints passed covering desktop catalog, all 4 scenarios, consequence progression, rewind state preservation, comparison matrix gating, takeaway completion, catalog status badge persistence, session reset on reload, computed focus rings & keyboard traversal, mobile 390px zero overflow [0px], invalid-slug recovery round-trip, 4-scenario static stimulus integrity with 0 inputs/textareas, and 0 backend counterfactual requests; 18 screenshot evidence captures generated).
-- `npm run build --prefix client` -> 100% GREEN (92 modules transformed, code-split chunk `Counterfactuals-*.js` created in ~487ms, 0 errors).
+1. **Six Cognitive Behavioral Dimensions**: Threat Recognition (`TR`), Signal Identification (`SI`), Verification Behavior (`VB`), Decision Quality (`DQ`), False Positive (`FP`), and Unreviewed Acceptance (`UA`) remain strictly modeled as independent traits. No synthetic composite score is ever computed.
+2. **Authoritative Server-Side Scoring**: All score matrices, progression thresholds, and stage evaluations are computed exclusively on the backend (`server/controllers/simulationController.js`).
+3. **Historical Session Immutability**: Historical assessment sessions and attempt logs are permanent. Baseline and final assessment records are never mutated in-place.
+4. **Statutory Accuracy**: Strict taxonomy separating `IN_FORCE` primary legislation, `ENACTED_FUTURE_COMMENCEMENT` provisions (DPDP Act 2023), and `STRUCK_DOWN_HISTORICAL` provisions (Section 66A IT Act).
+5. **Emergency Reporting Protocol**: Directs users immediately to National Cybercrime Helpline **1930** and portal `cybercrime.gov.in` without guaranteeing fund recovery.
+6. **Aesthetic Identity**: The warm, restrained "Constitutional Atelier" editorial aesthetic (`#F8F4EC` canvas, `#302B27` typography, `#9A503A` terracotta accent) is uniformly applied across all views.
+7. **Staging / Production Separation**: Render staging explicitly declares `ASSERT_STAGING_DB="true"` + `EXPECTED_STAGING_DB_NAME=cyber_law_staging`; unapproved `NODE_ENV=production` rejects staging/test URIs at connection time.
 
-### Integrated Assessment Validation (AQ-4)
-- `node server/tests/stagingProductionSmoke.test.js` -> 100% GREEN (13/13 tests passed, duration: ~6.9s).
-- `node server/tests/e2eUserJourneyAudit.js` -> 100% GREEN (12/12 steps passed, 0 failures).
-- `node --test server/tests/aq4_integrated_lifecycle.test.js` -> 100% GREEN (12/12 comprehensive lifecycle tests passed, duration: ~68.8s).
-- `node scripts/browser_resumption_smoke_test.js` -> 100% GREEN (Parts A–E passed; 12 screenshots captured covering mid-session reloads at Stages 2, 6, 10, completed re-entry, and expired session recovery).
-- `npm run build --prefix client` -> 100% GREEN (81 modules transformed, 0 errors, built in ~589ms).
+---
 
-### Assessment Foundation & Rubric Verification
-- `node server/tests/scoring_v2_authoritative.test.js` -> 100% GREEN (15/15 checks passed).
-- `node server/tests/scoring_path_equivalence.test.js` -> 100% GREEN (3/3 comprehensive paths passed; Path 1 vs Path 2 exact 16 TR / 10 SI / 16 VB / 4 DQ parity, honest FP score divergence, unified STRENGTH classification).
-- `node server/tests/si_idempotency_atomicity.test.js` -> 100% GREEN (7/7 checks passed; mandatory probe atomic rejection with zero DB writes, idempotent retry HTTP 200, conflict detection HTTP 409, and partial unique index compatibility).
-- `node server/tests/behavioralAuthoritativeResult.test.js` -> 100% GREEN (Tests A–G passed 100%).
-- `node server/tests/remediationEngine.test.js` -> 100% GREEN (Tests A–M passed 100%).
-- `node server/tests/phase2_awareness_profile.test.js` -> 100% GREEN (10/10 checks passed).
-- `node server/tests/phase3_2_navigation_and_integrity.test.js` -> 100% GREEN (7/7 checks passed).
+## 5. Immediate Next Actions
+
+1. **Open / Review Pull Request from `public-beta-experience`**:
+   - Review all isolated commits (`82e06a2`, `17e2e97`, `33ac6e5`, and documentation commit) cleanly separated by workstream.
+2. **Schedule Dependency Maintenance PR (`npm audit`)**:
+   - Prioritize non-breaking minor/patch upgrades for server runtime packages (`proxy-addr`, `body-parser`, `qs`, `mongoose` 8.x patch) before production promotion, followed by client/root tooling updates.
+3. **Deploy Updated Branch to Staging When Authorized**:
+   - Push/merge and trigger Netlify + Render staging rebuilds so Public Beta UI (`82e06a2`) and Stage 1 security fixes (`33ac6e5`) are live on staging.
+4. **Verify Post-Deploy Staging Smoke & Admin Access**:
+   - Confirm `/api/health`, CORS headers for Netlify origin, Public Beta announcement/feedback UI, and hardened admin CRUD endpoints on live staging.
