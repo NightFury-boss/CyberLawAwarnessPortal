@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 const Scenario = require('../models/Scenario');
 const ScenarioStage = require('../models/ScenarioStage');
 const ScenarioDecision = require('../models/ScenarioDecision');
+const { redactSensitiveText, logSafeServerError } = require('../utils/apiErrorResponder');
 
 const VALID_MEASUREMENT_FOCUS = [
   'THREAT_RECOGNITION',
@@ -205,8 +206,9 @@ async function auditScenario(scenarioId) {
     }
 
   } catch (err) {
+    logSafeServerError('[ScenarioIntegrity Audit Error]', err);
     result.valid = false;
-    result.errors.push(`Audit crashed: ${err.message}`);
+    result.errors.push(`Audit crashed: ${redactSensitiveText(err?.message || 'Unexpected audit error')}`);
   }
 
   return result;

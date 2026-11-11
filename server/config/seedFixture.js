@@ -2,17 +2,32 @@ const mongoose = require('mongoose');
 const dotenv = require('dotenv');
 const path = require('path');
 
-dotenv.config({ path: path.join(__dirname, '../.env') });
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/cyber_law_portal';
+if (
+  process.env.NODE_ENV !== 'production' &&
+  process.env.NODE_ENV !== 'test' &&
+  process.env.ASSERT_STAGING_DB !== 'true'
+) {
+  dotenv.config({ path: path.join(__dirname, '../.env') });
+}
+
+const { validateSeedExecutionTarget } = require('./seedSecurityGuard');
+const { logSafeServerError } = require('../utils/apiErrorResponder');
 
 const Scenario = require('../models/Scenario');
 const ScenarioStage = require('../models/ScenarioStage');
 const ScenarioDecision = require('../models/ScenarioDecision');
 
 async function seed(disconnect = true) {
+  const connectedDbName = mongoose.connection.readyState === 1 ? mongoose.connection.name : '';
+  const targetGuard = validateSeedExecutionTarget({
+    env: process.env,
+    isReset: false,
+    connectedDbName,
+    allowReset: false
+  });
   if (mongoose.connection.readyState === 0) {
-    console.log('[Seed Fixture] Connecting to MongoDB...');
-    await mongoose.connect(MONGODB_URI, { family: 4 });
+    console.log(`[Seed Fixture] Connecting to validated target: ${targetGuard.redactedUri}`);
+    await mongoose.connect(targetGuard.targetUri, { family: 4 });
     console.log('[Seed Fixture] Connected to MongoDB.');
   }
 
@@ -390,7 +405,7 @@ async function seed(disconnect = true) {
 
 if (require.main === module) {
   seed(true).catch(err => {
-    console.error('Seeding crashed:', err);
+    logSafeServerError('[Seed Fixture Error]', err);
     process.exit(1);
   });
 }

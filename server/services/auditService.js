@@ -1,17 +1,38 @@
 const AdminAuditLog = require('../models/AdminAuditLog');
+const { redactSensitiveText } = require('../utils/apiErrorResponder');
 
 // Sensitive key patterns to never persist under any circumstances
 const SENSITIVE_KEY_REGEX = /(password|hash|token|secret|jwt|session|pin|otp|aadhaar|credit|card|cvv|auth|bearer)/i;
+const AUDIT_EXTRA_KV_SECRET_REGEX = /\b(access_token|refresh_token|id_token|api_key|apikey|private_key|passphrase|session_id|jwt)\s*[:=]\s*(['"]?)[^\s,'";}\]]+\2/gi;
+const AUDIT_QUOTED_JSON_SECRET_REGEX = /(["'])(password|passwordHash|passphrase|token|secret|jwt|jwt_secret|mongodb_uri|mongo_uri|admin_password|api_key|apikey|access_token|refresh_token)\1\s*:\s*(["'])([^"']*)\3/gi;
 
 /**
- * Recursively sanitizes changes objects against an allowlist and sensitive key blocker.
+ * Redacts connection strings, bearer tokens, JWTs, hashes, and inline secrets inside
+ * arbitrary audit strings before applying length truncation.
+ */
+function sanitizeAuditString(rawStr, maxLength = 500) {
+  const redacted = redactSensitiveText(rawStr)
+    .replace(AUDIT_EXTRA_KV_SECRET_REGEX, '$1=[REDACTED]')
+    .replace(AUDIT_QUOTED_JSON_SECRET_REGEX, '$1$2$1: $3[REDACTED]$3');
+
+  return redacted.length > maxLength
+    ? redacted.substring(0, maxLength) + '... [TRUNCATED]'
+    : redacted;
+}
+
+/**
+ * Recursively sanitizes changes objects against sensitive keys and sensitive string values.
  * Truncates oversized string values to prevent collection bloating.
  */
 function sanitizeChanges(data, maxDepth = 3) {
   if (!data || maxDepth <= 0) return null;
 
+  if (data instanceof Date) {
+    return data;
+  }
+
   if (typeof data === 'string') {
-    return data.length > 500 ? data.substring(0, 500) + '... [TRUNCATED]' : data;
+    return sanitizeAuditString(data);
   }
 
   if (typeof data !== 'object') {
@@ -32,10 +53,12 @@ function sanitizeChanges(data, maxDepth = 3) {
 
     if (value === null || value === undefined) {
       clean[key] = value;
+    } else if (value instanceof Date) {
+      clean[key] = value;
     } else if (typeof value === 'object') {
       clean[key] = sanitizeChanges(value, maxDepth - 1);
     } else if (typeof value === 'string') {
-      clean[key] = value.length > 500 ? value.substring(0, 500) + '... [TRUNCATED]' : value;
+      clean[key] = sanitizeAuditString(value);
     } else {
       clean[key] = value;
     }
@@ -50,7 +73,7 @@ function sanitizeChanges(data, maxDepth = 3) {
 function extractSafeContext(req) {
   if (!req) return {};
   const ip = req.headers?.['x-forwarded-for']?.split(',')[0]?.trim() || req.socket?.remoteAddress || req.ip || 'unknown';
-  const rawUserAgent = req.headers?.['user-agent'] || 'unknown';
+  const rawUserAgent = redactSensitiveText(req.headers?.['user-agent'] || 'unknown');
   const userAgent = rawUserAgent.length > 200 ? rawUserAgent.substring(0, 200) : rawUserAgent;
 
   return {
@@ -96,15 +119,17 @@ async function logAdminEvent({
     // 4. Validate outcome
     const validOutcome = outcome === 'FAILURE' ? 'FAILURE' : 'SUCCESS';
 
-    // 5. Create audit log document
+    // 5. Create audit log document (also redact top-level text fields)
+    const rawAction = action || `${actionType} ${entityType}`;
+    const rawDescription = description || action || `${validOutcome}: ${actionType} on ${entityType}`;
     const auditRecord = await AdminAuditLog.create({
       adminId: effectiveAdminId,
-      action: action || `${actionType} ${entityType}`,
+      action: sanitizeAuditString(rawAction, 500),
       actionType,
       entityType,
       entityId: entityId || undefined,
       outcome: validOutcome,
-      description: description || action || `${validOutcome}: ${actionType} on ${entityType}`,
+      description: sanitizeAuditString(rawDescription, 1000),
       changes: safeChanges,
       metadata: safeMetadata,
       timestamp: new Date() // Server-derived timestamp
@@ -112,9 +137,10 @@ async function logAdminEvent({
 
     return { success: true, logId: auditRecord._id };
   } catch (err) {
-    // Never fail silently: log to stderr, but don't leak database exceptions directly
-    console.error('[AdminAuditLog Write Error]:', err.message);
-    return { success: false, error: err.message };
+    // Never fail silently: log redacted diagnostics to stderr, never expose DB exceptions
+    const safeMsg = redactSensitiveText(err?.message || 'Audit log write failed');
+    console.error('[AdminAuditLog Write Error]:', safeMsg);
+    return { success: false, error: safeMsg };
   }
 }
 

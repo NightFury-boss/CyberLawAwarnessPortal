@@ -16,16 +16,24 @@ const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
 let dotenv;
-try {
-  dotenv = require('dotenv');
-} catch (e) {
+if (
+  process.env.NODE_ENV !== 'production' &&
+  process.env.NODE_ENV !== 'test' &&
+  process.env.ASSERT_STAGING_DB !== 'true'
+) {
   try {
-    dotenv = require('../node_modules/dotenv');
-  } catch (e2) {}
+    dotenv = require('dotenv');
+  } catch (e) {
+    try {
+      dotenv = require('../node_modules/dotenv');
+    } catch (e2) {}
+  }
+  if (dotenv) {
+    dotenv.config({ path: path.join(__dirname, '../.env') });
+  }
 }
-if (dotenv) {
-  dotenv.config({ path: path.join(__dirname, '../.env') });
-}
+const { validateSeedExecutionTarget } = require('./seedSecurityGuard');
+const { logSafeServerError } = require('../utils/apiErrorResponder');
 const mongoose = require('mongoose');
 let connectDB = null;
 try {
@@ -1455,15 +1463,16 @@ if (require.main === module) {
   if (isLive) {
     (async () => {
       try {
-        console.log('[LIVE EXECUTION] Initializing database connection...');
-        await connectDB();
+        const targetGuard = validateSeedExecutionTarget({ env: process.env, isReset: false, allowReset: false });
+        console.log(`[LIVE EXECUTION] Initializing validated database connection (${targetGuard.redactedUri})...`);
+        await mongoose.connect(targetGuard.targetUri, { family: 4 });
         const result = await seedJusticeShortcomingsCases({ dryRun: false });
         console.log('[LIVE EXECUTION] Completed successfully with status:', result.status);
         await mongoose.disconnect();
         console.log('[Database] Disconnected cleanly.');
         process.exit(0);
       } catch (err) {
-        console.error('[LIVE EXECUTION ERROR]:', err);
+        logSafeServerError('[LIVE EXECUTION ERROR]', err);
         if (mongoose.connection.readyState !== 0) {
           await mongoose.disconnect();
         }

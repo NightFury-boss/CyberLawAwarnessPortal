@@ -23,6 +23,9 @@ This directory contains operational tools, deployment runners, database maintena
 | `safeOrphanRecovery.js` | Fail-closed utility to preview and purge orphaned synthetic test accounts created during smoke tests. | `node scripts/safeOrphanRecovery.js --run-id <ID> [--confirm]` |
 | `preflightDatabaseAudit.js` | Offline Mongoose schema validation for authored case studies before database insertion. | `node scripts/preflightDatabaseAudit.js` |
 | `verifyPostSeedDatabase.js` | Validates database collection integrity, counts, and slug uniqueness after seeding. | `node scripts/verifyPostSeedDatabase.js` |
+| `initializeStagingDatabase.js` | Guarded, idempotent initializer for all 11 canonical Class A staging collections (dry-run default; zero Class B/C/D writes). | `node scripts/initializeStagingDatabase.js` |
+| `verifyStagingContentIntegrity.js` | Read-only post-initialization auditor verifying counts, schemas, unique keys, graphs, and API endpoints. | `node scripts/verifyStagingContentIntegrity.js --offline` |
+| `rollbackStagingInitialization.js` | Manifest-scoped safe rollback reverting only documents inserted by a specific `staging_init_*` run. | `node scripts/rollbackStagingInitialization.js --run-id <ID>` |
 
 ---
 

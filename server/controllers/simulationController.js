@@ -7,6 +7,7 @@ const AssessmentDecision = require('../models/AssessmentDecision');
 const UserProgress = require('../models/UserProgress');
 const assessmentScoringService = require('../services/assessmentScoringService');
 const remediationEngineService = require('../services/remediationEngineService');
+const { logSafeServerError, sendStructuredError } = require('../utils/apiErrorResponder');
 
 function toObjectSafe(val) {
   if (!val) return {};
@@ -84,7 +85,7 @@ async function getWeakestCategory(userId) {
       return weakest;
     }
   } catch (err) {
-    console.error('Failed to get weakest category:', err);
+    logSafeServerError('[getWeakestCategory Error]', err);
   }
   return null;
 }
@@ -121,7 +122,7 @@ async function getSessionDecisionEvidence(sessionId) {
     }
     return decisionEvidence;
   } catch (err) {
-    console.error('Failed to populate decision evidence for session:', err);
+    logSafeServerError('[getSessionDecisionEvidence Error]', err);
     return [];
   }
 }
@@ -162,10 +163,10 @@ exports.getScenario = async (req, res) => {
     }
     res.json(scenario);
   } catch (error) {
-    console.error('[getScenarioStatus Error]:', error);
-    res.status(500).json({
-      success: false,
-      error: { code: 'SCENARIO_FETCH_ERROR', message: error.message }
+    return sendStructuredError(res, error, {
+      contextLabel: '[getScenario Error]',
+      defaultCode: 'SCENARIO_FETCH_ERROR',
+      defaultMessage: 'Unable to retrieve scenario.'
     });
   }
 };
@@ -343,10 +344,10 @@ exports.startAssessment = async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('[getScenarioStatus Error]:', error);
-    res.status(500).json({
-      success: false,
-      error: { code: 'START_ASSESSMENT_ERROR', message: error.message }
+    return sendStructuredError(res, error, {
+      contextLabel: '[startAssessment Error]',
+      defaultCode: 'START_ASSESSMENT_ERROR',
+      defaultMessage: 'Unable to start assessment session.'
     });
   }
 };
@@ -878,10 +879,10 @@ exports.submitStep = async (req, res) => {
       });
     }
   } catch (error) {
-    console.error('[getScenarioStatus Error]:', error);
-    res.status(500).json({
-      success: false,
-      error: { code: 'SUBMIT_STEP_ERROR', message: error.message }
+    return sendStructuredError(res, error, {
+      contextLabel: '[submitStep Error]',
+      defaultCode: 'SUBMIT_STEP_ERROR',
+      defaultMessage: 'Unable to process decision submission.'
     });
   }
 };
@@ -1017,10 +1018,10 @@ exports.getSession = async (req, res) => {
       message: `Session is ${session.status}`
     });
   } catch (error) {
-    console.error('[getScenarioStatus Error]:', error);
-    res.status(500).json({
-      success: false,
-      error: { code: 'GET_SESSION_ERROR', message: error.message }
+    return sendStructuredError(res, error, {
+      contextLabel: '[getSession Error]',
+      defaultCode: 'GET_SESSION_ERROR',
+      defaultMessage: 'Unable to retrieve assessment session.'
     });
   }
 };
@@ -1170,10 +1171,10 @@ exports.getScenarioStatus = async (req, res) => {
       status: 'none'
     });
   } catch (error) {
-    console.error('[getScenarioStatus Error]:', error);
-    res.status(500).json({
-      success: false,
-      error: { code: 'GET_STATUS_ERROR', message: error.message }
+    return sendStructuredError(res, error, {
+      contextLabel: '[getScenarioStatus Error]',
+      defaultCode: 'GET_STATUS_ERROR',
+      defaultMessage: 'Unable to retrieve scenario status.'
     });
   }
 };
@@ -1189,15 +1190,10 @@ exports.getRemediation = async (req, res) => {
       ...remediation
     });
   } catch (err) {
-    if (err.status && err.code) {
-      return res.status(err.status).json({
-        success: false,
-        error: { code: err.code, message: err.message }
-      });
-    }
-    return res.status(500).json({
-      success: false,
-      error: { code: 'INTERNAL_ERROR', message: err.message || 'Failed to generate remediation recommendations' }
+    return sendStructuredError(res, err, {
+      contextLabel: '[getRemediation Error]',
+      defaultCode: 'INTERNAL_ERROR',
+      defaultMessage: 'Failed to generate remediation recommendations'
     });
   }
 };
@@ -1409,9 +1405,10 @@ exports.getTrajectory = async (req, res) => {
       dimensions
     });
   } catch (error) {
-    return res.status(500).json({
-      success: false,
-      error: { code: 'TRAJECTORY_ERROR', message: error.message }
+    return sendStructuredError(res, error, {
+      contextLabel: '[getTrajectory Error]',
+      defaultCode: 'TRAJECTORY_ERROR',
+      defaultMessage: 'Unable to calculate behavioral trajectory.'
     });
   }
 };

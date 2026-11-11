@@ -15,6 +15,17 @@ const AdminAuditLog = require('../models/AdminAuditLog');
 const UserProgress = require('../models/UserProgress');
 const auditService = require('../services/auditService');
 const scenarioIntegrityService = require('../services/scenarioIntegrityService');
+const {
+  logSafeServerError,
+  redactSensitiveText,
+  classifySafeApiError,
+  sendMessageError
+} = require('../utils/apiErrorResponder');
+const {
+  parseStrictBoolean,
+  sanitizeAdminMutationPayload,
+  assertSafeQuizAdminPayload
+} = require('../utils/adminPayloadSanitizer');
 
 exports.getAnalytics = async (req, res) => {
   try {
@@ -165,7 +176,11 @@ exports.getAnalytics = async (req, res) => {
       behavioralAverages: cohortBehavioralAverages
     });
   } catch (error) {
-    res.status(500).json({ message: 'Error fetching analytics', error: error.message });
+    return sendMessageError(res, error, {
+      contextLabel: '[getAnalytics Error]',
+      defaultMessage: 'Error fetching analytics',
+      includeSuccessFalse: false
+    });
   }
 };
 
@@ -201,7 +216,11 @@ exports.getUsersProgress = async (req, res) => {
 
     res.json(trackingList);
   } catch (error) {
-    res.status(500).json({ message: 'Error tracking users progression', error: error.message });
+    return sendMessageError(res, error, {
+      contextLabel: '[getUsersProgress Error]',
+      defaultMessage: 'Error tracking users progression',
+      includeSuccessFalse: false
+    });
   }
 };
 
@@ -301,15 +320,43 @@ exports.getAuditLogs = async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('[getAuditLogs Error]:', error.message);
-    res.status(500).json({ success: false, message: 'Failed to retrieve audit records' });
+    return sendMessageError(res, error, {
+      contextLabel: '[getAuditLogs Error]',
+      defaultMessage: 'Failed to retrieve audit records'
+    });
   }
 };
+
+function handleAuditedAdminFailure(res, error, { contextLabel, defaultStatus = 500, defaultMessage, action, entityType, req }) {
+  logSafeServerError(contextLabel, error);
+  const classified = classifySafeApiError(error, { defaultStatus, defaultMessage });
+  const safeDiag = redactSensitiveText(error?.message || defaultMessage);
+
+  // Fire-and-forget safe failure audit without delaying or breaking response
+  auditService.logAdminEvent({
+    req,
+    actionType: req?.method === 'POST' ? 'CREATE' : (req?.method === 'DELETE' ? 'DELETE' : 'UPDATE'),
+    action,
+    entityType,
+    outcome: 'FAILURE',
+    description: `${defaultMessage}: ${classified.message}`,
+    metadata: {
+      ...(req?.params?.id ? { targetId: req.params.id } : {}),
+      error: safeDiag
+    }
+  }).catch(() => {});
+
+  return res.status(classified.status).json({
+    success: false,
+    message: classified.message
+  });
+}
 
 // CRUD for Laws
 exports.createLaw = async (req, res) => {
   try {
-    const newLaw = await LawSection.create(req.body);
+    const { payload } = sanitizeAdminMutationPayload('law', req.body, { mode: 'create' });
+    const newLaw = await LawSection.create(payload);
     await auditService.logAdminEvent({
       req,
       actionType: 'CREATE',
@@ -318,29 +365,29 @@ exports.createLaw = async (req, res) => {
       entityId: newLaw._id,
       outcome: 'SUCCESS',
       description: `Created legal section ${newLaw.sectionNumber}: ${newLaw.officialTitle || ''}`,
-      changes: req.body,
+      changes: payload,
       metadata: { sectionNumber: newLaw.sectionNumber, actName: newLaw.actName }
     });
     res.status(201).json(newLaw);
   } catch (error) {
-    console.error('[createLaw Error]:', error.message);
-    await auditService.logAdminEvent({
-      req,
-      actionType: 'CREATE',
-      action: `Failed to create LawSection`,
+    return handleAuditedAdminFailure(res, error, {
+      contextLabel: '[createLaw Error]',
+      defaultStatus: 500,
+      defaultMessage: 'Error creating law section',
+      action: 'Failed to create LawSection',
       entityType: 'LawSection',
-      outcome: 'FAILURE',
-      description: `Law section creation failed: ${error.message}`,
-      metadata: { error: error.message }
+      req
     });
-    res.status(400).json({ success: false, message: 'Error creating law section' });
   }
 };
 
 exports.updateLaw = async (req, res) => {
   try {
-    const updated = await LawSection.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true });
-    if (!updated) {
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      return res.status(400).json({ success: false, message: 'Invalid law section ID format' });
+    }
+    const existing = await LawSection.findById(req.params.id);
+    if (!existing) {
       await auditService.logAdminEvent({
         req,
         actionType: 'UPDATE',
@@ -353,6 +400,16 @@ exports.updateLaw = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Law not found' });
     }
 
+    const { payload, updateDoc } = sanitizeAdminMutationPayload('law', req.body, {
+      mode: 'update',
+      existingDoc: existing
+    });
+    const updated = await LawSection.findByIdAndUpdate(req.params.id, updateDoc, {
+      new: true,
+      runValidators: true,
+      context: 'query'
+    });
+
     await auditService.logAdminEvent({
       req,
       actionType: 'UPDATE',
@@ -361,27 +418,27 @@ exports.updateLaw = async (req, res) => {
       entityId: updated._id,
       outcome: 'SUCCESS',
       description: `Updated legal section ${updated.sectionNumber}`,
-      changes: req.body,
+      changes: payload,
       metadata: { sectionNumber: updated.sectionNumber }
     });
     res.json(updated);
   } catch (error) {
-    console.error('[updateLaw Error]:', error.message);
-    await auditService.logAdminEvent({
-      req,
-      actionType: 'UPDATE',
-      action: `Failed to update LawSection`,
+    return handleAuditedAdminFailure(res, error, {
+      contextLabel: '[updateLaw Error]',
+      defaultStatus: 500,
+      defaultMessage: 'Error updating law section',
+      action: 'Failed to update LawSection',
       entityType: 'LawSection',
-      outcome: 'FAILURE',
-      description: `Law section update failed: ${error.message}`,
-      metadata: { targetId: req.params.id, error: error.message }
+      req
     });
-    res.status(500).json({ success: false, message: 'Error updating law section' });
   }
 };
 
 exports.deleteLaw = async (req, res) => {
   try {
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      return res.status(400).json({ success: false, message: 'Invalid law section ID format' });
+    }
     const deleted = await LawSection.findByIdAndDelete(req.params.id);
     if (!deleted) {
       await auditService.logAdminEvent({
@@ -408,24 +465,22 @@ exports.deleteLaw = async (req, res) => {
     });
     res.json({ message: 'Law section deleted successfully' });
   } catch (error) {
-    console.error('[deleteLaw Error]:', error.message);
-    await auditService.logAdminEvent({
-      req,
-      actionType: 'DELETE',
-      action: `Failed to delete LawSection`,
+    return handleAuditedAdminFailure(res, error, {
+      contextLabel: '[deleteLaw Error]',
+      defaultStatus: 500,
+      defaultMessage: 'Error deleting law section',
+      action: 'Failed to delete LawSection',
       entityType: 'LawSection',
-      outcome: 'FAILURE',
-      description: `Law section deletion failed: ${error.message}`,
-      metadata: { targetId: req.params.id, error: error.message }
+      req
     });
-    res.status(500).json({ success: false, message: 'Error deleting law section' });
   }
 };
 
 // CRUD for Crimes
 exports.createCrime = async (req, res) => {
   try {
-    const newCrime = await CyberCrime.create(req.body);
+    const { payload } = sanitizeAdminMutationPayload('crime', req.body, { mode: 'create' });
+    const newCrime = await CyberCrime.create(payload);
     await auditService.logAdminEvent({
       req,
       actionType: 'CREATE',
@@ -434,29 +489,29 @@ exports.createCrime = async (req, res) => {
       entityId: newCrime._id,
       outcome: 'SUCCESS',
       description: `Created cybercrime profile: ${newCrime.title} (${newCrime.category || 'General'})`,
-      changes: req.body,
+      changes: payload,
       metadata: { title: newCrime.title, slug: newCrime.slug, category: newCrime.category }
     });
     res.status(201).json(newCrime);
   } catch (error) {
-    console.error('[createCrime Error]:', error.message);
-    await auditService.logAdminEvent({
-      req,
-      actionType: 'CREATE',
-      action: `Failed to create Cybercrime profile`,
+    return handleAuditedAdminFailure(res, error, {
+      contextLabel: '[createCrime Error]',
+      defaultStatus: 500,
+      defaultMessage: 'Error creating crime profile',
+      action: 'Failed to create Cybercrime profile',
       entityType: 'CyberCrime',
-      outcome: 'FAILURE',
-      description: `Cybercrime creation failed: ${error.message}`,
-      metadata: { error: error.message }
+      req
     });
-    res.status(400).json({ success: false, message: 'Error creating crime profile' });
   }
 };
 
 exports.updateCrime = async (req, res) => {
   try {
-    const updated = await CyberCrime.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true });
-    if (!updated) {
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      return res.status(400).json({ success: false, message: 'Invalid cybercrime ID format' });
+    }
+    const existing = await CyberCrime.findById(req.params.id);
+    if (!existing) {
       await auditService.logAdminEvent({
         req,
         actionType: 'UPDATE',
@@ -469,9 +524,19 @@ exports.updateCrime = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Crime category not found' });
     }
 
+    const { payload, updateDoc } = sanitizeAdminMutationPayload('crime', req.body, {
+      mode: 'update',
+      existingDoc: existing
+    });
+    const updated = await CyberCrime.findByIdAndUpdate(req.params.id, updateDoc, {
+      new: true,
+      runValidators: true,
+      context: 'query'
+    });
+
     let actionType = 'UPDATE';
-    if (req.body.published === true) actionType = 'PUBLISH';
-    else if (req.body.published === false) actionType = 'UNPUBLISH';
+    if (payload.published === true) actionType = 'PUBLISH';
+    else if (payload.published === false) actionType = 'UNPUBLISH';
 
     await auditService.logAdminEvent({
       req,
@@ -481,27 +546,27 @@ exports.updateCrime = async (req, res) => {
       entityId: updated._id,
       outcome: 'SUCCESS',
       description: `Updated cybercrime profile: ${updated.title}`,
-      changes: req.body,
+      changes: payload,
       metadata: { title: updated.title, slug: updated.slug }
     });
     res.json(updated);
   } catch (error) {
-    console.error('[updateCrime Error]:', error.message);
-    await auditService.logAdminEvent({
-      req,
-      actionType: 'UPDATE',
-      action: `Failed to update Cybercrime`,
+    return handleAuditedAdminFailure(res, error, {
+      contextLabel: '[updateCrime Error]',
+      defaultStatus: 500,
+      defaultMessage: 'Error updating crime profile',
+      action: 'Failed to update Cybercrime',
       entityType: 'CyberCrime',
-      outcome: 'FAILURE',
-      description: `Cybercrime update failed: ${error.message}`,
-      metadata: { targetId: req.params.id, error: error.message }
+      req
     });
-    res.status(500).json({ success: false, message: 'Error updating crime profile' });
   }
 };
 
 exports.deleteCrime = async (req, res) => {
   try {
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      return res.status(400).json({ success: false, message: 'Invalid cybercrime ID format' });
+    }
     const deleted = await CyberCrime.findByIdAndDelete(req.params.id);
     if (!deleted) {
       await auditService.logAdminEvent({
@@ -528,24 +593,22 @@ exports.deleteCrime = async (req, res) => {
     });
     res.json({ message: 'Crime category deleted successfully' });
   } catch (error) {
-    console.error('[deleteCrime Error]:', error.message);
-    await auditService.logAdminEvent({
-      req,
-      actionType: 'DELETE',
-      action: `Failed to delete Cybercrime`,
+    return handleAuditedAdminFailure(res, error, {
+      contextLabel: '[deleteCrime Error]',
+      defaultStatus: 500,
+      defaultMessage: 'Error deleting crime profile',
+      action: 'Failed to delete Cybercrime',
       entityType: 'CyberCrime',
-      outcome: 'FAILURE',
-      description: `Cybercrime deletion failed: ${error.message}`,
-      metadata: { targetId: req.params.id, error: error.message }
+      req
     });
-    res.status(500).json({ success: false, message: 'Error deleting crime profile' });
   }
 };
 
 // CRUD for Case Studies
 exports.createCase = async (req, res) => {
   try {
-    const newCase = await CaseStudy.create(req.body);
+    const { payload } = sanitizeAdminMutationPayload('case', req.body, { mode: 'create' });
+    const newCase = await CaseStudy.create(payload);
     await auditService.logAdminEvent({
       req,
       actionType: 'CREATE',
@@ -554,29 +617,29 @@ exports.createCase = async (req, res) => {
       entityId: newCase._id,
       outcome: 'SUCCESS',
       description: `Created case study: ${newCase.title}`,
-      changes: req.body,
+      changes: payload,
       metadata: { title: newCase.title, slug: newCase.slug }
     });
     res.status(201).json(newCase);
   } catch (error) {
-    console.error('[createCase Error]:', error.message);
-    await auditService.logAdminEvent({
-      req,
-      actionType: 'CREATE',
-      action: `Failed to create Case Study`,
+    return handleAuditedAdminFailure(res, error, {
+      contextLabel: '[createCase Error]',
+      defaultStatus: 500,
+      defaultMessage: 'Error creating case study',
+      action: 'Failed to create Case Study',
       entityType: 'CaseStudy',
-      outcome: 'FAILURE',
-      description: `Case study creation failed: ${error.message}`,
-      metadata: { error: error.message }
+      req
     });
-    res.status(400).json({ success: false, message: 'Error creating case study' });
   }
 };
 
 exports.updateCase = async (req, res) => {
   try {
-    const updated = await CaseStudy.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true });
-    if (!updated) {
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      return res.status(400).json({ success: false, message: 'Invalid case study ID format' });
+    }
+    const existing = await CaseStudy.findById(req.params.id);
+    if (!existing) {
       await auditService.logAdminEvent({
         req,
         actionType: 'UPDATE',
@@ -589,6 +652,16 @@ exports.updateCase = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Case not found' });
     }
 
+    const { payload, updateDoc } = sanitizeAdminMutationPayload('case', req.body, {
+      mode: 'update',
+      existingDoc: existing
+    });
+    const updated = await CaseStudy.findByIdAndUpdate(req.params.id, updateDoc, {
+      new: true,
+      runValidators: true,
+      context: 'query'
+    });
+
     await auditService.logAdminEvent({
       req,
       actionType: 'UPDATE',
@@ -597,27 +670,27 @@ exports.updateCase = async (req, res) => {
       entityId: updated._id,
       outcome: 'SUCCESS',
       description: `Updated case study: ${updated.title}`,
-      changes: req.body,
+      changes: payload,
       metadata: { title: updated.title }
     });
     res.json(updated);
   } catch (error) {
-    console.error('[updateCase Error]:', error.message);
-    await auditService.logAdminEvent({
-      req,
-      actionType: 'UPDATE',
-      action: `Failed to update Case Study`,
+    return handleAuditedAdminFailure(res, error, {
+      contextLabel: '[updateCase Error]',
+      defaultStatus: 500,
+      defaultMessage: 'Error updating case study',
+      action: 'Failed to update Case Study',
       entityType: 'CaseStudy',
-      outcome: 'FAILURE',
-      description: `Case study update failed: ${error.message}`,
-      metadata: { targetId: req.params.id, error: error.message }
+      req
     });
-    res.status(500).json({ success: false, message: 'Error updating case study' });
   }
 };
 
 exports.deleteCase = async (req, res) => {
   try {
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      return res.status(400).json({ success: false, message: 'Invalid case study ID format' });
+    }
     const deleted = await CaseStudy.findByIdAndDelete(req.params.id);
     if (!deleted) {
       await auditService.logAdminEvent({
@@ -644,17 +717,14 @@ exports.deleteCase = async (req, res) => {
     });
     res.json({ message: 'Case study deleted successfully' });
   } catch (error) {
-    console.error('[deleteCase Error]:', error.message);
-    await auditService.logAdminEvent({
-      req,
-      actionType: 'DELETE',
-      action: `Failed to delete Case Study`,
+    return handleAuditedAdminFailure(res, error, {
+      contextLabel: '[deleteCase Error]',
+      defaultStatus: 500,
+      defaultMessage: 'Error deleting case study',
+      action: 'Failed to delete Case Study',
       entityType: 'CaseStudy',
-      outcome: 'FAILURE',
-      description: `Case study deletion failed: ${error.message}`,
-      metadata: { targetId: req.params.id, error: error.message }
+      req
     });
-    res.status(500).json({ success: false, message: 'Error deleting case study' });
   }
 };
 
@@ -684,8 +754,10 @@ exports.getAdminQuizzes = async (req, res) => {
     }));
     res.json(populated);
   } catch (error) {
-    console.error('[getAdminQuizzes Error]:', error.message);
-    res.status(500).json({ success: false, message: 'Error fetching quizzes for administrator' });
+    return sendMessageError(res, error, {
+      contextLabel: '[getAdminQuizzes Error]',
+      defaultMessage: 'Error fetching quizzes for administrator'
+    });
   }
 };
 
@@ -741,13 +813,16 @@ exports.getAdminQuizById = async (req, res) => {
       }))
     });
   } catch (error) {
-    console.error('[getAdminQuizById Error]:', error.message);
-    res.status(500).json({ success: false, message: 'Error fetching quiz details' });
+    return sendMessageError(res, error, {
+      contextLabel: '[getAdminQuizById Error]',
+      defaultMessage: 'Error fetching quiz details'
+    });
   }
 };
 
 exports.createQuiz = async (req, res) => {
   try {
+    assertSafeQuizAdminPayload(req.body, { mode: 'create' });
     const { title, category, description, difficulty, relatedModule, published } = req.body;
     if (!title || typeof title !== 'string' || !title.trim()) {
       return res.status(400).json({ success: false, message: 'Quiz title is required' });
@@ -755,15 +830,25 @@ exports.createQuiz = async (req, res) => {
     if (!category || typeof category !== 'string' || !category.trim()) {
       return res.status(400).json({ success: false, message: 'Quiz category is required' });
     }
+    if (description !== undefined && typeof description !== 'string') {
+      return res.status(400).json({ success: false, message: 'Quiz description must be a string' });
+    }
+    if (difficulty !== undefined && typeof difficulty !== 'string') {
+      return res.status(400).json({ success: false, message: 'Quiz difficulty must be a string' });
+    }
+    if (relatedModule !== undefined && typeof relatedModule !== 'string') {
+      return res.status(400).json({ success: false, message: 'Quiz relatedModule must be a string' });
+    }
 
-    const newQuiz = await Quiz.create({
+    const createPayload = {
       title: title.trim(),
       category: category.trim(),
       description: description ? description.trim() : '',
-      difficulty: difficulty || 'Medium',
+      difficulty: difficulty ? difficulty.trim() : 'Medium',
       relatedModule: relatedModule ? relatedModule.trim() : '',
-      published: published !== undefined ? Boolean(published) : true
-    });
+      published: published !== undefined ? parseStrictBoolean(published, 'published') : true
+    };
+    const newQuiz = await Quiz.create(createPayload);
 
     await auditService.logAdminEvent({
       req,
@@ -773,23 +858,20 @@ exports.createQuiz = async (req, res) => {
       entityId: newQuiz._id,
       outcome: 'SUCCESS',
       description: `Created quiz module: ${newQuiz.title}`,
-      changes: req.body,
+      changes: createPayload,
       metadata: { title: newQuiz.title, category: newQuiz.category }
     });
 
     res.status(201).json(newQuiz);
   } catch (error) {
-    console.error('[createQuiz Error]:', error.message);
-    await auditService.logAdminEvent({
-      req,
-      actionType: 'CREATE',
-      action: `Failed to create Quiz`,
+    return handleAuditedAdminFailure(res, error, {
+      contextLabel: '[createQuiz Error]',
+      defaultStatus: 500,
+      defaultMessage: 'Error creating quiz',
+      action: 'Failed to create Quiz',
       entityType: 'Quiz',
-      outcome: 'FAILURE',
-      description: `Quiz creation failed: ${error.message}`,
-      metadata: { error: error.message }
+      req
     });
-    res.status(400).json({ success: false, message: error.message || 'Error creating quiz' });
   }
 };
 
@@ -813,16 +895,50 @@ exports.updateQuiz = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Quiz not found' });
     }
 
+    assertSafeQuizAdminPayload(req.body, { mode: 'update', existingDoc: currentQuiz });
     const { title, category, description, difficulty, relatedModule, published } = req.body;
     const updatePayload = {};
-    if (title !== undefined) updatePayload.title = title.trim();
-    if (category !== undefined) updatePayload.category = category.trim();
-    if (description !== undefined) updatePayload.description = description.trim();
-    if (difficulty !== undefined) updatePayload.difficulty = difficulty;
-    if (relatedModule !== undefined) updatePayload.relatedModule = relatedModule.trim();
-    if (published !== undefined) updatePayload.published = Boolean(published);
+    if (title !== undefined) {
+      if (typeof title !== 'string' || !title.trim()) {
+        return res.status(400).json({ success: false, message: 'Quiz title must be a non-empty string' });
+      }
+      updatePayload.title = title.trim();
+    }
+    if (category !== undefined) {
+      if (typeof category !== 'string' || !category.trim()) {
+        return res.status(400).json({ success: false, message: 'Quiz category must be a non-empty string' });
+      }
+      updatePayload.category = category.trim();
+    }
+    if (description !== undefined) {
+      if (typeof description !== 'string') {
+        return res.status(400).json({ success: false, message: 'Quiz description must be a string' });
+      }
+      updatePayload.description = description.trim();
+    }
+    if (difficulty !== undefined) {
+      if (typeof difficulty !== 'string') {
+        return res.status(400).json({ success: false, message: 'Quiz difficulty must be a string' });
+      }
+      updatePayload.difficulty = difficulty.trim();
+    }
+    if (relatedModule !== undefined) {
+      if (typeof relatedModule !== 'string') {
+        return res.status(400).json({ success: false, message: 'Quiz relatedModule must be a string' });
+      }
+      updatePayload.relatedModule = relatedModule.trim();
+    }
+    if (published !== undefined) updatePayload.published = parseStrictBoolean(published, 'published');
 
-    const updated = await Quiz.findByIdAndUpdate(req.params.id, updatePayload, { new: true, runValidators: true });
+    if (Object.keys(updatePayload).length === 0) {
+      return res.status(400).json({ success: false, message: 'No valid updatable fields provided.' });
+    }
+
+    const updated = await Quiz.findByIdAndUpdate(req.params.id, { $set: updatePayload }, {
+      new: true,
+      runValidators: true,
+      context: 'query'
+    });
 
     await auditService.logAdminEvent({
       req,
@@ -832,23 +948,20 @@ exports.updateQuiz = async (req, res) => {
       entityId: updated._id,
       outcome: 'SUCCESS',
       description: `Updated quiz module: ${updated.title}`,
-      changes: req.body,
+      changes: updatePayload,
       metadata: { title: updated.title }
     });
 
     res.json(updated);
   } catch (error) {
-    console.error('[updateQuiz Error]:', error.message);
-    await auditService.logAdminEvent({
-      req,
-      actionType: 'UPDATE',
-      action: `Failed to update Quiz`,
+    return handleAuditedAdminFailure(res, error, {
+      contextLabel: '[updateQuiz Error]',
+      defaultStatus: 500,
+      defaultMessage: 'Error updating quiz',
+      action: 'Failed to update Quiz',
       entityType: 'Quiz',
-      outcome: 'FAILURE',
-      description: `Quiz update failed: ${error.message}`,
-      metadata: { targetId: req.params.id, error: error.message }
+      req
     });
-    res.status(500).json({ success: false, message: error.message || 'Error updating quiz' });
   }
 };
 
@@ -908,17 +1021,14 @@ exports.deleteQuiz = async (req, res) => {
 
     res.json({ success: true, message: 'Quiz and associated questions deleted successfully' });
   } catch (error) {
-    console.error('[deleteQuiz Error]:', error.message);
-    await auditService.logAdminEvent({
-      req,
-      actionType: 'DELETE',
-      action: `Failed to delete Quiz`,
+    return handleAuditedAdminFailure(res, error, {
+      contextLabel: '[deleteQuiz Error]',
+      defaultStatus: 500,
+      defaultMessage: 'Error deleting quiz',
+      action: 'Failed to delete Quiz',
       entityType: 'Quiz',
-      outcome: 'FAILURE',
-      description: `Quiz deletion failed: ${error.message}`,
-      metadata: { targetId: req.params.id, error: error.message }
+      req
     });
-    res.status(500).json({ success: false, message: 'Error deleting quiz' });
   }
 };
 
@@ -928,6 +1038,8 @@ exports.createQuizQuestion = async (req, res) => {
     if (!mongoose.Types.ObjectId.isValid(quizId)) {
       return res.status(400).json({ success: false, message: 'Invalid quiz ID format' });
     }
+
+    assertSafeQuizAdminPayload(req.body, { mode: 'create' });
 
     const quiz = await Quiz.findById(quizId);
     if (!quiz) {
@@ -965,7 +1077,7 @@ exports.createQuizQuestion = async (req, res) => {
     }
 
     const numIndex = Number(correctOptionIndex);
-    if (isNaN(numIndex) || numIndex < 0 || numIndex >= cleanOptions.length) {
+    if (!Number.isInteger(numIndex) || numIndex < 0 || numIndex >= cleanOptions.length) {
       return res.status(400).json({ success: false, message: `correctOptionIndex must be an integer between 0 and ${cleanOptions.length - 1}` });
     }
 
@@ -973,23 +1085,25 @@ exports.createQuizQuestion = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Explanation is required' });
     }
 
+    const optStr = (v, fallback = '') => (typeof v === 'string' ? v.trim() : fallback);
+
     const newQuestion = await QuizQuestion.create({
       quizId: quiz._id,
       questionText: questionText.trim(),
       options: cleanOptions,
       correctOptionIndex: numIndex,
       explanation: explanation.trim(),
-      questionType: questionType || 'knowledge',
-      category: (category && category.trim()) || quiz.category,
-      difficulty: difficulty || quiz.difficulty || 'Intermediate',
-      cognitiveLevel: cognitiveLevel || 'Level 1',
-      topicTag: topicTag ? topicTag.trim() : '',
-      learningObjective: learningObjective ? learningObjective.trim() : '',
-      relatedLaw: relatedLaw ? relatedLaw.trim() : '',
-      relatedLawSection: relatedLawSection ? relatedLawSection.trim() : '',
-      relatedCrime: relatedCrime ? relatedCrime.trim() : '',
-      relatedModule: relatedModule ? relatedModule.trim() : (quiz.relatedModule || ''),
-      published: published !== undefined ? Boolean(published) : true
+      questionType: optStr(questionType, 'knowledge') || 'knowledge',
+      category: optStr(category, quiz.category) || quiz.category,
+      difficulty: optStr(difficulty, quiz.difficulty || 'Intermediate') || 'Intermediate',
+      cognitiveLevel: optStr(cognitiveLevel, 'Level 1') || 'Level 1',
+      topicTag: optStr(topicTag),
+      learningObjective: optStr(learningObjective),
+      relatedLaw: optStr(relatedLaw),
+      relatedLawSection: optStr(relatedLawSection),
+      relatedCrime: optStr(relatedCrime),
+      relatedModule: optStr(relatedModule, quiz.relatedModule || ''),
+      published: published !== undefined ? parseStrictBoolean(published, 'published') : true
     });
 
     await auditService.logAdminEvent({
@@ -1005,17 +1119,14 @@ exports.createQuizQuestion = async (req, res) => {
 
     res.status(201).json(newQuestion);
   } catch (error) {
-    console.error('[createQuizQuestion Error]:', error.message);
-    await auditService.logAdminEvent({
-      req,
-      actionType: 'CREATE',
-      action: `Failed to create Quiz Question`,
+    return handleAuditedAdminFailure(res, error, {
+      contextLabel: '[createQuizQuestion Error]',
+      defaultStatus: 500,
+      defaultMessage: 'Error creating question',
+      action: 'Failed to create Quiz Question',
       entityType: 'QuizQuestion',
-      outcome: 'FAILURE',
-      description: `Quiz question creation failed: ${error.message}`,
-      metadata: { error: error.message, quizId: req.params.id }
+      req
     });
-    res.status(400).json({ success: false, message: error.message || 'Error creating question' });
   }
 };
 
@@ -1030,6 +1141,12 @@ exports.updateQuizQuestion = async (req, res) => {
     if (!question) {
       return res.status(404).json({ success: false, message: 'Question not found for this quiz' });
     }
+
+    assertSafeQuizAdminPayload(req.body, {
+      mode: 'update',
+      existingDoc: question,
+      immutableFields: ['questionId', 'quizId']
+    });
 
     const {
       questionText,
@@ -1050,19 +1167,30 @@ exports.updateQuizQuestion = async (req, res) => {
     } = req.body;
 
     const updatePayload = {};
-    if (questionText !== undefined) updatePayload.questionText = questionText.trim();
-    if (explanation !== undefined) updatePayload.explanation = explanation.trim();
-    if (questionType !== undefined) updatePayload.questionType = questionType;
-    if (category !== undefined) updatePayload.category = category.trim();
-    if (difficulty !== undefined) updatePayload.difficulty = difficulty;
-    if (cognitiveLevel !== undefined) updatePayload.cognitiveLevel = cognitiveLevel;
-    if (topicTag !== undefined) updatePayload.topicTag = topicTag.trim();
-    if (learningObjective !== undefined) updatePayload.learningObjective = learningObjective.trim();
-    if (relatedLaw !== undefined) updatePayload.relatedLaw = relatedLaw.trim();
-    if (relatedLawSection !== undefined) updatePayload.relatedLawSection = relatedLawSection.trim();
-    if (relatedCrime !== undefined) updatePayload.relatedCrime = relatedCrime.trim();
-    if (relatedModule !== undefined) updatePayload.relatedModule = relatedModule.trim();
-    if (published !== undefined) updatePayload.published = Boolean(published);
+    const assignStringField = (key, val) => {
+      if (val !== undefined) {
+        if (typeof val !== 'string') {
+          const err = new Error(`Field "${key}" must be a text string.`);
+          err.status = 400;
+          throw err;
+        }
+        updatePayload[key] = val.trim();
+      }
+    };
+
+    assignStringField('questionText', questionText);
+    assignStringField('explanation', explanation);
+    assignStringField('questionType', questionType);
+    assignStringField('category', category);
+    assignStringField('difficulty', difficulty);
+    assignStringField('cognitiveLevel', cognitiveLevel);
+    assignStringField('topicTag', topicTag);
+    assignStringField('learningObjective', learningObjective);
+    assignStringField('relatedLaw', relatedLaw);
+    assignStringField('relatedLawSection', relatedLawSection);
+    assignStringField('relatedCrime', relatedCrime);
+    assignStringField('relatedModule', relatedModule);
+    if (published !== undefined) updatePayload.published = parseStrictBoolean(published, 'published');
 
     if (options !== undefined) {
       const cleanOptions = Array.isArray(options)
@@ -1077,13 +1205,21 @@ exports.updateQuizQuestion = async (req, res) => {
     if (correctOptionIndex !== undefined) {
       const currentOpts = updatePayload.options || question.options;
       const numIndex = Number(correctOptionIndex);
-      if (isNaN(numIndex) || numIndex < 0 || numIndex >= currentOpts.length) {
+      if (!Number.isInteger(numIndex) || numIndex < 0 || numIndex >= currentOpts.length) {
         return res.status(400).json({ success: false, message: `correctOptionIndex must be between 0 and ${currentOpts.length - 1}` });
       }
       updatePayload.correctOptionIndex = numIndex;
     }
 
-    const updatedQuestion = await QuizQuestion.findByIdAndUpdate(questionId, updatePayload, { new: true, runValidators: true });
+    if (Object.keys(updatePayload).length === 0) {
+      return res.status(400).json({ success: false, message: 'No valid updatable fields provided.' });
+    }
+
+    const updatedQuestion = await QuizQuestion.findByIdAndUpdate(questionId, { $set: updatePayload }, {
+      new: true,
+      runValidators: true,
+      context: 'query'
+    });
 
     await auditService.logAdminEvent({
       req,
@@ -1093,23 +1229,20 @@ exports.updateQuizQuestion = async (req, res) => {
       entityId: updatedQuestion._id,
       outcome: 'SUCCESS',
       description: `Updated question in quiz ID: ${quizId}`,
-      changes: req.body,
+      changes: updatePayload,
       metadata: { questionId, quizId }
     });
 
     res.json(updatedQuestion);
   } catch (error) {
-    console.error('[updateQuizQuestion Error]:', error.message);
-    await auditService.logAdminEvent({
-      req,
-      actionType: 'UPDATE',
-      action: `Failed to update Quiz Question`,
+    return handleAuditedAdminFailure(res, error, {
+      contextLabel: '[updateQuizQuestion Error]',
+      defaultStatus: 500,
+      defaultMessage: 'Error updating question',
+      action: 'Failed to update Quiz Question',
       entityType: 'QuizQuestion',
-      outcome: 'FAILURE',
-      description: `Question update failed: ${error.message}`,
-      metadata: { error: error.message, questionId: req.params.questionId }
+      req
     });
-    res.status(500).json({ success: false, message: error.message || 'Error updating question' });
   }
 };
 
@@ -1164,24 +1297,22 @@ exports.deleteQuizQuestion = async (req, res) => {
 
     res.json({ success: true, message: 'Question deleted successfully' });
   } catch (error) {
-    console.error('[deleteQuizQuestion Error]:', error.message);
-    await auditService.logAdminEvent({
-      req,
-      actionType: 'DELETE',
-      action: `Failed to delete Quiz Question`,
+    return handleAuditedAdminFailure(res, error, {
+      contextLabel: '[deleteQuizQuestion Error]',
+      defaultStatus: 500,
+      defaultMessage: 'Error deleting question',
+      action: 'Failed to delete Quiz Question',
       entityType: 'QuizQuestion',
-      outcome: 'FAILURE',
-      description: `Question deletion failed: ${error.message}`,
-      metadata: { error: error.message, questionId: req.params.questionId }
+      req
     });
-    res.status(500).json({ success: false, message: 'Error deleting question' });
   }
 };
 
 // CRUD for Resources
 exports.createResource = async (req, res) => {
   try {
-    const newRes = await Resource.create(req.body);
+    const { payload } = sanitizeAdminMutationPayload('resource', req.body, { mode: 'create' });
+    const newRes = await Resource.create(payload);
     await auditService.logAdminEvent({
       req,
       actionType: 'CREATE',
@@ -1190,29 +1321,29 @@ exports.createResource = async (req, res) => {
       entityId: newRes._id,
       outcome: 'SUCCESS',
       description: `Created resource link: ${newRes.title}`,
-      changes: req.body,
-      metadata: { title: newRes.title, type: newRes.type }
+      changes: payload,
+      metadata: { title: newRes.title, category: newRes.category }
     });
     res.status(201).json(newRes);
   } catch (error) {
-    console.error('[createResource Error]:', error.message);
-    await auditService.logAdminEvent({
-      req,
-      actionType: 'CREATE',
-      action: `Failed to create Resource`,
+    return handleAuditedAdminFailure(res, error, {
+      contextLabel: '[createResource Error]',
+      defaultStatus: 500,
+      defaultMessage: 'Error creating resource link',
+      action: 'Failed to create Resource',
       entityType: 'Resource',
-      outcome: 'FAILURE',
-      description: `Resource creation failed: ${error.message}`,
-      metadata: { error: error.message }
+      req
     });
-    res.status(400).json({ success: false, message: 'Error creating resource link' });
   }
 };
 
 exports.updateResource = async (req, res) => {
   try {
-    const updated = await Resource.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true });
-    if (!updated) {
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      return res.status(400).json({ success: false, message: 'Invalid resource ID format' });
+    }
+    const existing = await Resource.findById(req.params.id);
+    if (!existing) {
       await auditService.logAdminEvent({
         req,
         actionType: 'UPDATE',
@@ -1225,6 +1356,16 @@ exports.updateResource = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Resource not found' });
     }
 
+    const { payload, updateDoc } = sanitizeAdminMutationPayload('resource', req.body, {
+      mode: 'update',
+      existingDoc: existing
+    });
+    const updated = await Resource.findByIdAndUpdate(req.params.id, updateDoc, {
+      new: true,
+      runValidators: true,
+      context: 'query'
+    });
+
     await auditService.logAdminEvent({
       req,
       actionType: 'UPDATE',
@@ -1233,27 +1374,27 @@ exports.updateResource = async (req, res) => {
       entityId: updated._id,
       outcome: 'SUCCESS',
       description: `Updated resource link: ${updated.title}`,
-      changes: req.body,
+      changes: payload,
       metadata: { title: updated.title }
     });
     res.json(updated);
   } catch (error) {
-    console.error('[updateResource Error]:', error.message);
-    await auditService.logAdminEvent({
-      req,
-      actionType: 'UPDATE',
-      action: `Failed to update Resource`,
+    return handleAuditedAdminFailure(res, error, {
+      contextLabel: '[updateResource Error]',
+      defaultStatus: 500,
+      defaultMessage: 'Error updating resource link',
+      action: 'Failed to update Resource',
       entityType: 'Resource',
-      outcome: 'FAILURE',
-      description: `Resource update failed: ${error.message}`,
-      metadata: { targetId: req.params.id, error: error.message }
+      req
     });
-    res.status(500).json({ success: false, message: 'Error updating resource link' });
   }
 };
 
 exports.deleteResource = async (req, res) => {
   try {
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      return res.status(400).json({ success: false, message: 'Invalid resource ID format' });
+    }
     const deleted = await Resource.findByIdAndDelete(req.params.id);
     if (!deleted) {
       await auditService.logAdminEvent({
@@ -1280,17 +1421,14 @@ exports.deleteResource = async (req, res) => {
     });
     res.json({ message: 'Resource deleted successfully' });
   } catch (error) {
-    console.error('[deleteResource Error]:', error.message);
-    await auditService.logAdminEvent({
-      req,
-      actionType: 'DELETE',
-      action: `Failed to delete Resource`,
+    return handleAuditedAdminFailure(res, error, {
+      contextLabel: '[deleteResource Error]',
+      defaultStatus: 500,
+      defaultMessage: 'Error deleting resource link',
+      action: 'Failed to delete Resource',
       entityType: 'Resource',
-      outcome: 'FAILURE',
-      description: `Resource deletion failed: ${error.message}`,
-      metadata: { targetId: req.params.id, error: error.message }
+      req
     });
-    res.status(500).json({ success: false, message: 'Error deleting resource link' });
   }
 };
 
@@ -1328,8 +1466,10 @@ exports.getAdminScenarios = async (req, res) => {
     }));
     res.json(populated);
   } catch (error) {
-    console.error('[getAdminScenarios Error]:', error.message);
-    res.status(500).json({ success: false, message: 'Error fetching scenarios' });
+    return sendMessageError(res, error, {
+      contextLabel: '[getAdminScenarios Error]',
+      defaultMessage: 'Error fetching scenarios'
+    });
   }
 };
 
@@ -1371,8 +1511,10 @@ exports.getAdminScenarioById = async (req, res) => {
       stages: populatedStages
     });
   } catch (error) {
-    console.error('[getAdminScenarioById Error]:', error.message);
-    res.status(500).json({ success: false, message: 'Error fetching scenario graph' });
+    return sendMessageError(res, error, {
+      contextLabel: '[getAdminScenarioById Error]',
+      defaultMessage: 'Error fetching scenario graph'
+    });
   }
 };
 
@@ -1384,8 +1526,10 @@ exports.auditAdminScenario = async (req, res) => {
     const auditResult = await scenarioIntegrityService.auditScenario(req.params.id);
     res.json(auditResult);
   } catch (error) {
-    console.error('[auditAdminScenario Error]:', error.message);
-    res.status(500).json({ success: false, message: 'Error executing scenario audit: ' + error.message });
+    return sendMessageError(res, error, {
+      contextLabel: '[auditAdminScenario Error]',
+      defaultMessage: 'Error executing scenario audit'
+    });
   }
 };
 
@@ -1581,8 +1725,10 @@ exports.getDashboardSummary = async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('[getDashboardSummary Error]:', error.message);
-    res.status(500).json({ success: false, message: 'Error compiling administrative dashboard overview: ' + error.message });
+    return sendMessageError(res, error, {
+      contextLabel: '[getDashboardSummary Error]',
+      defaultMessage: 'Error compiling administrative dashboard overview'
+    });
   }
 };
 

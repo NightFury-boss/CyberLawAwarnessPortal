@@ -1,7 +1,15 @@
 const fs = require('fs');
 const path = require('path');
 const dotenv = require('dotenv');
-dotenv.config({ path: path.join(__dirname, '../.env') });
+if (
+  process.env.NODE_ENV !== 'production' &&
+  process.env.NODE_ENV !== 'test' &&
+  process.env.ASSERT_STAGING_DB !== 'true'
+) {
+  dotenv.config({ path: path.join(__dirname, '../.env') });
+}
+const { validateSeedExecutionTarget } = require('./seedSecurityGuard');
+const { logSafeServerError } = require('../utils/apiErrorResponder');
 
 const mongoose = require('mongoose');
 const Scenario = require('../models/Scenario');
@@ -386,11 +394,12 @@ async function runCalibration() {
   fs.writeFileSync(scenariosPath, JSON.stringify(rawScenarios, null, 2), 'utf8');
   console.log('Successfully saved calibrated scenarios.json!');
 
-  // Connect to DB and sync calibrated stages to MongoDB Atlas
+  // Connect to DB and sync calibrated stages to validated target
   const MONGODB_URI = process.env.MONGODB_URI;
   if (MONGODB_URI) {
-    console.log('Connecting to MongoDB to upsert calibrated stages...');
-    await mongoose.connect(MONGODB_URI, { family: 4 });
+    const targetGuard = validateSeedExecutionTarget({ env: process.env, isReset: false, allowReset: false });
+    console.log(`Connecting to validated MongoDB target (${targetGuard.redactedUri}) to upsert calibrated stages...`);
+    await mongoose.connect(targetGuard.targetUri, { family: 4 });
 
     const baselineScenario = await Scenario.findOne({ slug: 'baseline', version: 2 });
     const finalScenario = await Scenario.findOne({ slug: 'final', version: 2 });
@@ -440,6 +449,6 @@ async function runCalibration() {
 }
 
 runCalibration().catch(err => {
-  console.error('Calibration error:', err);
+  logSafeServerError('[Calibration Error]', err);
   process.exit(1);
 });

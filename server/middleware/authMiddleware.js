@@ -21,8 +21,8 @@ async function protect(req, res, next) {
     const secret = getJwtSecret();
     const decoded = jwt.verify(token, secret);
     const user = await User.findById(decoded.id).select('-passwordHash');
-    if (!user) {
-      return res.status(401).json({ message: 'Not authorized, user not found' });
+    if (!user || user.isActive === false) {
+      return res.status(401).json({ message: 'Not authorized' });
     }
     req.user = user;
     next();
@@ -32,7 +32,10 @@ async function protect(req, res, next) {
 }
 
 function adminOnly(req, res, next) {
-  if (req.user && req.user.role === 'admin') {
+  if (!req.user || req.user.isActive === false) {
+    return res.status(401).json({ message: 'Not authorized' });
+  }
+  if (req.user.role === 'admin') {
     next();
   } else {
     return res.status(403).json({ message: 'Access denied, administrator privileges required' });

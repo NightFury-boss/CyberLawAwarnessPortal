@@ -4,6 +4,28 @@ This document maintains the historical and ongoing record of major architectural
 
 ---
 
+## [2026-11-12] - Public Beta UX, Guarded Staging Tooling & Stage 1 Security Remediation (`public-beta-experience`)
+* **Category:** Product Release Prep, Staging Infrastructure Tooling, Backend Security Hardening
+* **Details**:
+  - **Public Beta Experience (`82e06a2`)**: Added `PublicBetaAnnouncement`, accessible `FeedbackModal`, footer Beta badge and feedback trigger, responsive styles in `client/src/styles/public-beta.css`, and contract tests (`server/tests/publicBetaExperience.test.js`, 6/6).
+  - **Guarded Staging Tooling (`17e2e97`)**: Added fail-closed canonical initializer (`scripts/initializeStagingDatabase.js` for 651 records across 11 Class A collections without touching learner data), content verifier (`scripts/verifyStagingContentIntegrity.js`), manifest-scoped rollback (`scripts/rollbackStagingInitialization.js`), and one-time staging admin provisioner (`scripts/createStagingAdmin.js`), backed by `stagingDatabaseInitialization.test.js` (13/13) and `stagingAdminProvisioning.test.js` (8/8).
+  - **Stage 1 Backend Security Remediation (`33ac6e5`)**: Added `server/config/seedSecurityGuard.js` (explicit credential enforcement, zero demo user seeding in prod/staging/remote), immediate inactive-account enforcement (`authController.js`, `authMiddleware.js`, `routes/crimes.js`), `server/utils/adminPayloadSanitizer.js` (operator/prototype checks, allowlists preserving `LawSection.role`, strict boolean & URL allowlist parsing), `server/utils/apiErrorResponder.js` across `server.js` and 9 controllers, reverse production DB guard + runtime connection error redaction (`server/config/db.js`), string-value redaction in `auditService.js`, and shared audit routing in `moduleController.js`.
+* **Verification**: `stage1SecurityRemediation.test.js` (24/24 across 6 suites), offline staging/isolation suites (`34/34`), `freeTierDeploymentIntegration.test.js` + `productionHardening.test.js` (47/47 across 14 suites), `publicBetaExperience.test.js` (6/6), 10-suite isolated `MongoMemoryServer` battery (10/10), and Vite production build (`552ms`, 98 modules, 0 errors).
+
+---
+
+## [2026-11-11] - Canonical Roadmap Refresh & Project State Reconciliation (Programme 2 Transition)
+* **Category:** Project Governance, Canonical Roadmap, Documentation Architecture
+* **Details**:
+  - Reconciled the canonical development roadmap (`.planning/ROADMAP.md`) and execution snapshot (`.planning/STATE.md`), formally closing the original six-stage foundational development programme (Stages 1 through 6) and the post-development design improvement workstream.
+  - Formally established Programme 2: Staging Deployment, Infrastructure Hardening & Operational Continuity, designating Milestone 7.1 (Staging Cloud Deployment & Live Verification) as the immediate active priority.
+  - Reconciled `.planning/DESIGN_IMPROVEMENT_BACKLOG.md`: closed all 16 foundational visual and accessibility items (DB-1..4, AS-1..4, PL-1..4, GL-1..4) verified in Pre-Beta Release (`8692471`), and established an active backlog for post-staging editorial polish (print stylesheets, micro-interactions).
+  - Clarified deployment state: recorded frontend live deployment on Netlify (`https://cyber-law-awareness-portal.netlify.app`), backend Blueprint preparation on Render, and pending live cloud provisioning.
+  - Corrected test runner metrics across documentation to reflect the verified 90-test automated suite (82 offline assertions + 8 statutory database checks).
+* **Verification**: All 7 backend test suites passing 100% (90 tests), client Vite production build compiling in 739ms (0 errors), and Oxlint passing with 0 errors across 83 client files.
+
+---
+
 ## [2026-11-11] - Phase B Repository Organization & Reticle Decommissioning
 * **Category:** Repository Architecture, Tool Decommissioning, Documentation
 * **Structural Reorganization**:

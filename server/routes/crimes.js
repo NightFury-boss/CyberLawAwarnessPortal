@@ -15,7 +15,7 @@ async function optionalProtect(req, res, next) {
     try {
       const decoded = jwt.verify(token, getJwtSecret());
       const user = await User.findById(decoded.id).select('-passwordHash');
-      if (user) {
+      if (user && user.isActive !== false) {
         req.user = user;
       }
     } catch (error) {

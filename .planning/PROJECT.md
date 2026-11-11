@@ -24,11 +24,14 @@ Provides an objective, criterion-referenced behavioral measurement of individual
 - **Admin Command Center**: User progress tracking, analytical metric breakdown, scenario audit logs, and legal content management.
 - **AI Legal Assistant**: Context-aware legal helper trained on Indian cyber jurisprudence.
 - **Adaptive Learning Pathways**: Three-step pedagogical interventions (Incident Learning, Practical Defense, Server-Authoritative Checkpoint Evaluation) tied directly to assessed behavioral deficits.
-- **Counterfactual Scenario Learning (Stage 3 / Original Phase 4)**: Educational simulations demonstrating alternative outcomes based on different decisions.
-- **Digital Rights & Privacy Education (Stage 4 / Original Phase 5)**: Comprehensive curriculum covering personal data, consent, digital rights, copyright, piracy, and malware.
-- **Spaced Retrieval & Long-Term Retention (Stage 5 / RT-1..4)**: Independent recall retention engine tracking knowledge maintenance over time.
-- **Dashboard Integration & Refinement (Stage 6 / Original Phase 6)**: Macro journey coherence uniting assessment, pathways, curriculum, counterfactuals, and retention.
-- **Post-Development Design Improvement (Separate Deferred Workstream)**: Dedicated backlog in `.planning/DESIGN_IMPROVEMENT_BACKLOG.md` for visual, editorial, and layout refinement following foundation completion.
+- **Counterfactual Scenario Learning**: Educational simulations demonstrating alternative outcomes based on different decisions ("What happens if...?").
+- **Digital Rights & Privacy Education**: 18-module curriculum covering personal data, consent, digital rights, copyright, piracy, and malware under DPDP Act 2023.
+- **Spaced Retrieval & Long-Term Retention**: Independent recall retention engine tracking knowledge maintenance over time with 8 question formats.
+- **Unified Learner Dashboard**: Macro journey coherence uniting assessment, pathways, curriculum, counterfactuals, retention, and the Three-Pillar Verified Defensive Learning Portfolio.
+- **Constitutional Atelier Visual Identity**: Restrained, editorial, warm parchment aesthetic with verified 0px horizontal overflow across all viewports and WCAG 2.1 AA accessibility compliance.
+- **Public Beta Experience & Feedback (`82e06a2`)**: Homepage Public Beta announcement banner, accessible structured feedback modal, and footer Beta status controls.
+- **Staging Infrastructure & Tooling (`17e2e97`)**: Netlify frontend deployment, Render backend deployment (`render.yaml`), fail-closed MongoDB Atlas `cyber_law_staging` initialization (`scripts/initializeStagingDatabase.js`, 651 canonical records across 11 collections), and one-time staging admin provisioning (`scripts/createStagingAdmin.js`).
+- **Backend Security Hardening (`33ac6e5`)**: Fail-closed seed guards (no hardcoded fallbacks or remote resets), immediate inactive-account token revocation, strict admin payload allowlists and URL validation, redacted API/DB/audit error logging, `auditService` string-value redaction, and reverse production database protection.
 
 ## Architecture & Principles
 - **Backend-Authoritative**: Zero scoring calculations or sensitive data inputs exist on the client. Assessment scoring, checkpoint validation, and reinforcement gating are calculated exclusively by the server.

@@ -4,15 +4,17 @@ const CaseStudy = require('../models/CaseStudy');
 const Resource = require('../models/Resource');
 const AssessmentSession = require('../models/AssessmentSession');
 const { escapeRegex } = require('../utils/regexUtils');
+const { sendStructuredError } = require('../utils/apiErrorResponder');
 
 exports.getAllCrimes = async (req, res) => {
   try {
     const crimes = await CyberCrime.find({ published: { $ne: false } });
     res.json(crimes);
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      error: { code: 'CRIME_FETCH_ERROR', message: error.message }
+    return sendStructuredError(res, error, {
+      contextLabel: '[getAllCrimes Error]',
+      defaultCode: 'CRIME_FETCH_ERROR',
+      defaultMessage: 'Error retrieving cybercrime catalog.'
     });
   }
 };
@@ -34,9 +36,10 @@ exports.getCrimeById = async (req, res) => {
     }
     res.json(crime);
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      error: { code: 'CRIME_FETCH_ERROR', message: error.message }
+    return sendStructuredError(res, error, {
+      contextLabel: '[getCrimeById Error]',
+      defaultCode: 'CRIME_FETCH_ERROR',
+      defaultMessage: 'Error retrieving cybercrime profile.'
     });
   }
 };
@@ -53,9 +56,10 @@ exports.getCrimeBySlug = async (req, res) => {
     }
     res.json(crime);
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      error: { code: 'CRIME_FETCH_ERROR', message: error.message }
+    return sendStructuredError(res, error, {
+      contextLabel: '[getCrimeBySlug Error]',
+      defaultCode: 'CRIME_FETCH_ERROR',
+      defaultMessage: 'Error retrieving cybercrime profile.'
     });
   }
 };
@@ -65,9 +69,10 @@ exports.getAllCases = async (req, res) => {
     const cases = await CaseStudy.find({ published: { $ne: false } });
     res.json(cases);
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      error: { code: 'CASE_FETCH_ERROR', message: error.message }
+    return sendStructuredError(res, error, {
+      contextLabel: '[getAllCases Error]',
+      defaultCode: 'CASE_FETCH_ERROR',
+      defaultMessage: 'Error retrieving case studies.'
     });
   }
 };
@@ -89,9 +94,10 @@ exports.getCaseById = async (req, res) => {
     }
     res.json(item);
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      error: { code: 'CASE_FETCH_ERROR', message: error.message }
+    return sendStructuredError(res, error, {
+      contextLabel: '[getCaseById Error]',
+      defaultCode: 'CASE_FETCH_ERROR',
+      defaultMessage: 'Error retrieving case study.'
     });
   }
 };
@@ -108,9 +114,10 @@ exports.getCaseBySlug = async (req, res) => {
     }
     res.json(item);
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      error: { code: 'CASE_FETCH_ERROR', message: error.message }
+    return sendStructuredError(res, error, {
+      contextLabel: '[getCaseBySlug Error]',
+      defaultCode: 'CASE_FETCH_ERROR',
+      defaultMessage: 'Error retrieving case study.'
     });
   }
 };
@@ -141,9 +148,10 @@ exports.searchCases = async (req, res) => {
 
     res.json(filtered);
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      error: { code: 'SEARCH_ERROR', message: error.message }
+    return sendStructuredError(res, error, {
+      contextLabel: '[searchCases Error]',
+      defaultCode: 'SEARCH_ERROR',
+      defaultMessage: 'Error searching case studies.'
     });
   }
 };
@@ -153,9 +161,10 @@ exports.getAllResources = async (req, res) => {
     const resources = await Resource.find();
     res.json(resources);
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      error: { code: 'RESOURCE_FETCH_ERROR', message: error.message }
+    return sendStructuredError(res, error, {
+      contextLabel: '[getAllResources Error]',
+      defaultCode: 'RESOURCE_FETCH_ERROR',
+      defaultMessage: 'Error retrieving official resources.'
     });
   }
 };
@@ -185,9 +194,10 @@ exports.searchCrimes = async (req, res) => {
 
     res.json(filtered);
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      error: { code: 'SEARCH_ERROR', message: error.message }
+    return sendStructuredError(res, error, {
+      contextLabel: '[searchCrimes Error]',
+      defaultCode: 'SEARCH_ERROR',
+      defaultMessage: 'Error searching cybercrimes.'
     });
   }
 };
@@ -275,9 +285,10 @@ exports.getRecommendations = async (req, res) => {
       recommendations
     });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      error: { code: 'RECOMMENDATION_ERROR', message: error.message }
+    return sendStructuredError(res, error, {
+      contextLabel: '[getRecommendations Error]',
+      defaultCode: 'RECOMMENDATION_ERROR',
+      defaultMessage: 'Error generating cybercrime recommendations.'
     });
   }
 };

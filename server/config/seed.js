@@ -4,10 +4,11 @@ const dotenv = require('dotenv');
 const path = require('path');
 const fs = require('fs');
 
-// Load environment variables
-dotenv.config({ path: path.join(__dirname, '../.env') });
-
-const connectDB = require('./db');
+const {
+  validateSeedAdminCredentials,
+  validateSeedExecutionTarget
+} = require('./seedSecurityGuard');
+const { logSafeServerError } = require('../utils/apiErrorResponder');
 
 // Import Models
 const User = require('../models/User');
@@ -28,10 +29,30 @@ const remediationCatalog = require('./remediationCatalog');
 
 async function seed(isReset = false) {
   try {
-    console.log(`Seeding MongoDB database (Reset Mode: ${isReset})...`);
-    await connectDB();
+    // Load local development .env only on execution, and never in production, test, or staging-guarded mode
+    if (
+      process.env.NODE_ENV !== 'production' &&
+      process.env.NODE_ENV !== 'test' &&
+      process.env.ASSERT_STAGING_DB !== 'true'
+    ) {
+      dotenv.config({ path: path.join(__dirname, '../.env') });
+    }
 
-    // 1. Clear Existing Data ONLY if isReset is true (Destructive Reset)
+    const connectedDbName = mongoose.connection.readyState === 1 ? mongoose.connection.name : '';
+    const targetGuard = validateSeedExecutionTarget({
+      env: process.env,
+      isReset: Boolean(isReset),
+      connectedDbName,
+      allowReset: true
+    });
+    const adminCreds = validateSeedAdminCredentials(process.env);
+
+    console.log(`[Seed] Starting database seed (Reset Mode: ${Boolean(isReset)}, Target: ${targetGuard.redactedUri})...`);
+    if (mongoose.connection.readyState !== 1) {
+      await mongoose.connect(targetGuard.targetUri, { family: 4 });
+    }
+
+    // 1. Clear Existing Data ONLY if isReset is true (Destructive Reset - local dev only)
     if (isReset) {
       console.log('- Destructive Reset: Clearing all collections...');
       await User.deleteMany({});
@@ -49,39 +70,40 @@ async function seed(isReset = false) {
       await LearningModule.deleteMany({});
     }
 
-    // 2. Create Users (Admin & User)
-    console.log('- Seeding users...');
-    const adminEmail = process.env.ADMIN_EMAIL || 'admin@cyberlawportal.test';
-    const adminPassword = process.env.ADMIN_PASSWORD || 'AdminPass123!';
-    
-    let adminUser = await User.findOne({ email: adminEmail.toLowerCase() });
+    // 2. Create Admin User (explicit validated credentials only) & Demo Learner (dev/test local only)
+    console.log(`- Ensuring administrator account (${adminCreds.maskedEmail})...`);
+    let adminUser = await User.findOne({ email: adminCreds.email });
     if (!adminUser) {
       adminUser = await User.create({
         fullName: 'Cyber Portal Security Admin',
-        email: adminEmail.toLowerCase(),
-        passwordHash: bcrypt.hashSync(adminPassword, 10),
+        email: adminCreds.email,
+        passwordHash: await bcrypt.hash(adminCreds.password, 10),
         role: 'admin',
         isActive: true
       });
     }
 
-    let demoUser = await User.findOne({ email: 'user@example.com' });
-    if (!demoUser) {
-      demoUser = await User.create({
-        fullName: 'Rohan Sharma',
-        email: 'user@example.com',
-        passwordHash: bcrypt.hashSync('UserPass123!', 10),
-        role: 'user',
-        isActive: true
-      });
+    if (targetGuard.allowDemoUser) {
+      let demoUser = await User.findOne({ email: 'user@example.com' });
+      if (!demoUser) {
+        demoUser = await User.create({
+          fullName: 'Rohan Sharma',
+          email: 'user@example.com',
+          passwordHash: await bcrypt.hash('UserPass123!', 10),
+          role: 'user',
+          isActive: true
+        });
 
-      // Create progress profile
-      await UserProgress.create({
-        userId: demoUser._id,
-        completedModules: [],
-        badgesEarned: ['First Step'],
-        currentStreak: 0
-      });
+        // Create progress profile
+        await UserProgress.create({
+          userId: demoUser._id,
+          completedModules: [],
+          badgesEarned: ['First Step'],
+          currentStreak: 0
+        });
+      }
+    } else {
+      console.log('- Demo user creation skipped (disabled outside local development/test hosts).');
     }
 
     // 3. Legal Sources
@@ -3523,12 +3545,15 @@ async function seed(isReset = false) {
     }
 
     console.log('Database successfully seeded!');
-    if (require.main === module) {
-      mongoose.connection.close();
+    if (require.main === module && mongoose.connection.readyState !== 0) {
+      await mongoose.connection.close();
     }
   } catch (err) {
-    console.error('Error seeding database:', err);
+    logSafeServerError('[Seed Error]', err);
     if (require.main === module) {
+      if (mongoose.connection.readyState !== 0) {
+        await mongoose.connection.close().catch(() => {});
+      }
       process.exit(1);
     }
     throw err;

@@ -4,6 +4,7 @@ const User = require('../models/User');
 const UserProgress = require('../models/UserProgress');
 const { getJwtSecret } = require('../middleware/authMiddleware');
 const { escapeRegex } = require('../utils/regexUtils');
+const { sendMessageError } = require('../utils/apiErrorResponder');
 
 exports.register = async (req, res) => {
   try {
@@ -70,7 +71,12 @@ exports.register = async (req, res) => {
       }
     });
   } catch (error) {
-    res.status(500).json({ message: 'Registration failed', error: error.message });
+    return sendMessageError(res, error, {
+      contextLabel: '[Auth Register Error]',
+      defaultStatus: 500,
+      defaultMessage: 'Registration failed. Please try again later.',
+      includeSuccessFalse: false
+    });
   }
 };
 
@@ -100,7 +106,7 @@ exports.login = async (req, res) => {
     }
 
     const isMatch = await bcrypt.compare(password, user.passwordHash);
-    if (!isMatch) {
+    if (!isMatch || user.isActive === false) {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
 
@@ -116,7 +122,12 @@ exports.login = async (req, res) => {
       }
     });
   } catch (error) {
-    res.status(500).json({ message: 'Login failed', error: error.message });
+    return sendMessageError(res, error, {
+      contextLabel: '[Auth Login Error]',
+      defaultStatus: 500,
+      defaultMessage: 'Login failed. Please try again later.',
+      includeSuccessFalse: false
+    });
   }
 };
 
