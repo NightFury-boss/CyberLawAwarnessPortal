@@ -1076,7 +1076,10 @@ exports.createQuizQuestion = async (req, res) => {
       return res.status(400).json({ success: false, message: 'At least 2 non-empty options are required' });
     }
 
-    const numIndex = Number(correctOptionIndex);
+    const isValidRawIndex =
+      typeof correctOptionIndex === 'number' ||
+      (typeof correctOptionIndex === 'string' && correctOptionIndex.trim() !== '');
+    const numIndex = isValidRawIndex ? Number(correctOptionIndex) : NaN;
     if (!Number.isInteger(numIndex) || numIndex < 0 || numIndex >= cleanOptions.length) {
       return res.status(400).json({ success: false, message: `correctOptionIndex must be an integer between 0 and ${cleanOptions.length - 1}` });
     }
@@ -1086,6 +1089,15 @@ exports.createQuizQuestion = async (req, res) => {
     }
 
     const optStr = (v, fallback = '') => (typeof v === 'string' ? v.trim() : fallback);
+    const QUIZ_TO_QUESTION_DIFFICULTY = {
+      Easy: 'Beginner',
+      Medium: 'Intermediate',
+      Hard: 'Advanced',
+      Beginner: 'Beginner',
+      Intermediate: 'Intermediate',
+      Advanced: 'Advanced'
+    };
+    const defaultDifficulty = QUIZ_TO_QUESTION_DIFFICULTY[quiz.difficulty] || 'Intermediate';
 
     const newQuestion = await QuizQuestion.create({
       quizId: quiz._id,
@@ -1095,7 +1107,7 @@ exports.createQuizQuestion = async (req, res) => {
       explanation: explanation.trim(),
       questionType: optStr(questionType, 'knowledge') || 'knowledge',
       category: optStr(category, quiz.category) || quiz.category,
-      difficulty: optStr(difficulty, quiz.difficulty || 'Intermediate') || 'Intermediate',
+      difficulty: optStr(difficulty, defaultDifficulty) || defaultDifficulty,
       cognitiveLevel: optStr(cognitiveLevel, 'Level 1') || 'Level 1',
       topicTag: optStr(topicTag),
       learningObjective: optStr(learningObjective),

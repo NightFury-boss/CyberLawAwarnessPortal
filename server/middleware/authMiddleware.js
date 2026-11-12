@@ -14,7 +14,7 @@ async function protect(req, res, next) {
   }
 
   if (!token) {
-    return res.status(401).json({ message: 'Not authorized, token missing' });
+    return res.status(401).json({ success: false, message: 'Not authorized, token missing' });
   }
 
   try {
@@ -22,23 +22,23 @@ async function protect(req, res, next) {
     const decoded = jwt.verify(token, secret);
     const user = await User.findById(decoded.id).select('-passwordHash');
     if (!user || user.isActive === false) {
-      return res.status(401).json({ message: 'Not authorized' });
+      return res.status(401).json({ success: false, message: 'Not authorized' });
     }
     req.user = user;
     next();
   } catch (error) {
-    return res.status(401).json({ message: 'Not authorized, token invalid' });
+    return res.status(401).json({ success: false, message: 'Not authorized, token invalid' });
   }
 }
 
 function adminOnly(req, res, next) {
   if (!req.user || req.user.isActive === false) {
-    return res.status(401).json({ message: 'Not authorized' });
+    return res.status(401).json({ success: false, message: 'Not authorized' });
   }
   if (req.user.role === 'admin') {
     next();
   } else {
-    return res.status(403).json({ message: 'Access denied, administrator privileges required' });
+    return res.status(403).json({ success: false, message: 'Access denied, administrator privileges required' });
   }
 }
 

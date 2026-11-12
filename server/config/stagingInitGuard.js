@@ -17,6 +17,7 @@ const {
   parseDatabaseTarget,
   assertApprovedStagingDatabase
 } = require('./stagingDatabaseGuard');
+const { redactSensitiveText } = require('../utils/apiErrorResponder');
 
 const REQUIRED_STAGING_DB_NAME = 'cyber_law_staging';
 const DISALLOWED_LOCAL_HOSTS = new Set([
@@ -105,7 +106,8 @@ function assertStrictStagingInitEnvironment(env = process.env, options = {}) {
 
   const parsed = parseDatabaseTarget(rawUri);
   if (!parsed.valid) {
-    throw new Error(`[STAGING INIT GUARD] Invalid MONGODB_URI format: ${parsed.error}`);
+    const safeReason = redactSensitiveText(parsed.error || '') || 'Unrecognized URI syntax.';
+    throw new Error(`[STAGING INIT GUARD] Invalid MONGODB_URI format: ${safeReason}`);
   }
 
   if (requireSrv && parsed.scheme !== 'mongodb+srv') {

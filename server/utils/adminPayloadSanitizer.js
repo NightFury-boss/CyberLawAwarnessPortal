@@ -34,6 +34,18 @@ const BENIGN_SERIALIZED_METADATA = new Set([
   'lastReviewed'
 ]);
 
+const INACTIVE_HISTORICAL_LAW_STATUSES = new Set([
+  'OMITTED',
+  'REPEALED',
+  'HISTORICAL'
+]);
+
+function isSection66AReference(sectionNumber) {
+  if (typeof sectionNumber !== 'string') return false;
+  return /^(?:(?:section|sec\.?)\s*)?66\s*-?\s*a\b/i.test(sectionNumber.trim()) ||
+    /\bsection\s*66\s*-?\s*a\b/i.test(sectionNumber);
+}
+
 function createValidationError(message, code = 'INVALID_ADMIN_PAYLOAD') {
   const err = new Error(message);
   err.status = 400;
@@ -470,6 +482,25 @@ function sanitizeAdminMutationPayload(resourceType, rawBody, { mode = 'update', 
     }
     if (spec.setServerLastReviewedOnUpdate) {
       payload.lastReviewed = new Date();
+    }
+  }
+
+  if (resourceType === 'law') {
+    const effectiveSectionNumber = payload.sectionNumber !== undefined
+      ? payload.sectionNumber
+      : (mode === 'update' ? existingDoc?.sectionNumber : undefined);
+    const effectiveLegalStatus = payload.legalStatus !== undefined
+      ? payload.legalStatus
+      : (mode === 'update' && existingDoc?.legalStatus ? existingDoc.legalStatus : 'CURRENT');
+
+    if (
+      isSection66AReference(effectiveSectionNumber) &&
+      !INACTIVE_HISTORICAL_LAW_STATUSES.has(String(effectiveLegalStatus).trim().toUpperCase())
+    ) {
+      throw createValidationError(
+        'IT Act Section 66A was struck down in Shreya Singhal v. Union of India (2015) and cannot be stored with an active legalStatus; mark it OMITTED, REPEALED, or HISTORICAL.',
+        'UNCONSTITUTIONAL_SECTION_66A'
+      );
     }
   }
 

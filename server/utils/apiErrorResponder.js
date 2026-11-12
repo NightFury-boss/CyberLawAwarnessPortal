@@ -13,7 +13,7 @@ const MONGO_URI_CRED_REGEX = /\b(mongodb(?:\+srv)?:\/\/)([^:\s/@]+):([^@\s/]+)@/
 const BEARER_TOKEN_REGEX = /\b(Bearer\s+)[^\s,'";}\]]+/gi;
 const RAW_JWT_REGEX = /\beyJ[A-Za-z0-9\-_=]{10,}\.[A-Za-z0-9\-_=]{10,}\.[A-Za-z0-9\-_=]{6,}\b/g;
 const BCRYPT_HASH_REGEX = /\$2[aby]\$\d{2}\$[./A-Za-z0-9]{53}/g;
-const INLINE_SECRET_REGEX = /\b(password|passwordHash|jwt_secret|mongodb_uri|mongo_uri|admin_password|secret)\s*[:=]\s*(['"]?)[^\s,'";}]+\2/gi;
+const INLINE_SECRET_REGEX = /(["']?)\b(password|passwordHash|jwt_secret|mongodb_uri|mongo_uri|admin_password|secret)\b\1\s*[:=]\s*(?:(["'])([^"']*)\3|([^\s,'";}]+))/gi;
 
 /**
  * Masks connection-string credentials, JWTs, hashes, and secret tokens from diagnostic strings.
@@ -28,7 +28,9 @@ function redactSensitiveText(input) {
     .replace(BEARER_TOKEN_REGEX, '$1[REDACTED_TOKEN]')
     .replace(RAW_JWT_REGEX, '[REDACTED_JWT]')
     .replace(BCRYPT_HASH_REGEX, '[REDACTED_HASH]')
-    .replace(INLINE_SECRET_REGEX, '$1=[REDACTED]');
+    .replace(INLINE_SECRET_REGEX, (_match, q1, key, q2) => (
+      q1 ? `${q1}${key}${q1}: ${q2 || '"'}[REDACTED]${q2 || '"'}` : `${key}=[REDACTED]`
+    ));
 }
 
 /**
@@ -185,9 +187,7 @@ function sendMessageError(res, error, options = {}) {
     logSafeServerError(contextLabel, error);
   }
 
-  const body = includeSuccessFalse
-    ? { success: false, message: classified.message }
-    : { message: classified.message };
+  const body = { success: false, message: classified.message };
 
   return res.status(classified.status).json(body);
 }

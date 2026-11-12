@@ -1,3 +1,4 @@
+const mongoose = require('mongoose');
 const AdminAuditLog = require('../models/AdminAuditLog');
 const { redactSensitiveText } = require('../utils/apiErrorResponder');
 
@@ -72,7 +73,7 @@ function sanitizeChanges(data, maxDepth = 3) {
  */
 function extractSafeContext(req) {
   if (!req) return {};
-  const ip = req.headers?.['x-forwarded-for']?.split(',')[0]?.trim() || req.socket?.remoteAddress || req.ip || 'unknown';
+  const ip = req.ip || req.socket?.remoteAddress || 'unknown';
   const rawUserAgent = redactSensitiveText(req.headers?.['user-agent'] || 'unknown');
   const userAgent = rawUserAgent.length > 200 ? rawUserAgent.substring(0, 200) : rawUserAgent;
 
@@ -96,7 +97,8 @@ async function logAdminEvent({
   outcome = 'SUCCESS',
   description = '',
   changes = null,
-  metadata = {}
+  metadata = {},
+  session = null
 }) {
   try {
     // 1. Strictly derive admin ID from server session (never trust client payload)
@@ -122,7 +124,7 @@ async function logAdminEvent({
     // 5. Create audit log document (also redact top-level text fields)
     const rawAction = action || `${actionType} ${entityType}`;
     const rawDescription = description || action || `${validOutcome}: ${actionType} on ${entityType}`;
-    const auditRecord = await AdminAuditLog.create({
+    const logPayload = {
       adminId: effectiveAdminId,
       action: sanitizeAuditString(rawAction, 500),
       actionType,
@@ -133,7 +135,15 @@ async function logAdminEvent({
       changes: safeChanges,
       metadata: safeMetadata,
       timestamp: new Date() // Server-derived timestamp
-    });
+    };
+
+    const auditRecord = session
+      ? (await AdminAuditLog.create([logPayload], { session }))?.[0]
+      : await AdminAuditLog.create(logPayload);
+
+    if (!auditRecord || !auditRecord._id) {
+      return { success: false, reason: 'AUDIT_RECORD_NOT_PERSISTED' };
+    }
 
     return { success: true, logId: auditRecord._id };
   } catch (err) {
@@ -144,8 +154,92 @@ async function logAdminEvent({
   }
 }
 
+function supportsTransactions() {
+  try {
+    const client = typeof mongoose.connection?.getClient === 'function'
+      ? mongoose.connection.getClient()
+      : mongoose.connection?.client;
+    const topoType = client?.topology?.description?.type || client?.topology?.s?.description?.type || '';
+    return topoType.startsWith('ReplicaSet') || topoType === 'Sharded';
+  } catch {
+    return false;
+  }
+}
+
+function isUnsupportedTransactionError(err) {
+  const msg = String(err?.message || '');
+  return (
+    err?.code === 20 ||
+    err?.codeName === 'IllegalOperation' ||
+    /Transaction numbers are only allowed on a replica set|does not support transactions|multi-document transactions/i.test(msg)
+  );
+}
+
+function createAuditFailureError(auditRes) {
+  const reason = redactSensitiveText(auditRes?.error || auditRes?.reason || 'Audit log write failed');
+  const err = new Error(`Audited operation aborted: audit log write failed (${reason}).`);
+  err.status = 500;
+  err.code = 'AUDIT_LOG_FAILED';
+  return err;
+}
+
+/**
+ * Executes an administrative content mutation coupled with mandatory audit logging.
+ * Uses MongoDB multi-document transactions when supported (replica set / sharded),
+ * and executes safe compensating rollback when running on standalone MongoDB.
+ */
+async function runAuditedMutation({ req, mutate, compensate, buildAuditEvent }) {
+  if (typeof mutate !== 'function' || typeof buildAuditEvent !== 'function') {
+    throw new Error('runAuditedMutation requires mutate and buildAuditEvent handlers.');
+  }
+
+  if (supportsTransactions()) {
+    const session = await mongoose.startSession();
+    try {
+      let txResult;
+      await session.withTransaction(async () => {
+        txResult = await mutate(session);
+        const auditRes = await logAdminEvent({ ...buildAuditEvent(txResult), req, session });
+        if (!auditRes || auditRes.success !== true) {
+          throw createAuditFailureError(auditRes);
+        }
+      });
+      return txResult;
+    } catch (txErr) {
+      if (!isUnsupportedTransactionError(txErr)) {
+        throw txErr;
+      }
+    } finally {
+      await session.endSession();
+    }
+  }
+
+  // Standalone MongoDB path: execute mutation, require audit success, compensate on failure
+  const result = await mutate(null);
+  let auditRes;
+  try {
+    auditRes = await logAdminEvent({ ...buildAuditEvent(result), req });
+  } catch (auditErr) {
+    auditRes = { success: false, error: redactSensitiveText(auditErr?.message || 'Audit exception') };
+  }
+
+  if (!auditRes || auditRes.success !== true) {
+    if (typeof compensate === 'function') {
+      try {
+        await compensate(result);
+      } catch (compErr) {
+        console.error('[AdminAuditLog Compensation Error]:', redactSensitiveText(compErr?.message || 'Compensation failed'));
+      }
+    }
+    throw createAuditFailureError(auditRes);
+  }
+
+  return result;
+}
+
 module.exports = {
   logAdminEvent,
+  runAuditedMutation,
   sanitizeChanges,
   extractSafeContext
 };

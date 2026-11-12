@@ -126,6 +126,23 @@ function extractLegalSourcesFromSeed(seedContent) {
 /**
  * Loads all 11 canonical educational/simulation datasets cleanly offline.
  */
+const QUIZ_CATEGORY_ALIASES = Object.freeze({
+  'Phishing and social engineering': 'Phishing',
+  'UPI, banking and financial fraud': 'Financial Safety',
+  'Identity theft and account security': 'Account Security'
+});
+
+function resolveQuizQuestionCategory(rawCategory, quizCategorySet) {
+  let mapped = rawCategory;
+  if (!quizCategorySet.has(mapped) && Object.prototype.hasOwnProperty.call(QUIZ_CATEGORY_ALIASES, rawCategory)) {
+    mapped = QUIZ_CATEGORY_ALIASES[rawCategory];
+  }
+  return {
+    sourceCategory: rawCategory,
+    targetQuizCategory: quizCategorySet.has(mapped) ? mapped : null
+  };
+}
+
 function loadCanonicalSeedCatalog() {
   const seedContent = fs.readFileSync(path.join(CONFIG_DIR, 'seed.js'), 'utf8');
 
@@ -186,13 +203,7 @@ function loadCanonicalSeedCatalog() {
 
   const quizQuestions = rawQuestions.map((raw, idx) => {
     const qData = { ...raw };
-    let targetCategory = qData.category;
-    if (!quizCategorySet.has(targetCategory)) {
-      if (targetCategory === 'Phishing and social engineering') targetCategory = 'Phishing';
-      else if (targetCategory === 'UPI, banking and financial fraud') targetCategory = 'Financial Safety';
-      else if (targetCategory === 'Identity theft and account security') targetCategory = 'Account Security';
-    }
-    const targetQuizCategory = quizCategorySet.has(targetCategory) ? targetCategory : 'Cyber Law Basics';
+    const { sourceCategory, targetQuizCategory } = resolveQuizQuestionCategory(qData.category, quizCategorySet);
 
     const hasAuthoredId = Boolean(qData.questionId);
     if (!hasAuthoredId) {
@@ -213,6 +224,7 @@ function loadCanonicalSeedCatalog() {
 
     return {
       ...qData,
+      _sourceQuizCategory: sourceCategory,
       _targetQuizCategory: targetQuizCategory,
       _matchStrategy: hasAuthoredId ? 'questionId' : 'questionText'
     };
@@ -356,6 +368,7 @@ function validateCanonicalCatalogOffline(catalog) {
 
   catalog.quizQuestions.forEach((q) => {
     const payload = { ...q, quizId: syntheticId };
+    delete payload._sourceQuizCategory;
     delete payload._targetQuizCategory;
     delete payload._matchStrategy;
     const err = new QuizQuestion(payload).validateSync();
@@ -443,11 +456,80 @@ function validateCanonicalCatalogOffline(catalog) {
     if (stageOrders.size !== stages.length) {
       errors.push(`Scenario ${scenario.slug}@v${scenario.version} has duplicate stageOrder values`);
     }
+
+    const adj = new Map();
+    const revAdj = new Map();
+    for (const order of stageOrders) {
+      adj.set(order, new Set());
+      revAdj.set(order, new Set());
+    }
+
     for (const stg of stages) {
       for (const dec of stg.decisions) {
-        if (dec.nextStageOrder !== null && !stageOrders.has(dec.nextStageOrder)) {
+        if (dec.nextStageOrder !== null && dec.nextStageOrder !== undefined) {
+          if (!stageOrders.has(dec.nextStageOrder)) {
+            errors.push(
+              `Broken branching link in ${scenario.slug}@v${scenario.version}#${stg.stageOrder}: nextStageOrder=${dec.nextStageOrder} missing`
+            );
+          } else {
+            adj.get(stg.stageOrder).add(dec.nextStageOrder);
+            revAdj.get(dec.nextStageOrder).add(stg.stageOrder);
+          }
+        }
+      }
+
+      // Explicit modeling of runtime Adaptive Segment branching (simulationController.js routes to diagnostic stages)
+      if (stg.title && stg.title.includes('Adaptive Segment')) {
+        const diagnosticTargets = stages.filter(
+          (candidate) => candidate.stageOrder > stg.stageOrder && candidate.eventClassification === 'malicious' && !candidate.terminal
+        );
+        for (const diag of diagnosticTargets) {
+          adj.get(stg.stageOrder).add(diag.stageOrder);
+          revAdj.get(diag.stageOrder).add(stg.stageOrder);
+        }
+      }
+    }
+
+    if (stageOrders.has(1)) {
+      const reachable = new Set([1]);
+      const queue = [1];
+      while (queue.length > 0) {
+        const cur = queue.shift();
+        for (const nxt of (adj.get(cur) || [])) {
+          if (!reachable.has(nxt)) {
+            reachable.add(nxt);
+            queue.push(nxt);
+          }
+        }
+      }
+
+      for (const stg of stages) {
+        if (!reachable.has(stg.stageOrder)) {
           errors.push(
-            `Broken branching link in ${scenario.slug}@v${scenario.version}#${stg.stageOrder}: nextStageOrder=${dec.nextStageOrder} missing`
+            `Unreachable stage in ${scenario.slug}@v${scenario.version}#${stg.stageOrder} ("${stg.title}") from stageOrder=1`
+          );
+        }
+      }
+
+      const completingStages = stages.filter(
+        (stg) => stg.terminal || (stg.decisions || []).some((d) => d.nextStageOrder === null)
+      );
+      const canComplete = new Set(completingStages.map((s) => s.stageOrder));
+      const revQueue = [...canComplete];
+      while (revQueue.length > 0) {
+        const cur = revQueue.shift();
+        for (const prev of (revAdj.get(cur) || [])) {
+          if (!canComplete.has(prev)) {
+            canComplete.add(prev);
+            revQueue.push(prev);
+          }
+        }
+      }
+
+      for (const stg of stages) {
+        if (reachable.has(stg.stageOrder) && !canComplete.has(stg.stageOrder)) {
+          errors.push(
+            `Non-completing cycle or dead-end in ${scenario.slug}@v${scenario.version}#${stg.stageOrder} ("${stg.title}"): cannot reach completion`
           );
         }
       }
@@ -496,8 +578,9 @@ function validateCanonicalCatalogOffline(catalog) {
   }
 
   for (const q of catalog.quizQuestions) {
-    if (!quizCatSet.has(q._targetQuizCategory)) {
-      errors.push(`QuizQuestion "${q.questionId}" failed Quiz category resolution: "${q._targetQuizCategory}"`);
+    if (!q._targetQuizCategory || !quizCatSet.has(q._targetQuizCategory)) {
+      const rawCat = q._sourceQuizCategory !== undefined ? q._sourceQuizCategory : q.category;
+      errors.push(`QuizQuestion "${q.questionId}" failed Quiz category resolution for source category "${rawCat}"`);
     }
   }
 
@@ -565,6 +648,7 @@ function validateCanonicalCatalogOffline(catalog) {
 
 module.exports = {
   EXPECTED_CANONICAL_COUNTS,
+  resolveQuizQuestionCategory,
   loadCanonicalSeedCatalog,
   validateCanonicalCatalogOffline,
   extractBalancedLiteral

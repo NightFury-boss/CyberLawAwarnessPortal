@@ -181,10 +181,31 @@ async function runCli(argv = process.argv.slice(2)) {
 
     const store = createMongooseStore();
     const isDryRun = mode === 'LIVE_DRY_RUN';
+    const backupDir = path.join(__dirname, '../backups');
+    let preWrittenManifestPath = null;
+
     const result = await runStagingInitialization({
       catalog,
       store,
-      dryRun: isDryRun
+      dryRun: isDryRun,
+      targetDatabase: guardResult.dbName,
+      targetHost: guardResult.host,
+      onBeforeMutation: async (preMeta) => {
+        if (!fs.existsSync(backupDir)) {
+          fs.mkdirSync(backupDir, { recursive: true });
+        }
+        preWrittenManifestPath = path.join(backupDir, `${preMeta.runId}.json`);
+        const pendingManifest = {
+          runId: preMeta.runId,
+          status: 'IN_PROGRESS',
+          startedAt: new Date().toISOString(),
+          targetDatabase: preMeta.targetDatabase,
+          targetHost: preMeta.targetHost,
+          beforeCounts: preMeta.beforeCounts,
+          insertedIds: preMeta.insertedIds
+        };
+        fs.writeFileSync(preWrittenManifestPath, JSON.stringify(pendingManifest, null, 2));
+      }
     });
 
     if (result.status === 'ABORTED_CONFLICTS') {
@@ -200,13 +221,13 @@ async function runCli(argv = process.argv.slice(2)) {
     formatSummaryTable(result);
 
     if (mode === 'LIVE_EXECUTE') {
-      const backupDir = path.join(__dirname, '../backups');
       if (!fs.existsSync(backupDir)) {
         fs.mkdirSync(backupDir, { recursive: true });
       }
-      const manifestPath = path.join(backupDir, `${result.runId}.json`);
+      const manifestPath = preWrittenManifestPath || path.join(backupDir, `${result.runId}.json`);
       const manifest = {
         runId: result.runId,
+        status: result.status,
         timestamp: new Date().toISOString(),
         targetDatabase: guardResult.dbName,
         targetHost: guardResult.host,

@@ -31,7 +31,7 @@ function isStagingDatabaseTarget(dbName) {
   if (APPROVED_STAGING_DATABASE_NAMES.has(lowerDb)) {
     return true;
   }
-  return lowerDb.includes('staging') || /(?:^|[_-])stage(?:$|[_-])/.test(lowerDb);
+  return lowerDb.includes('staging') || /(?:^|[_-])(?:stage|test)(?:$|[_-])/.test(lowerDb);
 }
 
 /**
@@ -118,7 +118,7 @@ function attachConnectionListeners() {
 
 const connectDB = async () => {
   if (mongoose.connection.readyState === 1) {
-    return mongoose.connection;
+    return mongoose;
   }
   const targetUri = getDatabaseUri();
 
