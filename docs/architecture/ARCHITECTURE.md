@@ -54,13 +54,13 @@ flowchart TD
 
 ### 2.1 Server-Authoritative Assessment Engine
 - **Zero Client-Side Scoring**: The browser never computes assessment scores or decides behavioral outcomes. Clients submit stage decisions along with unique idempotency keys (`submitAssessmentStep`).
-- **Six Discrete Behavioral Dimensions**:
-  1. `TR` (Threat Recognition): Ability to detect deceptive patterns, phishing vectors, and coercion.
-  2. `SI` (Statutory Interpretation): Correct identification of relevant legal rights, sections, and liabilities.
-  3. `VB` (Victim Vulnerability & Bias Mitigation): Resistance to victim-blaming and emotional manipulation.
-  4. `DQ` (Procedural Decision Quality): Quality of immediate forensic and protective responses.
-  5. `FP` (First-Response Preparedness): Knowledge of emergency reporting workflows (e.g. National Helpline 1930 within the 2–3 hour Golden Hour).
-  6. `UA` (Systemic Uncertainty Acknowledgment): Realism regarding judicial recovery timelines and fund-freeze probabilities.
+- **Six Discrete, Non-Composite Cognitive Dimensions**:
+  1. `TR` (Threat Recognition): Ability to detect deceptive patterns, phishing vectors, and social engineering pressure.
+  2. `SI` (Systematic Inspection): Careful inspection of URLs, sender addresses, technical headers, and transactional evidence before acting.
+  3. `VB` (Verification Behavior): Verifying suspicious claims or requests independently through official or out-of-band channels.
+  4. `DQ` (Deliberate Questioning): Pausing to challenge false urgency, coerced secrecy, or unverified authority before acting.
+  5. `FP` (Fault Preparedness): Knowledge of corrective escalation steps, including National Helpline **1930** and CFCFRMS Golden Hour reporting within 2–3 hours (without assuming guaranteed recovery).
+  6. `UA` (Uncertainty Acknowledgment): Recognizing evidentiary ambiguity, investigative limits, and uncertainty rather than making overconfident assumptions.
 - **CAS & Idempotency Locking**: Submissions utilize optimistic concurrency control (Compare-and-Swap). If a network retry occurs or duplicate clicks arrive, the engine checks the `idempotencyKey` and session version, returning the existing recorded evaluation without duplicate state mutation.
 
 ### 2.2 Cold-Start & API Timeout Strategy

@@ -25,6 +25,7 @@ const {
   mongoose,
   ALL_MODELS,
   CLASS_A_NAMES,
+  PROVENANCE_COLLECTION,
   assertModelsBoundToConnection
 } = require('../server/config/stagingInitializerEngine');
 
@@ -91,7 +92,12 @@ function getArgValue(argv, flag) {
   return null;
 }
 
-async function runRollback(argv = process.argv.slice(2)) {
+async function runRollback(argv = process.argv.slice(2), options = {}) {
+  const {
+    backupsDir = path.join(__dirname, '../backups'),
+    provenanceStore = null,
+    models = ALL_MODELS
+  } = options;
   const runId = getArgValue(argv, '--run-id');
   const isExecute = argv.includes('--confirm') && argv.includes('--execute');
 
@@ -100,7 +106,7 @@ async function runRollback(argv = process.argv.slice(2)) {
   console.log(`Mode: ${isExecute ? 'LIVE_ROLLBACK' : 'DRY_RUN'}`);
   console.log('======================================================================');
 
-  const { manifest, manifestPath } = loadAndValidateManifest(runId);
+  const { manifest, manifestPath } = loadAndValidateManifest(runId, backupsDir);
   console.log(`Manifest verified: ${manifestPath}`);
   console.log(`Recorded target  : ${manifest.targetDatabase} @ ${manifest.targetHost}`);
 
@@ -126,29 +132,70 @@ async function runRollback(argv = process.argv.slice(2)) {
 
   const rawUri = (process.env.MONGODB_URI || process.env.MONGO_URI).trim();
   const deletedCounts = {};
-  try {
-    await mongoose.connect(rawUri, { family: 4, serverSelectionTimeoutMS: 10000 });
-    assertModelsBoundToConnection(mongoose);
+  const skippedUnownedCounts = {};
+  const shouldManageConnection = !provenanceStore;
 
-    for (const [colName, Model] of REVERSE_ORDER_MODELS) {
-      const ids = (manifest.insertedIds?.[colName] || []).filter((id) => mongoose.Types.ObjectId.isValid(id));
-      if (ids.length === 0) {
+  try {
+    if (shouldManageConnection) {
+      await mongoose.connect(rawUri, { family: 4, serverSelectionTimeoutMS: 10000 });
+      assertModelsBoundToConnection(mongoose);
+    }
+
+    const provenanceRecord = provenanceStore
+      ? await provenanceStore.getRunProvenance(runId)
+      : await mongoose.connection.collection(PROVENANCE_COLLECTION).findOne({ _id: runId });
+
+    if (!provenanceRecord || !Array.isArray(provenanceRecord.entries)) {
+      throw new Error(
+        `[ROLLBACK PROVENANCE ERROR] No persistent database provenance found for runId "${runId}". Refusing manifest-only deletion.`
+      );
+    }
+    if (provenanceRecord.targetDatabase && provenanceRecord.targetDatabase !== 'cyber_law_staging') {
+      throw new Error(
+        `[ROLLBACK PROVENANCE ERROR] Provenance targetDatabase "${provenanceRecord.targetDatabase}" is not "cyber_law_staging".`
+      );
+    }
+
+    const verifiedOwnedByCol = new Map();
+    for (const entry of provenanceRecord.entries) {
+      if (!entry || !entry.collection || !entry.docId) continue;
+      if (!verifiedOwnedByCol.has(entry.collection)) {
+        verifiedOwnedByCol.set(entry.collection, new Set());
+      }
+      verifiedOwnedByCol.get(entry.collection).add(String(entry.docId));
+    }
+
+    for (const [colName] of REVERSE_ORDER_MODELS) {
+      const Model = models[colName];
+      const validIds = (manifest.insertedIds?.[colName] || []).filter((id) => mongoose.Types.ObjectId.isValid(id));
+      const ownedSet = verifiedOwnedByCol.get(colName) || new Set();
+      const confirmedOwnedIds = validIds.filter((id) => ownedSet.has(String(id)));
+      const skippedCount = validIds.length - confirmedOwnedIds.length;
+      skippedUnownedCounts[colName] = skippedCount;
+
+      if (skippedCount > 0) {
+        console.warn(
+          `  [PROVENANCE SKIP] ${colName.padEnd(20)}: skipped ${skippedCount} ID(s) lacking persistent provenance for runId "${runId}"`
+        );
+      }
+
+      if (confirmedOwnedIds.length === 0) {
         deletedCounts[colName] = 0;
         continue;
       }
-      const res = await Model.deleteMany({ _id: { $in: ids } });
+      const res = await Model.deleteMany({ _id: { $in: confirmedOwnedIds } });
       deletedCounts[colName] = res.deletedCount || 0;
       console.log(`  [DELETED] ${colName.padEnd(20)}: ${deletedCounts[colName]} document(s)`);
     }
 
     console.log('\n[ROLLBACK COMPLETE] Scoped Class A documents reverted cleanly.');
-    return { status: 'ROLLBACK_COMPLETE', deletedCounts };
+    return { status: 'ROLLBACK_COMPLETE', deletedCounts, skippedUnownedCounts };
   } catch (err) {
     console.error(`\n[ROLLBACK ERROR] ${err.message}`);
     err._loggedBeforeTeardown = true;
     throw err;
   } finally {
-    if (mongoose.connection.readyState !== 0) {
+    if (shouldManageConnection && mongoose.connection.readyState !== 0) {
       await mongoose.disconnect();
       console.log('[Database] Disconnected cleanly.');
     }

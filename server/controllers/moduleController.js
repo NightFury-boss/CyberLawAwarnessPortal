@@ -498,18 +498,30 @@ exports.adminCreateModule = async (req, res) => {
       return res.status(400).json({ success: false, message: 'A module with this slug already exists' });
     }
 
-    const newModule = await LearningModule.create(moduleData);
-
-    await auditService.logAdminEvent({
+    const newModule = await auditService.runAuditedMutation({
       req,
-      actionType: 'CREATE',
-      action: `Created Learning Module "${newModule.title}"`,
-      entityType: 'LearningModule',
-      entityId: newModule._id,
-      outcome: 'SUCCESS',
-      description: `Created new learning module in category "${newModule.category}"`,
-      changes: moduleData,
-      metadata: { slug: newModule.slug }
+      mutate: async (session) => {
+        if (session) {
+          const [created] = await LearningModule.create([moduleData], { session });
+          return created;
+        }
+        return LearningModule.create(moduleData);
+      },
+      compensate: async (created) => {
+        if (created && created._id) {
+          await LearningModule.deleteOne({ _id: created._id });
+        }
+      },
+      buildAuditEvent: (created) => ({
+        actionType: 'CREATE',
+        action: `Created Learning Module "${created.title}"`,
+        entityType: 'LearningModule',
+        entityId: created._id,
+        outcome: 'SUCCESS',
+        description: `Created new learning module in category "${created.category}"`,
+        changes: moduleData,
+        metadata: { slug: created.slug }
+      })
     });
 
     res.status(201).json({ success: true, module: newModule });
@@ -542,22 +554,30 @@ exports.adminUpdateModule = async (req, res) => {
       existingDoc: moduleDoc
     });
 
-    const updatedModule = await LearningModule.findByIdAndUpdate(id, updateDoc, {
-      new: true,
-      runValidators: true,
-      context: 'query'
-    });
-
-    await auditService.logAdminEvent({
+    const previousSnapshot = moduleDoc.toObject({ depopulate: true });
+    const updatedModule = await auditService.runAuditedMutation({
       req,
-      actionType: 'UPDATE',
-      action: `Updated Learning Module "${updatedModule.title}"`,
-      entityType: 'LearningModule',
-      entityId: updatedModule._id,
-      outcome: 'SUCCESS',
-      description: `Updated learning module properties`,
-      changes: payload,
-      metadata: { slug: updatedModule.slug }
+      mutate: async (session) => LearningModule.findByIdAndUpdate(id, updateDoc, {
+        new: true,
+        runValidators: true,
+        context: 'query',
+        ...(session ? { session } : {})
+      }),
+      compensate: async () => {
+        const restorePayload = { ...previousSnapshot };
+        delete restorePayload._id;
+        await LearningModule.replaceOne({ _id: id }, restorePayload);
+      },
+      buildAuditEvent: (updated) => ({
+        actionType: 'UPDATE',
+        action: `Updated Learning Module "${updated.title}"`,
+        entityType: 'LearningModule',
+        entityId: updated._id,
+        outcome: 'SUCCESS',
+        description: `Updated learning module properties`,
+        changes: payload,
+        metadata: { slug: updated.slug }
+      })
     });
 
     res.json({ success: true, module: updatedModule });
@@ -585,17 +605,22 @@ exports.adminDeleteModule = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Module not found' });
     }
 
-    await LearningModule.findByIdAndDelete(id);
-
-    await auditService.logAdminEvent({
+    const previousSnapshot = moduleDoc.toObject({ depopulate: true });
+    await auditService.runAuditedMutation({
       req,
-      actionType: 'DELETE',
-      action: `Deleted Learning Module "${moduleDoc.title}"`,
-      entityType: 'LearningModule',
-      entityId: moduleDoc._id,
-      outcome: 'SUCCESS',
-      description: `Deleted learning module slug "${moduleDoc.slug}"`,
-      metadata: { slug: moduleDoc.slug }
+      mutate: async (session) => LearningModule.findByIdAndDelete(id, session ? { session } : undefined),
+      compensate: async () => {
+        await LearningModule.collection.insertOne(previousSnapshot);
+      },
+      buildAuditEvent: () => ({
+        actionType: 'DELETE',
+        action: `Deleted Learning Module "${previousSnapshot.title}"`,
+        entityType: 'LearningModule',
+        entityId: previousSnapshot._id,
+        outcome: 'SUCCESS',
+        description: `Deleted learning module slug "${previousSnapshot.slug}"`,
+        metadata: { slug: previousSnapshot.slug }
+      })
     });
 
     res.json({ success: true, message: 'Learning module successfully deleted' });

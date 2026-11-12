@@ -26,7 +26,7 @@ Never convert an allegation into a fact. Never infer causation from temporal seq
 **Classification:** Documented Procedural Shortcoming
 
 ### Established narrative
-Sulli Deals and Bulli Bai were separate applications using photographs of Muslim women without consent in a derogatory mock-auction format. The incidents occurred at different times and involved separate perpetrators. Official MHA parliamentary material supports police action and the Sulli Deals investigation. Contemporary reporting described difficulty obtaining subscriber information from GitHub through domestic process and subsequent pursuit of formal international legal assistance.
+Sulli Deals and Bulli Bai were separate applications using photographs of Muslim women without consent in a derogatory mock-auction format. According to investigating authorities, the two incidents occurred at different times and involved separately accused individuals with distinct alleged roles; arrests or investigative allegations do not by themselves establish judicial guilt unless proved at trial. Official MHA parliamentary material supports police action and the Sulli Deals investigation. Contemporary reporting described difficulty obtaining subscriber information from GitHub through domestic process and subsequent pursuit of formal international legal assistance.
 
 GitHub's 2021 Transparency Report supports the general proposition that foreign-government requests for user information are routed through the US Department of Justice and appropriate international legal process. It does not establish the precise date or exact response in either case.
 

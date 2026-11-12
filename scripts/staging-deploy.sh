@@ -21,13 +21,15 @@ fi
 echo "[Step 1/5] Running Pre-Flight Environment Validation..."
 node scripts/validate-staging-env.js "$ENV_FILE"
 
+USING_DOCKER=false
 echo ""
 echo "[Step 2/5] Building & Packaging Application Containers..."
-if command -v docker &> /dev/null && command -v docker compose &> /dev/null; then
-  echo "  * Docker Compose detected. Building staging images..."
-  docker compose -f docker-compose.staging.yml build --no-cache
+if command -v docker &> /dev/null && docker compose version &> /dev/null; then
+  USING_DOCKER=true
+  echo "  * Docker Compose detected. Building staging images with --env-file $ENV_FILE..."
+  docker compose --env-file "$ENV_FILE" -f docker-compose.staging.yml build --no-cache
   echo "  * Starting staging services..."
-  docker compose -f docker-compose.staging.yml up -d
+  docker compose --env-file "$ENV_FILE" -f docker-compose.staging.yml up -d
 else
   echo "  * Docker not detected. Falling back to native process manager workflow..."
   echo "  * Building client bundle with Vite..."
@@ -39,38 +41,58 @@ echo ""
 echo "[Step 3/5] Verifying Service Health & Readiness Probe..."
 MAX_ATTEMPTS=12
 ATTEMPT=1
-HEALTH_URL="http://localhost:5000/api/health"
+STAGING_BIND=$(grep -E '^STAGING_HOST_BIND=' "$ENV_FILE" | head -n1 | cut -d= -f2- | tr -d '"\r' || true)
+STAGING_PORT_VAL=$(grep -E '^STAGING_PORT=' "$ENV_FILE" | head -n1 | cut -d= -f2- | tr -d '"\r' || true)
+STAGING_BIND="${STAGING_BIND:-127.0.0.1}"
+STAGING_PORT_VAL="${STAGING_PORT_VAL:-8080}"
 
-# If docker is running frontend on port 80, health can also be probed through Nginx
-if command -v curl &> /dev/null; then
-  until curl -s -f "$HEALTH_URL" | grep -q '"status":"healthy"' || [ $ATTEMPT -gt $MAX_ATTEMPTS ]; do
-    echo "  Waiting for backend health probe... (attempt $ATTEMPT/$MAX_ATTEMPTS)"
-    sleep 3
-    ATTEMPT=$((ATTEMPT + 1))
-  done
+if [ "$USING_DOCKER" = true ]; then
+  HEALTH_URL="http://${STAGING_BIND}:${STAGING_PORT_VAL}/api/health"
+else
+  HEALTH_URL="http://127.0.0.1:5000/api/health"
 fi
 
-if [ $ATTEMPT -gt $MAX_ATTEMPTS ]; then
-  echo "✖ Health check failed after $MAX_ATTEMPTS attempts."
-  echo "  Check container logs with: docker compose -f docker-compose.staging.yml logs backend"
+if ! command -v curl &> /dev/null; then
+  echo "✖ curl is required for post-start health verification at $HEALTH_URL."
   exit 1
 fi
-echo "✔ Health probe returned 200 OK (database connected, service healthy)."
+
+HEALTH_OK=false
+while [ $ATTEMPT -le $MAX_ATTEMPTS ]; do
+  if curl -fsS "$HEALTH_URL" | grep -q '"status":"healthy"'; then
+    HEALTH_OK=true
+    break
+  fi
+  echo "  Waiting for service health probe ($HEALTH_URL)... (attempt $ATTEMPT/$MAX_ATTEMPTS)"
+  sleep 3
+  ATTEMPT=$((ATTEMPT + 1))
+done
+
+if [ "$HEALTH_OK" != true ]; then
+  echo "✖ Health check failed after $MAX_ATTEMPTS attempts at $HEALTH_URL."
+  if [ "$USING_DOCKER" = true ]; then
+    echo "  Check container logs with: docker compose --env-file $ENV_FILE -f docker-compose.staging.yml logs"
+  fi
+  exit 1
+fi
+echo "✔ Health probe returned 200 OK at $HEALTH_URL (database connected, service healthy)."
 
 echo ""
 echo "[Step 4/5] Executing Non-Destructive Database Seeding..."
-# Runs idempotent seeder (will not wipe existing student accounts or sessions)
-node server/config/seed.js
+if [ "$USING_DOCKER" = true ]; then
+  docker compose --env-file "$ENV_FILE" -f docker-compose.staging.yml exec -T -e ASSERT_STAGING_DB=true backend node config/seed.js
+else
+  ASSERT_STAGING_DB=true node server/config/seed.js
+fi
 
 echo ""
-echo "[Step 5/5] Running Post-Deployment Smoke Check..."
+echo "[Step 5/5] Running Post-Deployment Integration Smoke Check..."
 node --test server/tests/stagingProductionSmoke.test.js
 
 echo ""
 echo "================================================================="
 echo "✔ STAGING DEPLOYMENT SUCCEEDED"
-echo "  Frontend URL: http://localhost:80 (or configured staging domain)"
-echo "  Backend API:  http://localhost:5000/api"
-echo "  Health Probe: http://localhost:5000/api/health"
+echo "  Frontend/Proxy URL: http://${STAGING_BIND}:${STAGING_PORT_VAL}"
+echo "  Health Probe:       ${HEALTH_URL}"
 echo "================================================================="
 

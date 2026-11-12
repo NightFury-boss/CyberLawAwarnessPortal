@@ -21,6 +21,7 @@ const {
 } = require('../config/stagingInitGuard');
 const {
   EXPECTED_CANONICAL_COUNTS,
+  resolveQuizQuestionCategory,
   loadCanonicalSeedCatalog,
   validateCanonicalCatalogOffline
 } = require('../config/canonicalSeedLoader');
@@ -30,6 +31,9 @@ const {
   CLASS_A_NAMES,
   PROTECTED_CLASS_NAMES,
   assertModelsBoundToConnection,
+  materializeCanonical,
+  normalizeExistingDoc,
+  auditFlatCollection,
   runStagingInitialization
 } = require('../config/stagingInitializerEngine');
 const initCli = require('../../scripts/initializeStagingDatabase');
@@ -468,7 +472,10 @@ describe('Staging Database Initialization Architecture (Offline Suite)', () => {
       execFileSync(process.execPath, ['-e', childCode], {
         cwd: path.resolve(__dirname, '../..'),
         env: {
-          ...process.env,
+          PATH: process.env.PATH,
+          SystemRoot: process.env.SystemRoot,
+          TEMP: process.env.TEMP,
+          TMP: process.env.TMP,
           ASSERT_STAGING_DB: 'true',
           EXPECTED_STAGING_DB_NAME: 'cyber_law_staging',
           EXPECTED_STAGING_HOST: 'mock.cluster.mongodb.net',
@@ -527,5 +534,241 @@ describe('Staging Database Initialization Architecture (Offline Suite)', () => {
     assert.equal(parsed.hasMongoUri, false, 'MONGODB_URI must NOT leak from server/.env');
     assert.equal(parsed.hasJwtSecret, false, 'JWT_SECRET must NOT leak from server/.env');
     assert.equal(parsed.hasAssertStaging, false, 'ASSERT_STAGING_DB must NOT leak from server/.env');
+  });
+
+  it('14. #42 canonicalSeedLoader records validation error with source category on unmapped quiz category', () => {
+    const resolved = resolveQuizQuestionCategory('NonExistent Authored Topic', new Set(['Cyber Law Basics']));
+    assert.equal(resolved.targetQuizCategory, null);
+    assert.equal(resolved.sourceCategory, 'NonExistent Authored Topic');
+
+    const catalog = loadCanonicalSeedCatalog();
+    const mutated = {
+      ...catalog,
+      quizQuestions: catalog.quizQuestions.map((q, i) => (
+        i === 0
+          ? { ...q, category: 'NonExistent Authored Topic', _sourceQuizCategory: 'NonExistent Authored Topic', _targetQuizCategory: null }
+          : q
+      ))
+    };
+    const report = validateCanonicalCatalogOffline(mutated);
+    assert.equal(report.valid, false);
+    assert.ok(report.errors.some((e) => e.includes('NonExistent Authored Topic')));
+  });
+
+  it('15. #50 & #51 normalizeExistingDoc materializes missing schema defaults and getSecondaryKeys ignores empty/null keys', () => {
+    const sampleQuestion = loadCanonicalSeedCatalog().quizQuestions[0];
+    const cleanCanon = { ...sampleQuestion, quizId: new mongoose.Types.ObjectId() };
+    delete cleanCanon._sourceQuizCategory;
+    delete cleanCanon._targetQuizCategory;
+    delete cleanCanon._matchStrategy;
+    delete cleanCanon.published;
+    delete cleanCanon.reviewStatus;
+
+    // Older DB record stored before defaulted fields (`published`, `reviewStatus`, `sequenceItems`, `indicators`) were added
+    const legacyStored = { ...cleanCanon, _id: new mongoose.Types.ObjectId() };
+    delete legacyStored.published;
+    delete legacyStored.reviewStatus;
+    delete legacyStored.sequenceItems;
+    delete legacyStored.indicators;
+
+    const canonNorm = materializeCanonical(modelsByName.QuizQuestion, cleanCanon);
+    const dbNorm = normalizeExistingDoc(modelsByName.QuizQuestion, legacyStored);
+    assert.deepEqual(dbNorm, canonNorm);
+
+    // #51 Empty/null/undefined secondary keys must never collide across unrelated docs
+    const items = [
+      { sectionNumber: 'Sec 1', slug: '' },
+      { sectionNumber: 'Sec 2', slug: null }
+    ];
+    const existingDocs = [
+      { _id: new mongoose.Types.ObjectId(), sectionNumber: 'Sec 1', slug: '' },
+      { _id: new mongoose.Types.ObjectId(), sectionNumber: 'Sec 2', slug: null },
+      { _id: new mongoose.Types.ObjectId(), sectionNumber: 'Sec 3', slug: null }
+    ];
+    const audit = auditFlatCollection({
+      collectionName: 'LawSection',
+      Model: modelsByName.LawSection,
+      items,
+      existingDocs,
+      getPrimaryKey: (d) => ({ field: 'sectionNumber', value: d.sectionNumber }),
+      getSecondaryKeys: (d) => [{ field: 'slug', value: d.slug }]
+    });
+    assert.equal(audit.conflicts.length, 0);
+  });
+
+  it('16. #43 canonicalSeedLoader preserves Adaptive Segment while rejecting unreachable stages & non-completing cycles', () => {
+    const baseCatalog = loadCanonicalSeedCatalog();
+    assert.equal(validateCanonicalCatalogOffline(baseCatalog).valid, true);
+
+    // Unreachable stage injected into baseline@v1
+    const withUnreachable = {
+      ...baseCatalog,
+      scenarios: baseCatalog.scenarios.map((entry, idx) => (
+        idx !== 0
+          ? entry
+          : {
+              ...entry,
+              stages: [
+                ...entry.stages,
+                {
+                  ...entry.stages[1],
+                  stageOrder: 99,
+                  title: 'Orphaned Unreachable Stage',
+                  terminal: true,
+                  decisions: []
+                }
+              ]
+            }
+      )),
+      counts: {
+        ...baseCatalog.counts,
+        ScenarioStage: baseCatalog.counts.ScenarioStage + 1
+      }
+    };
+    const unreachableReport = validateCanonicalCatalogOffline(withUnreachable);
+    assert.equal(unreachableReport.valid, false);
+    assert.ok(unreachableReport.errors.some((e) => e.includes('Unreachable stage') && e.includes('#99')));
+
+    // Non-completing cycle (stage 2 <-> stage 3 with no terminal exit)
+    const withCycle = {
+      ...baseCatalog,
+      scenarios: baseCatalog.scenarios.map((entry, idx) => {
+        if (idx !== 0) return entry;
+        const stagesClone = JSON.parse(JSON.stringify(entry.stages));
+        stagesClone[1].decisions[0].nextStageOrder = 3;
+        stagesClone[1].decisions[1].nextStageOrder = 3;
+        stagesClone[2].decisions[0].nextStageOrder = 2;
+        stagesClone[2].decisions[1].nextStageOrder = 2;
+        return { ...entry, stages: stagesClone };
+      })
+    };
+    const cycleReport = validateCanonicalCatalogOffline(withCycle);
+    assert.equal(cycleReport.valid, false);
+    assert.ok(cycleReport.errors.some((e) => e.includes('Non-completing cycle')));
+  });
+
+  it('17. #40 & #41 staging initialization records pre-mutation manifest & DB provenance and rollback enforces DB ownership', async () => {
+    // A. Failure to persist pre-mutation manifest aborts BEFORE any Class A write
+    const failManifestStore = createSimulatedStore();
+    await assert.rejects(
+      () => runStagingInitialization({
+        catalog,
+        store: failManifestStore,
+        dryRun: false,
+        runId: 'staging_init_fail_manifest',
+        onBeforeMutation: async () => { throw new Error('Disk read-only manifest failure'); }
+      }),
+      /Disk read-only manifest failure/
+    );
+    assert.equal(failManifestStore.getWriteCount(), 0);
+
+    // B. Simulate live run capturing provenance BEFORE writes and rollback verifying DB provenance
+    const provenanceRecords = new Map();
+    const simStore = createSimulatedStore();
+    const seenBeforeFirstCreate = [];
+    const origCreateOne = simStore.createOne;
+    simStore.createRunProvenance = async (doc) => {
+      provenanceRecords.set(doc.runId, { ...doc });
+      return doc;
+    };
+    simStore.finalizeRunProvenance = async (rId, fields) => {
+      provenanceRecords.set(rId, { ...provenanceRecords.get(rId), ...fields });
+    };
+    simStore.createOne = async (col, doc) => {
+      if (seenBeforeFirstCreate.length === 0) {
+        const prov = provenanceRecords.get('staging_init_prov_ok');
+        seenBeforeFirstCreate.push(Boolean(prov && prov.entries.length > 0 && prov.status === 'IN_PROGRESS'));
+      }
+      return origCreateOne(col, doc);
+    };
+
+    const runManifestSnapshots = [];
+    const execRes = await runStagingInitialization({
+      catalog,
+      store: simStore,
+      dryRun: false,
+      runId: 'staging_init_prov_ok',
+      onBeforeMutation: async (meta) => {
+        runManifestSnapshots.push(meta);
+      }
+    });
+    assert.equal(seenBeforeFirstCreate[0], true, 'DB provenance must exist BEFORE first createOne');
+    assert.equal(runManifestSnapshots.length, 1);
+    assert.equal(runManifestSnapshots[0].entries.length, execRes.insertedIds.LegalSource.length + execRes.insertedIds.LawSection.length + execRes.insertedIds.CyberCrime.length + execRes.insertedIds.CaseStudy.length + execRes.insertedIds.Quiz.length + execRes.insertedIds.QuizQuestion.length + execRes.insertedIds.LearningModule.length + execRes.insertedIds.Resource.length + execRes.insertedIds.Scenario.length + execRes.insertedIds.ScenarioStage.length + execRes.insertedIds.ScenarioDecision.length);
+
+    // C. Rollback skips unowned IDs not present in persistent DB provenance & fails closed if provenance missing
+    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'cl-prov-rb-'));
+    const ownedId = new mongoose.Types.ObjectId().toString();
+    const unownedId = new mongoose.Types.ObjectId().toString();
+    fs.writeFileSync(
+      path.join(tmpDir, 'staging_init_rb_check.json'),
+      JSON.stringify({
+        runId: 'staging_init_rb_check',
+        targetDatabase: 'cyber_law_staging',
+        targetHost: 'cluster0.stage123.mongodb.net',
+        insertedIds: { CyberCrime: [ownedId, unownedId] }
+      })
+    );
+
+    const prevEnv = {
+      ASSERT_STAGING_DB: process.env.ASSERT_STAGING_DB,
+      EXPECTED_STAGING_DB_NAME: process.env.EXPECTED_STAGING_DB_NAME,
+      EXPECTED_STAGING_HOST: process.env.EXPECTED_STAGING_HOST,
+      MONGODB_URI: process.env.MONGODB_URI,
+      ALLOW_DB_RESET: process.env.ALLOW_DB_RESET
+    };
+    process.env.ASSERT_STAGING_DB = 'true';
+    process.env.EXPECTED_STAGING_DB_NAME = 'cyber_law_staging';
+    process.env.EXPECTED_STAGING_HOST = 'cluster0.stage123.mongodb.net';
+    process.env.MONGODB_URI = 'mongodb+srv://stage:Secret!@cluster0.stage123.mongodb.net/cyber_law_staging';
+    delete process.env.ALLOW_DB_RESET;
+
+    try {
+      // Missing DB provenance must refuse deletion
+      await assert.rejects(
+        () => rollbackCli.runRollback(['--run-id', 'staging_init_rb_check', '--confirm', '--execute'], {
+          backupsDir: tmpDir,
+          provenanceStore: { async getRunProvenance() { return null; } }
+        }),
+        /ROLLBACK PROVENANCE ERROR/
+      );
+
+      // Present provenance filters deleteMany strictly to ownedId
+      const deletedFilters = [];
+      const mockModels = Object.fromEntries(CLASS_A_NAMES.map((name) => [
+        name,
+        {
+          async deleteMany(filter) {
+            deletedFilters.push({ name, ids: filter._id.$in });
+            return { deletedCount: filter._id.$in.length };
+          }
+        }
+      ]));
+
+      const rbRes = await rollbackCli.runRollback(['--run-id', 'staging_init_rb_check', '--confirm', '--execute'], {
+        backupsDir: tmpDir,
+        provenanceStore: {
+          async getRunProvenance() {
+            return {
+              runId: 'staging_init_rb_check',
+              targetDatabase: 'cyber_law_staging',
+              entries: [{ collection: 'CyberCrime', docId: ownedId }]
+            };
+          }
+        },
+        models: mockModels
+      });
+
+      assert.equal(rbRes.status, 'ROLLBACK_COMPLETE');
+      assert.equal(rbRes.deletedCounts.CyberCrime, 1);
+      assert.equal(rbRes.skippedUnownedCounts.CyberCrime, 1);
+      assert.deepEqual(deletedFilters, [{ name: 'CyberCrime', ids: [ownedId] }]);
+    } finally {
+      for (const [k, v] of Object.entries(prevEnv)) {
+        if (v === undefined) delete process.env[k];
+        else process.env[k] = v;
+      }
+      fs.rmSync(tmpDir, { recursive: true, force: true });
+    }
   });
 });

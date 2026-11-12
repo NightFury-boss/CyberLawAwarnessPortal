@@ -27,6 +27,7 @@ try {
 
 const { maskEmail } = require('../server/config/stagingAdminProvisioner');
 const { DISALLOWED_SEED_PASSWORDS } = require('../server/config/seedSecurityGuard');
+const { assertApprovedStagingDatabase } = require('../server/config/stagingDatabaseGuard');
 const { redactSensitiveText } = require('../server/utils/apiErrorResponder');
 
 // Determine env file path (defaults to server/.env if not provided)
@@ -111,25 +112,42 @@ async function runValidation() {
     }
   }
 
-  // 4. MONGODB_URI Connection Check
+  // 4. MONGODB_URI Isolation Guard & Connection Check
   const mongoUri = process.env.MONGODB_URI ? process.env.MONGODB_URI.trim() : '';
   if (!mongoUri) {
     record('MONGODB_URI', false, 'Missing MONGODB_URI connection string', true);
   } else if (!mongoUri.startsWith('mongodb://') && !mongoUri.startsWith('mongodb+srv://')) {
     record('MONGODB_URI', false, 'Invalid URI scheme (must start with mongodb:// or mongodb+srv://)', true);
   } else {
-    // Attempt real handshake with 6-second timeout
-    process.stdout.write('Checking MongoDB connection... ');
+    let guardPassed = false;
     try {
-      const conn = await mongoose.connect(mongoUri, {
-        serverSelectionTimeoutMS: 6000,
-        family: 4
-      });
-      const pingRes = await mongoose.connection.db.admin().ping();
-      record('MONGODB_URI', true, 'Handshake successful (ping: ok)');
-      await mongoose.disconnect();
-    } catch (err) {
-      record('MONGODB_URI', false, `Database connection failed: ${redactSensitiveText(err?.message || 'Unknown error')}`, true);
+      const expectedDbName = typeof process.env.EXPECTED_STAGING_DB_NAME === 'string' && process.env.EXPECTED_STAGING_DB_NAME.trim()
+        ? process.env.EXPECTED_STAGING_DB_NAME.trim()
+        : undefined;
+      const expectedHost = typeof process.env.EXPECTED_STAGING_HOST === 'string' && process.env.EXPECTED_STAGING_HOST.trim()
+        ? process.env.EXPECTED_STAGING_HOST.trim()
+        : undefined;
+      const verified = assertApprovedStagingDatabase(mongoUri, { expectedDbName, expectedHost });
+      record('STAGING_DB_GUARD', true, `Approved target (${verified.dbName} on ${verified.host})`);
+      guardPassed = true;
+    } catch (guardErr) {
+      record('STAGING_DB_GUARD', false, redactSensitiveText(guardErr?.message || 'Target failed staging DB guard'), true);
+    }
+
+    if (guardPassed) {
+      // Attempt real handshake with 6-second timeout only after passing staging DB guard
+      process.stdout.write('Checking MongoDB connection... ');
+      try {
+        await mongoose.connect(mongoUri, {
+          serverSelectionTimeoutMS: 6000,
+          family: 4
+        });
+        await mongoose.connection.db.admin().ping();
+        record('MONGODB_URI', true, 'Handshake successful (ping: ok)');
+        await mongoose.disconnect();
+      } catch (err) {
+        record('MONGODB_URI', false, `Database connection failed: ${redactSensitiveText(err?.message || 'Unknown error')}`, true);
+      }
     }
   }
 

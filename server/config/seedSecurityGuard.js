@@ -76,7 +76,10 @@ function validateSeedAdminCredentials(env = process.env, { allowPlaceholderStagi
     );
   }
 
-  if (env.NODE_ENV === 'production' && DISALLOWED_PLACEHOLDER_EMAILS.has(rawEmail)) {
+  const nodeEnv = typeof env.NODE_ENV === 'string' ? env.NODE_ENV.trim().toLowerCase() : '';
+  const isRestrictedTarget = nodeEnv === 'production' || nodeEnv === 'staging' || env.ASSERT_STAGING_DB === 'true';
+
+  if (isRestrictedTarget && DISALLOWED_PLACEHOLDER_EMAILS.has(rawEmail)) {
     throw new Error(
       '[SEED SECURITY BLOCK] ADMIN_EMAIL cannot use a sample/documentation placeholder in production or staging.'
     );

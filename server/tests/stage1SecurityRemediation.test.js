@@ -16,6 +16,8 @@ const { describe, it, before, after } = require('node:test');
 const assert = require('node:assert/strict');
 const path = require('path');
 const fs = require('fs');
+const os = require('os');
+const crypto = require('crypto');
 const { execFileSync } = require('node:child_process');
 const express = require('express');
 const mongoose = require('mongoose');
@@ -29,6 +31,7 @@ const {
 } = require('../config/seedSecurityGuard');
 const {
   redactSensitiveText,
+  logSafeServerError,
   classifySafeApiError,
   sendStructuredError,
   sendMessageError
@@ -36,6 +39,11 @@ const {
 const { getJwtSecret } = require('../config/productionSecurity');
 const { protect, adminOnly } = require('../middleware/authMiddleware');
 const connectDB = require('../config/db');
+const { assertStrictStagingInitEnvironment } = require('../config/stagingInitGuard');
+const {
+  createMongooseAdminUserStore,
+  provisionStagingAdmin
+} = require('../config/stagingAdminProvisioner');
 const auditService = require('../services/auditService');
 const { auditScenario } = require('../services/scenarioIntegrityService');
 const { generateRemediation } = require('../services/remediationEngineService');
@@ -90,7 +98,7 @@ describe('Stage 1 P0 Security Remediation Verification', () => {
 
   before(async () => {
     process.env.NODE_ENV = 'test';
-    process.env.JWT_SECRET = 'stage1_security_test_secret_key_with_32_plus_chars_999';
+    process.env.JWT_SECRET = crypto.randomBytes(32).toString('hex');
 
     mongoServer = await MongoMemoryServer.create();
     mongoUri = mongoServer.getUri();
@@ -346,9 +354,11 @@ describe('Stage 1 P0 Security Remediation Verification', () => {
       assert.match(stagingTarget.redactedUri, /mongodb\+srv:\/\/\*\*\*\*:\*\*\*\*@cluster0\.xxeclfp\.mongodb\.net\/cyber_law_staging/);
     });
 
-    it('blocks direct seedReset.js execution outside local development & refuses remote targets in child process', () => {
-      let exitStatus = 0;
-      let combinedOutput = '';
+    it('blocks direct seedReset.js execution outside local development & refuses unsafe targets on isolated throwaway URIs', () => {
+      // Probe 1: Non-development NODE_ENV guard blocks before connecting
+      const throwawayEnvUri = mongoServer.getUri('seedreset_probe_env_block');
+      let envExitStatus = 0;
+      let envOutput = '';
       try {
         execFileSync(process.execPath, ['server/config/seedReset.js'], {
           cwd: path.resolve(__dirname, '../..'),
@@ -357,17 +367,41 @@ describe('Stage 1 P0 Security Remediation Verification', () => {
             SystemRoot: process.env.SystemRoot,
             NODE_ENV: 'production',
             ALLOW_DB_RESET: 'true',
-            MONGODB_URI: 'mongodb://127.0.0.1:27017/cyber_law_portal'
+            MONGODB_URI: throwawayEnvUri
           },
           encoding: 'utf8',
           stdio: 'pipe'
         });
       } catch (err) {
-        exitStatus = err.status;
-        combinedOutput = `${err.stdout || ''}\n${err.stderr || ''}`;
+        envExitStatus = err.status;
+        envOutput = `${err.stdout || ''}\n${err.stderr || ''}`;
       }
-      assert.equal(exitStatus, 1);
-      assert.match(combinedOutput, /\[DATABASE RESET SECURITY BLOCK\]/);
+      assert.equal(envExitStatus, 1);
+      assert.match(envOutput, /\[DATABASE RESET SECURITY BLOCK\]/);
+
+      // Probe 2: Development mode with prohibited keyword target is blocked by validateSeedExecutionTarget on disposable DB
+      const throwawayTargetUri = mongoServer.getUri('seedreset_probe_prod_keyword');
+      let targetExitStatus = 0;
+      let targetOutput = '';
+      try {
+        execFileSync(process.execPath, ['server/config/seedReset.js'], {
+          cwd: path.resolve(__dirname, '../..'),
+          env: {
+            PATH: process.env.PATH,
+            SystemRoot: process.env.SystemRoot,
+            NODE_ENV: 'development',
+            ALLOW_DB_RESET: 'true',
+            MONGODB_URI: throwawayTargetUri
+          },
+          encoding: 'utf8',
+          stdio: 'pipe'
+        });
+      } catch (err) {
+        targetExitStatus = err.status;
+        targetOutput = `${err.stdout || ''}\n${err.stderr || ''}`;
+      }
+      assert.equal(targetExitStatus, 1);
+      assert.match(targetOutput, /\[DATABASE RESET SECURITY BLOCK\].*prohibited keyword/i);
     });
   });
 
@@ -1222,7 +1256,7 @@ describe('Stage 1 P0 Security Remediation Verification', () => {
         'utf8'
       );
       assert.equal(/AdminAuditLog\.create\s*\(/.test(moduleControllerSrc), false);
-      assert.match(moduleControllerSrc, /auditService\.logAdminEvent\(/);
+      assert.match(moduleControllerSrc, /auditService\.(logAdminEvent|runAuditedMutation)\(/);
 
       const slug = `audit-routed-module-${Date.now()}`;
       const createRes = await fetch(`${baseUrl}/api/modules/admin`, {
@@ -1288,6 +1322,441 @@ describe('Stage 1 P0 Security Remediation Verification', () => {
       }).lean();
       assert.ok(deleteAudit);
       assert.equal(deleteAudit.metadata?.slug, slug);
+    });
+  });
+
+  // =========================================================================
+  // 6. BATCH B1 REMEDIATION REGRESSIONS (#19, #45, #46, #49, #53, #56, #57, #63, #64)
+  // =========================================================================
+  describe('6. Batch B1 Security Guard, Envelope & Redaction Regressions', () => {
+    it('#19 validate-staging-env fails closed before connecting when given a production URI', () => {
+      const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'clp-val-staging-'));
+      const envFile = path.join(tmpDir, '.env.prodprobe');
+      fs.writeFileSync(
+        envFile,
+        [
+          'NODE_ENV=production',
+          'JWT_SECRET=a_very_long_unique_random_test_secret_over_32_characters_9876543210',
+          'CLIENT_URL=https://staging.cyberlawportal.org',
+          'MONGODB_URI=mongodb://user:Pass123!@127.0.0.1:27017/cyber_law_portal',
+          'ADMIN_EMAIL=ops@cyberlawportal.org',
+          'ADMIN_PASSWORD=StrongStagingAdminPassword!99'
+        ].join('\n')
+      );
+
+      let out = '';
+      let exitCode = 0;
+      try {
+        out = execFileSync(process.execPath, ['scripts/validate-staging-env.js', envFile], {
+          cwd: path.resolve(__dirname, '../..'),
+          env: {
+            PATH: process.env.PATH,
+            SystemRoot: process.env.SystemRoot
+          },
+          encoding: 'utf8',
+          stdio: 'pipe'
+        });
+      } catch (err) {
+        exitCode = err.status;
+        out = `${err.stdout || ''}\n${err.stderr || ''}`;
+      } finally {
+        fs.rmSync(tmpDir, { recursive: true, force: true });
+      }
+
+      assert.equal(exitCode, 1);
+      assert.match(out, /STAGING_DB_GUARD/);
+      assert.equal(out.includes('Checking MongoDB connection'), false);
+    });
+
+    it('#45 treats standalone test database-name tokens as non-production targets in production guard', () => {
+      assert.equal(connectDB.isStagingDatabaseTarget('portal_test'), true);
+      assert.equal(connectDB.isStagingDatabaseTarget('test_db'), true);
+      assert.equal(connectDB.isStagingDatabaseTarget('app-test-2'), true);
+      assert.equal(connectDB.isStagingDatabaseTarget('cyber_law_portal'), false);
+
+      assert.throws(
+        () => connectDB.assertDatabaseConnectionPolicy('mongodb+srv://u:P@cluster.net/portal_test', { NODE_ENV: 'production' }),
+        /PRODUCTION DATABASE GUARD/
+      );
+    });
+
+    it('#46 rejects placeholder admin emails when NODE_ENV=staging or ASSERT_STAGING_DB=true', () => {
+      assert.throws(
+        () => validateSeedAdminCredentials({
+          NODE_ENV: 'staging',
+          ADMIN_EMAIL: 'staging-admin@cyberlawportal.org',
+          ADMIN_PASSWORD: 'UniqueStrongSeedPassword!99'
+        }),
+        /placeholder/
+      );
+      assert.throws(
+        () => validateSeedAdminCredentials({
+          NODE_ENV: 'development',
+          ASSERT_STAGING_DB: 'true',
+          ADMIN_EMAIL: 'admin@cyberlawportal.test',
+          ADMIN_PASSWORD: 'UniqueStrongSeedPassword!99'
+        }),
+        /placeholder/
+      );
+      const devAllowed = validateSeedAdminCredentials({
+        NODE_ENV: 'development',
+        ADMIN_EMAIL: 'staging-admin@cyberlawportal.org',
+        ADMIN_PASSWORD: 'UniqueStrongSeedPassword!99'
+      });
+      assert.equal(devAllowed.email, 'staging-admin@cyberlawportal.org');
+    });
+
+    it('#49 stagingInitGuard redacts sensitive error fragments from malformed URI parse errors', () => {
+      assert.throws(
+        () => assertStrictStagingInitEnvironment({
+          ASSERT_STAGING_DB: 'true',
+          EXPECTED_STAGING_DB_NAME: 'cyber_law_staging',
+          EXPECTED_STAGING_HOST: 'cluster0.example.mongodb.net',
+          MONGODB_URI: 'mongodb+srv://[invalid host/cyber_law_staging?password=GuardSecret99!'
+        }),
+        (err) => {
+          assert.match(err.message, /Invalid MONGODB_URI format/);
+          assert.equal(err.message.includes('GuardSecret99!'), false);
+          return true;
+        }
+      );
+    });
+
+    it('#53 rejects creating or updating Section 66A into any active legalStatus', async () => {
+      const baseFields = {
+        actName: 'Information Technology Act, 2000',
+        officialTitle: 'Offensive messages',
+        plainLanguageExplanation: 'Historical struck-down provision explained for awareness.',
+        whyItMatters: 'Struck down in Shreya Singhal v. Union of India (2015).',
+        exampleScenario: 'Critical commentary cannot be prosecuted under Section 66A.'
+      };
+
+      const createOmittedDefault = await fetch(`${baseUrl}/api/admin/laws`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${activeAdminToken}`
+        },
+        body: JSON.stringify({
+          ...baseFields,
+          sectionNumber: 'Section 66A'
+        })
+      });
+      assert.equal(createOmittedDefault.status, 400);
+      assert.match((await createOmittedDefault.json()).message, /66A/i);
+
+      const createCurrentExplicit = await fetch(`${baseUrl}/api/admin/laws`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${activeAdminToken}`
+        },
+        body: JSON.stringify({
+          ...baseFields,
+          sectionNumber: 'Section 66A',
+          legalStatus: 'CURRENT'
+        })
+      });
+      assert.equal(createCurrentExplicit.status, 400);
+      assert.match((await createCurrentExplicit.json()).message, /66A/i);
+
+      const createOmittedHistorical = await fetch(`${baseUrl}/api/admin/laws`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${activeAdminToken}`
+        },
+        body: JSON.stringify({
+          ...baseFields,
+          sectionNumber: 'Section 66A',
+          slug: `sec-66a-b1-${Date.now()}`,
+          legalStatus: 'OMITTED'
+        })
+      });
+      assert.equal(createOmittedHistorical.status, 201);
+      const created66A = await createOmittedHistorical.json();
+
+      try {
+        const reactivateRes = await fetch(`${baseUrl}/api/admin/laws/${created66A._id}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${activeAdminToken}`
+          },
+          body: JSON.stringify({ legalStatus: 'CURRENT' })
+        });
+        assert.equal(reactivateRes.status, 400);
+        assert.match((await reactivateRes.json()).message, /66A/i);
+      } finally {
+        await LawSection.deleteOne({ _id: created66A._id });
+      }
+    });
+
+    it('#56 auditService ignores spoofed X-Forwarded-For and prefers req.ip', () => {
+      const ctx = auditService.extractSafeContext({
+        ip: '198.51.100.10',
+        socket: { remoteAddress: '10.0.0.2' },
+        headers: {
+          'x-forwarded-for': '203.0.113.99, 198.51.100.10',
+          'user-agent': 'AuditTest/1.0'
+        }
+      });
+      assert.equal(ctx.ip, '198.51.100.10');
+    });
+
+    it('#57 authMiddleware includes success: false in all 401 and 403 JSON envelopes', async () => {
+      const missingRes = await fetch(`${baseUrl}/api/auth/me`);
+      assert.equal(missingRes.status, 401);
+      const missingBody = await missingRes.json();
+      assert.equal(missingBody.success, false);
+      assert.match(missingBody.message, /Not authorized/);
+
+      const invalidRes = await fetch(`${baseUrl}/api/auth/me`, {
+        headers: { Authorization: 'Bearer invalid.jwt.tok' }
+      });
+      assert.equal(invalidRes.status, 401);
+      const invalidBody = await invalidRes.json();
+      assert.equal(invalidBody.success, false);
+
+      const inactiveRes = await fetch(`${baseUrl}/api/auth/me`, {
+        headers: { Authorization: `Bearer ${inactiveLearnerToken}` }
+      });
+      assert.equal(inactiveRes.status, 401);
+      const inactiveBody = await inactiveRes.json();
+      assert.equal(inactiveBody.success, false);
+    });
+
+    it('#63 & #64 apiErrorResponder redacts JSON-quoted secrets and enforces success: false on message errors', () => {
+      const origErr = console.error;
+      const lines = [];
+      console.error = (...args) => lines.push(args.map(String).join(' '));
+      try {
+        logSafeServerError('[JsonSecretProbe]', new Error('Bad auth {"password": "JsonSecretValue!9"}'));
+      } finally {
+        console.error = origErr;
+      }
+      const combined = lines.join('\n');
+      assert.equal(combined.includes('JsonSecretValue!9'), false);
+      assert.match(combined, /"password": "\[REDACTED\]"/);
+
+      const mockRes = {
+        statusCode: 200,
+        payload: null,
+        status(c) { this.statusCode = c; return this; },
+        json(p) { this.payload = p; return this; }
+      };
+      sendMessageError(mockRes, new Error('db fail'), {
+        defaultMessage: 'Service busy.',
+        includeSuccessFalse: false
+      });
+      assert.equal(mockRes.statusCode, 500);
+      assert.deepEqual(mockRes.payload, { success: false, message: 'Service busy.' });
+    });
+
+    it('#44 connectDB returns Mongoose instance even when already connected', async () => {
+      assert.equal(mongoose.connection.readyState, 1);
+      const conn = await connectDB();
+      assert.strictEqual(conn, mongoose);
+      assert.ok(conn.connection.host);
+      assert.equal(conn.connection.readyState, 1);
+    });
+
+    it('#52 & #54 createQuizQuestion maps default quiz difficulty and rejects coerced non-numeric correctOptionIndex', async () => {
+      const quiz = await Quiz.create({
+        title: `B2 Test Quiz ${Date.now()}`,
+        category: 'Cyber Law Basics',
+        description: 'Testing quiz difficulty mapping and index validation'
+      });
+      assert.equal(quiz.difficulty, 'Medium');
+
+      try {
+        for (const badIndex of [null, '', '   ', true, false]) {
+          const badRes = await fetch(`${baseUrl}/api/admin/quizzes/${quiz._id}/questions`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${activeAdminToken}`
+            },
+            body: JSON.stringify({
+              questionText: 'Bad index check?',
+              options: ['Option A', 'Option B'],
+              correctOptionIndex: badIndex,
+              explanation: 'Index validation check'
+            })
+          });
+          assert.equal(badRes.status, 400, `Expected 400 for correctOptionIndex=${JSON.stringify(badIndex)}`);
+        }
+
+        const okRes = await fetch(`${baseUrl}/api/admin/quizzes/${quiz._id}/questions`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${activeAdminToken}`
+          },
+          body: JSON.stringify({
+            questionText: 'Valid default quiz question?',
+            options: ['Yes, valid', 'No, invalid'],
+            correctOptionIndex: 0,
+            explanation: 'Default Medium quiz should map question difficulty to Intermediate.'
+          })
+        });
+        assert.equal(okRes.status, 201);
+        const createdQuestion = await okRes.json();
+        assert.equal(createdQuestion.difficulty, 'Intermediate');
+        await QuizQuestion.deleteOne({ _id: createdQuestion._id });
+      } finally {
+        await Quiz.deleteOne({ _id: quiz._id });
+      }
+    });
+
+    it('#55 moduleController compensates/rolls back creates, updates, and deletes when AdminAuditLog write fails in standalone MongoDB', async () => {
+      const seedSlug = `b4-compensate-${Date.now()}`;
+      const existing = await LearningModule.create({
+        title: 'Original Module Title',
+        slug: seedSlug,
+        category: 'Cyber Law Fundamentals',
+        summary: 'Original summary before audit failure test',
+        content: 'Original body content.'
+      });
+
+      const origAuditCreate = AdminAuditLog.create;
+      AdminAuditLog.create = async () => {
+        throw new Error('Simulated AdminAuditLog write failure');
+      };
+
+      try {
+        // 1. Failed audit on CREATE must return 500 and roll back created module
+        const createSlug = `${seedSlug}-create`;
+        const failCreateRes = await fetch(`${baseUrl}/api/modules/admin`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${activeAdminToken}`
+          },
+          body: JSON.stringify({
+            title: 'Should Be Rolled Back',
+            slug: createSlug,
+            category: 'Cyber Law Fundamentals',
+            summary: 'Orphan prevention check',
+            content: 'Body content'
+          })
+        });
+        assert.equal(failCreateRes.status, 500);
+        const failCreateBody = await failCreateRes.json();
+        assert.equal(failCreateBody.success, false);
+        assert.equal(await LearningModule.findOne({ slug: createSlug }), null);
+
+        // 2. Failed audit on UPDATE must return 500 and restore previous title/summary
+        const failUpdateRes = await fetch(`${baseUrl}/api/modules/admin/${existing._id}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${activeAdminToken}`
+          },
+          body: JSON.stringify({
+            title: 'Mutated Title That Must Revert',
+            summary: 'Mutated summary'
+          })
+        });
+        assert.equal(failUpdateRes.status, 500);
+        const reloadedAfterUpdate = await LearningModule.findById(existing._id).lean();
+        assert.equal(reloadedAfterUpdate.title, 'Original Module Title');
+        assert.equal(reloadedAfterUpdate.summary, 'Original summary before audit failure test');
+
+        // 3. Failed audit on DELETE must return 500 and restore deleted module with original _id
+        const failDeleteRes = await fetch(`${baseUrl}/api/modules/admin/${existing._id}`, {
+          method: 'DELETE',
+          headers: { Authorization: `Bearer ${activeAdminToken}` }
+        });
+        assert.equal(failDeleteRes.status, 500);
+        const restoredAfterDelete = await LearningModule.findById(existing._id).lean();
+        assert.ok(restoredAfterDelete);
+        assert.equal(restoredAfterDelete.slug, seedSlug);
+        assert.equal(restoredAfterDelete.title, 'Original Module Title');
+      } finally {
+        AdminAuditLog.create = origAuditCreate;
+        await LearningModule.deleteOne({ _id: existing._id });
+      }
+    });
+
+    it('#48 createMongooseAdminUserStore enforces real MongoDB unique index & serializes concurrent provisioning without touching learners', async () => {
+      const existingAdmins = await User.find({ role: 'admin' }).select('_id').lean();
+      const adminIds = existingAdmins.map((u) => u._id);
+      const uniqueTestEmail = `concurrent.staging.${Date.now()}@cyberlawexample.org`;
+      const provEnv = {
+        ...process.env,
+        NODE_ENV: 'staging',
+        ASSERT_STAGING_DB: 'true',
+        ADMIN_EMAIL: uniqueTestEmail,
+        ADMIN_PASSWORD: 'StrongStagingAdmin!2026_LockCheck',
+        ADMIN_FULL_NAME: 'Lock Concurrency Check Admin'
+      };
+
+      try {
+        if (adminIds.length > 0) {
+          await User.updateMany({ _id: { $in: adminIds } }, { $set: { role: 'user' } });
+        }
+
+        const lockCol = mongoose.connection.collection('staging_admin_provision_locks');
+        await lockCol.deleteMany({});
+
+        // Create two independent stores simulating two concurrent CLI processes sharing real mongod
+        const storeOne = createMongooseAdminUserStore(mongoose, { User, UserProgress });
+        const storeTwo = createMongooseAdminUserStore(mongoose, { User, UserProgress });
+
+        // Directly verify real MongoDB E11000 duplicate-key handling on shared lockKey
+        const directLockKey = `direct_e11000_check_${Date.now()}`;
+        await storeOne.acquireProvisionLock({
+          lockKey: directLockKey,
+          ownerRunId: 'owner_a',
+          maskedEmail: 'st***@cyberlawexample.org'
+        });
+        await assert.rejects(
+          () => storeTwo.acquireProvisionLock({
+            lockKey: directLockKey,
+            ownerRunId: 'owner_b',
+            maskedEmail: 'st***@cyberlawexample.org'
+          }),
+          /\[CONCURRENT PROVISIONING CONFLICT\]/
+        );
+        await storeOne.releaseProvisionLock({ lockKey: directLockKey, ownerRunId: 'owner_a' });
+
+        // Verify unique index on lockKey exists in real MongoDB
+        const indexes = await lockCol.indexes();
+        assert.ok(
+          indexes.some((idx) => idx.key?.lockKey === 1 && idx.unique === true),
+          'Expected unique index on staging_admin_provision_locks.lockKey'
+        );
+
+        // Concurrent provisionStagingAdmin calls against real MongoDB
+        const preProgressCount = await UserProgress.countDocuments({});
+        const results = await Promise.allSettled([
+          provisionStagingAdmin({
+            env: provEnv,
+            store: storeOne,
+            guardResult: { dbName: 'cyber_law_staging', host: 'cluster0.xxeclfp.mongodb.net' }
+          }),
+          provisionStagingAdmin({
+            env: provEnv,
+            store: storeTwo,
+            guardResult: { dbName: 'cyber_law_staging', host: 'cluster0.xxeclfp.mongodb.net' }
+          })
+        ]);
+
+        const fulfilled = results.filter((r) => r.status === 'fulfilled');
+        const rejected = results.filter((r) => r.status === 'rejected');
+        assert.equal(fulfilled.length, 1);
+        assert.equal(rejected.length, 1);
+        assert.match(rejected[0].reason.message, /CONCURRENT PROVISIONING CONFLICT|PRECONDITION ABORT/);
+        assert.equal(await User.countDocuments({ email: uniqueTestEmail }), 1);
+        assert.equal(await UserProgress.countDocuments({}), preProgressCount);
+      } finally {
+        await User.deleteMany({ email: uniqueTestEmail });
+        await mongoose.connection.collection('staging_admin_provision_locks').deleteMany({});
+        if (adminIds.length > 0) {
+          await User.updateMany({ _id: { $in: adminIds } }, { $set: { role: 'admin' } });
+        }
+      }
     });
   });
 });

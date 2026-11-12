@@ -216,13 +216,73 @@ function verifyConnectedStagingTarget(
  * Mongoose User/UserProgress read + single-admin create store strictly bound to
  * the shared singleton connection (zero deletes, zero UserProgress writes).
  */
+const PROVISION_LOCK_COLLECTION = 'staging_admin_provision_locks';
+const DEFAULT_LOCK_KEY = 'staging_admin_bootstrap';
+
 function createMongooseAdminUserStore(activeMongoose = mongoose, models = ALL_MODELS) {
   const targetModels = {
     User: models.User,
     UserProgress: models.UserProgress
   };
+  const writeAudit = {
+    adminUserIds: [],
+    nonAdminUserWrites: 0,
+    userProgressWrites: 0
+  };
+  let lockIndexReady = false;
+
+  async function getLockCollection() {
+    assertModelsBoundToConnection(activeMongoose, targetModels);
+    const col = activeMongoose.connection.collection(PROVISION_LOCK_COLLECTION);
+    if (!lockIndexReady) {
+      await col.createIndex({ lockKey: 1 }, { unique: true });
+      lockIndexReady = true;
+    }
+    return col;
+  }
 
   return {
+    getWriteAudit() {
+      return {
+        adminUserIds: [...writeAudit.adminUserIds],
+        nonAdminUserWrites: writeAudit.nonAdminUserWrites,
+        userProgressWrites: writeAudit.userProgressWrites
+      };
+    },
+
+    async acquireProvisionLock({ lockKey = DEFAULT_LOCK_KEY, ownerRunId, maskedEmail }) {
+      const col = await getLockCollection();
+      try {
+        await col.insertOne({
+          lockKey,
+          ownerRunId,
+          maskedEmail,
+          status: 'IN_PROGRESS',
+          acquiredAt: new Date()
+        });
+      } catch (err) {
+        if (err && err.code === 11000) {
+          throw new Error(
+            '[CONCURRENT PROVISIONING CONFLICT] Staging administrator provisioning lock is already held or completed. Refusing concurrent admin creation.'
+          );
+        }
+        throw err;
+      }
+    },
+
+    async completeProvisionLock({ lockKey = DEFAULT_LOCK_KEY, ownerRunId, adminId }) {
+      const col = await getLockCollection();
+      await col.updateOne(
+        { lockKey, ownerRunId },
+        { $set: { status: 'COMPLETED', adminId: String(adminId), completedAt: new Date() } }
+      );
+    },
+
+    async releaseProvisionLock({ lockKey = DEFAULT_LOCK_KEY, ownerRunId }) {
+      const col = await getLockCollection();
+      await col.deleteOne({ lockKey, ownerRunId, status: 'IN_PROGRESS' });
+    },
+
     async findAdmins() {
       assertModelsBoundToConnection(activeMongoose, targetModels);
       return targetModels.User.find({ role: 'admin' })
@@ -267,6 +327,12 @@ function createMongooseAdminUserStore(activeMongoose = mongoose, models = ALL_MO
       }
 
       const created = await targetModels.User.create(payload);
+      if (created.role === 'admin') {
+        writeAudit.adminUserIds.push(created._id);
+      } else {
+        writeAudit.nonAdminUserWrites += 1;
+      }
+
       return {
         _id: created._id,
         fullName: created.fullName,
@@ -339,24 +405,64 @@ async function provisionStagingAdmin({
     };
   }
 
-  // 3. Hash password with bcryptjs using identical cost factor as authController.register (10)
-  const passwordHash = await bcrypt.hash(credentials.password, BCRYPT_WORK_FACTOR);
-
-  // 4. Insert strictly one administrator User document (never touch UserProgress)
-  const userPayload = {
-    fullName: credentials.fullName,
-    email: credentials.email,
-    passwordHash,
-    role: 'admin',
-    isActive: true
-  };
-
-  const created = await store.createAdminUser(userPayload);
-  if (!created || !created._id) {
-    throw new Error('[VERIFICATION ERROR] Administrator creation did not return a persisted record.');
+  // 3. Acquire atomic unique provisioning lock BEFORE creating any privileged account (#48)
+  const ownerRunId = `prov_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+  const hasLockSupport = typeof store.acquireProvisionLock === 'function';
+  if (hasLockSupport) {
+    await store.acquireProvisionLock({
+      lockKey: DEFAULT_LOCK_KEY,
+      ownerRunId,
+      maskedEmail: credentials.maskedEmail
+    });
   }
 
-  // 5. Re-query database directly to verify post-insertion invariants
+  let created = null;
+  try {
+    // Re-check inside lock to catch non-locked pre-existing admins
+    const lockedExistingAdmins = await store.findAdmins();
+    if (lockedExistingAdmins.length > 0) {
+      const maskedExisting = lockedExistingAdmins.map((a) => maskEmail(a.email)).join(', ');
+      throw new Error(
+        `[PRECONDITION ABORT] ${lockedExistingAdmins.length} existing administrator account(s) detected (${maskedExisting}). Refusing creation.`
+      );
+    }
+
+    // 4. Hash password with bcryptjs using identical cost factor as authController.register (10)
+    const passwordHash = await bcrypt.hash(credentials.password, BCRYPT_WORK_FACTOR);
+
+    // 5. Insert strictly one administrator User document (never touch UserProgress)
+    const userPayload = {
+      fullName: credentials.fullName,
+      email: credentials.email,
+      passwordHash,
+      role: 'admin',
+      isActive: true
+    };
+
+    created = await store.createAdminUser(userPayload);
+    if (!created || !created._id) {
+      throw new Error('[VERIFICATION ERROR] Administrator creation did not return a persisted record.');
+    }
+
+    if (hasLockSupport && typeof store.completeProvisionLock === 'function') {
+      await store.completeProvisionLock({
+        lockKey: DEFAULT_LOCK_KEY,
+        ownerRunId,
+        adminId: created._id
+      });
+    }
+  } catch (err) {
+    if (!created && hasLockSupport && typeof store.releaseProvisionLock === 'function') {
+      try {
+        await store.releaseProvisionLock({ lockKey: DEFAULT_LOCK_KEY, ownerRunId });
+      } catch (_releaseErr) {
+        // Ignore cleanup failure when surfacing primary provisioning error
+      }
+    }
+    throw err;
+  }
+
+  // 5. Re-query database directly to verify post-insertion invariants scoped to this operation
   const postAdmins = await store.findAdmins();
   if (postAdmins.length !== 1) {
     throw new Error(
@@ -364,7 +470,13 @@ async function provisionStagingAdmin({
     );
   }
 
-  const verifiedAdmin = postAdmins[0];
+  const verifiedAdmin = postAdmins.find((a) => String(a._id) === String(created._id));
+  if (!verifiedAdmin) {
+    throw new Error(
+      `[VERIFICATION ERROR] Provisioned administrator ID "${created._id}" was not found during post-insert verification.`
+    );
+  }
+
   if (verifiedAdmin.role !== 'admin') {
     throw new Error(
       `[VERIFICATION ERROR] Provisioned administrator role mismatch: expected "admin", got "${verifiedAdmin.role}".`
@@ -383,21 +495,22 @@ async function provisionStagingAdmin({
     );
   }
 
-  const postTotalUsers = await store.countUsers();
+  const writeAudit = typeof store.getWriteAudit === 'function' ? store.getWriteAudit() : null;
+  if (writeAudit) {
+    if (
+      writeAudit.nonAdminUserWrites > 0 ||
+      writeAudit.userProgressWrites > 0 ||
+      writeAudit.adminUserIds.length !== 1 ||
+      String(writeAudit.adminUserIds[0]) !== String(created._id)
+    ) {
+      throw new Error(
+        `[DATA BOUNDARY VIOLATION] Unexpected non-admin or UserProgress writes recorded during admin provisioning (nonAdminUserWrites=${writeAudit.nonAdminUserWrites}, userProgressWrites=${writeAudit.userProgressWrites}).`
+      );
+    }
+  }
+
   const postLearnerCount = await store.countLearners();
   const postProgressCount = await store.countUserProgress();
-
-  if (postTotalUsers !== preTotalUsers + 1) {
-    throw new Error(
-      `[VERIFICATION ERROR] Unexpected total User count change (${preTotalUsers} -> ${postTotalUsers}).`
-    );
-  }
-
-  if (postLearnerCount !== preLearnerCount || postProgressCount !== preProgressCount) {
-    throw new Error(
-      `[DATA BOUNDARY VIOLATION] Learner boundary altered (users role=user: ${preLearnerCount}->${postLearnerCount}, UserProgress: ${preProgressCount}->${postProgressCount}).`
-    );
-  }
 
   return {
     status: 'PROVISIONED_AND_VERIFIED',

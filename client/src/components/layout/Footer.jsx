@@ -23,7 +23,7 @@ export default function Footer() {
           <div className="footer-emergency-box">
             <strong className="emergency-title">Cyber Crime Helpline: 1930</strong>
             <p className="emergency-detail">
-              National emergency support via Toll-Free <strong>1930</strong>. File official complaints at{' '}
+              National emergency support via Toll-Free <strong>1930</strong> with CFCFRMS and Golden Hour reporting within 2–3 hours. Prompt reporting assists inter-bank hold coordination without guaranteeing fund freeze or recovery. File official complaints at{' '}
               <a href="https://cybercrime.gov.in" target="_blank" rel="noopener noreferrer" className="emergency-link">
                 cybercrime.gov.in
               </a>
@@ -72,7 +72,7 @@ export default function Footer() {
       {/* Institutional Educational Disclaimer & Copyright */}
       <div className="container footer-bottom">
         <div className="footer-disclaimer">
-          <strong>Educational Awareness Disclaimer:</strong> All curriculum material, case studies, and simulated scenarios provided on this portal are developed exclusively for civic digital literacy and educational awareness. They do not constitute formal legal counsel, statutory interpretation, or personal legal advisory services.
+          <strong>Educational Awareness Disclaimer:</strong> All curriculum material, case studies, and simulated scenarios provided on this portal are developed exclusively for civic digital literacy and educational awareness. They do not constitute formal legal advice, statutory legal certification, authoritative statutory interpretation, or personal legal advisory services.
         </div>
         <div className="footer-copyright">
           &copy; {new Date().getFullYear()} Cyber Law Awareness Portal • Public Beta 1.0. Built for Academic and Awareness purposes.

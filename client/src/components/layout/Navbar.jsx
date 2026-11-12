@@ -28,6 +28,7 @@ function Navbar({ user, setUser, isWorkspace, sidebarOpen, setSidebarOpen }) {
   const navRef = useRef(null);
   const mobileTriggerRef = useRef(null);
   const closeBtnRef = useRef(null);
+  const drawerRef = useRef(null);
 
   // Track scroll position to subtly reinforce header border
   useEffect(() => {
@@ -75,26 +76,69 @@ function Navbar({ user, setUser, isWorkspace, sidebarOpen, setSidebarOpen }) {
     return () => window.removeEventListener('resize', updateIndicator);
   }, []);
 
-  // Accessibility: focus management and escape key listener for mobile drawer
+  // Accessibility: background inertness, scroll lock, focus trap & escape dismissal for mobile drawer
   useEffect(() => {
+    if (!mobileDrawerOpen) return undefined;
+
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
+    const inertSnapshots = [];
+    let currentEl = drawerRef.current;
+    while (currentEl && currentEl !== document.body && currentEl.parentElement) {
+      for (const sibling of Array.from(currentEl.parentElement.children)) {
+        if (sibling === currentEl || sibling.classList?.contains('mobile-drawer-backdrop')) continue;
+        inertSnapshots.push({ el: sibling, prevInert: Boolean(sibling.inert) });
+        sibling.inert = true;
+      }
+      currentEl = currentEl.parentElement;
+    }
+
     const handleKeyDown = (e) => {
-      if (e.key === 'Escape' && mobileDrawerOpen) {
+      if (e.key === 'Escape') {
+        e.preventDefault();
         setMobileDrawerOpen(false);
         mobileTriggerRef.current?.focus();
+        return;
+      }
+
+      if (e.key === 'Tab' && drawerRef.current) {
+        const focusables = Array.from(
+          drawerRef.current.querySelectorAll(
+            'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+          )
+        ).filter((el) => !el.disabled && el.offsetParent !== null);
+
+        if (focusables.length === 0) return;
+
+        const firstEl = focusables[0];
+        const lastEl = focusables[focusables.length - 1];
+
+        if (!drawerRef.current.contains(document.activeElement)) {
+          e.preventDefault();
+          (e.shiftKey ? lastEl : firstEl).focus();
+          return;
+        }
+
+        if (e.shiftKey && document.activeElement === firstEl) {
+          e.preventDefault();
+          lastEl.focus();
+        } else if (!e.shiftKey && document.activeElement === lastEl) {
+          e.preventDefault();
+          firstEl.focus();
+        }
       }
     };
 
-    if (mobileDrawerOpen) {
-      document.body.style.overflow = 'hidden';
-      closeBtnRef.current?.focus();
-      window.addEventListener('keydown', handleKeyDown);
-    } else {
-      document.body.style.overflow = '';
-    }
+    closeBtnRef.current?.focus();
+    window.addEventListener('keydown', handleKeyDown, true);
 
     return () => {
-      document.body.style.overflow = '';
-      window.removeEventListener('keydown', handleKeyDown);
+      document.body.style.overflow = prevOverflow;
+      window.removeEventListener('keydown', handleKeyDown, true);
+      for (const { el, prevInert } of inertSnapshots) {
+        el.inert = prevInert;
+      }
     };
   }, [mobileDrawerOpen]);
 
@@ -318,6 +362,7 @@ function Navbar({ user, setUser, isWorkspace, sidebarOpen, setSidebarOpen }) {
             aria-hidden="true"
           />
           <div
+            ref={drawerRef}
             className="mobile-drawer"
             role="dialog"
             aria-modal="true"

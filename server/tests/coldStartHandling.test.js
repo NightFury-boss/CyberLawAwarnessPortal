@@ -82,6 +82,12 @@ describe('Cold-Start Handling & Timeout Strategy Verification', () => {
       } else if (req.url === '/status-504') {
         res.writeHead(504, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ error: { message: 'Gateway Timeout' } }));
+      } else if (req.url === '/stalled-body') {
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.write('{"partial":');
+      } else if (req.url === '/bad-json') {
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end('not-valid-json');
       } else {
         res.writeHead(404, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ error: { message: 'Not found' } }));
@@ -225,9 +231,12 @@ describe('Cold-Start Handling & Timeout Strategy Verification', () => {
   // Test 5: Production does not display staging-specific messaging
   // ============================================================================
   it('5. Production does not display staging-specific messaging', () => {
-    // 5A: Staging message check
+    // 5A: Staging message check (#12)
     const stagingMsg = apiModule.getColdStartMessage(true);
     assert.match(stagingMsg, /staging/i);
+    assert.doesNotMatch(stagingMsg, /45\s*seconds/i);
+    assert.match(stagingMsg, /60\s*seconds/i);
+    assert.match(stagingMsg, /retries/i);
 
     // 5B: Production message check
     const prodMsg = apiModule.getColdStartMessage(false);
@@ -527,5 +536,72 @@ describe('Cold-Start Handling & Timeout Strategy Verification', () => {
       unsubscribe();
       apiModule.setNoticeDelayMsForTesting(null);
     }
+  });
+
+  it('15. #13 Timeout and abort remain active through handleResponse body parsing and clean up on parse failure', async () => {
+    apiModule.setNoticeDelayMsForTesting(20);
+    let currentState = { active: false };
+    const unsubscribe = apiModule.subscribeColdStart((s) => { currentState = s; });
+
+    try {
+      // Stalled response body after 200 headers must trigger ERR_TIMEOUT
+      let timeoutErr = null;
+      try {
+        await apiModule.requestJson(`${serverUrl}/stalled-body`, { method: 'GET', maxRetries: 0 }, 80);
+      } catch (err) {
+        timeoutErr = err;
+      }
+      assert.ok(timeoutErr, 'Stalled body must time out');
+      assert.equal(timeoutErr.code, 'ERR_TIMEOUT');
+      assert.equal(currentState.active, false);
+
+      // Parse failure on invalid JSON must reject and tear down active tracking cleanly
+      await assert.rejects(
+        () => apiModule.requestJson(`${serverUrl}/bad-json`, { method: 'GET', maxRetries: 0 }),
+        SyntaxError
+      );
+      assert.equal(currentState.active, false);
+    } finally {
+      unsubscribe();
+      apiModule.setNoticeDelayMsForTesting(null);
+    }
+  });
+
+  it('16. #14 Retry backoff delay aborts immediately on caller AbortSignal without firing second attempt', async () => {
+    const controller = new AbortController();
+    setTimeout(() => {
+      controller.abort(new Error('Aborted during retry delay'));
+    }, 50);
+
+    const start = Date.now();
+    let caughtErr = null;
+    try {
+      await apiModule.fetchWithTimeout(`${serverUrl}/retry-get-fail-once`, {
+        method: 'GET',
+        signal: controller.signal,
+        maxRetries: 1
+      });
+    } catch (err) {
+      caughtErr = err;
+    }
+    const elapsed = Date.now() - start;
+
+    assert.ok(caughtErr, 'Expected retry delay to reject upon caller abort');
+    assert.match(caughtErr.message, /Aborted during retry delay/);
+    assert.ok(elapsed < 800, `Expected prompt abort during 2s backoff wait, took ${elapsed}ms`);
+    assert.equal(requestLog.filter((r) => r.url === '/retry-get-fail-once').length, 1);
+  });
+
+  it('17. #1 & #11 App renders ColdStartNotice while loading and preserves token across non-auth failures', () => {
+    const fs = require('node:fs');
+    const path = require('node:path');
+    const appSrc = fs.readFileSync(path.join(__dirname, '../../client/src/App.jsx'), 'utf8');
+
+    const loadingIdx = appSrc.indexOf('{loading ?');
+    const coldStartIdx = appSrc.indexOf('<ColdStartNotice />');
+    assert.ok(coldStartIdx !== -1 && loadingIdx !== -1 && coldStartIdx < loadingIdx, 'ColdStartNotice must mount outside loading branch');
+
+    // Only explicit 401/403 should invoke api.logout()
+    assert.match(appSrc, /err\.status === 401 \|\| err\.status === 403/);
   });
 });

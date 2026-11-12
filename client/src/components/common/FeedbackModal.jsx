@@ -1,22 +1,22 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
+import {
+  FEEDBACK_CATEGORIES,
+  FEEDBACK_EMAIL_ADDRESS,
+  buildFeedbackMailto,
+  prepareAndLaunchMailtoFeedback,
+  sanitizeFeedbackPath
+} from '../../utils/feedbackHelpers';
+
+export { FEEDBACK_CATEGORIES };
 
 /**
  * Cyber Law Awareness Portal — Public Beta Feedback Modal
- * 
- * Provides an accessible, dignified pathway for visitors, students, and legal
- * educators to submit bug reports, statutory accuracy suggestions, and
- * experiential impressions during the Public Beta.
+ *
+ * Provides an accessible pathway for visitors, students, and educators to
+ * prepare bug reports, statutory accuracy notes, and experiential feedback via
+ * their email client without persisting personal email addresses locally.
  */
-export const FEEDBACK_CATEGORIES = [
-  { id: 'experience', label: 'Learning Experience', icon: '✦', desc: 'Flow, clarity, or comprehension' },
-  { id: 'bug', label: 'Bug or Issue', icon: '⚙', desc: 'Display, navigation, or technical bug' },
-  { id: 'legal', label: 'Statutory Accuracy', icon: '§', desc: 'Citations, legal terms, or precedents' },
-  { id: 'general', label: 'General Thoughts', icon: '💬', desc: 'Impressions, ideas, and suggestions' }
-];
-
-const FEEDBACK_STORAGE_KEY = 'cl_public_beta_feedback';
-
 export default function FeedbackModal({ isOpen: propIsOpen, onClose: propOnClose, initialCategory = 'experience' }) {
   const location = useLocation();
   const [internalOpen, setInternalOpen] = useState(false);
@@ -26,43 +26,67 @@ export default function FeedbackModal({ isOpen: propIsOpen, onClose: propOnClose
   const [learnerRole, setLearnerRole] = useState('student');
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState('');
+  const [mailtoFallbackUrl, setMailtoFallbackUrl] = useState('');
+  const [preparedMailtoUrl, setPreparedMailtoUrl] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const modalRef = useRef(null);
   const prevFocusedElement = useRef(null);
   const textareaRef = useRef(null);
+  const successFocusRef = useRef(null);
+  const resetTimerRef = useRef(null);
 
   const isOpen = propIsOpen !== undefined ? propIsOpen : internalOpen;
+  const safePathname = sanitizeFeedbackPath(location.pathname);
+
+  const cancelPendingReset = () => {
+    if (resetTimerRef.current !== null) {
+      clearTimeout(resetTimerRef.current);
+      resetTimerRef.current = null;
+    }
+  };
+
+  const resetFormState = () => {
+    cancelPendingReset();
+    setSubmitted(false);
+    setMessage('');
+    setEmail('');
+    setError('');
+    setMailtoFallbackUrl('');
+    setPreparedMailtoUrl('');
+    setIsSubmitting(false);
+  };
 
   // Listen for global custom events to open feedback from anywhere
   useEffect(() => {
     const handleOpenEvent = (e) => {
+      cancelPendingReset();
       const detail = e.detail || {};
       if (detail.category) setCategory(detail.category);
       setSubmitted(false);
       setError('');
+      setMailtoFallbackUrl('');
+      setPreparedMailtoUrl('');
       setInternalOpen(true);
     };
 
     window.addEventListener('cl:open-feedback', handleOpenEvent);
-    return () => window.removeEventListener('cl:open-feedback', handleOpenEvent);
+    return () => {
+      window.removeEventListener('cl:open-feedback', handleOpenEvent);
+      cancelPendingReset();
+    };
   }, []);
 
   const handleClose = () => {
+    resetFormState();
     if (propOnClose) {
       propOnClose();
     } else {
       setInternalOpen(false);
     }
-    // Reset state after close
-    setTimeout(() => {
-      setSubmitted(false);
-      setMessage('');
-      setError('');
-    }, 250);
   };
 
-  // Accessibility: focus trapping & escape key handler
+  // Accessibility: background scroll lock, focus trapping & escape key handler
   useEffect(() => {
     if (!isOpen) {
       if (prevFocusedElement.current) {
@@ -73,7 +97,10 @@ export default function FeedbackModal({ isOpen: propIsOpen, onClose: propOnClose
       return;
     }
 
+    cancelPendingReset();
     prevFocusedElement.current = document.activeElement;
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
 
     const handleKeyDown = (e) => {
       if (e.key === 'Escape') {
@@ -95,6 +122,12 @@ export default function FeedbackModal({ isOpen: propIsOpen, onClose: propOnClose
         const firstEl = focusableArr[0];
         const lastEl = focusableArr[focusableArr.length - 1];
 
+        if (!modalRef.current.contains(document.activeElement)) {
+          e.preventDefault();
+          (e.shiftKey ? lastEl : firstEl).focus();
+          return;
+        }
+
         if (e.shiftKey && document.activeElement === firstEl) {
           e.preventDefault();
           lastEl.focus();
@@ -106,13 +139,13 @@ export default function FeedbackModal({ isOpen: propIsOpen, onClose: propOnClose
     };
 
     window.addEventListener('keydown', handleKeyDown);
-    
-    // Focus textarea or first interactive element
+
+    // Focus textarea or first interactive element on open
     const timer = setTimeout(() => {
       if (textareaRef.current) {
         textareaRef.current.focus();
       } else if (modalRef.current) {
-        const first = modalRef.current.querySelector('button, input, textarea');
+        const first = modalRef.current.querySelector('button, input, textarea, [href]');
         first?.focus();
       }
     }, 60);
@@ -120,82 +153,81 @@ export default function FeedbackModal({ isOpen: propIsOpen, onClose: propOnClose
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
       clearTimeout(timer);
+      document.body.style.overflow = prevOverflow;
     };
   }, [isOpen]);
 
+  // Move keyboard/screen-reader focus into prepared confirmation view upon submit
+  useEffect(() => {
+    if (!isOpen || !submitted) return;
+    const focusTimer = setTimeout(() => {
+      if (successFocusRef.current) {
+        successFocusRef.current.focus();
+      } else if (modalRef.current) {
+        const closeBtn = modalRef.current.querySelector('.success-close-btn, .feedback-modal-close-btn');
+        closeBtn?.focus();
+      }
+    }, 30);
+    return () => clearTimeout(focusTimer);
+  }, [isOpen, submitted]);
+
   if (!isOpen) return null;
+
+  const launchMailtoClient = (mailtoUrl) => {
+    if (typeof window === 'undefined' || typeof document === 'undefined') return false;
+    window.location.href = mailtoUrl;
+    return true;
+  };
 
   const handleSubmit = (e) => {
     e.preventDefault();
     setError('');
-
-    const trimmedMsg = message.trim();
-    if (!trimmedMsg) {
-      setError('Please provide a short description of your observation or feedback.');
-      return;
-    }
-
-    if (trimmedMsg.length < 8) {
-      setError('Please provide at least 8 characters so we can understand your thought.');
-      return;
-    }
-
+    setMailtoFallbackUrl('');
     setIsSubmitting(true);
 
-    try {
-      const record = {
-        id: `fb_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
-        category,
-        message: trimmedMsg,
-        email: email.trim() || null,
-        learnerRole,
-        path: location.pathname + (location.search || ''),
-        viewport: typeof window !== 'undefined' ? `${window.innerWidth}x${window.innerHeight}` : 'unknown',
-        timestamp: new Date().toISOString()
-      };
+    const outcome = prepareAndLaunchMailtoFeedback({
+      category,
+      message,
+      email,
+      learnerRole,
+      pathname: safePathname,
+      launchMailto: launchMailtoClient
+    });
 
-      // Safely persist to browser storage
-      let existing = [];
-      try {
-        const raw = localStorage.getItem(FEEDBACK_STORAGE_KEY);
-        if (raw) existing = JSON.parse(raw);
-        if (!Array.isArray(existing)) existing = [];
-      } catch {
-        existing = [];
-      }
+    setIsSubmitting(false);
 
-      existing.unshift(record);
-      // Keep maximum 30 historical records locally
-      if (existing.length > 30) existing = existing.slice(0, 30);
-      localStorage.setItem(FEEDBACK_STORAGE_KEY, JSON.stringify(existing));
-
-      setIsSubmitting(false);
-      setSubmitted(true);
-    } catch {
-      setIsSubmitting(false);
-      setSubmitted(true); // Still show graceful confirmation to user
+    if (outcome.validationError) {
+      setError(outcome.validationError);
+      return;
     }
+
+    if (!outcome.ok) {
+      setError(outcome.deliveryError || `Please use the email button below to send feedback to ${FEEDBACK_EMAIL_ADDRESS}.`);
+      setMailtoFallbackUrl(outcome.mailtoUrl);
+      return;
+    }
+
+    setPreparedMailtoUrl(outcome.mailtoUrl);
+    setSubmitted(true);
   };
 
-  const getMailtoLink = () => {
-    const subject = encodeURIComponent(`[Public Beta Feedback] ${FEEDBACK_CATEGORIES.find(c => c.id === category)?.label || 'General'}`);
-    const body = encodeURIComponent(
-      `Category: ${category}\n` +
-      `Page: ${location.pathname}\n` +
-      `Role: ${learnerRole}\n\n` +
-      `Feedback:\n${message}\n\n` +
-      `Contact: ${email || 'Not provided'}`
-    );
-    return `mailto:feedback@cyberlawportal.org?subject=${subject}&body=${body}`;
-  };
+  const getMailtoLink = () => (
+    preparedMailtoUrl || buildFeedbackMailto({
+      category,
+      message,
+      email,
+      learnerRole,
+      pathname: safePathname
+    })
+  );
 
   return (
-    <div 
-      className="feedback-modal-backdrop" 
+    <div
+      className="feedback-modal-backdrop"
       onClick={(e) => { if (e.target === e.currentTarget) handleClose(); }}
       role="presentation"
     >
-      <div 
+      <div
         ref={modalRef}
         className="feedback-modal-dialog"
         role="dialog"
@@ -209,9 +241,9 @@ export default function FeedbackModal({ isOpen: propIsOpen, onClose: propOnClose
             <span className="feedback-modal-badge">PUBLIC BETA</span>
             <span className="feedback-modal-eyebrow">COMMUNITY FEEDBACK</span>
           </div>
-          <button 
-            type="button" 
-            onClick={handleClose} 
+          <button
+            type="button"
+            onClick={handleClose}
             className="feedback-modal-close-btn"
             aria-label="Close feedback dialog"
           >
@@ -221,21 +253,38 @@ export default function FeedbackModal({ isOpen: propIsOpen, onClose: propOnClose
           </button>
         </div>
 
+        {/* Shared Dialog Title & Description stay mounted across form and prepared states */}
+        <div className="feedback-modal-intro" style={{ padding: '0 var(--space-lg, 1.5rem)' }}>
+          <h2 id="feedback-dialog-title" className="feedback-modal-title">
+            {submitted ? 'Email Draft Ready' : 'Share Your Beta Experience'}
+          </h2>
+          <p id="feedback-dialog-desc" className="feedback-modal-desc">
+            {submitted
+              ? `Complete delivery by sending the prepared message in your email app to ${FEEDBACK_EMAIL_ADDRESS}.`
+              : 'Prepare a structured feedback email for our team. No form inputs or personal emails are saved in browser storage.'}
+          </p>
+        </div>
+
         {!submitted ? (
           <form onSubmit={handleSubmit} className="feedback-modal-form" noValidate>
-            <div className="feedback-modal-intro">
-              <h2 id="feedback-dialog-title" className="feedback-modal-title">
-                Share Your Beta Experience
-              </h2>
-              <p id="feedback-dialog-desc" className="feedback-modal-desc">
-                Your observations help us refine curriculum explanations, fix unexpected bugs, and strengthen practical digital legal awareness.
-              </p>
-            </div>
-
             {error && (
               <div className="feedback-modal-alert" role="alert">
                 <span className="alert-icon" aria-hidden="true">⚠</span>
-                <span>{error}</span>
+                <div>
+                  <span>{error}</span>
+                  {mailtoFallbackUrl && (
+                    <div style={{ marginTop: '0.5rem' }}>
+                      <a
+                        href={mailtoFallbackUrl}
+                        className="email-alt-link"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        Open Email Draft to {FEEDBACK_EMAIL_ADDRESS} &rarr;
+                      </a>
+                    </div>
+                  )}
+                </div>
               </div>
             )}
 
@@ -288,7 +337,7 @@ export default function FeedbackModal({ isOpen: propIsOpen, onClose: propOnClose
                 aria-required="true"
               />
               <div className="feedback-field-hint">
-                <span>Page context: <code>{location.pathname}</code></span>
+                <span>Page context: <code>{safePathname}</code></span>
                 <span>{message.length} characters</span>
               </div>
             </div>
@@ -345,7 +394,7 @@ export default function FeedbackModal({ isOpen: propIsOpen, onClose: propOnClose
                 disabled={isSubmitting}
                 className="btn btn-primary feedback-submit-btn"
               >
-                {isSubmitting ? 'Recording...' : 'Send Feedback'}
+                {isSubmitting ? 'Preparing Email...' : 'Prepare Feedback Email'}
               </button>
             </div>
           </form>
@@ -354,21 +403,23 @@ export default function FeedbackModal({ isOpen: propIsOpen, onClose: propOnClose
             <div className="success-icon-wrap" aria-hidden="true">
               <span className="success-check">✓</span>
             </div>
-            <h3 className="success-title">Thank You for Your Feedback</h3>
+            <h3 ref={successFocusRef} tabIndex={-1} className="success-title">
+              Email Client Prompted
+            </h3>
             <p className="success-message">
-              Your insight directly contributes to refining the Cyber Law Awareness Portal for students, citizens, and educators across India.
+              Your feedback has been formatted into an email draft addressed to {FEEDBACK_EMAIL_ADDRESS}. Nothing was stored locally in your browser; send the email from your mail app to deliver your note.
             </p>
             <div className="success-reference-box">
               <span className="ref-label">Category:</span>
               <strong className="ref-val">{FEEDBACK_CATEGORIES.find(c => c.id === category)?.label}</strong>
               <span className="ref-sep">•</span>
               <span className="ref-label">Context:</span>
-              <code className="ref-code">{location.pathname}</code>
+              <code className="ref-code">{safePathname}</code>
             </div>
 
             <div className="success-email-alternative">
               <p className="email-alt-note">
-                Prefer to send a direct message or attach screenshots?
+                Did your email client not open automatically, or would you like to re-open the draft?
               </p>
               <a 
                 href={getMailtoLink()} 

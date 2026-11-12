@@ -127,9 +127,11 @@ function materializeCanonical(Model, payload, extraExcludeKeys = []) {
 }
 
 function normalizeExistingDoc(Model, dbDoc, extraExcludeKeys = []) {
-  const plain = typeof dbDoc.toObject === 'function' ? dbDoc.toObject({ depopulate: true }) : dbDoc;
-  // Pass through Model defaults if missing optional defaults, keeping existing scalar fields
-  const normalized = normalizeForCompare(plain);
+  const plain = typeof dbDoc.toObject === 'function' ? dbDoc.toObject({ depopulate: true }) : { ...dbDoc };
+  const materialized = typeof Model === 'function'
+    ? new Model(plain).toObject({ depopulate: true })
+    : plain;
+  const normalized = normalizeForCompare(materialized);
   for (const k of extraExcludeKeys) {
     delete normalized[k];
   }
@@ -193,6 +195,8 @@ function assertModelsBoundToConnection(activeMongoose = mongoose, modelRegistry 
   }
 }
 
+const PROVENANCE_COLLECTION = 'staging_init_provenances';
+
 /**
  * Creates a live Mongoose store adapter bound strictly to the active staging connection.
  */
@@ -221,6 +225,25 @@ function createMongooseStore() {
       assertModelsBoundToConnection(mongoose, { [name]: models[name] });
       await models[name].updateOne({ _id: id }, { $set: updateFields });
       return models[name].findById(id).lean();
+    },
+    async createRunProvenance(provenanceDoc) {
+      assertModelsBoundToConnection(mongoose, models);
+      const col = mongoose.connection.collection(PROVENANCE_COLLECTION);
+      await col.insertOne({
+        _id: provenanceDoc.runId,
+        ...provenanceDoc
+      });
+      return provenanceDoc;
+    },
+    async finalizeRunProvenance(runId, fields) {
+      assertModelsBoundToConnection(mongoose, models);
+      const col = mongoose.connection.collection(PROVENANCE_COLLECTION);
+      await col.updateOne({ _id: runId }, { $set: fields });
+    },
+    async getRunProvenance(runId) {
+      assertModelsBoundToConnection(mongoose, models);
+      const col = mongoose.connection.collection(PROVENANCE_COLLECTION);
+      return col.findOne({ _id: runId });
     }
   };
 }
@@ -260,7 +283,9 @@ function auditFlatCollection({
       continue;
     }
 
-    const secKeys = getSecondaryKeys(item);
+    const secKeys = getSecondaryKeys(item).filter(
+      (sKey) => sKey && sKey.value !== null && sKey.value !== undefined && sKey.value !== ''
+    );
     let hasSecondaryIssue = false;
 
     for (const sKey of secKeys) {
@@ -344,8 +369,16 @@ function auditFlatCollection({
  * Executes complete pre-flight audit and (unless dryRun=true) applies non-destructive,
  * dependency-ordered initialization against the target store.
  */
-async function runStagingInitialization({ catalog, store, dryRun = true, runId = null }) {
-  const activeRunId = runId || `staging_init_${Date.now()}`;
+async function runStagingInitialization({
+  catalog,
+  store,
+  dryRun = true,
+  runId = null,
+  targetDatabase = 'cyber_law_staging',
+  targetHost = '',
+  onBeforeMutation = null
+}) {
+  const activeRunId = runId || `staging_init_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
   const beforeCounts = await store.countAllCollections();
 
   // Fetch current Class A collections in read-only mode
@@ -718,6 +751,56 @@ async function runStagingInitialization({ catalog, store, dryRun = true, runId =
   }
 
   // --- LIVE EXECUTION (Non-Destructive, Topological Order) ---
+  // Pre-allocate deterministic _ids and persist durable recovery manifest + DB provenance BEFORE any Class A mutation.
+  const plannedIds = Object.fromEntries(CLASS_A_NAMES.map((n) => [n, []]));
+  const provenanceEntries = [];
+  const allocateId = (colName) => {
+    const id = new mongoose.Types.ObjectId();
+    const idStr = id.toString();
+    plannedIds[colName].push(idStr);
+    provenanceEntries.push({ collection: colName, docId: idStr });
+    return id;
+  };
+
+  for (const colName of ['LegalSource', 'LawSection', 'CyberCrime', 'CaseStudy', 'Quiz', 'QuizQuestion', 'LearningModule', 'Resource']) {
+    for (const step of collectionPlans[colName].plan) {
+      if (step.action === 'insert') {
+        step._plannedId = allocateId(colName);
+      }
+    }
+  }
+  for (const sStep of scenarioPlan) {
+    if (sStep.action === 'insert') sStep._plannedId = allocateId('Scenario');
+  }
+  for (const stStep of stagePlan) {
+    if (stStep.action === 'insert') stStep._plannedId = allocateId('ScenarioStage');
+  }
+  for (const dStep of decisionPlan) {
+    if (dStep.action === 'insert') dStep._plannedId = allocateId('ScenarioDecision');
+  }
+
+  if (typeof onBeforeMutation === 'function') {
+    await onBeforeMutation({
+      runId: activeRunId,
+      targetDatabase,
+      targetHost,
+      beforeCounts,
+      insertedIds: plannedIds,
+      entries: provenanceEntries
+    });
+  }
+
+  if (typeof store.createRunProvenance === 'function') {
+    await store.createRunProvenance({
+      runId: activeRunId,
+      targetDatabase,
+      targetHost,
+      status: 'IN_PROGRESS',
+      startedAt: new Date().toISOString(),
+      entries: provenanceEntries
+    });
+  }
+
   const insertedIds = Object.fromEntries(CLASS_A_NAMES.map((n) => [n, []]));
   const repairedIds = Object.fromEntries(CLASS_A_NAMES.map((n) => [n, []]));
 
@@ -733,7 +816,7 @@ async function runStagingInitialization({ catalog, store, dryRun = true, runId =
   // 1. LegalSource
   for (const step of collectionPlans.LegalSource.plan) {
     if (step.action === 'insert') {
-      const created = await store.createOne('LegalSource', stripMeta(step.item));
+      const created = await store.createOne('LegalSource', { ...stripMeta(step.item), _id: step._plannedId });
       insertedIds.LegalSource.push(created._id.toString());
       resolvedSourceIdsByKey.set(step.item._sourceKey, created._id.toString());
     }
@@ -745,7 +828,7 @@ async function runStagingInitialization({ catalog, store, dryRun = true, runId =
       ? resolvedSourceIdsByKey.get(step.item._officialSourceKey) || null
       : null;
     if (step.action === 'insert') {
-      const payload = stripMeta(step.item);
+      const payload = { ...stripMeta(step.item), _id: step._plannedId };
       if (resolvedSourceId) payload.officialSourceId = resolvedSourceId;
       const created = await store.createOne('LawSection', payload);
       insertedIds.LawSection.push(created._id.toString());
@@ -758,7 +841,7 @@ async function runStagingInitialization({ catalog, store, dryRun = true, runId =
   // 3. CyberCrime
   for (const step of collectionPlans.CyberCrime.plan) {
     if (step.action === 'insert') {
-      const created = await store.createOne('CyberCrime', stripMeta(step.item));
+      const created = await store.createOne('CyberCrime', { ...stripMeta(step.item), _id: step._plannedId });
       insertedIds.CyberCrime.push(created._id.toString());
     }
   }
@@ -766,7 +849,7 @@ async function runStagingInitialization({ catalog, store, dryRun = true, runId =
   // 4. CaseStudy
   for (const step of collectionPlans.CaseStudy.plan) {
     if (step.action === 'insert') {
-      const payload = stripMeta(step.item);
+      const payload = { ...stripMeta(step.item), _id: step._plannedId };
       if (payload.collection === 'Cases Where Justice Fell Short') {
         payload.seedBatchId = activeRunId;
       }
@@ -778,7 +861,7 @@ async function runStagingInitialization({ catalog, store, dryRun = true, runId =
   // 5. Quiz
   for (const step of collectionPlans.Quiz.plan) {
     if (step.action === 'insert') {
-      const created = await store.createOne('Quiz', stripMeta(step.item));
+      const created = await store.createOne('Quiz', { ...stripMeta(step.item), _id: step._plannedId });
       insertedIds.Quiz.push(created._id.toString());
       resolvedQuizIdsByCategory.set(step.item.category, created._id.toString());
     }
@@ -791,7 +874,7 @@ async function runStagingInitialization({ catalog, store, dryRun = true, runId =
       throw new Error(`Unable to resolve quizId for category "${step.item._targetQuizCategory}"`);
     }
     if (step.action === 'insert') {
-      const payload = { ...stripMeta(step.item), quizId: resolvedQuizId };
+      const payload = { ...stripMeta(step.item), _id: step._plannedId, quizId: resolvedQuizId };
       const created = await store.createOne('QuizQuestion', payload);
       insertedIds.QuizQuestion.push(created._id.toString());
     } else if (step.action === 'repair_link') {
@@ -803,7 +886,7 @@ async function runStagingInitialization({ catalog, store, dryRun = true, runId =
   // 7. LearningModule
   for (const step of collectionPlans.LearningModule.plan) {
     if (step.action === 'insert') {
-      const created = await store.createOne('LearningModule', stripMeta(step.item));
+      const created = await store.createOne('LearningModule', { ...stripMeta(step.item), _id: step._plannedId });
       insertedIds.LearningModule.push(created._id.toString());
     }
   }
@@ -811,7 +894,7 @@ async function runStagingInitialization({ catalog, store, dryRun = true, runId =
   // 8. Resource
   for (const step of collectionPlans.Resource.plan) {
     if (step.action === 'insert') {
-      const created = await store.createOne('Resource', stripMeta(step.item));
+      const created = await store.createOne('Resource', { ...stripMeta(step.item), _id: step._plannedId });
       insertedIds.Resource.push(created._id.toString());
     }
   }
@@ -821,7 +904,7 @@ async function runStagingInitialization({ catalog, store, dryRun = true, runId =
     const sKey = `${sStep.item.slug}@v${sStep.item.version}`;
     let scenarioDoc = sStep.existingDoc;
     if (sStep.action === 'insert') {
-      scenarioDoc = await store.createOne('Scenario', stripMeta(sStep.item));
+      scenarioDoc = await store.createOne('Scenario', { ...stripMeta(sStep.item), _id: sStep._plannedId });
       insertedIds.Scenario.push(scenarioDoc._id.toString());
     }
 
@@ -832,6 +915,7 @@ async function runStagingInitialization({ catalog, store, dryRun = true, runId =
       let stageDoc = stStep.existingDoc;
       if (stStep.action === 'insert') {
         const stPayload = {
+          _id: stStep._plannedId,
           scenarioId: scenarioDoc._id,
           stageOrder: stStep.item.stageOrder,
           title: stStep.item.title,
@@ -867,6 +951,7 @@ async function runStagingInitialization({ catalog, store, dryRun = true, runId =
 
         if (dStep.action === 'insert') {
           const decPayload = {
+            _id: dStep._plannedId,
             stageId: stageDoc._id,
             optionText: dStep.item.optionText,
             scoreChange: dStep.item.scoreChange,
@@ -913,6 +998,13 @@ async function runStagingInitialization({ catalog, store, dryRun = true, runId =
     }
   }
 
+  if (typeof store.finalizeRunProvenance === 'function') {
+    await store.finalizeRunProvenance(activeRunId, {
+      status: 'INITIALIZATION_SUCCEEDED',
+      completedAt: new Date().toISOString()
+    });
+  }
+
   return {
     status: 'INITIALIZATION_SUCCEEDED',
     runId: activeRunId,
@@ -931,9 +1023,12 @@ module.exports = {
   ALL_MODELS,
   CLASS_A_NAMES,
   PROTECTED_CLASS_NAMES,
+  PROVENANCE_COLLECTION,
   assertModelsBoundToConnection,
   normalizeForCompare,
   materializeCanonical,
+  normalizeExistingDoc,
+  auditFlatCollection,
   createMongooseStore,
   runStagingInitialization
 };

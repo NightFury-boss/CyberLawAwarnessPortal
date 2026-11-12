@@ -245,7 +245,7 @@ Automated WCAG 2.1 AA accessibility scans were executed using `@axe-core/playwri
 | **Dashboard** (`/dashboard`) | 3 | 3 Serious | • `aria-progressbar-name`: Progressbar lacks accessible label.<br>• `nested-interactive`: Action link wraps nested button.<br>• `color-contrast`: Masthead edition badge text. |
 | **Laws** (`/laws`) | 1 | 1 Serious | • `color-contrast`: Status badge text on translucent background. |
 | **Crimes** (`/crimes`) | 1 | 1 Serious | • `color-contrast`: Category badge text on light blue tint. |
-| **Cases** (`/cases`) | **0** | **0 Violations** | **100% WCAG 2.1 AA Compliant** across all tested elements. |
+| **Cases** (`/cases`) | **0** | **0 Violations** | Automated `@axe-core/playwright` scan detected zero violations across tested elements (manual keyboard and screen-reader audit still required for full WCAG 2.1 AA conformance). |
 | **Prevention** (`/prevention`) | 2 | 2 Serious | • `color-contrast`: Eyebrow text below threshold.<br>• `scrollable-region-focusable`: Horizontal phase sequence bar lacks keyboard access (`tabIndex="0"`). |
 | **Resources** (`/resources`) | 1 | 1 Serious | • `color-contrast`: Sub-caption text below threshold. |
 | **Modules Catalog** (`/modules`) | 2 | 1 Critical, 1 Serious | • `select-name` (CRITICAL): Category `<select>` lacks accessible label.<br>• `color-contrast`: Eyebrow and tag contrast. |

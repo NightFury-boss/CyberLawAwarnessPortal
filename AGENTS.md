@@ -60,7 +60,7 @@ Learner competence is modeled exclusively across **six discrete, non-composite c
    - Structural layout components (`Navbar`, `Sidebar`, `Footer`) reside in `client/src/components/layout/`.
    - Backward-compatible facades are maintained in `client/src/components/` for seamless re-exports.
 3. **Design Aesthetic**:
-   - Maintain the established editorial visual identity: warm paper surfaces, deep navy typography (`#0f172a`), restrained blue accents (`#1e3a8a`, `#2563eb`), and generous whitespace.
+   - Maintain the established editorial visual identity (**Constitutional Atelier / Forest Cream v1.1**): warm cream paper surfaces (`#F9F5E6`, `#FFFDF8`), deep forest ink typography (`#26352B`), restrained forest green (`#1F4D3A`) and terracotta (`#805B43`) accents, and generous whitespace.
    - Strictly avoid cyberpunk neon palettes, dark hacker themes, or flashy arcade-like gamification.
 
 ---

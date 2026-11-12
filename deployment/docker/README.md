@@ -19,7 +19,8 @@ The Docker Compose file remains at the repository root:
 * Client Container Spec: [`client/Dockerfile`](../../client/Dockerfile)
 * Client Nginx Spec: [`client/nginx.conf`](../../client/nginx.conf)
 * Server Container Spec: [`server/Dockerfile`](../../server/Dockerfile)
-* Host Nginx Reverse Proxy Config: [`nginx/staging.conf`](../../nginx/staging.conf)
+* Container Nginx Config (Alternate): [`nginx/staging.conf`](../../nginx/staging.conf)
+* Host Nginx Reverse Proxy Guidance: [Host Nginx Reverse Proxy Block](../../docs/deployment/DOCKER_VPS_DEPLOYMENT.md#5-reverse-proxy-https--dns-setup) (proxies HTTPS traffic to `127.0.0.1:${STAGING_PORT:-8080}`)
 
 **Root Location Invariance:**
 `docker-compose.staging.yml` must remain at the repository root because:
