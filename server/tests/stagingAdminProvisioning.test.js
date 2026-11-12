@@ -59,10 +59,39 @@ function createMockAdminUserStore({
   let hasInserted = false;
   let idSeq = userDocs.length + 1;
 
+  const writeAudit = {
+    adminUserIds: [],
+    nonAdminUserWrites: 0,
+    userProgressWrites: 0
+  };
+  const activeLocks = new Set();
+
   return {
     userDocs,
     userProgressDocs,
     getCreateCalls: () => createCalls,
+    async acquireProvisionLock({ lockKey }) {
+      if (activeLocks.has(lockKey)) {
+        throw new Error(
+          '[CONCURRENT PROVISIONING CONFLICT] Staging administrator provisioning lock is already held or completed.'
+        );
+      }
+      activeLocks.add(lockKey);
+    },
+    async completeProvisionLock() {},
+    async releaseProvisionLock({ lockKey }) {
+      activeLocks.delete(lockKey);
+    },
+    getWriteAudit() {
+      if (hasInserted && typeof postInsertOverride?.getWriteAudit === 'function') {
+        return postInsertOverride.getWriteAudit(writeAudit);
+      }
+      return {
+        adminUserIds: [...writeAudit.adminUserIds],
+        nonAdminUserWrites: writeAudit.nonAdminUserWrites,
+        userProgressWrites: writeAudit.userProgressWrites
+      };
+    },
 
     async findAdmins() {
       if (hasInserted && typeof postInsertOverride?.findAdmins === 'function') {
@@ -134,6 +163,14 @@ function createMockAdminUserStore({
         seq: idSeq++
       };
       userDocs.push(persisted);
+      if (persisted.role === 'admin') {
+        writeAudit.adminUserIds.push(persisted._id);
+      } else {
+        writeAudit.nonAdminUserWrites += 1;
+      }
+      if (typeof postInsertOverride?.onAfterCreate === 'function') {
+        await postInsertOverride.onAfterCreate(userDocs, userProgressDocs);
+      }
       return {
         _id: persisted._id,
         fullName: persisted.fullName,
@@ -436,12 +473,33 @@ describe('Dedicated Staging Administrator Provisioning Suite (Offline / Isolated
       /\[VERIFICATION ERROR\].*Expected exactly 1 administrator account/
     );
 
-    // D. UserProgress count changed unexpectedly
+    // D. #47 Concurrent learner registration succeeds while provisioner-scoped UserProgress write aborts cleanly
+    const concurrentLearnerStore = createMockAdminUserStore({
+      initialUsers: [baseLearner],
+      initialUserProgress: [baseProgress],
+      postInsertOverride: {
+        onAfterCreate: async (uDocs, pDocs) => {
+          uDocs.push({
+            _id: 'concurrent-learner-2',
+            fullName: 'Concurrent Signup',
+            email: 'concurrent@cyberlawexample.org',
+            passwordHash: '$2a$10$hash',
+            role: 'user',
+            isActive: true
+          });
+          pDocs.push({ _id: 'prog-2', userId: 'concurrent-learner-2', completedModules: [] });
+        }
+      }
+    });
+    const concurrentRes = await provisionStagingAdmin({ env: VALID_STAGING_ENV, store: concurrentLearnerStore });
+    assert.equal(concurrentRes.status, 'PROVISIONED_AND_VERIFIED');
+    assert.equal(concurrentRes.existingLearnersPreserved, 2);
+
     const progressMutatedStore = createMockAdminUserStore({
       initialUsers: [baseLearner],
       initialUserProgress: [baseProgress],
       postInsertOverride: {
-        countUserProgress: async () => 2
+        getWriteAudit: (audit) => ({ ...audit, userProgressWrites: 1 })
       }
     });
     await assert.rejects(
@@ -590,5 +648,21 @@ describe('Dedicated Staging Administrator Provisioning Suite (Offline / Isolated
     assert.ok(discIdx !== -1, `Expected [Database] Disconnected cleanly. in emitted events:\n${emitted.join('\n')}`);
     assert.ok(errIdx < discIdx, `Error must be emitted BEFORE disconnect! Events:\n${emitted.join('\n')}`);
     assert.match(failRun.stderr, /__READYSTATE_ERR__:0/);
+  });
+
+  it('9. #48 Atomic provisioning lock serializes concurrent admin creation without global DB single-admin constraint', async () => {
+    const store = createMockAdminUserStore({ initialUsers: [] });
+    const results = await Promise.allSettled([
+      provisionStagingAdmin({ env: VALID_STAGING_ENV, store }),
+      provisionStagingAdmin({ env: VALID_STAGING_ENV, store })
+    ]);
+
+    const fulfilled = results.filter((r) => r.status === 'fulfilled');
+    const rejected = results.filter((r) => r.status === 'rejected');
+    assert.equal(fulfilled.length, 1);
+    assert.equal(rejected.length, 1);
+    assert.match(rejected[0].reason.message, /CONCURRENT PROVISIONING CONFLICT|PRECONDITION ABORT/);
+    assert.equal(store.getCreateCalls(), 1);
+    assert.equal(store.userDocs.filter((u) => u.role === 'admin').length, 1);
   });
 });

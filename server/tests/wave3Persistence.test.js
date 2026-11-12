@@ -51,8 +51,8 @@ async function runPersistenceSuite() {
     const mongoUri = mongoServer.getUri();
     process.env.NODE_ENV = 'test';
     process.env.MONGO_URI_TEST = mongoUri;
-    process.env.ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'wave3.admin@cyberlaw.test.local';
-    process.env.ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'Wave3IsolatedTestAdmin!2026';
+    process.env.ADMIN_EMAIL = 'wave3.admin@cyberlaw.test.local';
+    process.env.ADMIN_PASSWORD = 'Wave3IsolatedTestAdmin!2026';
 
     await mongoose.connect(mongoUri, { family: 4 });
     assert(mongoose.connection.readyState === 1, 'Connected to ephemeral in-memory MongoDB');
