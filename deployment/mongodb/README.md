@@ -19,10 +19,10 @@ To prevent human configuration errors from ever routing staging or testing traff
 * Guard Implementation: [`server/config/stagingDatabaseGuard.js`](../../server/config/stagingDatabaseGuard.js)
 * Guard Contract Suite: [`server/tests/stagingDatabaseGuard.test.js`](../../server/tests/stagingDatabaseGuard.test.js)
 
-**Enforcement Rules:**
-1. When `ASSERT_STAGING_DB="true"`, the database connection string must explicitly target an approved staging database name.
-2. If `EXPECTED_STAGING_DB_NAME=cyber_law_staging` is set, any connection string targeting a different database immediately throws a fatal exception and halts process initialization.
-3. The guard strictly rejects connection URIs containing production keywords (`cyber_law_portal`, `prod`, `live`, or `master`).
+**Enforcement Rules & Guard Scope:**
+1. When `ASSERT_STAGING_DB="true"`, the database connection string must explicitly validate the **database name** against `APPROVED_STAGING_DATABASE_NAMES` (or exact `EXPECTED_STAGING_DB_NAME`) and rejects production keywords (`cyber_law_portal`, `prod`, `live`, `master`, `primary`).
+2. **Cluster Host Qualification:** The runtime guard validates the Atlas cluster **hostname only when `EXPECTED_STAGING_HOST` is explicitly configured**. Because database-name matching alone does not guarantee cluster/account isolation if an identical DB name exists elsewhere, operators **must** set `EXPECTED_STAGING_HOST` for strict cluster checks and independently verify staging cluster hosts and least-privilege database credentials.
+3. For dedicated staging initialization scripts (`initializeStagingDatabase.js`, `createStagingAdmin.js`, `rollbackStagingInitialization.js`), `EXPECTED_STAGING_HOST` and `EXPECTED_STAGING_DB_NAME=cyber_law_staging` are mandatory via [`stagingInitGuard.js`](../../server/config/stagingInitGuard.js).
 
 ---
 

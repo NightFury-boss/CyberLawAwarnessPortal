@@ -196,7 +196,8 @@ flowchart TD
     Step6 --> Step7["7. Configure Netlify Env Var (VITE_API_URL)"]
     Step7 --> Step8["8. Deploy Netlify Frontend Site & Obtain Domain"]
     Step8 --> Step9["9. Update Render CLIENT_URL with Netlify Domain"]
-    Step9 --> Step10["10. Execute Live Smoke Tests & Browser Verification"]
+    Step9 --> Step9B["9B. Initialize Staging DB & Provision Admin"]
+    Step9B --> Step10["10. Execute Live Smoke Tests & Browser Verification"]
 ```
 
 ### Step 1: Provision MongoDB Atlas Staging Database & Least-Privilege User
@@ -303,8 +304,22 @@ Under **Site configuration** → **Environment variables**, configure:
    `CLIENT_URL = https://cyberlaw-portal-staging.netlify.app`
 3. Click **Save Changes**. Render will automatically trigger a zero-downtime redeployment with the new CORS policy.
 
+### Step 9B: Initialize Staging Database & Provision Administrator *(Required Before Smoke / Browser Walkthroughs)*
+Before testing assessments or logging into Admin on a fresh `cyber_law_staging` database:
+1. Run offline dry-run and live guarded canonical initialization from a trusted shell with explicit staging env vars (`ASSERT_STAGING_DB=true`, `EXPECTED_STAGING_DB_NAME=cyber_law_staging`, `EXPECTED_STAGING_HOST`, `MONGODB_URI`):
+   ```bash
+   node scripts/initializeStagingDatabase.js --live-dry-run
+   node scripts/initializeStagingDatabase.js --confirm --execute
+   ```
+2. Provision the staging administrator account using the dedicated admin provisioner (with `ADMIN_EMAIL` and `ADMIN_PASSWORD` set):
+   ```bash
+   node scripts/createStagingAdmin.js --dry-run
+   node scripts/createStagingAdmin.js --confirm --execute
+   ```
+3. Verify `/api/laws` and `/api/quizzes` return initialized canonical records before running Check 4's assessment walkthrough.
+
 ### Step 10: Execute Live Smoke Tests & Verification
-Execute the checks described in Section 6 below.
+Execute the checks described in Section 6 below only after database initialization and admin provisioning succeed.
 
 ---
 

@@ -1,4 +1,7 @@
-# Cyber Law Awareness Portal — Staging & Production Deployment Guide
+# Cyber Law Awareness Portal — Docker & VPS Deployment Guide (Secondary Topology)
+
+> [!NOTE]
+> **Secondary Self-Hosted Deployment Option:** Active staging runs on the zero-cost **Netlify + Render + MongoDB Atlas** stack documented in [`FREE_TIER_DEPLOYMENT_GUIDE.md`](./FREE_TIER_DEPLOYMENT_GUIDE.md). Use this runbook strictly when self-hosting containers via `docker-compose.staging.yml` on a VPS.
 
 This guide specifies the architecture, environment configuration, container assets, and verification runbook for deploying the Cyber Law Awareness Portal to a controlled staging environment and subsequent production release.
 
@@ -55,7 +58,7 @@ Copy `server/.env.staging.example` to `server/.env.staging` and configure:
 | `CLIENT_URL` | Allowed frontend origin(s) | Explicit HTTPS origin (e.g. `https://staging.cyberlawportal.org`). Never `*` or `localhost` in production. |
 | `JWT_SECRET` | Secret key for JWT signing | Minimum 32 characters, cryptographically random. Generate with: `openssl rand -hex 32` |
 | `MONGODB_URI` | Atlas connection string | `mongodb+srv://...` with TLS/SSL enabled |
-| `TRUST_PROXY` | Reverse proxy trust level | Set to `1` behind Nginx, Cloudflare, or AWS ALB |
+| `TRUST_PROXY` | Reverse proxy trust level | Set to `2` for Host Nginx -> Container Nginx -> Express (sanitize forwarded headers at host Nginx); set `1` when only one proxy hop terminates ingress |
 | `ADMIN_EMAIL` | Initial admin account email | Valid email address |
 | `ADMIN_PASSWORD` | Initial admin account password | Minimum 8 characters, non-default |
 | `RATE_LIMIT_AUTH_MAX` | Max login/register attempts | `20` per 15 minutes |
@@ -98,23 +101,23 @@ The script will verify high-entropy secrets, origin configurations, and ping the
 
 ### Step 2: Build & Launch with Docker Compose
 ```bash
-# Build containers with zero cache to guarantee fresh dependencies
-docker compose -f docker-compose.staging.yml build --no-cache
+# Build containers with explicit env file loaded (passes ASSERT_STAGING_DB & EXPECTED_STAGING_DB_NAME via Compose)
+docker compose --env-file server/.env.staging -f docker-compose.staging.yml build --no-cache
 
 # Start containers in detached mode
-docker compose -f docker-compose.staging.yml up -d
+docker compose --env-file server/.env.staging -f docker-compose.staging.yml up -d
 ```
 
 ### Step 3: Verify Container Health
 ```bash
 # Check container status and healthcheck verdict
-docker compose -f docker-compose.staging.yml ps
+docker compose --env-file server/.env.staging -f docker-compose.staging.yml ps
 
 # Inspect backend logs
-docker compose -f docker-compose.staging.yml logs -f backend
+docker compose --env-file server/.env.staging -f docker-compose.staging.yml logs -f backend
 
-# Probe backend health directly
-curl -i http://localhost:5000/api/health
+# Probe health through the published frontend Nginx address (default 127.0.0.1:8080 or configured STAGING_PORT)
+curl -i http://127.0.0.1:8080/api/health
 ```
 Expected response:
 ```json
@@ -127,16 +130,22 @@ HTTP/1.1 200 OK
 }
 ```
 
-### Step 4: Non-Destructive Database Seeding
-Initialize laws, cybercrime fixtures, quizzes, and scenario version 2 branching workflows without overwriting existing learner history:
+### Step 4: Non-Destructive Staging Database Initialization / Seeding
+Initialize canonical staging content (passing explicit `ASSERT_STAGING_DB=true` guard):
 ```bash
-docker compose -f docker-compose.staging.yml exec backend node config/seed.js
+docker compose --env-file server/.env.staging -f docker-compose.staging.yml exec -e ASSERT_STAGING_DB=true backend node config/seed.js
 ```
 
-### Step 5: Execute Automated Staging Smoke Tests
-Run the production smoke test suite against the live staging environment:
+### Step 5: Execute Integration & Live Deployed-Service Smoke Checks
+Run the automated integration smoke suite against staging fixtures **and** verify the live deployed HTTPS endpoint:
 ```bash
+# 1. Automated in-process Express integration & security smoke suite (against isolated/staging test URI)
 node --test server/tests/stagingProductionSmoke.test.js
+
+# 2. Live deployed-service HTTP smoke probes against STAGING_URL
+STAGING_URL="https://staging.yourdomain.com"
+curl -fsS "${STAGING_URL}/api/health"
+curl -fsS "${STAGING_URL}/api/laws" > /dev/null
 ```
 
 ---
@@ -161,7 +170,8 @@ When deploying to a public VPS:
        ssl_certificate_key /etc/letsencrypt/live/staging.yourdomain.com/privkey.pem;
 
        location / {
-           proxy_pass http://127.0.0.1:80; # Forwards to Docker frontend Nginx
+           proxy_pass http://127.0.0.1:8080; # Matches STAGING_PORT in docker-compose.staging.yml (default 8080)
+           add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
            proxy_set_header Host $host;
            proxy_set_header X-Real-IP $remote_addr;
            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;

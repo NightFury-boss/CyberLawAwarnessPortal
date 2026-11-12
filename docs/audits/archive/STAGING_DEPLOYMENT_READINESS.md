@@ -1,5 +1,8 @@
 # Cyber Law Awareness Portal — Staging Deployment Readiness Guide
 
+> [!NOTE]
+> **Historical Archive (Docker/VPS Readiness Baseline):** Preserved for historical reference against the earlier self-hosted Docker/VPS baseline. Active staging now runs on **Netlify + Render + MongoDB Atlas** ([`FREE_TIER_DEPLOYMENT_GUIDE.md`](../../deployment/FREE_TIER_DEPLOYMENT_GUIDE.md)).
+
 **Document Version:** 1.0.0  
 **Date of Assessment:** 11 November 2026  
 **Auditor:** Cyber Law Portal Engineering Partnership (Lead Product Architect & Full-Stack Engineer)  
@@ -74,7 +77,7 @@ All configuration is externalized via environment variables. The repository prov
 | `CLIENT_URL` | Backend | `https://staging.cyberlawportal.org` | **Critical Security Invariant.** Comma-separated list of trusted frontend origins allowed by CORS. Must use HTTPS and must **never** point to localhost, 127.0.0.1, or loopback in production mode. |
 | `JWT_SECRET` | Backend | *(64-char hex string)* | **Cryptographic Invariant.** Secret key used to sign and verify learner session tokens. Must be at least 32 characters with high entropy. Fails startup if matching known sample defaults. |
 | `MONGODB_URI` | Backend | `mongodb+srv://<user>:<pass>@<cluster>.mongodb.net/cyber_law_staging?retryWrites=true&w=majority` | Dedicated staging database connection string with TLS/SSL enabled. Must point to a staging database, **never** production. |
-| `TRUST_PROXY` | Backend | `1` | Informs Express that it is running behind a reverse proxy (Nginx/Cloudflare/ALB). Ensures `req.ip` and `req.protocol` correctly detect HTTPS via `X-Forwarded-Proto`. |
+| `TRUST_PROXY` | Backend | `2` *(Host Ingress + Docker Nginx only)* | For this two-hop topology (Host Ingress -> Docker Nginx -> Express), set `TRUST_PROXY=2` and ensure host ingress sanitizes external `X-Forwarded-For` / `X-Forwarded-Proto` headers. *(Single-proxy deployments such as Render Free Tier or direct Docker Nginx without outer ingress use `1`.)* |
 | `STAGING_PORT` | Host / Compose | `80` (or `8080`) | Host port mapped to container port 80 in `docker-compose.staging.yml`. |
 | `ADMIN_EMAIL` | Backend | `staging-admin@cyberlawportal.org` | Super-administrator account identity used during authorized staging initialization. |
 | `ADMIN_PASSWORD` | Backend | *(Strong password)* | Initial administrator authentication credential (minimum 8 characters). |

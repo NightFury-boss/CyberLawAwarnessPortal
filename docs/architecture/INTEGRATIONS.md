@@ -47,7 +47,8 @@ This document outlines the hosting platforms, third-party services, and runtime 
 - **Fail-Closed Guard**:
   - Enforced via `ASSERT_STAGING_DB="true"` and `EXPECTED_STAGING_DB_NAME=cyber_law_staging`.
   - Halts process boot if connection string references production databases (`cyber_law_portal` or names containing `prod`, `live`, or `master`).
-- **Dynamic IP Ingress Requirement (`0.0.0.0/0`)**:
-  - Render's free tier runs on dynamic multi-tenant infrastructure without static egress IPs.
-  - Atlas Network Access must permit `0.0.0.0/0`.
-  - Defense-in-depth is maintained by zero production data, SCRAM-SHA-256 authentication, 24+ char unguessable passwords, TLS 1.3 encryption, and least-privilege scoping to the staging database.
+- **Dynamic IP Ingress Exception (`0.0.0.0/0` — Staging Only)**:
+  - Render Free Tier executes on dynamic multi-tenant egress infrastructure without static outbound IPs.
+  - Because of this free-tier platform constraint, Atlas Network Access may permit `0.0.0.0/0` **strictly as a staging-only exception** for `cyber_law_staging`.
+  - **Production Requirement**: Production Atlas clusters **must never use `0.0.0.0/0`**; production must enforce restricted network paths (static-egress IP allowlisting, Atlas VPC Peering, or AWS PrivateLink) alongside SCRAM-SHA-256 credentials, mandatory TLS 1.3 (`mongodb+srv://`), and database-scoped privileges.
+  - Staging defense-in-depth relies on zero production data in `cyber_law_staging`, SCRAM-SHA-256 authentication with 24+ character passwords, TLS 1.3 transport, and least-privilege `readWrite` permissions scoped exclusively to `cyber_law_staging`.

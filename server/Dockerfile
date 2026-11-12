@@ -19,6 +19,7 @@ RUN npm ci --omit=dev && npm cache clean --force
 # Copy application source code
 COPY server.js ./
 COPY config/ ./config/
+COPY controllers/ ./controllers/
 COPY models/ ./models/
 COPY routes/ ./routes/
 COPY middleware/ ./middleware/

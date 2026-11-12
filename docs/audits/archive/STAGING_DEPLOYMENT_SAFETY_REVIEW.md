@@ -1,5 +1,8 @@
 # Cyber Law Awareness Portal — Staging Deployment Safety Review
 
+> [!NOTE]
+> **Historical Archive (Pre-Netlify/Render Safety Review):** Captures an earlier Docker/VPS pre-deployment assessment snapshot. Active staging runs on **Netlify + Render + MongoDB Atlas** ([`FREE_TIER_DEPLOYMENT_GUIDE.md`](../../deployment/FREE_TIER_DEPLOYMENT_GUIDE.md)); historical defect statuses noted below reflect subsequent hardening fixes.
+
 **Review Type:** Pre-Deployment Operational & Security Safety Assessment  
 **Date of Review:** 11 November 2026  
 **Auditor:** Cyber Law Portal Engineering Partnership (Lead Product Architect & Security Reviewer)  
@@ -121,9 +124,13 @@ after(async () => {
 ```
 - **Surgical Scoping**: Cleanup uses `$in: testSessionIds` and `$in: testUserIds`. It only deletes the exact ObjectIds instantiated during that specific test run.
 - **Zero Impact on Real Data**: Existing learners, published scenario seeds (`baseline`, `final`), curriculum modules, and case study narratives remain untouched.
-- **Orphan Recovery Query**: If an abrupt process kill (`SIGKILL`) prevents `after()` from completing, an operator can purge any orphaned test accounts using:
-  ```javascript
-  db.users.deleteMany({ email: /@staging\.test$/ });
+- **Orphan Recovery Utility**: If an abrupt process kill (`SIGKILL`) prevents `after()` from completing, use the existing run-scoped recovery CLI (`scripts/safeOrphanRecovery.js`) rather than broad collection-wide filters:
+  ```bash
+  # Dry-run preview first (required --run-id scopes Strictly to that smoke run)
+  node scripts/safeOrphanRecovery.js --run-id <SMOKE_RUN_ID>
+
+  # Execute run-scoped purge after verifying preview counts
+  node scripts/safeOrphanRecovery.js --run-id <SMOKE_RUN_ID> --confirm
   ```
 
 ---
@@ -162,7 +169,7 @@ proxy_set_header Host $host;
 | Defect ID | Severity | Surface / Component | Observed Risk | Remediation / Safe Fix |
 | :--- | :---: | :--- | :--- | :--- |
 | **SEC-STG-01** | **Medium** | Docker Build Context | Missing `.dockerignore` in `client/` and `server/`. `COPY . ./` in `client/Dockerfile` copies the entire client directory into the builder stage, risking inclusion of local `.env` files or temporary scratch files in the build cache. | Create `.dockerignore` files in `client/` and `server/` excluding `.env*`, `node_modules`, `tests/`, and `.git/`. |
-| **SEC-STG-02** | **Medium** | Smoke Test Guard | `stagingProductionSmoke.test.js` connects via `connectDB()`. It lacks an explicit fail-closed check verifying that the database URI does not point to production. | Add an explicit check in `before()`: assert that `mongoose.connection.name` or `MONGODB_URI` contains `staging` or `test`, or require `ALLOW_PRODUCTION_SMOKE=true` to proceed. |
+| **SEC-STG-02** | **Medium** | Smoke Test Guard | Historical finding at snapshot time (`stagingProductionSmoke.test.js` lacked an explicit fail-closed DB guard prior to `connectDB()`). | **Resolved (Historical Note):** `stagingProductionSmoke.test.js` `before()` now invokes `assertApprovedStagingDatabase()` before `connectDB()` (failing closed with zero `ALLOW_PRODUCTION_SMOKE` override; set `EXPECTED_STAGING_HOST` as well to bind cluster host verification). |
 | **SEC-STG-03** | **Low** | Reverse Proxy Topology | `TRUST_PROXY=1` assumes a single proxy hop. If Cloudflare or an outer ALB is added in front of Docker Nginx, rate-limiting may bundle all users into one IP bucket. | Document outer proxy topology in deployment manual; set `TRUST_PROXY=2` when behind Cloudflare. |
 
 ---

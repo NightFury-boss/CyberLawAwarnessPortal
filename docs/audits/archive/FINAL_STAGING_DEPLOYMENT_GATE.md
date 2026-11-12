@@ -1,5 +1,8 @@
 # Cyber Law Awareness Portal — Final Staging Deployment Gate Report
 
+> [!NOTE]
+> **Historical Archive (Docker/VPS Staging Gate):** Preserved for historical audit traceability against an earlier self-hosted Docker/VPS staging baseline. Active staging now uses **Netlify + Render + MongoDB Atlas** documented in [`FREE_TIER_DEPLOYMENT_GUIDE.md`](../../deployment/FREE_TIER_DEPLOYMENT_GUIDE.md).
+
 **Document Version:** 1.0.0  
 **Date of Assessment:** 11 November 2026  
 **Auditor:** Cyber Law Portal Engineering Partnership (Lead Product Architect & Security Reviewer)  
@@ -90,8 +93,8 @@ The verified staging topology uses **External Reverse-Proxy TLS Termination (Edg
   - Hop 2: Docker Frontend Container (Nginx Alpine)
   - Hop 3: Express Backend Container (Node.js)
 - **Recommendation**:
-  - If deploying with a local Host Nginx reverse proxy: configure `TRUST_PROXY=2` in `.env.staging` so Express reads the true public client IP from `X-Forwarded-For` for rate limiting.
-  - If deploying behind Cloudflare + Host Ingress (3 hops): set `TRUST_PROXY=3` or configure Cloudflare's published IP ranges.
+  - If deploying with a local Host Nginx reverse proxy: configure `TRUST_PROXY=2` in `.env.staging` so Express reads the true public client IP from `X-Forwarded-For` for rate limiting (ensure Host Nginx sanitizes external `X-Forwarded-For` headers).
+  - If deploying behind Cloudflare + Host Ingress (3 hops): verify first that direct public access to the host ingress is firewalled/blocked (permitting traffic only from Cloudflare's published IPs or via Authenticated Origin Pulls) before setting `TRUST_PROXY=3`; otherwise, an attacker bypassing Cloudflare directly to the origin can spoof forwarded IPs to evade IP-based rate limits.
 
 ---
 
@@ -188,12 +191,12 @@ The authorized project owner must execute the following sequence:
 4. **Populate `.env.staging` on Host**:
    - Set `NODE_ENV=production`
    - Set `CLIENT_URL=https://staging.cyberlawportal.org`
-   - Set `JWT_SECRET=$(openssl rand -hex 32)`
+   - Generate `JWT_SECRET` externally (`openssl rand -hex 32`) outside Compose env parsing (Docker Compose does not expand `$(...)` inside `.env` files) and write the generated 64-char hex value directly into `.env.staging` cleanly without printing or echoing it to shell history or logs.
    - Set `MONGODB_URI=mongodb+srv://<user>:<pass>@<cluster>.mongodb.net/cyber_law_staging?retryWrites=true&w=majority`
    - Set `TRUST_PROXY=2` (for Host Nginx -> Docker Nginx -> Express)
    - Set `STAGING_HOST_BIND=127.0.0.1` and `STAGING_PORT=8080`
 5. **Run Pre-Flight Check**:
-   - Run `node scripts/validate-staging-env.js .env.staging` on the host to verify credentials and database handshake before starting containers.
+   - Run `node scripts/validate-staging-env.js .env.staging` on the host to verify credentials, staging DB isolation guard, and database handshake before starting containers.
 6. **Launch & Verify**:
    - Run `docker compose --env-file .env.staging -f docker-compose.staging.yml up -d --build`.
    - Run `NODE_ENV=production npm run test:smoke` to complete live acceptance.

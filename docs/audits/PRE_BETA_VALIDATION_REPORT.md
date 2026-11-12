@@ -93,8 +93,8 @@ Before executing the live staging deployment and running `npm run test:smoke`, t
 
 ## 5. Assessment and Data Integrity Confirmation
 
-1. **Six Behavioral Metrics**:
-   - Threat Recognition (`TR`), Signal Identification (`SI`), Vulnerability Assessment (`VB`), Decision Quality (`DQ`), Procedural Action (`FP`), and Urgency Appraisal (`UA`) remain strictly anchored in `server/models/AssessmentSession.js` and `server/controllers/quizController.js`.
+1. **Six Discrete, Non-Composite Cognitive Dimensions**:
+   - Learner competence is modeled exclusively as **six discrete, non-composite cognitive dimensions** — Threat Recognition (`TR`), Systematic Inspection (`SI`), Verification Behavior (`VB`), Deliberate Questioning (`DQ`), Fault Preparedness (`FP`), and Uncertainty Acknowledgment (`UA`) — anchored in `server/models/AssessmentSession.js` and `server/controllers/quizController.js` without collapsing traits into a single composite score.
    - Zero modifications were made to assessment matrices, weightings, or scoring algorithms.
 2. **Server-Authoritative Scoring**:
    - All scores, diagnostic baselines, and longitudinal trajectory deltas are computed exclusively on the backend. No scoring authority exists in client-side code.

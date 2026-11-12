@@ -26,16 +26,18 @@ Checks verified:
 * `NODE_ENV === 'production'`
 * `JWT_SECRET` is defined, non-default, and at least 32 characters.
 * `CLIENT_URL` is a valid HTTPS or approved staging URL.
-* `MONGODB_URI` does not reference production databases and satisfies staging guards.
+* `MONGODB_URI` is validated against `assertApprovedStagingDatabase` **before** attempting `mongoose.connect()` (`STAGING_DB_GUARD`), rejecting production or unapproved database targets fail-closed before any handshake. (Set `EXPECTED_STAGING_HOST` as well to bind cluster host validation.)
 
 ### Automated Container Deployment
+*(Secondary self-hosted Docker/VPS workflow — distinct from the active Netlify + Render cloud staging flow in [`FREE_TIER_DEPLOYMENT_GUIDE.md`](../../docs/deployment/FREE_TIER_DEPLOYMENT_GUIDE.md).)*
+
 On a self-hosted VPS, deploy staging updates via:
 ```bash
-# Linux/macOS
-./scripts/staging-deploy.sh .env.staging
+# Linux/macOS (probes frontend published address 127.0.0.1:${STAGING_PORT:-8080}/api/health when Docker Compose is used)
+./scripts/staging-deploy.sh server/.env.staging
 
 # Windows PowerShell
-.\scripts\staging-deploy.ps1 -EnvFile .env.staging
+.\scripts\staging-deploy.ps1 -EnvFile server/.env.staging
 ```
 
 ---
