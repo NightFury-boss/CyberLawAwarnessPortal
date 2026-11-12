@@ -45,12 +45,12 @@ function AppContent() {
   const location = useLocation();
 
   // Navigation Context Determination
-  const isWorkspace = location.pathname === '/dashboard' || 
-                      location.pathname === '/quizzes' || 
-                      location.pathname.startsWith('/modules') ||
-                      location.pathname.startsWith('/lessons') ||
-                      location.pathname.startsWith('/assessment/') ||
-                      location.pathname.startsWith('/workspace');
+  const isWorkspace = location.pathname === '/dashboard' ||
+    location.pathname === '/quizzes' ||
+    location.pathname.startsWith('/modules') ||
+    location.pathname.startsWith('/lessons') ||
+    location.pathname.startsWith('/assessment/') ||
+    location.pathname.startsWith('/workspace');
   const isAdminPath = location.pathname.startsWith('/admin');
 
   // Desktop workspace sidebar collapsed state (persisted during active workspace session)
@@ -88,13 +88,13 @@ function AppContent() {
       if (hash) {
         const targetId = hash.substring(1);
         let attempts = 0;
-        
+
         const scrollToAnchor = () => {
           const element = document.getElementById(targetId);
           if (element) {
             const header = document.querySelector('.top-header, .workspace-topbar');
             const headerHeight = header ? header.offsetHeight : 64;
-            
+
             element.style.scrollMarginTop = `${headerHeight + 16}px`;
             element.scrollIntoView({
               behavior: 'smooth',
@@ -122,7 +122,7 @@ function AppContent() {
     checkAuth();
     // In staging environment, initiate non-blocking background ping to wake up sleeping Render backend
     if (api.isStagingEnvironment?.()) {
-      api.checkHealth().catch(() => {});
+      api.checkHealth().catch(() => { });
     }
   }, []);
 
@@ -132,9 +132,11 @@ function AppContent() {
         const profile = await api.getMe();
         setUser(profile);
       } catch (err) {
-        // Token stale or invalid
-        api.logout();
-        setUser(null);
+        // Clear stored token only on explicit server authorization rejection; preserve token across cold-start timeouts/network errors
+        if (err && (err.status === 401 || err.status === 403)) {
+          api.logout();
+          setUser(null);
+        }
       }
     }
     setLoading(false);
@@ -144,14 +146,6 @@ function AppContent() {
     setProgressTrigger(prev => prev + 1);
   };
 
-  if (loading) {
-    return (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', fontFamily: 'var(--font-sans)', color: 'var(--text-primary)' }}>
-        <h3>Loading Portal Environment...</h3>
-      </div>
-    );
-  }
-
   // Compute main content layout class based on context
   const getContentLayoutClass = () => {
     if (isAdminPath) return '';
@@ -160,177 +154,185 @@ function AppContent() {
   };
 
   return (
-    <div className={isAdminPath ? "" : "app-container"}>
+    <>
       <ColdStartNotice />
-      <FeedbackModal />
-      {/* Learner/Admin Workspace Sidebar is mounted only in workspace routes */}
-      {!isAdminPath && isWorkspace && (
-        <Sidebar 
-          user={user} 
-          isCollapsed={sidebarCollapsed} 
-          setIsCollapsed={setSidebarCollapsed}
-          isOpen={sidebarMobileOpen} 
-          setIsOpen={setSidebarMobileOpen} 
-        />
-      )}
+      {loading ? (
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', fontFamily: 'var(--font-sans)', color: 'var(--text-primary)' }}>
+          <h3>Loading Portal Environment...</h3>
+        </div>
+      ) : (
+        <div className={isAdminPath ? "" : "app-container"}>
+          <FeedbackModal />
+          {/* Learner/Admin Workspace Sidebar is mounted only in workspace routes */}
+          {!isAdminPath && isWorkspace && (
+            <Sidebar
+              user={user}
+              isCollapsed={sidebarCollapsed}
+              setIsCollapsed={setSidebarCollapsed}
+              isOpen={sidebarMobileOpen}
+              setIsOpen={setSidebarMobileOpen}
+            />
+          )}
 
-      <div className={getContentLayoutClass()} style={{ marginLeft: isAdminPath ? 0 : undefined }}>
-        {/* Navbar handles both Public Portal horizontal nav and Workspace Topbar */}
-        {!isAdminPath && (
-          <Navbar 
-            user={user} 
-            setUser={setUser} 
-            isWorkspace={isWorkspace}
-            sidebarOpen={sidebarMobileOpen} 
-            setSidebarOpen={setSidebarMobileOpen} 
-          />
-        )}
-        
-        <main style={{ flex: 1 }}>
-          <div key={location.pathname} className="portal-page-settle">
-            <ErrorBoundary>
-              <Suspense fallback={<PageLoadingFallback />}>
-                <Routes location={location}>
-                  {/* Public Routes */}
-                  <Route path="/" element={<Home user={user} />} />
-                  <Route path="/about" element={<About />} />
-                  {/* Authenticated Learner Lesson Routes */}
-                  <Route 
-                    path="/modules" 
-                    element={user ? <Modules user={user} isWorkspace={true} /> : <Navigate to="/login" replace />} 
-                  />
-                  <Route 
-                    path="/modules/:slug" 
-                    element={user ? <Modules user={user} isWorkspace={true} /> : <Navigate to="/login" replace />} 
-                  />
-                  <Route 
-                    path="/lessons" 
-                    element={user ? <Navigate to="/modules" replace /> : <Navigate to="/login" replace />} 
-                  />
-                  <Route 
-                    path="/lessons/:slug" 
-                    element={user ? <Modules user={user} isWorkspace={true} /> : <Navigate to="/login" replace />} 
-                  />
-                  <Route path="/laws" element={<Laws />} />
-                  <Route path="/crimes" element={<Crimes />} />
-                  <Route path="/cases" element={<Cases />} />
-                  <Route path="/prevention" element={<Prevention />} />
-                  <Route path="/resources" element={<Resources />} />
-                  
-                  <Route 
-                    path="/login" 
-                    element={!user ? <Login setUser={setUser} /> : <Navigate to={user.role === 'admin' ? "/admin" : "/dashboard"} replace />} 
-                  />
-                  <Route 
-                    path="/register" 
-                    element={!user ? <Register setUser={setUser} /> : <Navigate to={user.role === 'admin' ? "/admin" : "/dashboard"} replace />} 
-                  />
+          <div className={getContentLayoutClass()} style={{ marginLeft: isAdminPath ? 0 : undefined }}>
+            {/* Navbar handles both Public Portal horizontal nav and Workspace Topbar */}
+            {!isAdminPath && (
+              <Navbar
+                user={user}
+                setUser={setUser}
+                isWorkspace={isWorkspace}
+                sidebarOpen={sidebarMobileOpen}
+                setSidebarOpen={setSidebarMobileOpen}
+              />
+            )}
 
-                  {/* User Protected Workspace Routes */}
-                  <Route 
-                    path="/dashboard" 
-                    element={
-                      user ? (
-                        user.role === 'admin' ? (
-                          <Navigate to="/admin" replace />
-                        ) : (
-                          <Dashboard user={user} progressTrigger={progressTrigger} />
-                        )
-                      ) : (
-                        <Navigate to="/login" replace />
-                      )
-                    } 
-                  />
-                  <Route 
-                    path="/assessment/baseline" 
-                    element={user ? <BaselineAssessment user={user} updateProgressTrigger={triggerProgressUpdate} /> : <Navigate to="/login" />} 
-                  />
-                  <Route 
-                    path="/assessment/final" 
-                    element={user ? <FinalAssessment user={user} updateProgressTrigger={triggerProgressUpdate} /> : <Navigate to="/login" />} 
-                  />
-                  <Route 
-                    path="/quizzes" 
-                    element={user ? <Quizzes user={user} updateProgressTrigger={triggerProgressUpdate} /> : <Navigate to="/login" />} 
-                  />
+            <main style={{ flex: 1 }}>
+              <div key={location.pathname} className="portal-page-settle">
+                <ErrorBoundary>
+                  <Suspense fallback={<PageLoadingFallback />}>
+                    <Routes location={location}>
+                      {/* Public Routes */}
+                      <Route path="/" element={<Home user={user} />} />
+                      <Route path="/about" element={<About />} />
+                      {/* Authenticated Learner Lesson Routes */}
+                      <Route
+                        path="/modules"
+                        element={user ? <Modules user={user} isWorkspace={true} /> : <Navigate to="/login" replace />}
+                      />
+                      <Route
+                        path="/modules/:slug"
+                        element={user ? <Modules user={user} isWorkspace={true} /> : <Navigate to="/login" replace />}
+                      />
+                      <Route
+                        path="/lessons"
+                        element={user ? <Navigate to="/modules" replace /> : <Navigate to="/login" replace />}
+                      />
+                      <Route
+                        path="/lessons/:slug"
+                        element={user ? <Modules user={user} isWorkspace={true} /> : <Navigate to="/login" replace />}
+                      />
+                      <Route path="/laws" element={<Laws />} />
+                      <Route path="/crimes" element={<Crimes />} />
+                      <Route path="/cases" element={<Cases />} />
+                      <Route path="/prevention" element={<Prevention />} />
+                      <Route path="/resources" element={<Resources />} />
 
-                  {/* Workspace Contextual Content Routes (Protected within Workspace Shell) */}
-                  <Route 
-                    path="/workspace" 
-                    element={
-                      user ? (
-                        user.role === 'admin' ? (
-                          <Navigate to="/admin" replace />
-                        ) : (
-                          <Navigate to="/dashboard" replace />
-                        )
-                      ) : (
-                        <Navigate to="/login" replace />
-                      )
-                    } 
-                  />
-                  <Route 
-                    path="/workspace/dashboard" 
-                    element={<Navigate to="/dashboard" replace />} 
-                  />
-                  <Route 
-                    path="/workspace/quizzes" 
-                    element={user ? <Quizzes user={user} updateProgressTrigger={triggerProgressUpdate} /> : <Navigate to="/login" />} 
-                  />
-                  <Route 
-                    path="/workspace/laws" 
-                    element={user ? <Laws /> : <Navigate to="/login" replace />} 
-                  />
-                  <Route 
-                    path="/workspace/crimes" 
-                    element={user ? <Crimes /> : <Navigate to="/login" replace />} 
-                  />
-                  <Route 
-                    path="/workspace/cases" 
-                    element={user ? <Cases /> : <Navigate to="/login" replace />} 
-                  />
-                  <Route 
-                    path="/workspace/modules" 
-                    element={user ? <Modules user={user} isWorkspace={true} /> : <Navigate to="/login" replace />} 
-                  />
-                  <Route 
-                    path="/workspace/modules/:slug" 
-                    element={user ? <Modules user={user} isWorkspace={true} /> : <Navigate to="/login" replace />} 
-                  />
-                  <Route 
-                    path="/workspace/prevention" 
-                    element={user ? <Prevention /> : <Navigate to="/login" replace />} 
-                  />
-                  <Route 
-                    path="/workspace/resources" 
-                    element={user ? <Resources /> : <Navigate to="/login" replace />} 
-                  />
-                  <Route 
-                    path="/workspace/counterfactuals" 
-                    element={user ? <Counterfactuals /> : <Navigate to="/login" replace />} 
-                  />
-                  <Route 
-                    path="/workspace/counterfactuals/:slug" 
-                    element={user ? <Counterfactuals /> : <Navigate to="/login" replace />} 
-                  />
+                      <Route
+                        path="/login"
+                        element={!user ? <Login setUser={setUser} /> : <Navigate to={user.role === 'admin' ? "/admin" : "/dashboard"} replace />}
+                      />
+                      <Route
+                        path="/register"
+                        element={!user ? <Register setUser={setUser} /> : <Navigate to={user.role === 'admin' ? "/admin" : "/dashboard"} replace />}
+                      />
 
-                  {/* Admin Protected Routes */}
-                  <Route 
-                    path="/admin" 
-                    element={user && user.role === 'admin' ? <AdminPanel user={user} /> : <Navigate to="/login" />} 
-                  />
+                      {/* User Protected Workspace Routes */}
+                      <Route
+                        path="/dashboard"
+                        element={
+                          user ? (
+                            user.role === 'admin' ? (
+                              <Navigate to="/admin" replace />
+                            ) : (
+                              <Dashboard user={user} progressTrigger={progressTrigger} />
+                            )
+                          ) : (
+                            <Navigate to="/login" replace />
+                          )
+                        }
+                      />
+                      <Route
+                        path="/assessment/baseline"
+                        element={user ? <BaselineAssessment user={user} updateProgressTrigger={triggerProgressUpdate} /> : <Navigate to="/login" />}
+                      />
+                      <Route
+                        path="/assessment/final"
+                        element={user ? <FinalAssessment user={user} updateProgressTrigger={triggerProgressUpdate} /> : <Navigate to="/login" />}
+                      />
+                      <Route
+                        path="/quizzes"
+                        element={user ? <Quizzes user={user} updateProgressTrigger={triggerProgressUpdate} /> : <Navigate to="/login" />}
+                      />
 
-                  {/* Fallback */}
-                  <Route path="*" element={<Navigate to="/" />} />
-                </Routes>
-              </Suspense>
-            </ErrorBoundary>
+                      {/* Workspace Contextual Content Routes (Protected within Workspace Shell) */}
+                      <Route
+                        path="/workspace"
+                        element={
+                          user ? (
+                            user.role === 'admin' ? (
+                              <Navigate to="/admin" replace />
+                            ) : (
+                              <Navigate to="/dashboard" replace />
+                            )
+                          ) : (
+                            <Navigate to="/login" replace />
+                          )
+                        }
+                      />
+                      <Route
+                        path="/workspace/dashboard"
+                        element={<Navigate to="/dashboard" replace />}
+                      />
+                      <Route
+                        path="/workspace/quizzes"
+                        element={user ? <Quizzes user={user} updateProgressTrigger={triggerProgressUpdate} /> : <Navigate to="/login" />}
+                      />
+                      <Route
+                        path="/workspace/laws"
+                        element={user ? <Laws /> : <Navigate to="/login" replace />}
+                      />
+                      <Route
+                        path="/workspace/crimes"
+                        element={user ? <Crimes /> : <Navigate to="/login" replace />}
+                      />
+                      <Route
+                        path="/workspace/cases"
+                        element={user ? <Cases /> : <Navigate to="/login" replace />}
+                      />
+                      <Route
+                        path="/workspace/modules"
+                        element={user ? <Modules user={user} isWorkspace={true} /> : <Navigate to="/login" replace />}
+                      />
+                      <Route
+                        path="/workspace/modules/:slug"
+                        element={user ? <Modules user={user} isWorkspace={true} /> : <Navigate to="/login" replace />}
+                      />
+                      <Route
+                        path="/workspace/prevention"
+                        element={user ? <Prevention /> : <Navigate to="/login" replace />}
+                      />
+                      <Route
+                        path="/workspace/resources"
+                        element={user ? <Resources /> : <Navigate to="/login" replace />}
+                      />
+                      <Route
+                        path="/workspace/counterfactuals"
+                        element={user ? <Counterfactuals /> : <Navigate to="/login" replace />}
+                      />
+                      <Route
+                        path="/workspace/counterfactuals/:slug"
+                        element={user ? <Counterfactuals /> : <Navigate to="/login" replace />}
+                      />
+
+                      {/* Admin Protected Routes */}
+                      <Route
+                        path="/admin"
+                        element={user && user.role === 'admin' ? <AdminPanel user={user} /> : <Navigate to="/login" />}
+                      />
+
+                      {/* Fallback */}
+                      <Route path="*" element={<Navigate to="/" />} />
+                    </Routes>
+                  </Suspense>
+                </ErrorBoundary>
+              </div>
+            </main>
+
+            {!isAdminPath && !isWorkspace && <Footer />}
           </div>
-        </main>
-
-        {!isAdminPath && !isWorkspace && <Footer />}
-      </div>
-    </div>
+        </div>
+      )}
+    </>
   );
 }
 

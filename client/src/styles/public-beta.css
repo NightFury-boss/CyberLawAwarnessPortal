@@ -213,7 +213,7 @@
   background-color: rgba(38, 53, 43, 0.55);
   backdrop-filter: blur(4px);
   -webkit-backdrop-filter: blur(4px);
-  z-index: 1000;
+  z-index: 1400;
   display: flex;
   align-items: center;
   justify-content: center;

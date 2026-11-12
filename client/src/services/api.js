@@ -77,7 +77,7 @@ function isStagingEnvironment(
  */
 function getColdStartMessage(isStaging = isStagingEnvironment()) {
   return isStaging
-    ? 'Waking up staging services... Initial request may take up to 45 seconds while Render spins up.'
+    ? 'Waking up staging services... Initial request may take up to 60 seconds (retries can extend the total wait) while Render spins up.'
     : 'Connecting to server... Please wait a moment.';
 }
 
@@ -269,11 +269,47 @@ function linkAbortSignals(timeoutSignal, callerSignal) {
   };
 }
 
+function createTimeoutError(effectiveTimeout, isStaging) {
+  const timeoutErr = new Error(
+    isStaging
+      ? `Request timed out after ${Math.round(effectiveTimeout / 1000)}s. The staging server may still be spinning up. Please try again.`
+      : `Request timed out after ${Math.round(effectiveTimeout / 1000)}s. Please check your connection and try again.`
+  );
+  timeoutErr.name = 'TimeoutError';
+  timeoutErr.isTimeout = true;
+  timeoutErr.code = 'ERR_TIMEOUT';
+  return timeoutErr;
+}
+
+function waitWithSignal(ms, callerSignal) {
+  if (callerSignal && callerSignal.aborted) {
+    return Promise.reject(
+      callerSignal.reason || new DOMException('The user aborted a request.', 'AbortError')
+    );
+  }
+  return new Promise((resolve, reject) => {
+    const onAbort = () => {
+      clearTimeout(delayTimer);
+      reject(callerSignal.reason || new DOMException('The user aborted a request.', 'AbortError'));
+    };
+    const delayTimer = setTimeout(() => {
+      if (callerSignal) {
+        callerSignal.removeEventListener('abort', onAbort);
+      }
+      resolve();
+    }, ms);
+    if (callerSignal) {
+      callerSignal.addEventListener('abort', onAbort, { once: true });
+    }
+  });
+}
+
 async function fetchWithTimeout(url, options = {}, timeoutMs) {
-  const method = (options.method || 'GET').toUpperCase();
+  const { responseHandler, ...fetchOptions } = options;
+  const method = (fetchOptions.method || 'GET').toUpperCase();
   const isSafeMethod = method === 'GET' || method === 'HEAD';
   const isStaging = isStagingEnvironment();
-  const callerSignal = options.signal;
+  const callerSignal = fetchOptions.signal;
 
   // If caller signal is already aborted, fail immediately without starting request or retrying
   if (callerSignal && callerSignal.aborted) {
@@ -283,10 +319,10 @@ async function fetchWithTimeout(url, options = {}, timeoutMs) {
 
   // Staging cold-start retry: ONLY for safe GET requests, max 1 retry with backoff.
   // POST/PUT/PATCH/DELETE are strictly 0 retries.
-  const maxRetries = isSafeMethod ? (options.maxRetries ?? (isStaging && !getServerAwakeStatus() ? 1 : 0)) : 0;
+  const maxRetries = isSafeMethod ? (fetchOptions.maxRetries ?? (isStaging && !getServerAwakeStatus() ? 1 : 0)) : 0;
 
   // Fix H-1: Track in-flight request lifecycle ONCE per logical request outside retry loop
-  onCallStart(options);
+  onCallStart(fetchOptions);
 
   try {
     let attempt = 0;
@@ -297,12 +333,22 @@ async function fetchWithTimeout(url, options = {}, timeoutMs) {
       const timeoutController = new AbortController();
       const timerId = setTimeout(() => timeoutController.abort(), effectiveTimeout);
       const { signal: combinedSignal, cleanup: signalCleanup } = linkAbortSignals(timeoutController.signal, callerSignal);
+      let cleanedUp = false;
+      const cleanupAttempt = () => {
+        if (!cleanedUp) {
+          cleanedUp = true;
+          clearTimeout(timerId);
+          signalCleanup();
+        }
+      };
+      let responseReceived = false;
 
       try {
         const response = await fetch(url, {
-          ...options,
+          ...fetchOptions,
           signal: combinedSignal
         });
+        responseReceived = true;
 
         // Fix H-2: Only mark server awake on successful or non-gateway error responses
         // 502 (proxy cannot reach container) and 503 (database disconnected) do NOT mark server awake
@@ -313,15 +359,28 @@ async function fetchWithTimeout(url, options = {}, timeoutMs) {
 
         // If safe GET received proxy 502/503 during cold-start boot, retry if attempts remain
         if (isSafeMethod && isProxyOrDegraded && attempt <= maxRetries) {
-          await new Promise((r) => setTimeout(r, 2000));
+          try { await response.body?.cancel?.(); } catch (_e) {}
+          cleanupAttempt();
+          await waitWithSignal(2000, callerSignal);
           continue;
+        }
+
+        if (typeof responseHandler === 'function') {
+          return await responseHandler(response);
         }
 
         return response;
       } catch (err) {
         // Fix M-2: If caller aborted the request, propagate immediately without retrying
-        if (callerSignal && callerSignal.aborted) {
+        if (callerSignal && callerSignal.aborted && !err?.isHttp) {
           throw callerSignal.reason || err;
+        }
+
+        if (responseReceived) {
+          if (timeoutController.signal.aborted && !err?.isHttp) {
+            throw createTimeoutError(effectiveTimeout, isStaging);
+          }
+          throw err;
         }
 
         const isTimeout = timeoutController.signal.aborted;
@@ -329,34 +388,33 @@ async function fetchWithTimeout(url, options = {}, timeoutMs) {
 
         // Safe GET network retry if proxy dropped connection before container was listening
         if (isSafeMethod && attempt <= maxRetries && isNetwork) {
-          await new Promise((r) => setTimeout(r, 2000));
+          cleanupAttempt();
+          await waitWithSignal(2000, callerSignal);
           continue;
         }
 
         if (isTimeout) {
-          const timeoutErr = new Error(
-            isStaging
-              ? `Request timed out after ${Math.round(effectiveTimeout / 1000)}s. The staging server may still be spinning up. Please try again.`
-              : `Request timed out after ${Math.round(effectiveTimeout / 1000)}s. Please check your connection and try again.`
-          );
-          timeoutErr.name = 'TimeoutError';
-          timeoutErr.isTimeout = true;
-          timeoutErr.code = 'ERR_TIMEOUT';
-          throw timeoutErr;
+          throw createTimeoutError(effectiveTimeout, isStaging);
         }
 
         err.isNetwork = true;
         if (!err.code) err.code = 'ERR_NETWORK';
         throw err;
       } finally {
-        clearTimeout(timerId);
-        signalCleanup();
+        cleanupAttempt();
       }
     }
   } finally {
     // Fix H-1: Exactly one teardown per logical API request
-    onCallEnd(options);
+    onCallEnd(fetchOptions);
   }
+}
+
+async function requestJson(url, options = {}, timeoutMs) {
+  return fetchWithTimeout(url, {
+    ...options,
+    responseHandler: handleResponse
+  }, timeoutMs);
 }
 
 // Helper to handle responses
@@ -386,32 +444,29 @@ async function handleResponse(response) {
 const api = {
   // Authentication
   login: async (email, password) => {
-    const res = await fetchWithTimeout(`${API_URL}/auth/login`, {
+    const data = await requestJson(`${API_URL}/auth/login`, {
       method: 'POST',
       headers: getHeaders(),
       body: JSON.stringify({ email, password })
     });
-    const data = await handleResponse(res);
     localStorage.setItem('token', data.token);
     return data;
   },
 
   register: async (email, password, fullName) => {
-    const res = await fetchWithTimeout(`${API_URL}/auth/register`, {
+    const data = await requestJson(`${API_URL}/auth/register`, {
       method: 'POST',
       headers: getHeaders(),
       body: JSON.stringify({ email, password, fullName })
     });
-    const data = await handleResponse(res);
     localStorage.setItem('token', data.token);
     return data;
   },
 
   getMe: async () => {
-    const res = await fetchWithTimeout(`${API_URL}/auth/me`, {
+    return requestJson(`${API_URL}/auth/me`, {
       headers: getHeaders()
     });
-    return handleResponse(res);
   },
 
   logout: () => {
@@ -425,94 +480,81 @@ const api = {
 
   // Public Resources
   getLaws: async () => {
-    const res = await fetchWithTimeout(`${API_URL}/laws`, {
+    return requestJson(`${API_URL}/laws`, {
       headers: getHeaders()
     });
-    return handleResponse(res);
   },
 
   searchLaws: async (query) => {
-    const res = await fetchWithTimeout(`${API_URL}/laws/search?q=${encodeURIComponent(query)}`, {
+    return requestJson(`${API_URL}/laws/search?q=${encodeURIComponent(query)}`, {
       headers: getHeaders()
     });
-    return handleResponse(res);
   },
 
   getLaw: async (id) => {
-    const res = await fetchWithTimeout(`${API_URL}/laws/${id}`, {
+    return requestJson(`${API_URL}/laws/${id}`, {
       headers: getHeaders()
     });
-    return handleResponse(res);
   },
 
   getCrimes: async () => {
-    const res = await fetchWithTimeout(`${API_URL}/crimes/crimes`, {
+    return requestJson(`${API_URL}/crimes/crimes`, {
       headers: getHeaders()
     });
-    return handleResponse(res);
   },
 
   searchCrimes: async (query) => {
-    const res = await fetchWithTimeout(`${API_URL}/crimes/crimes/search?q=${encodeURIComponent(query)}`, {
+    return requestJson(`${API_URL}/crimes/crimes/search?q=${encodeURIComponent(query)}`, {
       headers: getHeaders()
     });
-    return handleResponse(res);
   },
 
   getCrimeRecommendations: async () => {
-    const res = await fetchWithTimeout(`${API_URL}/crimes/crimes/recommendations`, {
+    return requestJson(`${API_URL}/crimes/crimes/recommendations`, {
       headers: getHeaders()
     });
-    return handleResponse(res);
   },
 
   getCrimeBySlug: async (slug) => {
-    const res = await fetchWithTimeout(`${API_URL}/crimes/crimes/slug/${slug}`, {
+    return requestJson(`${API_URL}/crimes/crimes/slug/${slug}`, {
       headers: getHeaders()
     });
-    return handleResponse(res);
   },
 
   getCrime: async (id) => {
-    const res = await fetchWithTimeout(`${API_URL}/crimes/crimes/${id}`, {
+    return requestJson(`${API_URL}/crimes/crimes/${id}`, {
       headers: getHeaders()
     });
-    return handleResponse(res);
   },
 
   getCases: async () => {
-    const res = await fetchWithTimeout(`${API_URL}/crimes/cases`, {
+    return requestJson(`${API_URL}/crimes/cases`, {
       headers: getHeaders()
     });
-    return handleResponse(res);
   },
 
   getCase: async (id) => {
-    const res = await fetchWithTimeout(`${API_URL}/crimes/cases/${id}`, {
+    return requestJson(`${API_URL}/crimes/cases/${id}`, {
       headers: getHeaders()
     });
-    return handleResponse(res);
   },
 
   getCaseBySlug: async (slug) => {
-    const res = await fetchWithTimeout(`${API_URL}/crimes/cases/slug/${slug}`, {
+    return requestJson(`${API_URL}/crimes/cases/slug/${slug}`, {
       headers: getHeaders()
     });
-    return handleResponse(res);
   },
 
   searchCases: async (query) => {
-    const res = await fetchWithTimeout(`${API_URL}/crimes/cases/search?q=${encodeURIComponent(query)}`, {
+    return requestJson(`${API_URL}/crimes/cases/search?q=${encodeURIComponent(query)}`, {
       headers: getHeaders()
     });
-    return handleResponse(res);
   },
 
   getResources: async () => {
-    const res = await fetchWithTimeout(`${API_URL}/crimes/resources`, {
+    return requestJson(`${API_URL}/crimes/resources`, {
       headers: getHeaders()
     });
-    return handleResponse(res);
   },
 
   // Learning Modules & Lessons
@@ -523,130 +565,114 @@ const api = {
     if (params.search) query.append('search', params.search);
 
     const queryString = query.toString() ? `?${query.toString()}` : '';
-    const res = await fetchWithTimeout(`${API_URL}/modules${queryString}`, {
+    return requestJson(`${API_URL}/modules${queryString}`, {
       headers: getHeaders()
     });
-    return handleResponse(res);
   },
 
   getModuleBySlug: async (slug) => {
-    const res = await fetchWithTimeout(`${API_URL}/modules/${slug}`, {
+    return requestJson(`${API_URL}/modules/${slug}`, {
       headers: getHeaders()
     });
-    return handleResponse(res);
   },
 
   recordModuleProgress: async (slug, data = { completed: true }) => {
-    const res = await fetchWithTimeout(`${API_URL}/modules/${slug}/progress`, {
+    return requestJson(`${API_URL}/modules/${slug}/progress`, {
       method: 'POST',
       headers: getHeaders(),
       body: JSON.stringify(data)
     });
-    return handleResponse(res);
   },
 
   // Quizzes
   getQuizzes: async () => {
-    const res = await fetchWithTimeout(`${API_URL}/quizzes`, {
+    return requestJson(`${API_URL}/quizzes`, {
       headers: getHeaders()
     });
-    return handleResponse(res);
   },
 
   getQuizModes: async () => {
-    const res = await fetchWithTimeout(`${API_URL}/quizzes/modes`, {
+    return requestJson(`${API_URL}/quizzes/modes`, {
       headers: getHeaders()
     });
-    return handleResponse(res);
   },
 
   getQuizTopics: async () => {
-    const res = await fetchWithTimeout(`${API_URL}/quizzes/topics`, {
+    return requestJson(`${API_URL}/quizzes/topics`, {
       headers: getHeaders()
     });
-    return handleResponse(res);
   },
 
   getQuizHistory: async () => {
-    const res = await fetchWithTimeout(`${API_URL}/quizzes/history`, {
+    return requestJson(`${API_URL}/quizzes/history`, {
       headers: getHeaders()
     });
-    return handleResponse(res);
   },
 
   getDueQuizRecalls: async () => {
-    const res = await fetchWithTimeout(`${API_URL}/quizzes/recall/due`, {
+    return requestJson(`${API_URL}/quizzes/recall/due`, {
       headers: getHeaders()
     });
-    return handleResponse(res);
   },
 
   submitQuizRecall: async (questionId, answer) => {
-    const res = await fetchWithTimeout(`${API_URL}/quizzes/recall/submit`, {
+    return requestJson(`${API_URL}/quizzes/recall/submit`, {
       method: 'POST',
       headers: getHeaders(),
       body: JSON.stringify({ questionId, answer })
     });
-    return handleResponse(res);
   },
 
   startQuizSession: async (payload = {}) => {
-    const res = await fetchWithTimeout(`${API_URL}/quizzes/start`, {
+    return requestJson(`${API_URL}/quizzes/start`, {
       method: 'POST',
       headers: getHeaders(),
       body: JSON.stringify(payload)
     });
-    return handleResponse(res);
   },
 
   getQuizQuestions: async (quizId) => {
-    const res = await fetchWithTimeout(`${API_URL}/quizzes/${quizId}/questions`, {
+    return requestJson(`${API_URL}/quizzes/${quizId}/questions`, {
       headers: getHeaders()
     });
-    return handleResponse(res);
   },
 
   submitQuiz: async (quizIdOrPayload, maybeAnswers) => {
     const body = (quizIdOrPayload && typeof quizIdOrPayload === 'object' && quizIdOrPayload.answers)
       ? quizIdOrPayload
       : { quizId: quizIdOrPayload, answers: maybeAnswers };
-    const res = await fetchWithTimeout(`${API_URL}/quizzes/submit`, {
+    return requestJson(`${API_URL}/quizzes/submit`, {
       method: 'POST',
       headers: getHeaders(),
       body: JSON.stringify(body)
     });
-    return handleResponse(res);
   },
 
   // Simulation / Assessments (Backend-Authoritative)
   getScenario: async (code) => {
-    const res = await fetchWithTimeout(`${API_URL}/assessments/${code}`, {
+    return requestJson(`${API_URL}/assessments/${code}`, {
       headers: getHeaders()
     });
-    return handleResponse(res);
   },
 
   startAssessment: async (scenarioCode) => {
-    const res = await fetchWithTimeout(`${API_URL}/assessments/start`, {
+    return requestJson(`${API_URL}/assessments/start`, {
       method: 'POST',
       headers: getHeaders(),
       body: JSON.stringify({ scenarioCode })
     });
-    return handleResponse(res);
   },
 
   getAssessmentSession: async (sessionId) => {
-    const res = await fetchWithTimeout(`${API_URL}/assessments/session/${sessionId}`, {
+    return requestJson(`${API_URL}/assessments/session/${sessionId}`, {
       headers: getHeaders()
     });
-    return handleResponse(res);
   },
 
   getAssessmentStatus: async (scenarioCode) => {
-    const res = await fetchWithTimeout(`${API_URL}/assessments/status/${scenarioCode}`, {
+    return requestJson(`${API_URL}/assessments/status/${scenarioCode}`, {
       headers: getHeaders()
     });
-    return handleResponse(res);
   },
 
   submitAssessmentStep: async (assessmentSessionId, stageId, decisionId, signalProbeDecisionId, idempotencyKey) => {
@@ -661,32 +687,29 @@ const api = {
     if (idempotencyKey) {
       payload.idempotencyKey = idempotencyKey;
     }
-    const res = await fetchWithTimeout(`${API_URL}/assessments/submit-step`, {
+    return requestJson(`${API_URL}/assessments/submit-step`, {
       method: 'POST',
       headers: getHeaders(),
       body: JSON.stringify(payload)
     });
-    return handleResponse(res);
   },
 
   getAssessmentRemediation: async (sessionId) => {
-    const res = await fetchWithTimeout(`${API_URL}/assessments/remediation/${sessionId}`, {
+    return requestJson(`${API_URL}/assessments/remediation/${sessionId}`, {
       headers: getHeaders()
     });
-    return handleResponse(res);
   },
 
   // Progress Dashboard
   getProgress: async () => {
-    const res = await fetchWithTimeout(`${API_URL}/progress`, {
+    return requestJson(`${API_URL}/progress`, {
       headers: getHeaders()
     });
-    return handleResponse(res);
   },
 
   // Learning Pathway Progression (Phase 4)
   recordPathwayStep: async (pathwayId, sourceSessionId, step, extraData = {}) => {
-    const res = await fetchWithTimeout(`${API_URL}/progress/pathways/step`, {
+    return requestJson(`${API_URL}/progress/pathways/step`, {
       method: 'POST',
       headers: getHeaders(),
       body: JSON.stringify({
@@ -696,25 +719,22 @@ const api = {
         ...extraData
       })
     });
-    return handleResponse(res);
   },
 
   getPathwayCheckpoint: async (pathwayId, sourceSessionId) => {
-    const res = await fetchWithTimeout(`${API_URL}/progress/pathways/${pathwayId}/checkpoint?sourceSessionId=${sourceSessionId}`, {
+    return requestJson(`${API_URL}/progress/pathways/${pathwayId}/checkpoint?sourceSessionId=${sourceSessionId}`, {
       headers: getHeaders()
     });
-    return handleResponse(res);
   },
 
   getPathwayCheckpointReview: async (pathwayId, sourceSessionId) => {
-    const res = await fetchWithTimeout(`${API_URL}/progress/pathways/${pathwayId}/review?sourceSessionId=${sourceSessionId}`, {
+    return requestJson(`${API_URL}/progress/pathways/${pathwayId}/review?sourceSessionId=${sourceSessionId}`, {
       headers: getHeaders()
     });
-    return handleResponse(res);
   },
 
   submitPathwayCheckpoint: async (pathwayId, sourceSessionId, answers) => {
-    const res = await fetchWithTimeout(`${API_URL}/progress/pathways/checkpoint`, {
+    return requestJson(`${API_URL}/progress/pathways/checkpoint`, {
       method: 'POST',
       headers: getHeaders(),
       body: JSON.stringify({
@@ -723,12 +743,11 @@ const api = {
         answers
       })
     });
-    return handleResponse(res);
   },
 
   // Phase 5A: Targeted Habit Reinforcement
   reinforcePathway: async (pathwayId, sourceSessionId, answers) => {
-    const res = await fetchWithTimeout(`${API_URL}/progress/pathways/reinforce`, {
+    return requestJson(`${API_URL}/progress/pathways/reinforce`, {
       method: 'POST',
       headers: getHeaders(),
       body: JSON.stringify({
@@ -737,29 +756,26 @@ const api = {
         answers
       })
     });
-    return handleResponse(res);
   },
 
   // Spaced Retrieval & Follow-Up Learning
   getDueSpacedRetrievals: async () => {
-    const res = await fetchWithTimeout(`${API_URL}/progress/pathways/spaced-retrieval/due`, {
+    return requestJson(`${API_URL}/progress/pathways/spaced-retrieval/due`, {
       headers: getHeaders()
     });
-    return handleResponse(res);
   },
 
   getSpacedRetrievalQuestions: async (pathwayId, sourceSessionId = '') => {
     const url = sourceSessionId
       ? `${API_URL}/progress/pathways/${pathwayId}/spaced-retrieval?sourceSessionId=${sourceSessionId}`
       : `${API_URL}/progress/pathways/${pathwayId}/spaced-retrieval`;
-    const res = await fetchWithTimeout(url, {
+    return requestJson(url, {
       headers: getHeaders()
     });
-    return handleResponse(res);
   },
 
   submitSpacedRetrieval: async (pathwayId, sourceSessionId, answers) => {
-    const res = await fetchWithTimeout(`${API_URL}/progress/pathways/${pathwayId}/spaced-retrieval`, {
+    return requestJson(`${API_URL}/progress/pathways/${pathwayId}/spaced-retrieval`, {
       method: 'POST',
       headers: getHeaders(),
       body: JSON.stringify({
@@ -767,54 +783,47 @@ const api = {
         answers
       })
     });
-    return handleResponse(res);
   },
 
   // Phase 5B: Longitudinal Evidence & Three-Pillar Portfolio
   getPortfolio: async () => {
-    const res = await fetchWithTimeout(`${API_URL}/progress/portfolio`, {
+    return requestJson(`${API_URL}/progress/portfolio`, {
       headers: getHeaders()
     });
-    return handleResponse(res);
   },
 
   getTrajectory: async () => {
-    const res = await fetchWithTimeout(`${API_URL}/assessments/trajectory`, {
+    return requestJson(`${API_URL}/assessments/trajectory`, {
       headers: getHeaders()
     });
-    return handleResponse(res);
   },
 
   // Assistant
   askAssistant: async (message) => {
-    const res = await fetchWithTimeout(`${API_URL}/assistant/ask`, {
+    return requestJson(`${API_URL}/assistant/ask`, {
       method: 'POST',
       headers: getHeaders(),
       body: JSON.stringify({ message })
     });
-    return handleResponse(res);
   },
 
   // Admin Dashboard CRUD
   adminGetAnalytics: async () => {
-    const res = await fetchWithTimeout(`${API_URL}/admin/analytics`, {
+    return requestJson(`${API_URL}/admin/analytics`, {
       headers: getHeaders()
     });
-    return handleResponse(res);
   },
 
   adminGetDashboardSummary: async () => {
-    const res = await fetchWithTimeout(`${API_URL}/admin/dashboard-summary`, {
+    return requestJson(`${API_URL}/admin/dashboard-summary`, {
       headers: getHeaders()
     });
-    return handleResponse(res);
   },
 
   adminGetUsers: async () => {
-    const res = await fetchWithTimeout(`${API_URL}/admin/users-progress`, {
+    return requestJson(`${API_URL}/admin/users-progress`, {
       headers: getHeaders()
     });
-    return handleResponse(res);
   },
 
   adminGetAuditLogs: async (params = {}) => {
@@ -825,231 +834,202 @@ const api = {
       }
     });
     const qs = searchParams.toString() ? `?${searchParams.toString()}` : '';
-    const res = await fetchWithTimeout(`${API_URL}/admin/audit-logs${qs}`, {
+    return requestJson(`${API_URL}/admin/audit-logs${qs}`, {
       headers: getHeaders()
     });
-    return handleResponse(res);
   },
 
   // Laws CRUD
   adminCreateLaw: async (data) => {
-    const res = await fetchWithTimeout(`${API_URL}/admin/laws`, {
+    return requestJson(`${API_URL}/admin/laws`, {
       method: 'POST',
       headers: getHeaders(),
       body: JSON.stringify(data)
     });
-    return handleResponse(res);
   },
   adminUpdateLaw: async (id, data) => {
-    const res = await fetchWithTimeout(`${API_URL}/admin/laws/${id}`, {
+    return requestJson(`${API_URL}/admin/laws/${id}`, {
       method: 'PUT',
       headers: getHeaders(),
       body: JSON.stringify(data)
     });
-    return handleResponse(res);
   },
   adminDeleteLaw: async (id) => {
-    const res = await fetchWithTimeout(`${API_URL}/admin/laws/${id}`, {
+    return requestJson(`${API_URL}/admin/laws/${id}`, {
       method: 'DELETE',
       headers: getHeaders()
     });
-    return handleResponse(res);
   },
 
   // Crimes CRUD
   adminCreateCrime: async (data) => {
-    const res = await fetchWithTimeout(`${API_URL}/admin/crimes`, {
+    return requestJson(`${API_URL}/admin/crimes`, {
       method: 'POST',
       headers: getHeaders(),
       body: JSON.stringify(data)
     });
-    return handleResponse(res);
   },
   adminUpdateCrime: async (id, data) => {
-    const res = await fetchWithTimeout(`${API_URL}/admin/crimes/${id}`, {
+    return requestJson(`${API_URL}/admin/crimes/${id}`, {
       method: 'PUT',
       headers: getHeaders(),
       body: JSON.stringify(data)
     });
-    return handleResponse(res);
   },
   adminDeleteCrime: async (id) => {
-    const res = await fetchWithTimeout(`${API_URL}/admin/crimes/${id}`, {
+    return requestJson(`${API_URL}/admin/crimes/${id}`, {
       method: 'DELETE',
       headers: getHeaders()
     });
-    return handleResponse(res);
   },
 
   // Cases CRUD
   adminCreateCase: async (data) => {
-    const res = await fetchWithTimeout(`${API_URL}/admin/cases`, {
+    return requestJson(`${API_URL}/admin/cases`, {
       method: 'POST',
       headers: getHeaders(),
       body: JSON.stringify(data)
     });
-    return handleResponse(res);
   },
   adminUpdateCase: async (id, data) => {
-    const res = await fetchWithTimeout(`${API_URL}/admin/cases/${id}`, {
+    return requestJson(`${API_URL}/admin/cases/${id}`, {
       method: 'PUT',
       headers: getHeaders(),
       body: JSON.stringify(data)
     });
-    return handleResponse(res);
   },
   adminDeleteCase: async (id) => {
-    const res = await fetchWithTimeout(`${API_URL}/admin/cases/${id}`, {
+    return requestJson(`${API_URL}/admin/cases/${id}`, {
       method: 'DELETE',
       headers: getHeaders()
     });
-    return handleResponse(res);
   },
 
   // Quizzes & Questions Administration
   adminGetQuizzes: async () => {
-    const res = await fetchWithTimeout(`${API_URL}/admin/quizzes`, {
+    return requestJson(`${API_URL}/admin/quizzes`, {
       headers: getHeaders()
     });
-    return handleResponse(res);
   },
   adminGetQuiz: async (id) => {
-    const res = await fetchWithTimeout(`${API_URL}/admin/quizzes/${id}`, {
+    return requestJson(`${API_URL}/admin/quizzes/${id}`, {
       headers: getHeaders()
     });
-    return handleResponse(res);
   },
   adminCreateQuiz: async (data) => {
-    const res = await fetchWithTimeout(`${API_URL}/admin/quizzes`, {
+    return requestJson(`${API_URL}/admin/quizzes`, {
       method: 'POST',
       headers: getHeaders(),
       body: JSON.stringify(data)
     });
-    return handleResponse(res);
   },
   adminUpdateQuiz: async (id, data) => {
-    const res = await fetchWithTimeout(`${API_URL}/admin/quizzes/${id}`, {
+    return requestJson(`${API_URL}/admin/quizzes/${id}`, {
       method: 'PUT',
       headers: getHeaders(),
       body: JSON.stringify(data)
     });
-    return handleResponse(res);
   },
   adminDeleteQuiz: async (id) => {
-    const res = await fetchWithTimeout(`${API_URL}/admin/quizzes/${id}`, {
+    return requestJson(`${API_URL}/admin/quizzes/${id}`, {
       method: 'DELETE',
       headers: getHeaders()
     });
-    return handleResponse(res);
   },
   adminCreateQuizQuestion: async (quizId, data) => {
-    const res = await fetchWithTimeout(`${API_URL}/admin/quizzes/${quizId}/questions`, {
+    return requestJson(`${API_URL}/admin/quizzes/${quizId}/questions`, {
       method: 'POST',
       headers: getHeaders(),
       body: JSON.stringify(data)
     });
-    return handleResponse(res);
   },
   adminUpdateQuizQuestion: async (quizId, questionId, data) => {
-    const res = await fetchWithTimeout(`${API_URL}/admin/quizzes/${quizId}/questions/${questionId}`, {
+    return requestJson(`${API_URL}/admin/quizzes/${quizId}/questions/${questionId}`, {
       method: 'PUT',
       headers: getHeaders(),
       body: JSON.stringify(data)
     });
-    return handleResponse(res);
   },
   adminDeleteQuizQuestion: async (quizId, questionId) => {
-    const res = await fetchWithTimeout(`${API_URL}/admin/quizzes/${quizId}/questions/${questionId}`, {
+    return requestJson(`${API_URL}/admin/quizzes/${quizId}/questions/${questionId}`, {
       method: 'DELETE',
       headers: getHeaders()
     });
-    return handleResponse(res);
   },
 
   // Scenarios Inspection & Integrity Audit
   adminGetScenarios: async () => {
-    const res = await fetchWithTimeout(`${API_URL}/admin/scenarios`, {
+    return requestJson(`${API_URL}/admin/scenarios`, {
       headers: getHeaders()
     });
-    return handleResponse(res);
   },
   adminGetScenario: async (id) => {
-    const res = await fetchWithTimeout(`${API_URL}/admin/scenarios/${id}`, {
+    return requestJson(`${API_URL}/admin/scenarios/${id}`, {
       headers: getHeaders()
     });
-    return handleResponse(res);
   },
   adminAuditScenario: async (id) => {
-    const res = await fetchWithTimeout(`${API_URL}/admin/scenarios/${id}/audit`, {
+    return requestJson(`${API_URL}/admin/scenarios/${id}/audit`, {
       headers: getHeaders()
     });
-    return handleResponse(res);
   },
 
   // Resources CRUD
   adminCreateResource: async (data) => {
-    const res = await fetchWithTimeout(`${API_URL}/admin/resources`, {
+    return requestJson(`${API_URL}/admin/resources`, {
       method: 'POST',
       headers: getHeaders(),
       body: JSON.stringify(data)
     });
-    return handleResponse(res);
   },
   adminUpdateResource: async (id, data) => {
-    const res = await fetchWithTimeout(`${API_URL}/admin/resources/${id}`, {
+    return requestJson(`${API_URL}/admin/resources/${id}`, {
       method: 'PUT',
       headers: getHeaders(),
       body: JSON.stringify(data)
     });
-    return handleResponse(res);
   },
   adminDeleteResource: async (id) => {
-    const res = await fetchWithTimeout(`${API_URL}/admin/resources/${id}`, {
+    return requestJson(`${API_URL}/admin/resources/${id}`, {
       method: 'DELETE',
       headers: getHeaders()
     });
-    return handleResponse(res);
   },
 
   // Admin Learning Modules
   adminGetModules: async () => {
-    const res = await fetchWithTimeout(`${API_URL}/modules/admin/all`, {
+    return requestJson(`${API_URL}/modules/admin/all`, {
       headers: getHeaders()
     });
-    return handleResponse(res);
   },
   adminCreateModule: async (data) => {
-    const res = await fetchWithTimeout(`${API_URL}/modules/admin`, {
+    return requestJson(`${API_URL}/modules/admin`, {
       method: 'POST',
       headers: getHeaders(),
       body: JSON.stringify(data)
     });
-    return handleResponse(res);
   },
   adminUpdateModule: async (id, data) => {
-    const res = await fetchWithTimeout(`${API_URL}/modules/admin/${id}`, {
+    return requestJson(`${API_URL}/modules/admin/${id}`, {
       method: 'PUT',
       headers: getHeaders(),
       body: JSON.stringify(data)
     });
-    return handleResponse(res);
   },
   adminDeleteModule: async (id) => {
-    const res = await fetchWithTimeout(`${API_URL}/modules/admin/${id}`, {
+    return requestJson(`${API_URL}/modules/admin/${id}`, {
       method: 'DELETE',
       headers: getHeaders()
     });
-    return handleResponse(res);
   },
 
   // Operational & Health Methods
   checkHealth: async (options = {}) => {
     try {
-      const res = await fetchWithTimeout(`${API_URL}/health`, {
+      return await requestJson(`${API_URL}/health`, {
         headers: getHeaders(),
         ...options
       });
-      return handleResponse(res);
     } catch (err) {
       return {
         status: 'error',
@@ -1074,6 +1054,8 @@ export {
   API_URL,
   resolveApiUrl,
   fetchWithTimeout,
+  handleResponse,
+  requestJson,
   subscribeColdStart,
   isStagingEnvironment,
   getColdStartMessage,
